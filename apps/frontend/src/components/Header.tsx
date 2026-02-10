@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
 import { useAuth } from '@/features/auth/components/useAuth';
-// Importa tu logo aquí. Si tu archivo tiene otro nombre (ej: reflab.svg), cámbialo aquí.
 import logo from '@/assets/logos/RefLab Logo No BG.svg';
 
 /**
@@ -66,27 +64,32 @@ const BellIcon = ({ onClick }: { onClick: () => void }) => (
  * SVG placeholder for the logo.
  */
 const RefLabLogo = ({ onClick }: { onClick: () => void }) => (
-  <div 
-    className="flex items-center gap-2 cursor-pointer" 
+  <div
+    className="flex items-center gap-2 cursor-pointer"
     onClick={onClick}
     role="button"
     aria-label="RefLab Home"
   >
-    {/* Ajusta el tamaño con h-8 w-8 o w-auto según necesites */}
     <img src={logo} alt="RefLab Logo" className="h-6 w-auto" />
     <span className="text-xl font-bold text-(--text-primary)">RefLab</span>
   </div>
 );
 
+interface HeaderProps {
+  onMenuToggle: () => void;
+  onMenuClose: () => void;
+}
+
 /**
  * Header Component
  * Layout: 20% Left (Menu) | 60% Center (Logo) | 20% Right (Search/Notifs)
+ *
+ * Sidebar state is managed by the parent (AppShell) via onMenuToggle/onMenuClose props.
  */
-export const Header: React.FC = () => {
+export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -98,21 +101,6 @@ export const Header: React.FC = () => {
     { id: 3, text: "Welcome to RefLab!", time: "1d ago" }
   ];
 
-
-  // --- Hamburger Menu Logic ---
-  // Single click toggles the sidebar
-  const handleHamburgerClick = () => {
-    // If double click happens, this might fire first, but the double click handler will override/close it.
-    // Standard toggle behavior:
-    setIsSidebarOpen((prev) => !prev);
-  };
-
-  // Double click explicitly closes the sidebar (as requested)
-  const handleHamburgerDoubleClick = () => {
-    // Force close on double click
-    setIsSidebarOpen(false);
-  };
-
   // --- Logo Logic ---
   const handleLogoClick = () => {
     if (user) {
@@ -121,10 +109,8 @@ export const Header: React.FC = () => {
     }
 
     if (location.pathname === '/') {
-      // If on landing page, scroll to top smoothly
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // If elsewhere, navigate immediately to landing page
       navigate('/');
     }
   };
@@ -132,13 +118,12 @@ export const Header: React.FC = () => {
   // --- Search Logic ---
   const handleSearchClick = () => {
     setIsSearchOpen(true);
-    setIsNotificationsOpen(false); // Close others
+    setIsNotificationsOpen(false);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
-    // Implement actual search navigation or filtering here
     setIsSearchOpen(false);
     setSearchQuery('');
   };
@@ -146,19 +131,19 @@ export const Header: React.FC = () => {
   // --- Notifications Logic ---
   const handleNotificationsClick = () => {
     setIsNotificationsOpen((prev) => !prev);
-    setIsSearchOpen(false); // Close others
+    setIsSearchOpen(false);
   };
 
   return (
     <>
-      {/* Navbar Container */}
+      {/* Navbar Container - fixed at top */}
       <header className="fixed top-0 left-0 w-full h-16 bg-(--bg-surface) shadow-(--shadow-soft) z-50 flex items-center px-4 border-b border-(--border-subtle) transition-all">
-        
+
         {/* [HAMBURGUER MENU 20%] */}
         <div className="w-[20%] flex justify-start items-center">
-          <MenuIcon 
-            onClick={handleHamburgerClick} 
-            onDoubleClick={handleHamburgerDoubleClick} 
+          <MenuIcon
+            onClick={onMenuToggle}
+            onDoubleClick={onMenuClose}
           />
         </div>
 
@@ -173,9 +158,6 @@ export const Header: React.FC = () => {
           <BellIcon onClick={handleNotificationsClick} />
         </div>
       </header>
-
-      {/* Sidebar Component */}
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       {/* Search Overlay */}
       {isSearchOpen && (
@@ -193,8 +175,8 @@ export const Header: React.FC = () => {
               <button type="submit" className="px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) font-bold rounded-(--radius-button) hover:bg-(--brand-yellow-soft)">
                 Go
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsSearchOpen(false)}
                 className="px-3 py-2 text-(--text-secondary) hover:bg-(--bg-surface-2) rounded-(--radius-button)"
               >
@@ -206,7 +188,7 @@ export const Header: React.FC = () => {
           <div className="absolute inset-0 -z-10" onClick={() => setIsSearchOpen(false)} />
         </div>
       )}
-      
+
       {/* Notifications Dropdown */}
       {isNotificationsOpen && (
         <>
@@ -235,9 +217,6 @@ export const Header: React.FC = () => {
           </div>
         </>
       )}
-
-      {/* Spacer to prevent content from being hidden behind fixed header */}
-      <div className="h-16" />
     </>
   );
 };

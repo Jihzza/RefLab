@@ -32,7 +32,7 @@ export async function signUpWithPassword(email: string, password: string) {
     options: {
       // Where to redirect after email confirmation
       // This URL must be in your Supabase "Redirect URLs" list
-      emailRedirectTo: `${window.location.origin}/app/dashboard`,
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
     },
   })
 
@@ -53,7 +53,8 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       // Where Google should redirect after successful auth
-      redirectTo: `${window.location.origin}/app/dashboard`,
+      // This lands on the OAuth callback page which handles the code exchange
+      redirectTo: `${window.location.origin}/auth/callback`,
     },
   })
 
@@ -68,8 +69,8 @@ export async function signInWithGoogle() {
  * 2. Clear the session from localStorage
  * 3. The onAuthStateChange listener will fire with event 'SIGNED_OUT'
  */
-export async function signOut() {
-  const { error } = await supabase.auth.signOut()
+export async function signOut(scope: 'global' | 'local' | 'others' = 'local') {
+  const { error } = await supabase.auth.signOut({ scope })
   return { error }
 }
 
@@ -125,6 +126,7 @@ export async function getSession() {
  * - SIGNED_OUT: user just logged out
  * - TOKEN_REFRESHED: access token was automatically refreshed
  * - USER_UPDATED: user data changed (e.g., password reset)
+ * - PASSWORD_RECOVERY: user arrived via a password reset link
  *
  * Returns an unsubscribe function to clean up the listener
  */
@@ -135,4 +137,56 @@ export function onAuthStateChange(
 
   // Return the unsubscribe function for cleanup in useEffect
   return subscription.unsubscribe
+}
+
+/**
+ * Manually exchange an auth code for a session (PKCE flow)
+ *
+ * Normally detectSessionInUrl handles this automatically,
+ * but this serves as a manual fallback for the callback page.
+ */
+export async function exchangeCodeForSession(code: string) {
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+  return { session: data.session, error }
+}
+
+/**
+ * Update the current user's metadata (stored in auth.users.raw_user_meta_data)
+ */
+export async function updateUserMetadata(updates: Record<string, unknown>) {
+  const { data, error } = await supabase.auth.updateUser({ data: updates })
+  return { user: data.user, error }
+}
+
+/**
+ * Delete the current user's account via the delete-account Edge Function
+ */
+export async function deleteAccountRequest() {
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    return { error: new Error('No active session') }
+  }
+
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/delete-account`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': supabaseAnonKey,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    return { error: new Error(body.error || `Failed to delete account (${response.status})`) }
+  }
+
+  return { error: null }
 }

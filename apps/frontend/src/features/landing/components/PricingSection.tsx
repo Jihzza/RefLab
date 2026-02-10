@@ -21,6 +21,7 @@
  * └─────────────────────────────────────────────────┘
  */
 
+import { useNavigate } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import PricingCard from "./PricingCard";
@@ -103,15 +104,14 @@ const PRICING_PLANS: PricingPlan[] = [
 const CAROUSEL_SLIDES = [...PRICING_PLANS, ...PRICING_PLANS];
 
 export default function PricingSection() {
+  const navigate = useNavigate();
+
   /**
-   * Handle plan selection
-   * Currently logs to console - implement checkout/signup flow as needed
+   * Handle plan selection — navigates to the billing pricing page
+   * where users can sign up / log in and then proceed to checkout.
    */
-  const handlePlanSelect = (planId: string) => {
-    // Extract the actual plan ID (remove the duplicate suffix if present)
-    const actualPlanId = planId.replace(/-\d+$/, "");
-    console.log("Selected plan:", actualPlanId);
-    // TODO: Navigate to checkout or show signup modal
+  const handlePlanSelect = (_planId: string) => {
+    navigate('/app/billing/pricing');
   };
 
   return (

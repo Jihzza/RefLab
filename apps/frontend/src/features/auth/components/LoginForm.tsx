@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
+import { mapAuthError } from "../api/authErrors";
 import type { AuthFormErrors } from "../types";
 
 interface LoginFormProps {
@@ -62,14 +63,8 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
     const { error } = await signIn(email, password);
 
     if (error) {
-      // Map common Supabase errors to user-friendly messages
-      if (error.message.includes("Invalid login credentials")) {
-        setErrors({ general: "Invalid email or password" });
-      } else if (error.message.includes("Email not confirmed")) {
-        setErrors({ general: "Please confirm your email before logging in" });
-      } else {
-        setErrors({ general: error.message });
-      }
+      const mapped = mapAuthError(error, 'login');
+      setErrors(mapped.field ? { [mapped.field]: mapped.message } : { general: mapped.message });
       setLoading(false);
       return;
     }
@@ -87,11 +82,12 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
     const { error } = await signInWithGoogle();
 
     if (error) {
-      setErrors({ general: error.message });
+      const mapped = mapAuthError(error, 'oauth');
+      setErrors({ general: mapped.message });
       setLoading(false);
     }
     // Note: If successful, user will be redirected to Google
-    // No need to navigate here - the redirect URL handles it
+    // No need to navigate here - the callback page handles it
   };
 
   return (

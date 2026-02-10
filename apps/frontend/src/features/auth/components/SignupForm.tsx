@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "./useAuth";
+import { mapAuthError } from "../api/authErrors";
 import type { AuthFormErrors } from "../types";
 
 /**
@@ -67,14 +68,8 @@ export default function SignupForm() {
     const { error } = await signUp(email, password);
 
     if (error) {
-      // Map common Supabase errors to user-friendly messages
-      if (error.message.includes("User already registered")) {
-        setErrors({ email: "An account with this email already exists" });
-      } else if (error.message.includes("Password")) {
-        setErrors({ password: error.message });
-      } else {
-        setErrors({ general: error.message });
-      }
+      const mapped = mapAuthError(error, 'signup');
+      setErrors(mapped.field ? { [mapped.field]: mapped.message } : { general: mapped.message });
       setLoading(false);
       return;
     }
@@ -101,7 +96,8 @@ export default function SignupForm() {
     const { error } = await signInWithGoogle();
 
     if (error) {
-      setErrors({ general: error.message });
+      const mapped = mapAuthError(error, 'oauth');
+      setErrors({ general: mapped.message });
       setLoading(false);
     }
     // Note: If successful, user will be redirected to Google

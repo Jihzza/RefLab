@@ -62,6 +62,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <button onClick={() => handleNavigation('/app/notifications')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
               <span>Notifications</span>
             </button>
+            <button onClick={() => handleNavigation('/app/billing')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
+              <span>Billing</span>
+            </button>
           </nav>
         </div>
 

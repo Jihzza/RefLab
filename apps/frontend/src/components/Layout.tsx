@@ -1,21 +1,13 @@
 import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { Header } from './Header';
-import { BottomNav } from './BottomNav';
-import { useAuth } from '@/features/auth/components/useAuth';
+import { Outlet } from 'react-router-dom';
 
+/**
+ * Layout - Root route wrapper.
+ *
+ * A simple pass-through for route nesting.
+ * All authenticated layout (Header, Sidebar, BottomNav) is handled by AppShell.
+ * Public routes (landing, reset-password, auth callback) render directly.
+ */
 export const Layout: React.FC = () => {
-  const { user } = useAuth();
-  const location = useLocation();
-  const isLandingPage = location.pathname === '/';
-
-  return (
-    <>
-      {!isLandingPage && <Header />}
-      <main className={user && !isLandingPage ? "pb-16" : ""}>
-        <Outlet />
-      </main>
-      {user && !isLandingPage && <BottomNav />}
-    </>
-  );
+  return <Outlet />;
 };

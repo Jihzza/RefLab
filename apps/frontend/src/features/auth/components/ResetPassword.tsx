@@ -1,23 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
+import { mapAuthError } from "../api/authErrors";
 
 /**
  * ResetPassword - Page for setting a new password after clicking reset link
  *
  * Flow:
  * 1. User clicks reset link in email
- * 2. Link redirects to: /reset-password#access_token=xxx&type=recovery
- * 3. Supabase client automatically parses the token (detectSessionInUrl: true)
- * 4. User is now temporarily authenticated and can set a new password
- * 5. After setting password, redirect to dashboard
+ * 2. Link redirects to: /reset-password?code=xxx (PKCE flow)
+ * 3. Supabase client automatically exchanges the code (detectSessionInUrl: true)
+ * 4. PASSWORD_RECOVERY event fires, setting recoveryMode=true in AuthProvider
+ * 5. User is temporarily authenticated and can set a new password
+ * 6. After setting password, redirect to dashboard
  *
  * Important: This page should only be accessible via the email reset link.
- * The URL contains tokens that Supabase needs to authenticate the password change.
  */
 export default function ResetPassword() {
   const navigate = useNavigate();
-  const { updatePassword, user } = useAuth();
+  const { updatePassword, user, recoveryMode } = useAuth();
 
   // Form state
   const [password, setPassword] = useState("");
@@ -28,20 +29,27 @@ export default function ResetPassword() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Check if user arrived via reset link (they should have a session from the token)
+  // Check if user arrived via a valid reset link.
+  // With PKCE, detectSessionInUrl exchanges the code automatically and the
+  // PASSWORD_RECOVERY event sets recoveryMode=true in AuthProvider.
   useEffect(() => {
-    // Give Supabase a moment to process the URL tokens
+    // If the exchange succeeded, clear any prior error
+    if (user || recoveryMode) {
+      setError("");
+      return;
+    }
+
+    // Give Supabase time to exchange the code and fire the recovery event
     const timer = setTimeout(() => {
-      // If there's no user after processing, the link might be invalid/expired
-      if (!user) {
+      if (!user && !recoveryMode) {
         setError(
           "Invalid or expired reset link. Please request a new password reset."
         );
       }
-    }, 1000);
+    }, 5000);
 
     return () => clearTimeout(timer);
-  }, [user]);
+  }, [user, recoveryMode]);
 
   const validateForm = (): boolean => {
     if (!password) {
@@ -70,22 +78,32 @@ export default function ResetPassword() {
 
     setLoading(true);
 
-    const { error: updateError } = await updatePassword(password);
+    try {
+      const { error: updateError } = await updatePassword(password);
 
-    if (updateError) {
-      setError(updateError.message);
+      if (updateError) {
+        const mapped = mapAuthError(updateError, 'update-password');
+        setError(mapped.message);
+        setLoading(false);
+        return;
+      }
+
+      // Success!
+      setSuccess(true);
       setLoading(false);
-      return;
+
+      // Redirect to dashboard after a short delay
+      setTimeout(() => {
+        navigate("/app/dashboard", { replace: true });
+      }, 2000);
+    } catch (err) {
+      const mapped = mapAuthError(
+        err instanceof Error ? err : new Error('Failed to update password'),
+        'update-password'
+      );
+      setError(mapped.message);
+      setLoading(false);
     }
-
-    // Success!
-    setSuccess(true);
-    setLoading(false);
-
-    // Redirect to dashboard after a short delay
-    setTimeout(() => {
-      navigate("/app/dashboard", { replace: true });
-    }, 2000);
   };
 
   // Show success message and redirect

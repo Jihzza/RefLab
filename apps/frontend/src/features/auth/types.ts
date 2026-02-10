@@ -33,6 +33,9 @@ export interface AuthContextType {
   // True if session expired mid-use (for modal display)
   sessionExpired: boolean
 
+  // True when PASSWORD_RECOVERY event fires (user arrived via reset link)
+  recoveryMode: boolean
+
   // Dismiss the session expired modal
   dismissSessionExpired: () => void
 
@@ -48,6 +51,7 @@ export interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
   updateUser: (updates: Partial<Pick<Profile, 'username' | 'name' | 'photo_url'>>) => Promise<{ error: Error | null }>
   updateUserMetadata: (updates: Partial<User["user_metadata"]>) => Promise<{ error: Error | null }>
+  deleteAccount: () => Promise<{ error: Error | null }>
 }
 
 // Types for auth form state (used by LoginForm, SignupForm, etc.)

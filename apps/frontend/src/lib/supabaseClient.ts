@@ -30,5 +30,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
     // Detect session from URL (needed for OAuth redirects and email confirmations)
     detectSessionInUrl: true,
+
+    // Use PKCE (Proof Key for Code Exchange) for all auth flows
+    // This replaces the implicit flow: URLs use ?code=... instead of #access_token=...
+    flowType: 'pkce',
   },
 })

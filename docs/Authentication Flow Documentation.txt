@@ -1,0 +1,308 @@
+The Authentication will contain several executable main function that are represented in the front-end
+
+* Sign-in
+* Sign-up
+* Update/Delete
+
+Overview scheme
+
+Source: https://app.eraser.io/workspace/KKGQr4MjGHxWbETWeXce?origin=share
+Note here the following:
+
+* Think of /auth/callback as a landing route whose only job is to finish an OAuth login that started somewhere else (Google’s consent screen). It’s not a Supabase “feature page” — it’s your app’s route that completes the flow. 
+* From your login UI you call: supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: 'https://reflab.com/auth/callback' } })
+    Supabase redirects the browser to Google, and Google will redirect back to your redirectTo URL afterwards. 
+
+Authentication Routing
+
+Protected and unprotected routing:
+
+// apps/frontend/src/app/Router.tsx
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import RequireAuth from './RequireAuth'
+
+import LandingPage from '@/features//LandingPage'
+import DashboardPage from
+import LearnPage from
+import CommunityPage from
+import SettingsPage from
+import NewsPage from
+
+
+#Unprotected routing React:
+<LandingPage> -> domain = https://reflab.com
+<Mainframe>
+   <Header>
+   <Sidebar>
+   <Footer>
+        <TermsOfServicePage> -> domain = https://reflab.com/terms-of-service
+        <PrivacyPolicy> -> domain = https://reflab.com/privacy-policy
+        <CookiesPolicy> -> domain = https://reflab.com/cookies-policy
+        <AIPolicy> -> domain = htpps://reflab.com/ai-policy
+<PricingPage> -> domain = https://reflab.com/pricing
+   
+# Protected Routing general users
+<ProfilePage> -> domain = https://reflab.com/login
+<DashboardPage> -> domain = https://reflab.com/dashboard & https://reflab.com/home https://reflab.com/home
+<NewsPage> -> domain = https://reflab.com/news
+
+    
+# Learn pages
+<LearnTestPage> -> domain = https://reflab.com/learn & https://reflab.com/learn/tests
+<LearnQuestionsPage> domain = -> https://reflab.com/learn/questions
+<LearnVideosPage> domain = -> https://reflab.com/learn/videos
+<LearnCoursesPage> domain = -> https://reflab.com/learn/courses
+<LearnResourcesPage> domain = -> https://reflab.com/learn/resources
+        
+<CommunityPage> -> domain = https://reflab.com/
+<MessagesPage> -> domain = https://reflab.com/messages
+<SearchPage> -> domain = https://reflab.com/search
+<LeaderboardPage> -> domain = https://reflab.com/leaderboard
+<NotificationsPage> -> domain = https://reflab.com/notifications
+<SettingsPage> -> domain = https://reflab.com/settings
+        
+# Protected Routing admin Users
+<AdminPage> -> domain = https://reflab.com/admin
+# Protected Routing other role users
+?
+
+Note to wrap the Protected routes like so:
+
+<Route
+path="/settings"
+element={
+    <RequireAuth>
+    <SettingsPage />
+    </RequireAuth>
+}
+/>
+
+Authentication Navigation
+
+From (Domain)
+	To (Domain)
+
+https://reflab.com/login
+	
+
+
+	
+
+
+Authentication map + code snippets
+
+See the documentation here:
+
+
+1. Supabase Client.ts
+
+// apps/frontend/src/lib/supabaseClient.ts
+import { createClient } from '@supabase/supabase-js'
+
+const url = import.meta.env.VITE_SUPABASE_URL as string
+const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
+if (!url || !anon) throw new Error('Missing Supabase env vars')
+
+export const supabase = createClient(url, anon, {
+  auth: {
+    flowType: 'pkce',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
+
+1. Supabase Auth API wrappers:
+
+// apps/frontend/src/features/auth/api/authApi.ts
+import { supabase } from '@/lib/supabaseClient'
+
+export async function signUpWithPassword(email: string, password: string) {
+  return supabase.auth.signUp({ email, password })
+}
+
+export async function signInWithPassword(email: string, password: string) {
+  return supabase.auth.signInWithPassword({ email, password })
+}
+
+export async function signInWithGoogle(redirectTo: string) {
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo },
+  })
+}
+
+export async function exchangeCodeForSession(code: string) {
+  return supabase.auth.exchangeCodeForSession(code)
+}
+
+export async function requestPasswordReset(email: string, redirectTo: string) {
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo })
+}
+
+export async function updatePassword(newPassword: string) {
+  return supabase.auth.updateUser({ password: newPassword })
+}
+
+export async function updateUserMetadata(data: Record<string, unknown>) {
+  return supabase.auth.updateUser({ data })
+}
+
+export async function signOut(scope: 'global' | 'local' | 'others' = 'global') {
+  return supabase.auth.signOut({ scope })
+}
+
+1. Supabase Auth errors:
+
+// apps/frontend/src/features/auth/api/authErrors.ts
+export type AuthUiErrorKind = 'invalid_credentials' | 'oauth_callback' | 'rate_limited' | 'generic'
+
+export function mapAuthError(err: any, ctx?: 'password' | 'oauth') {
+  const status = err?.status as number | undefined
+  const message = (err?.message as string | undefined) ?? 'Authentication error'
+
+  if (status === 429) return { kind: 'rate_limited' as AuthUiErrorKind, message: 'Too many attempts. Try again later.' }
+
+  if (ctx === 'password') {
+    // Avoid user enumeration; use generic message.
+    return { kind: 'invalid_credentials' as AuthUiErrorKind, message: 'Invalid email or password.' }
+  }
+
+  if (ctx === 'oauth') return { kind: 'oauth_callback' as AuthUiErrorKind, message }
+
+  return { kind: 'generic' as AuthUiErrorKind, message }
+}
+
+1. Session initialization + onAuthStateChange (InitSession + AuthEvents)
+
+// apps/frontend/src/features/auth/components/AuthProvider.tsx
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import type { Session, User } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient'
+
+type AuthStatus = 'idle' | 'busy' | 'ready' | 'error'
+
+type AuthCtx = {
+  status: AuthStatus
+  error: string | null
+  session: Session | null
+  user: User | null
+  accessToken: string | null
+  lastEvent: string | null
+  setBusy: (busy: boolean) => void
+  setError: (msg: string | null) => void
+}
+
+const Ctx = createContext<AuthCtx | null>(null)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [status, setStatus] = useState<AuthStatus>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [lastEvent, setLastEvent] = useState<string | null>(null)
+
+  const setBusy = (busy: boolean) => setStatus(busy ? 'busy' : 'ready')
+
+  useEffect(() => {
+    setStatus('busy')
+
+    // Subscribe first: INITIAL_SESSION is emitted after storage loads. :contentReference[oaicite:6]{index=6}
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setLastEvent(event)
+      setSession(nextSession)
+      setUser(nextSession?.user ?? null)
+      setAccessToken(nextSession?.access_token ?? null)
+      setStatus('ready')
+      setError(null)
+    })
+
+    // One bootstrap read (optional). Avoid repeated getSession calls for token reads.
+    supabase.auth.getSession().then(({ data: d, error: e }) => {
+      if (e) {
+        setError(e.message)
+        setStatus('error')
+        return
+      }
+      setSession(d.session)
+      setUser(d.session?.user ?? null)
+      setAccessToken(d.session?.access_token ?? null)
+      setLastEvent('BOOTSTRAP_GET_SESSION')
+      setStatus('ready')
+    })
+
+    return () => data.subscription.unsubscribe()
+  }, [])
+
+  const value = useMemo<AuthCtx>(
+    () => ({ status, error, session, user, accessToken, lastEvent, setBusy, setError }),
+    [status, error, session, user, accessToken, lastEvent]
+  )
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+}
+
+export function useAuth() {
+  const ctx = useContext(Ctx)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
+}
+
+1. RequireAuth, routing protection guard
+
+// apps/frontend/src/app/RequireAuth.tsx
+import React from 'react'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth/components/AuthProvider'
+
+export default function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { status, session } = useAuth()
+  if (status === 'busy' || status === 'idle') return <div>Loading…</div>
+  if (!session) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+1. OAuth callback page (PKCE exchange)
+
+// apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx
+import React, { useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { exchangeCodeForSession } from '@/features/auth/api/authApi'
+import { useAuth } from '@/features/auth/components/AuthProvider'
+import { mapAuthError } from '@/features/auth/api/authErrors'
+
+export default function OAuthCallbackPage() {
+  const [params] = useSearchParams()
+  const nav = useNavigate()
+  const { setBusy, setError } = useAuth()
+
+  useEffect(() => {
+    const run = async () => {
+      const code = params.get('code')
+      if (!code) {
+        setError('Missing OAuth code.')
+        return
+      }
+
+      setBusy(true)
+      const { error } = await exchangeCodeForSession(code)
+      setBusy(false)
+
+      if (error) {
+        setError(mapAuthError(error, 'oauth').message)
+        return
+      }
+
+      nav('/dashboard', { replace: true })
+    }
+
+    run()
+  }, [])
+
+  return <div>Signing you in…</div>
+}
+
+
