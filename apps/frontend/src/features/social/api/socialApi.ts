@@ -1,5 +1,12 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Post, Comment, PostMediaType, FeedFilter } from '../types'
+import type {
+  Post,
+  Comment,
+  PostMediaType,
+  FeedFilter,
+  PublicProfileView,
+  PublicProfileFeedResponse,
+} from '../types'
 
 // ============================================
 // Feed
@@ -15,6 +22,69 @@ export async function getFeed(
   const { data, error } = await supabase.rpc('get_social_feed', {
     p_user_id: userId,
     p_media_type: filter === 'all' ? null : filter,
+    p_cursor: cursor,
+    p_limit: limit,
+  })
+
+  if (error) return { posts: [], error: new Error(error.message) }
+  return { posts: (data ?? []) as Post[], error: null }
+}
+
+/** Fetch one profile's feed (posts + reposts) with cursor pagination and media filter. */
+export async function getProfileFeed(
+  viewerUserId: string,
+  profileUserId: string,
+  filter: FeedFilter = 'all',
+  cursor: string | null = null,
+  limit: number = 20
+): Promise<{ posts: Post[]; error: Error | null }> {
+  const { data, error } = await supabase.rpc('get_profile_feed', {
+    p_viewer_id: viewerUserId,
+    p_profile_user_id: profileUserId,
+    p_media_type: filter === 'all' ? null : filter,
+    p_cursor: cursor,
+    p_limit: limit,
+  })
+
+  if (error) return { posts: [], error: new Error(error.message) }
+  return { posts: (data ?? []) as Post[], error: null }
+}
+
+/** Fetch public profile info + relationship flags for a username. */
+export async function getPublicProfileView(
+  viewerId: string,
+  username: string
+): Promise<{ profile: PublicProfileView | null; error: Error | null }> {
+  const normalized = username.trim()
+
+  if (!normalized) {
+    return { profile: null, error: new Error('Username is required.') }
+  }
+
+  const { data, error } = await supabase.rpc('get_public_profile_view', {
+    p_viewer_id: viewerId,
+    p_username: normalized,
+  })
+
+  if (error) return { profile: null, error: new Error(error.message) }
+
+  const profile = Array.isArray(data)
+    ? ((data[0] ?? null) as PublicProfileView | null)
+    : ((data ?? null) as PublicProfileView | null)
+
+  return { profile, error: null }
+}
+
+/** Fetch paginated posts for a specific public profile. */
+export async function getPublicProfileFeed(
+  viewerId: string,
+  targetUserId: string,
+  cursor: string | null = null,
+  limit: number = 20
+): Promise<PublicProfileFeedResponse> {
+  const { data, error } = await supabase.rpc('get_public_profile_feed', {
+    p_viewer_id: viewerId,
+    p_target_user_id: targetUserId,
     p_cursor: cursor,
     p_limit: limit,
   })
@@ -86,6 +156,30 @@ export async function togglePostLike(
   const { error } = await supabase
     .from('post_likes')
     .insert({ user_id: userId, post_id: postId })
+  return { error: error ? new Error(error.message) : null }
+}
+
+/** Create a follow relationship. */
+export async function followUser(
+  followerId: string,
+  followingId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('user_follows')
+    .insert({ follower_id: followerId, following_id: followingId })
+  return { error: error ? new Error(error.message) : null }
+}
+
+/** Remove a follow relationship. */
+export async function unfollowUser(
+  followerId: string,
+  followingId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('user_follows')
+    .delete()
+    .eq('follower_id', followerId)
+    .eq('following_id', followingId)
   return { error: error ? new Error(error.message) : null }
 }
 

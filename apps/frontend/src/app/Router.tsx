@@ -11,7 +11,8 @@ import NotificationsPage from "@/features/notifications/components/Notifications
 import LeaderboardPage from "@/features/leaderboard/components/LeaderboardPage";
 import ProfilePage from "@/features/profile/components/ProfilePage";
 import EditProfilePage from "../features/profile/components/EditProfilePage";
-import PublicProfilePage from "@/features/profile/components/PublicProfilePage";
+import SettingsPage from "@/features/profile/components/SettingsPage";
+import PublicProfilePage from "@/features/social/components/PublicProfilePage";
 import BillingDashboard from "@/features/billing/components/BillingDashboard";
 import PricingPage from "@/features/billing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
@@ -68,6 +69,8 @@ export default function Router() {
           <Route path="profile" element={<ProfilePage />} />
           {/* /app/profile/edit shows edit profile form */}
           <Route path="profile/edit" element={<EditProfilePage />} />
+          {/* /app/profile/settings shows settings page */}
+          <Route path="profile/settings" element={<SettingsPage />} />
           {/* /app/profile/:username shows another user's public profile */}
           <Route path="profile/:username" element={<PublicProfilePage />} />
         </Route>

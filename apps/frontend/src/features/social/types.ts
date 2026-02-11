@@ -59,3 +59,18 @@ export interface FeedState {
   error: string | null
   filter: FeedFilter
 }
+
+export interface PublicProfileView {
+  id: string
+  username: string
+  name: string | null
+  photo_url: string | null
+  is_following: boolean
+  is_blocked_by_viewer: boolean
+  has_blocked_viewer: boolean
+}
+
+export interface PublicProfileFeedResponse {
+  posts: Post[]
+  error: Error | null
+}
