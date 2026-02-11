@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function LeaderboardPage() {
   const users = [
     { rank: 1, name: 'Alex', score: 2400 },
