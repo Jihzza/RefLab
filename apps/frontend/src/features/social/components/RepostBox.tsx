@@ -1,4 +1,6 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth/components/useAuth'
 import MediaDisplay from './MediaDisplay'
 import type { Post, PostAuthor } from '../types'
 
@@ -18,13 +20,31 @@ interface RepostBoxProps {
 
 /** Embedded card showing the original post within a repost. */
 const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+
   const displayName = originalPost.author.name || originalPost.author.username
   const initials = displayName.slice(0, 2).toUpperCase()
+
+  const openAuthorProfile = () => {
+    const isSelf = user?.id === originalPost.author.id
+    if (isSelf) {
+      navigate('/app/profile')
+      return
+    }
+
+    navigate(`/app/profile/${encodeURIComponent(originalPost.author.username)}`)
+  }
 
   return (
     <div className="mt-3 p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle)">
       {/* Original author */}
-      <div className="flex items-center gap-2 mb-2">
+      <button
+        type="button"
+        onClick={openAuthorProfile}
+        className="flex items-center gap-2 mb-2 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1"
+        aria-label={`Open ${displayName} profile`}
+      >
         {originalPost.author.photo_url ? (
           <img
             src={originalPost.author.photo_url}
@@ -44,7 +64,7 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
         <span className="text-xs text-(--text-muted)">
           @{originalPost.author.username}
         </span>
-      </div>
+      </button>
 
       {/* Original content */}
       {originalPost.content && (

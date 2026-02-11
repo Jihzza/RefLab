@@ -12,7 +12,7 @@ import LeaderboardPage from "@/features/leaderboard/components/LeaderboardPage";
 import ProfilePage from "@/features/profile/components/ProfilePage";
 import EditProfilePage from "../features/profile/components/EditProfilePage";
 import SettingsPage from "@/features/profile/components/SettingsPage";
-import PublicProfilePage from "@/features/profile/components/PublicProfilePage";
+import PublicProfilePage from "@/features/social/components/PublicProfilePage";
 import BillingDashboard from "@/features/billing/components/BillingDashboard";
 import PricingPage from "@/features/billing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
