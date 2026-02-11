@@ -23,6 +23,26 @@ export async function getFeed(
   return { posts: (data ?? []) as Post[], error: null }
 }
 
+/** Fetch one profile's feed (posts + reposts) with cursor pagination and media filter. */
+export async function getProfileFeed(
+  viewerUserId: string,
+  profileUserId: string,
+  filter: FeedFilter = 'all',
+  cursor: string | null = null,
+  limit: number = 20
+): Promise<{ posts: Post[]; error: Error | null }> {
+  const { data, error } = await supabase.rpc('get_profile_feed', {
+    p_viewer_id: viewerUserId,
+    p_profile_user_id: profileUserId,
+    p_media_type: filter === 'all' ? null : filter,
+    p_cursor: cursor,
+    p_limit: limit,
+  })
+
+  if (error) return { posts: [], error: new Error(error.message) }
+  return { posts: (data ?? []) as Post[], error: null }
+}
+
 // ============================================
 // Post CRUD
 // ============================================
