@@ -11,9 +11,12 @@ import NotificationsPage from "@/features/notifications/components/Notifications
 import LeaderboardPage from "@/features/leaderboard/components/LeaderboardPage";
 import ProfilePage from "@/features/profile/components/ProfilePage";
 import EditProfilePage from "../features/profile/components/EditProfilePage";
+import PublicProfilePage from "@/features/profile/components/PublicProfilePage";
 import BillingDashboard from "@/features/billing/components/BillingDashboard";
 import PricingPage from "@/features/billing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
+import MessagesPage from "@/features/messages/components/MessagesPage";
+import ConversationPage from "@/features/messages/components/ConversationPage";
 import RequireAuth from "./RequireAuth";
 import RequireGuest from "./RequireGuest";
 import AppShell from "./AppShell";
@@ -57,10 +60,16 @@ export default function Router() {
           <Route path="billing/pricing" element={<PricingPage />} />
           {/* /app/social shows the social feed */}
           <Route path="social" element={<SocialPage />} />
+          {/* /app/messages shows direct messages */}
+          <Route path="messages" element={<MessagesPage />} />
+          {/* /app/messages/:conversationId shows a conversation */}
+          <Route path="messages/:conversationId" element={<ConversationPage />} />
           {/* /app/profile shows user profile */}
           <Route path="profile" element={<ProfilePage />} />
           {/* /app/profile/edit shows edit profile form */}
           <Route path="profile/edit" element={<EditProfilePage />} />
+          {/* /app/profile/:username shows another user's public profile */}
+          <Route path="profile/:username" element={<PublicProfilePage />} />
         </Route>
       </Route>
     </Routes>
