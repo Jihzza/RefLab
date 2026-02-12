@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useBilling } from './useBilling'
 import { createCheckoutSession } from '../api/billingApi'
-import type { PlanId, BillingInterval } from '../types'
+import type { PlanId } from '../types'
 
 interface PlanConfig {
   id: PlanId
   name: string
-  monthlyPrice: number // EUR
-  yearlyPrice: number  // EUR
+  priceLabel: string
   benefits: string[]
   isHighlighted?: boolean
 }
@@ -16,8 +15,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'free',
     name: 'Free',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    priceLabel: 'Free',
     benefits: [
       'Access to basic Laws of the Game content',
       'Limited practice quizzes',
@@ -28,8 +26,7 @@ const PLANS: PlanConfig[] = [
   {
     id: 'pro',
     name: 'Pro',
-    monthlyPrice: 9,
-    yearlyPrice: 99,
+    priceLabel: '€9 / month',
     isHighlighted: true,
     benefits: [
       'Everything in Free',
@@ -41,32 +38,28 @@ const PLANS: PlanConfig[] = [
     ],
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: 49,
-    yearlyPrice: 499,
+    id: 'plus',
+    name: 'Plus',
+    priceLabel: '€29 / month',
     benefits: [
       'Everything in Pro',
-      'Team management dashboard',
-      'Custom training programs',
-      'API access for integrations',
-      'Dedicated account manager',
-      'SLA guarantees',
+      'Advanced analytics insights',
+      'Priority support + faster response',
+      'Early access to new premium features',
     ],
   },
 ]
 
 export default function PricingPage() {
   const { planId: currentPlan, isLoading: billingLoading } = useBilling()
-  const [interval, setInterval] = useState<BillingInterval>('monthly')
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSubscribe = async (planId: Exclude<PlanId, 'free'>) => {
-    setLoadingPlan(planId)
+  const handleSubscribe = async (plan: Exclude<PlanId, 'free'>) => {
+    setLoadingPlan(plan)
     setError(null)
 
-    const { url, error: checkoutError } = await createCheckoutSession(planId, interval)
+    const { url, error: checkoutError } = await createCheckoutSession(plan)
 
     if (checkoutError || !url) {
       setError(checkoutError?.message || 'Failed to start checkout')
@@ -74,14 +67,7 @@ export default function PricingPage() {
       return
     }
 
-    // Redirect to Stripe Checkout
-    window.location.href = url
-  }
-
-  const yearlyDiscount = (plan: PlanConfig) => {
-    if (plan.monthlyPrice === 0) return 0
-    const yearlyEquivalent = plan.monthlyPrice * 12
-    return Math.round(((yearlyEquivalent - plan.yearlyPrice) / yearlyEquivalent) * 100)
+    window.location.assign(url)
   }
 
   return (
@@ -93,42 +79,15 @@ export default function PricingPage() {
         Upgrade to unlock advanced training tools and AI-powered feedback.
       </p>
 
-      {/* Monthly/Yearly Toggle */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        <button
-          onClick={() => setInterval('monthly')}
-          className={`px-4 py-2 rounded-(--radius-button) text-sm font-medium transition-colors ${
-            interval === 'monthly'
-              ? 'bg-(--brand-yellow) text-(--bg-primary)'
-              : 'bg-(--bg-surface-2) text-(--text-secondary) hover:text-(--text-primary)'
-          }`}
-        >
-          Monthly
-        </button>
-        <button
-          onClick={() => setInterval('yearly')}
-          className={`px-4 py-2 rounded-(--radius-button) text-sm font-medium transition-colors ${
-            interval === 'yearly'
-              ? 'bg-(--brand-yellow) text-(--bg-primary)'
-              : 'bg-(--bg-surface-2) text-(--text-secondary) hover:text-(--text-primary)'
-          }`}
-        >
-          Yearly
-        </button>
-      </div>
-
       {error && (
         <div className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-4 py-3 rounded-lg mb-6 text-center">
           {error}
         </div>
       )}
 
-      {/* Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => {
-          const price = interval === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
           const isCurrentPlan = currentPlan === plan.id
-          const discount = interval === 'yearly' ? yearlyDiscount(plan) : 0
 
           return (
             <div
@@ -148,19 +107,7 @@ export default function PricingPage() {
               <h2 className="text-lg font-bold text-(--text-primary) mb-1">{plan.name}</h2>
 
               <div className="mb-4">
-                <span className="text-3xl font-bold text-(--text-primary)">
-                  {price === 0 ? 'Free' : `€${price}`}
-                </span>
-                {price > 0 && (
-                  <span className="text-(--text-muted) text-sm ml-1">
-                    /{interval === 'monthly' ? 'mo' : 'yr'}
-                  </span>
-                )}
-                {discount > 0 && (
-                  <span className="ml-2 text-xs font-semibold bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
-                    Save {discount}%
-                  </span>
-                )}
+                <span className="text-3xl font-bold text-(--text-primary)">{plan.priceLabel}</span>
               </div>
 
               <ul className="space-y-2 mb-6 grow">

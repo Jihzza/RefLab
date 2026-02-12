@@ -1,13 +1,12 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Subscription, Invoice, PlanId, BillingInterval } from '../types'
+import type { Subscription, PlanId } from '../types'
 
 /**
  * Create a Stripe Checkout Session via the create-checkout-session Edge Function.
  * Returns the Stripe Checkout URL to redirect the user to.
  */
 export async function createCheckoutSession(
-  planId: Exclude<PlanId, 'free'>,
-  billingInterval: BillingInterval
+  plan: Exclude<PlanId, 'free'>,
 ): Promise<{ url: string | null; error: Error | null }> {
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -27,7 +26,7 @@ export async function createCheckoutSession(
         'apikey': supabaseAnonKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ planId, billingInterval }),
+      body: JSON.stringify({ plan }),
     }
   )
 
@@ -84,10 +83,10 @@ export async function getSubscription(): Promise<{
   error: Error | null
 }> {
   const { data, error } = await supabase
-    .from('subscriptions')
+    .from('stripe_subscriptions')
     .select('*')
     .in('status', ['active', 'trialing', 'past_due'])
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
 
@@ -96,24 +95,4 @@ export async function getSubscription(): Promise<{
   }
 
   return { subscription: data as Subscription | null, error: null }
-}
-
-/**
- * Get the user's invoices from Supabase (RLS-protected).
- */
-export async function getInvoices(limit = 10): Promise<{
-  invoices: Invoice[]
-  error: Error | null
-}> {
-  const { data, error } = await supabase
-    .from('invoices')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit)
-
-  if (error) {
-    return { invoices: [], error: new Error(error.message) }
-  }
-
-  return { invoices: (data ?? []) as Invoice[], error: null }
 }

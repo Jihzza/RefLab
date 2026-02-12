@@ -46,10 +46,10 @@ serve(async (req) => {
 
     // 3. Cancel any active Stripe subscriptions before deleting the user
     const { data: customer } = await supabaseAdmin
-      .from('customers')
+      .from('stripe_customers')
       .select('stripe_customer_id')
-      .eq('id', user.id)
-      .single()
+      .eq('user_id', user.id)
+      .maybeSingle()
 
     if (customer?.stripe_customer_id) {
       const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
@@ -57,17 +57,17 @@ serve(async (req) => {
         const stripe = new Stripe(stripeKey, { apiVersion: '2024-04-10' })
 
         const { data: activeSubscriptions } = await supabaseAdmin
-          .from('subscriptions')
-          .select('id')
+          .from('stripe_subscriptions')
+          .select('stripe_subscription_id')
           .eq('user_id', user.id)
           .in('status', ['active', 'trialing', 'past_due'])
 
         if (activeSubscriptions) {
           for (const sub of activeSubscriptions) {
             try {
-              await stripe.subscriptions.cancel(sub.id)
+              await stripe.subscriptions.cancel(sub.stripe_subscription_id)
             } catch (stripeErr) {
-              console.error(`Failed to cancel subscription ${sub.id}:`, stripeErr)
+              console.error(`Failed to cancel subscription ${sub.stripe_subscription_id}:`, stripeErr)
               // Continue with account deletion even if Stripe cancellation fails
             }
           }

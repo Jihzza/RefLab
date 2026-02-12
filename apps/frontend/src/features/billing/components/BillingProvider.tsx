@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
-import { getSubscription, getInvoices } from '../api/billingApi'
+import { getSubscription } from '../api/billingApi'
 import { BillingContext } from './BillingContext'
-import type { Subscription, Invoice, PlanId } from '../types'
+import type { Subscription, PlanId } from '../types'
 
 interface BillingProviderProps {
   children: ReactNode
@@ -11,14 +11,12 @@ interface BillingProviderProps {
 export function BillingProvider({ children }: BillingProviderProps) {
   const { user, authStatus } = useAuth()
   const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchBilling = useCallback(async () => {
     if (!user) {
       setSubscription(null)
-      setInvoices([])
       setIsLoading(false)
       return
     }
@@ -26,16 +24,12 @@ export function BillingProvider({ children }: BillingProviderProps) {
     setIsLoading(true)
     setError(null)
 
-    const [subResult, invResult] = await Promise.all([
-      getSubscription(),
-      getInvoices(),
-    ])
+    const subResult = await getSubscription()
 
     if (subResult.error) {
       setError(subResult.error.message)
     }
     setSubscription(subResult.subscription)
-    setInvoices(invResult.invoices)
     setIsLoading(false)
   }, [user])
 
@@ -45,7 +39,6 @@ export function BillingProvider({ children }: BillingProviderProps) {
       fetchBilling()
     } else if (authStatus === 'unauthenticated') {
       setSubscription(null)
-      setInvoices([])
       setError(null)
     }
   }, [authStatus, user, fetchBilling])
@@ -53,23 +46,22 @@ export function BillingProvider({ children }: BillingProviderProps) {
   // Derive plan from subscription
   const planId: PlanId = subscription &&
     ['active', 'trialing', 'past_due'].includes(subscription.status)
-    ? subscription.plan_id
+    ? subscription.plan
     : 'free'
 
-  const isPro = planId === 'pro' || planId === 'enterprise'
-  const isEnterprise = planId === 'enterprise'
+  const isPro = planId === 'pro' || planId === 'plus'
+  const isPlus = planId === 'plus'
 
   return (
     <BillingContext.Provider
       value={{
         subscription,
-        invoices,
         planId,
         isLoading,
         error,
         refreshBilling: fetchBilling,
         isPro,
-        isEnterprise,
+        isPlus,
       }}
     >
       {children}

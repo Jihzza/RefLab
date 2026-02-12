@@ -8,13 +8,13 @@ interface PlanBadgeProps {
 const PLAN_STYLES: Record<PlanId, string> = {
   free: 'bg-gray-500/20 text-gray-400',
   pro: 'bg-(--brand-yellow)/20 text-(--brand-yellow)',
-  enterprise: 'bg-purple-500/20 text-purple-400',
+  plus: 'bg-green-500/20 text-green-400',
 }
 
 const PLAN_LABELS: Record<PlanId, string> = {
   free: 'Free',
   pro: 'Pro',
-  enterprise: 'Enterprise',
+  plus: 'Plus',
 }
 
 export default function PlanBadge({ planId, className = '' }: PlanBadgeProps) {

@@ -49,7 +49,7 @@ const swiperStyles = `
 /**
  * Pricing plans data
  *
- * Three tiers: Free, Pro (highlighted), and Enterprise
+ * Three tiers: Free, Pro (highlighted), and Plus
  * Prices are in EUR per month
  */
 const PRICING_PLANS: PricingPlan[] = [
@@ -81,18 +81,16 @@ const PRICING_PLANS: PricingPlan[] = [
     buttonText: "Subscribe",
   },
   {
-    id: "enterprise",
-    name: "Enterprise",
-    pricePerMonth: 49,
+    id: "plus",
+    name: "Plus",
+    pricePerMonth: 29,
     benefits: [
       "Everything in Pro",
-      "Team management dashboard",
-      "Custom training programs",
-      "API access for integrations",
-      "Dedicated account manager",
-      "SLA guarantees",
+      "Advanced analytics insights",
+      "Priority support + faster response",
+      "Early access to new premium features",
     ],
-    buttonText: "Contact Us",
+    buttonText: "Subscribe",
   },
 ];
 
@@ -110,7 +108,8 @@ export default function PricingSection() {
    * Handle plan selection — navigates to the billing pricing page
    * where users can sign up / log in and then proceed to checkout.
    */
-  const handlePlanSelect = (_planId: string) => {
+  const handlePlanSelect = (planId: string) => {
+    void planId;
     navigate('/app/billing/pricing');
   };
 
