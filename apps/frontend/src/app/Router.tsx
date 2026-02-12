@@ -18,6 +18,7 @@ import PricingPage from "@/features/billing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
 import MessagesPage from "@/features/messages/components/MessagesPage";
 import ConversationPage from "@/features/messages/components/ConversationPage";
+import SearchPage from "@/features/search/components/SearchPage";
 import RequireAuth from "./RequireAuth";
 import RequireGuest from "./RequireGuest";
 import AppShell from "./AppShell";
@@ -65,6 +66,8 @@ export default function Router() {
           <Route path="messages" element={<MessagesPage />} />
           {/* /app/messages/:conversationId shows a conversation */}
           <Route path="messages/:conversationId" element={<ConversationPage />} />
+          {/* /app/search shows user search */}
+          <Route path="search" element={<SearchPage />} />
           {/* /app/profile shows user profile */}
           <Route path="profile" element={<ProfilePage />} />
           {/* /app/profile/edit shows edit profile form */}

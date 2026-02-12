@@ -90,9 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Mock notifications data
   const notifications = [
@@ -117,21 +115,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
 
   // --- Search Logic ---
   const handleSearchClick = () => {
-    setIsSearchOpen(true);
-    setIsNotificationsOpen(false);
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Searching for:', searchQuery);
-    setIsSearchOpen(false);
-    setSearchQuery('');
+    // navigate directly to the dedicated search page (protected route)
+    navigate('/app/search');
   };
 
   // --- Notifications Logic ---
   const handleNotificationsClick = () => {
     setIsNotificationsOpen((prev) => !prev);
-    setIsSearchOpen(false);
   };
 
   return (
@@ -159,35 +149,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
         </div>
       </header>
 
-      {/* Search Overlay */}
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-50 bg-(--bg-primary)/50 flex items-start justify-center pt-20 px-4">
-          <div className="bg-(--bg-surface) w-full max-w-md rounded-(--radius-card) shadow-xl p-4 animate-in fade-in slide-in-from-top-5 duration-200 border border-(--border-subtle)">
-            <form onSubmit={handleSearchSubmit} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Search RefLab..."
-                className="flex-1 px-4 py-2 bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-primary) rounded-(--radius-input) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow) placeholder-(--text-muted)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                autoFocus
-              />
-              <button type="submit" className="px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) font-bold rounded-(--radius-button) hover:bg-(--brand-yellow-soft)">
-                Go
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen(false)}
-                className="px-3 py-2 text-(--text-secondary) hover:bg-(--bg-surface-2) rounded-(--radius-button)"
-              >
-                ✕
-              </button>
-            </form>
-          </div>
-          {/* Click outside to close */}
-          <div className="absolute inset-0 -z-10" onClick={() => setIsSearchOpen(false)} />
-        </div>
-      )}
+
 
       {/* Notifications Dropdown */}
       {isNotificationsOpen && (
