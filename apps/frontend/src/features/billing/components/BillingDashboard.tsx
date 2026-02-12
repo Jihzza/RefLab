@@ -7,7 +7,7 @@ import PlanBadge from './PlanBadge'
 export default function BillingDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { subscription, invoices, planId, isLoading, refreshBilling } = useBilling()
+  const { subscription, planId, isLoading, refreshBilling } = useBilling()
   const [portalLoading, setPortalLoading] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
   const pollCountRef = useRef(0)
@@ -68,13 +68,6 @@ export default function BillingDashboard() {
     })
   }
 
-  const formatAmount = (cents: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency.toUpperCase(),
-    }).format(cents / 100)
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -91,7 +84,7 @@ export default function BillingDashboard() {
       {checkoutSuccess && (
         <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg mb-6 text-center text-sm font-medium">
           {subscription
-            ? `Welcome to ${subscription.plan_id.charAt(0).toUpperCase() + subscription.plan_id.slice(1)}!`
+            ? `Welcome to ${subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}!`
             : 'Processing your subscription...'}
         </div>
       )}
@@ -106,13 +99,6 @@ export default function BillingDashboard() {
               <PlanBadge planId={planId} />
             </div>
           </div>
-          {subscription && (
-            <div className="text-right">
-              <p className="text-sm text-(--text-muted)">
-                {formatAmount(subscription.amount, subscription.currency)}/{subscription.billing_interval === 'monthly' ? 'mo' : 'yr'}
-              </p>
-            </div>
-          )}
         </div>
 
         {subscription && (
@@ -127,13 +113,15 @@ export default function BillingDashboard() {
                 {subscription.status.replace('_', ' ')}
               </span>
             </div>
-            <div className="flex justify-between text-(--text-secondary)">
-              <span>Next renewal</span>
-              <span>{formatDate(subscription.current_period_end)}</span>
-            </div>
+            {subscription.current_period_end && (
+              <div className="flex justify-between text-(--text-secondary)">
+                <span>Next renewal</span>
+                <span>{formatDate(subscription.current_period_end)}</span>
+              </div>
+            )}
             {subscription.cancel_at_period_end && (
               <div className="bg-(--brand-yellow)/10 border border-(--brand-yellow)/20 text-(--brand-yellow) text-sm px-3 py-2 rounded-lg mt-3">
-                Your subscription will be canceled at the end of the current billing period ({formatDate(subscription.current_period_end)}).
+                Your subscription will be canceled at the end of the current billing period.
               </div>
             )}
           </div>
@@ -167,45 +155,6 @@ export default function BillingDashboard() {
           )}
         </div>
       </div>
-
-      {/* Invoices */}
-      {invoices.length > 0 && (
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-xl p-6">
-          <h2 className="text-lg font-bold text-(--text-primary) mb-4">Invoice History</h2>
-          <div className="space-y-3">
-            {invoices.map((invoice) => (
-              <div
-                key={invoice.id}
-                className="flex items-center justify-between py-2 border-b border-(--border-subtle) last:border-0"
-              >
-                <div>
-                  <p className="text-sm text-(--text-primary)">
-                    {formatDate(invoice.created_at)}
-                  </p>
-                  <p className="text-xs text-(--text-muted) capitalize">
-                    {invoice.status}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-(--text-primary)">
-                    {formatAmount(invoice.amount_paid || invoice.amount_due, invoice.currency)}
-                  </span>
-                  {invoice.invoice_pdf && (
-                    <a
-                      href={invoice.invoice_pdf}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-(--brand-yellow) hover:underline"
-                    >
-                      PDF
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   )
 }
