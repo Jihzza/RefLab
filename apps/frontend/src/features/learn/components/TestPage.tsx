@@ -185,14 +185,14 @@ export default function TestPage() {
   return (
     <div className="min-h-full bg-(--bg-primary)">
       {/* Header */}
-      <div className="bg-white border-b px-6 py-4">
+      <div className="bg-(--bg-surface) border-b border-(--border-subtle) px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <button
               onClick={() => navigate('/app/learn')}
               className="text-(--text-muted) hover:text-(--text-secondary) text-sm mb-1"
             >
-              ← Back to Learn
+              &larr; Back to Learn
             </button>
             <h1 className="text-xl font-bold text-(--text-primary)">{test?.title}</h1>
           </div>
@@ -243,10 +243,10 @@ export default function TestPage() {
                   className={`
                     w-3 h-3 rounded-full transition-all
                     ${isCurrent
-                      ? 'bg-blue-600 scale-125'
+                      ? 'bg-(--info) scale-125'
                       : isAnswered
-                        ? 'bg-blue-300'
-                        : 'bg-gray-300'
+                        ? 'bg-(--info)/50'
+                        : 'bg-(--bg-surface-2)'
                     }
                   `}
                   aria-label={`Go to question ${idx + 1}`}

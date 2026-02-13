@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario } from '../types'
 
 /**
  * Fetch all active tests
@@ -72,16 +72,15 @@ export async function getOrCreateAttempt(testId: string) {
     .eq('user_id', user.id)
     .eq('test_id', testId)
     .eq('status', 'in_progress')
-    .single()
+    .maybeSingle()
+
+  if (fetchError) {
+    return { data: null, error: fetchError }
+  }
 
   // If found, return it
   if (existingAttempt) {
     return { data: existingAttempt as TestAttempt, error: null }
-  }
-
-  // If not found (PGRST116 = no rows), create a new one
-  if (fetchError && fetchError.code !== 'PGRST116') {
-    return { data: null, error: fetchError }
   }
 
   // Create new attempt
@@ -223,4 +222,141 @@ export async function getCompletedAttempts(testId: string) {
     .order('submitted_at', { ascending: false })
 
   return { data: data as TestAttempt[] | null, error }
+}
+
+/**
+ * Get all of the user's completed attempts (across all tests)
+ */
+export async function getUserCompletedAttempts() {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  const { data, error } = await supabase
+    .from('test_attempts')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'submitted')
+    .order('submitted_at', { ascending: false })
+    .limit(50)
+
+  return { data: data as TestAttempt[] | null, error }
+}
+
+/**
+ * Fetch all questions across all active tests (for practice mode)
+ */
+export async function getAllQuestions() {
+  const { data, error } = await supabase
+    .from('test_questions')
+    .select('*')
+
+  return { data: data as TestQuestion[] | null, error }
+}
+
+/**
+ * Fetch all active video scenarios
+ */
+export async function getVideoScenarios() {
+  const { data, error } = await supabase
+    .from('video_scenarios')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at')
+
+  return { data: data as VideoScenario[] | null, error }
+}
+
+/**
+ * Get the public URL for a video file stored in the "Learn Videos" bucket.
+ *
+ * The video_url column stores just the filename (e.g., "penalty-area-challenge.mp4").
+ * This function builds the full Supabase Storage public URL.
+ */
+export function getVideoPublicUrl(filename: string): string {
+  const { data } = supabase.storage.from('learn-videos').getPublicUrl(filename)
+  return data.publicUrl
+}
+
+/**
+ * Sync the "Learn Videos" bucket with the video_scenarios table.
+ *
+ * Calls the sync-video-scenarios Edge Function which:
+ * 1. Lists all video files in the bucket
+ * 2. Inserts new rows for files not yet tracked
+ * 3. New rows have is_active=false until configured in the Table Editor
+ */
+export async function syncVideoScenarios() {
+  const { data, error } = await supabase.functions.invoke('sync-video-scenarios', {
+    method: 'POST',
+  })
+
+  return { data, error }
+}
+
+/**
+ * Save a practice question answer
+ *
+ * Called when the user clicks "Check" in the Questions (practice) tab.
+ * This feeds into dashboard metrics: Overall Accuracy, Accuracy by Topic,
+ * Accuracy Change, Total Questions Answered, and activity tracking.
+ */
+export async function savePracticeAnswer(
+  questionId: string,
+  selectedOption: OptionLetter,
+  isCorrect: boolean
+) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  const { data, error } = await supabase
+    .from('question_practice_answers')
+    .insert({
+      user_id: user.id,
+      question_id: questionId,
+      selected_option: selectedOption,
+      is_correct: isCorrect,
+    })
+    .select()
+    .single()
+
+  return { data, error }
+}
+
+/**
+ * Save a video attempt (action + sanction decisions)
+ */
+export async function saveVideoAttempt(
+  scenarioId: string,
+  selectedAction: string,
+  selectedSanction: string,
+  actionCorrect: boolean,
+  sanctionCorrect: boolean
+) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  const { data, error } = await supabase
+    .from('video_attempts')
+    .insert({
+      user_id: user.id,
+      scenario_id: scenarioId,
+      selected_action: selectedAction,
+      selected_sanction: selectedSanction,
+      action_correct: actionCorrect,
+      sanction_correct: sanctionCorrect,
+      is_correct: actionCorrect && sanctionCorrect,
+    })
+    .select()
+    .single()
+
+  return { data, error }
 }

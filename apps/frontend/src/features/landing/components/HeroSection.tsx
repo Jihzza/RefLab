@@ -14,7 +14,7 @@
  * └─────────────────────────────────────────┘
  */
 
-import BannerLogo from "@/assets/logos/Banner RefLab No BG.svg";
+import BannerLogo from "@/assets/logos/Banner-RefLab-No-BG.svg";
 
 export default function HeroSection() {
   return (
