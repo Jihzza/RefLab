@@ -1,11 +1,39 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/useAuth';
+import {
+  LayoutDashboard,
+  ClipboardList,
+  BookOpen,
+  Bell,
+  Trophy,
+  CreditCard,
+  Users,
+  MessageSquare,
+  Search,
+  UserCircle,
+  Settings,
+  LogOut,
+} from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const NAV_ITEMS = [
+  { label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
+  { label: 'Tests', path: '/app/tests', icon: ClipboardList },
+  { label: 'Learn', path: '/app/learn', icon: BookOpen },
+  { label: 'Social', path: '/app/social', icon: Users },
+  { label: 'Messages', path: '/app/messages', icon: MessageSquare },
+  { label: 'Search', path: '/app/search', icon: Search },
+  { label: 'Notifications', path: '/app/notifications', icon: Bell },
+  { label: 'Leaderboards', path: '/app/leaderboards', icon: Trophy },
+  { label: 'Profile', path: '/app/profile', icon: UserCircle },
+  { label: 'Billing', path: '/app/billing', icon: CreditCard },
+  { label: 'Settings', path: '/app/settings', icon: Settings },
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user, signOut } = useAuth();
@@ -16,9 +44,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     try {
       await signOut();
     } catch (error) {
-      console.error("Error al cerrar sesión:", error);
+      console.error("Error signing out:", error);
     } finally {
-      // Siempre cerrar el sidebar y redirigir, incluso si falla la red
       onClose();
       navigate('/');
     }
@@ -50,21 +77,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Navigation Links (Top) */}
         <div className="p-4 grow overflow-y-auto">
           <nav className="space-y-1">
-            <button onClick={() => handleNavigation('/app/dashboard')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
-              <span>Dashboard</span>
-            </button>
-            <button onClick={() => handleNavigation('/app/tests')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
-              <span>Tests</span>
-            </button>
-            <button onClick={() => handleNavigation('/app/learn')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
-              <span>Learn</span>
-            </button>
-            <button onClick={() => handleNavigation('/app/notifications')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
-              <span>Notifications</span>
-            </button>
-            <button onClick={() => handleNavigation('/app/billing')} className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium">
-              <span>Billing</span>
-            </button>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium"
+                >
+                  <Icon className="w-4.5 h-4.5 shrink-0" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </div>
 
@@ -74,9 +99,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 {user.user_metadata?.avatar_url ? (
-                  <img 
-                    src={user.user_metadata.avatar_url} 
-                    alt="Profile" 
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="Profile"
                     className="w-10 h-10 rounded-full object-cover border border-(--border-subtle)"
                   />
                 ) : (
@@ -93,26 +118,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
               </div>
-              
+
               <button
                 onClick={handleLogout}
                 type="button"
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 text-(--error) hover:bg-(--error)/10 rounded-(--radius-button) transition-colors border border-(--error)/20 hover:border-(--error)/40 text-sm font-medium"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Cerrar Sesión
+                <LogOut className="w-4 h-4" />
+                Log Out
               </button>
             </div>
           ) : (
              <div className="flex flex-col gap-3">
-                <p className="text-sm text-(--text-muted) px-1">Invitado</p>
-                <button 
-                  onClick={() => handleNavigation('/login')} 
+                <p className="text-sm text-(--text-muted) px-1">Guest</p>
+                <button
+                  onClick={() => handleNavigation('/')}
                   className="w-full px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors text-sm font-bold"
                 >
-                  Iniciar Sesión
+                  Log In
                 </button>
              </div>
           )}

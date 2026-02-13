@@ -231,7 +231,7 @@ export default function ProfilePage() {
                 className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
                 onClick={() => {
                   setIsMenuOpen(false)
-                  navigate('/app/profile/settings')
+                  navigate('/app/settings')
                 }}
               >
                 Settings
