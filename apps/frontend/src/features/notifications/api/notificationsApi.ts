@@ -1,41 +1,42 @@
 import { supabase } from '@/lib/supabaseClient'
-
-export interface Notification {
-  id: string
-  user_id: string
-  type: string
-  title: string
-  message: string
-  read: boolean
-  dismissed_permanently: boolean
-  next_reminder_at: string | null
-  created_at: string
-  updated_at: string
-}
+import type { EnrichedNotification } from '../types'
 
 /**
- * Fetch all notifications for the current user
+ * Select clause that joins actor profile data from the profiles table.
+ * Returns actor as null when actor_id is null (system notifications).
+ */
+const NOTIFICATION_SELECT = `
+  *,
+  actor:profiles!notifications_actor_id_fkey (
+    id,
+    username,
+    name,
+    photo_url
+  )
+`
+
+/**
+ * Fetch all notifications for the current user (with actor profile data).
  */
 export async function getNotifications(userId: string) {
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
+    .select(NOTIFICATION_SELECT)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
-  return { notifications: data as Notification[] | null, error }
+  return { notifications: data as EnrichedNotification[] | null, error }
 }
 
 /**
- * Fetch active notifications (not permanently dismissed)
+ * Fetch active notifications (not permanently dismissed, with actor data).
  *
- * Note: For MVP, we fetch all non-dismissed notifications.
- * The "remind later" feature will filter client-side or be refined later.
+ * Returns newest first. System notifications (no actor) will have actor = null.
  */
 export async function getActiveNotifications(userId: string) {
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
+    .select(NOTIFICATION_SELECT)
     .eq('user_id', userId)
     .eq('dismissed_permanently', false)
     .order('created_at', { ascending: false })
@@ -44,14 +45,13 @@ export async function getActiveNotifications(userId: string) {
     console.error('Failed to fetch notifications:', error)
   }
 
-  return { notifications: data as Notification[] | null, error }
+  return { notifications: data as EnrichedNotification[] | null, error }
 }
 
 /**
- * Get count of unread notifications
+ * Get count of unread notifications.
  */
 export async function getUnreadCount(userId: string) {
-  // Simplified query: count all non-dismissed, unread notifications
   const { count, error } = await supabase
     .from('notifications')
     .select('*', { count: 'exact', head: true })
@@ -63,7 +63,7 @@ export async function getUnreadCount(userId: string) {
 }
 
 /**
- * Mark a notification as read
+ * Mark a notification as read.
  */
 export async function markAsRead(notificationId: string) {
   const { error } = await supabase
@@ -75,7 +75,7 @@ export async function markAsRead(notificationId: string) {
 }
 
 /**
- * Mark all notifications as read
+ * Mark all notifications as read for a user.
  */
 export async function markAllAsRead(userId: string) {
   const { error } = await supabase
@@ -87,12 +87,12 @@ export async function markAllAsRead(userId: string) {
 }
 
 /**
- * Dismiss notification with "remind me later" (shows again tomorrow)
+ * Dismiss notification with "remind me later" (shows again tomorrow at 9am).
  */
 export async function remindLater(notificationId: string) {
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)
-  tomorrow.setHours(9, 0, 0, 0) // Show at 9am next day
+  tomorrow.setHours(9, 0, 0, 0)
 
   const { error } = await supabase
     .from('notifications')
@@ -106,7 +106,7 @@ export async function remindLater(notificationId: string) {
 }
 
 /**
- * Dismiss notification permanently ("don't remind again")
+ * Dismiss notification permanently ("don't remind again").
  */
 export async function dismissPermanently(notificationId: string) {
   const { error } = await supabase
@@ -121,7 +121,7 @@ export async function dismissPermanently(notificationId: string) {
 }
 
 /**
- * Delete the profile completion notification (after profile is complete)
+ * Delete the profile completion notification (after profile is complete).
  */
 export async function deleteProfileReminder(userId: string) {
   const { error } = await supabase

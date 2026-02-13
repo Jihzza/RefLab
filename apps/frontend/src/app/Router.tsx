@@ -16,6 +16,7 @@ import PublicProfilePage from "@/features/social/components/PublicProfilePage";
 import BillingDashboard from "@/features/billing/components/BillingDashboard";
 import PricingPage from "@/features/billing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
+import PostDetailPage from "@/features/social/components/PostDetailPage";
 import MessagesPage from "@/features/messages/components/MessagesPage";
 import ConversationPage from "@/features/messages/components/ConversationPage";
 import SearchPage from "@/features/search/components/SearchPage";
@@ -62,6 +63,8 @@ export default function Router() {
           <Route path="billing/pricing" element={<PricingPage />} />
           {/* /app/social shows the social feed */}
           <Route path="social" element={<SocialPage />} />
+          {/* /app/post/:postId shows a single post (from notifications, share links) */}
+          <Route path="post/:postId" element={<PostDetailPage />} />
           {/* /app/messages shows direct messages */}
           <Route path="messages" element={<MessagesPage />} />
           {/* /app/messages/:conversationId shows a conversation */}

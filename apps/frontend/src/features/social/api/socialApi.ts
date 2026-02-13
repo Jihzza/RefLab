@@ -93,6 +93,20 @@ export async function getPublicProfileFeed(
   return { posts: (data ?? []) as Post[], error: null }
 }
 
+/** Fetch a single post by ID (for post detail page, notifications, share links). */
+export async function getPostById(
+  userId: string,
+  postId: string
+): Promise<{ post: Post | null; error: Error | null }> {
+  const { data, error } = await supabase.rpc('get_post_by_id', {
+    p_user_id: userId,
+    p_post_id: postId,
+  })
+
+  if (error) return { post: null, error: new Error(error.message) }
+  return { post: (data ?? null) as Post | null, error: null }
+}
+
 // ============================================
 // Post CRUD
 // ============================================
