@@ -34,6 +34,7 @@ serve(async (req) => {
       })
     }
 
+    // Verify user identity
     const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -48,6 +49,7 @@ serve(async (req) => {
       })
     }
 
+    // Look up the Stripe customer ID
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -59,36 +61,45 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .maybeSingle()
 
+    // No Stripe customer means no invoices
     if (!customer?.stripe_customer_id) {
-      return new Response(JSON.stringify({ error: 'No billing account found' }), {
-        status: 404,
+      return new Response(JSON.stringify({ invoices: [], has_more: false }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const origin = req.headers.get('origin') ?? Deno.env.get('SITE_URL') ?? ''
-    if (!origin) {
-      return new Response(JSON.stringify({ error: 'Missing SITE_URL configuration' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const body = await req.json().catch(() => null)
+    const limit = Math.min(body?.limit ?? 10, 50)
 
+    // Fetch invoices from Stripe (use fetch client to avoid Deno Node compat issues)
     const stripe = new Stripe(stripeKey, {
       apiVersion: '2024-04-10',
       httpClient: Stripe.createFetchHttpClient(),
     })
-    const session = await stripe.billingPortal.sessions.create({
+    const invoiceList = await stripe.invoices.list({
       customer: customer.stripe_customer_id,
-      return_url: `${origin}/app/pricing`,
+      limit,
     })
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    // Map to simplified objects
+    const invoices = invoiceList.data.map((inv) => ({
+      id: inv.id,
+      number: inv.number,
+      amount_paid: inv.amount_paid,
+      currency: inv.currency,
+      status: inv.status,
+      created: inv.created,
+      hosted_invoice_url: inv.hosted_invoice_url,
+      invoice_pdf: inv.invoice_pdf,
+    }))
+
+    return new Response(JSON.stringify({ invoices, has_more: invoiceList.has_more }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('create-portal-session error:', error)
+    console.error('list-invoices error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

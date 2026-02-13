@@ -41,6 +41,7 @@ serve(async (req) => {
       })
     }
 
+    // Verify user identity
     const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -56,91 +57,93 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => null)
-    const plan = body?.plan as Plan | undefined
-    if (!plan || !['pro', 'plus'].includes(plan)) {
+    const subscriptionId = body?.subscription_id as string | undefined
+    const newPlan = body?.new_plan as Plan | undefined
+
+    if (!subscriptionId) {
+      return new Response(JSON.stringify({ error: 'Missing subscription_id' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!newPlan || !['pro', 'plus'].includes(newPlan)) {
       return new Response(JSON.stringify({ error: 'Invalid plan. Must be "pro" or "plus".' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const stripePriceId = PLAN_PRICE_MAP[plan]
-    if (!stripePriceId) {
-      return new Response(JSON.stringify({ error: `Missing price config for plan: ${plan}` }), {
+    const newPriceId = PLAN_PRICE_MAP[newPlan]
+    if (!newPriceId) {
+      return new Response(JSON.stringify({ error: `Missing price config for plan: ${newPlan}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: '2024-04-10',
-      httpClient: Stripe.createFetchHttpClient(),
-    })
-
+    // Verify ownership
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: existingCustomer } = await supabaseAdmin
-      .from('stripe_customers')
-      .select('stripe_customer_id')
-      .eq('user_id', user.id)
+    const { data: sub, error: subError } = await supabaseAdmin
+      .from('stripe_subscriptions')
+      .select('user_id, plan')
+      .eq('stripe_subscription_id', subscriptionId)
       .maybeSingle()
 
-    let stripeCustomerId = existingCustomer?.stripe_customer_id ?? ''
-
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: { supabase_user_id: user.id },
+    if (subError || !sub) {
+      return new Response(JSON.stringify({ error: 'Subscription not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
-      stripeCustomerId = customer.id
-
-      await supabaseAdmin
-        .from('stripe_customers')
-        .upsert({ user_id: user.id, stripe_customer_id: stripeCustomerId }, { onConflict: 'user_id' })
     }
 
-    const origin = req.headers.get('origin') ?? Deno.env.get('SITE_URL') ?? ''
-    if (!origin) {
-      return new Response(JSON.stringify({ error: 'Missing SITE_URL configuration' }), {
+    if (sub.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Subscription does not belong to this user' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (sub.plan === newPlan) {
+      return new Response(JSON.stringify({ error: 'Already on this plan' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Retrieve subscription from Stripe to get the item ID
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: '2024-04-10',
+      httpClient: Stripe.createFetchHttpClient(),
+    })
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const itemId = subscription.items.data[0]?.id
+
+    if (!itemId) {
+      return new Response(JSON.stringify({ error: 'Could not find subscription item' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      customer: stripeCustomerId,
-      line_items: [{ price: stripePriceId, quantity: 1 }],
-      success_url: `${origin}/app/pricing?checkout=success`,
-      cancel_url: `${origin}/app/pricing`,
-      metadata: {
-        supabase_user_id: user.id,
-        plan,
-      },
-      subscription_data: {
-        metadata: {
-          supabase_user_id: user.id,
-          plan,
-        },
-      },
+    // Update subscription with no proration: new price applies at next billing cycle
+    await stripe.subscriptions.update(subscriptionId, {
+      items: [{ id: itemId, price: newPriceId }],
+      proration_behavior: 'none',
     })
 
-    if (!session.url) {
-      return new Response(JSON.stringify({ error: 'Stripe did not return checkout url' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    // The webhook (customer.subscription.updated) will update the DB automatically
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('create-checkout-session error:', error)
+    console.error('change-subscription-plan error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

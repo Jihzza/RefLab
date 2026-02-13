@@ -62,7 +62,10 @@ serve(async (req) => {
       )
     }
 
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2024-04-10' })
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2024-04-10',
+      httpClient: Stripe.createFetchHttpClient(),
+    })
     const rawBody = await req.text()
     const signature = req.headers.get('stripe-signature')
 

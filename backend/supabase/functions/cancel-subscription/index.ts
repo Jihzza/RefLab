@@ -34,6 +34,7 @@ serve(async (req) => {
       })
     }
 
+    // Verify user identity
     const supabaseUser = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -48,47 +49,62 @@ serve(async (req) => {
       })
     }
 
+    const body = await req.json().catch(() => null)
+    const subscriptionId = body?.subscription_id as string | undefined
+    if (!subscriptionId) {
+      return new Response(JSON.stringify({ error: 'Missing subscription_id' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Verify ownership: subscription must belong to this user
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: customer } = await supabaseAdmin
-      .from('stripe_customers')
-      .select('stripe_customer_id')
-      .eq('user_id', user.id)
+    const { data: sub, error: subError } = await supabaseAdmin
+      .from('stripe_subscriptions')
+      .select('user_id')
+      .eq('stripe_subscription_id', subscriptionId)
       .maybeSingle()
 
-    if (!customer?.stripe_customer_id) {
-      return new Response(JSON.stringify({ error: 'No billing account found' }), {
+    if (subError || !sub) {
+      return new Response(JSON.stringify({ error: 'Subscription not found' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const origin = req.headers.get('origin') ?? Deno.env.get('SITE_URL') ?? ''
-    if (!origin) {
-      return new Response(JSON.stringify({ error: 'Missing SITE_URL configuration' }), {
-        status: 500,
+    if (sub.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Subscription does not belong to this user' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
+    // Cancel at period end via Stripe
     const stripe = new Stripe(stripeKey, {
       apiVersion: '2024-04-10',
       httpClient: Stripe.createFetchHttpClient(),
     })
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customer.stripe_customer_id,
-      return_url: `${origin}/app/pricing`,
+    await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
     })
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    // Update DB directly so the frontend sees the change immediately
+    await supabaseAdmin
+      .from('stripe_subscriptions')
+      .update({ cancel_at_period_end: true })
+      .eq('stripe_subscription_id', subscriptionId)
+
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {
-    console.error('create-portal-session error:', error)
+    console.error('cancel-subscription error:', error)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
