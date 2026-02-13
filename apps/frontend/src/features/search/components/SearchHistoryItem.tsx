@@ -1,4 +1,3 @@
-import React from 'react'
 import type { SearchedUser } from '../types'
 import { useNavigate } from 'react-router-dom'
 

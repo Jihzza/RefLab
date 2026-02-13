@@ -44,7 +44,7 @@ export function useSettings() {
   const [saving, setSaving] = useState(false)
 
   // Debounce timer ref for notification toggles
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   // Pending notification updates to batch-save
   const pendingUpdatesRef = useRef<Map<InAppNotificationType, boolean>>(new Map())
 

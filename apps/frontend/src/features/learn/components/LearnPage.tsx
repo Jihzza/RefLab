@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FileText, Video, GraduationCap, Loader2 } from 'lucide-react'
+import { FileText, GraduationCap, Loader2 } from 'lucide-react'
 import {
   getTests,
   getQuestions,

@@ -1,6 +1,5 @@
 import { CalendarDays, Flame, Trophy, Activity } from 'lucide-react'
 import type { HabitStats } from '../types'
-import StatCard from './StatCard'
 import TrainingCalendar from './TrainingCalendar'
 
 interface HabitsSectionProps {
