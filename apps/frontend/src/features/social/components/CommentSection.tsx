@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useComments } from '../hooks/useComments'
 import CommentBox from './CommentBox'
+import MentionDropdown from './MentionDropdown'
 
 interface CommentSectionProps {
   postId: string
@@ -27,6 +28,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const [newComment, setNewComment] = useState('')
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Mention state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Fetch comments on mount
   useEffect(() => {
@@ -55,13 +60,79 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     setReplyingTo(parentCommentId)
   }
 
+  // Detect @mention: scan backwards from cursor to find an @ preceded by space or start
+  const detectMention = (value: string, cursorPos: number) => {
+    const textBeforeCursor = value.slice(0, cursorPos)
+    const atIndex = textBeforeCursor.lastIndexOf('@')
+
+    if (atIndex === -1) {
+      setMentionQuery(null)
+      return
+    }
+
+    // @ must be at position 0 or preceded by a space/newline
+    if (atIndex > 0 && textBeforeCursor[atIndex - 1] !== ' ') {
+      setMentionQuery(null)
+      return
+    }
+
+    const queryText = textBeforeCursor.slice(atIndex + 1)
+
+    // If the query contains a space, the mention is complete
+    if (queryText.includes(' ')) {
+      setMentionQuery(null)
+      return
+    }
+
+    setMentionQuery(queryText)
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setNewComment(value)
+    detectMention(value, e.target.selectionStart ?? value.length)
+  }
+
+  // Insert selected username, replacing the @query text
+  const handleMentionSelect = useCallback(
+    (username: string) => {
+      const input = inputRef.current
+      if (!input) return
+
+      const cursorPos = input.selectionStart ?? newComment.length
+      const textBeforeCursor = newComment.slice(0, cursorPos)
+      const atIndex = textBeforeCursor.lastIndexOf('@')
+
+      if (atIndex === -1) return
+
+      const before = newComment.slice(0, atIndex)
+      const after = newComment.slice(cursorPos)
+      const updated = `${before}@${username} ${after}`
+
+      setNewComment(updated)
+      setMentionQuery(null)
+
+      // Restore focus and cursor position after the inserted mention
+      requestAnimationFrame(() => {
+        input.focus()
+        const pos = atIndex + username.length + 2 // @username + space
+        input.setSelectionRange(pos, pos)
+      })
+    },
+    [newComment],
+  )
+
+  const handleMentionClose = useCallback(() => {
+    setMentionQuery(null)
+  }, [])
+
   if (!user) return null
 
   return (
     <div className="border-t border-(--border-subtle) mt-3 pt-3">
       {/* Comment input */}
       <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
-        <div className="flex-1">
+        <div className="flex-1 relative">
           {replyingTo && (
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px] text-(--text-muted)">
@@ -77,12 +148,20 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             </div>
           )}
           <input
+            ref={inputRef}
             type="text"
             value={newComment}
-            onChange={e => setNewComment(e.target.value)}
+            onChange={handleInputChange}
             placeholder={replyingTo ? 'Write a reply...' : 'Add a comment...'}
             className="w-full px-3 py-2 text-sm bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
           />
+          {mentionQuery !== null && (
+            <MentionDropdown
+              query={mentionQuery}
+              onSelect={handleMentionSelect}
+              onClose={handleMentionClose}
+            />
+          )}
         </div>
         <button
           type="submit"

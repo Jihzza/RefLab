@@ -18,6 +18,7 @@ interface PostBoxProps {
   onReport: (type: 'post' | 'user', targetId: string, reason: string) => void
   onBlock: (userId: string) => void
   onCommentCountChange: (postId: string, delta: number) => void
+  defaultShowComments?: boolean
 }
 
 /** Single post card composing header, body, footer, and expandable comments. */
@@ -31,9 +32,10 @@ const PostBox: React.FC<PostBoxProps> = ({
   onReport,
   onBlock,
   onCommentCountChange,
+  defaultShowComments = false,
 }) => {
   const { user } = useAuth()
-  const [showComments, setShowComments] = useState(false)
+  const [showComments, setShowComments] = useState(defaultShowComments)
   const [reportDialog, setReportDialog] = useState<{ type: 'post' | 'user'; targetId: string } | null>(null)
   const [blockDialog, setBlockDialog] = useState<{ userId: string; username: string } | null>(null)
   const isOwnPost = user?.id === post.author.id

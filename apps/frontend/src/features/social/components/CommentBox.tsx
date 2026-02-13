@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Comment } from '../types'
 
 interface CommentBoxProps {
@@ -26,6 +27,47 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(days / 30)}mo`
 }
 
+/** Parses comment text and renders @username mentions as highlighted clickable spans. */
+function renderContentWithMentions(
+  content: string,
+  navigate: ReturnType<typeof useNavigate>,
+): React.ReactNode[] {
+  const mentionRegex = /@([a-z0-9_.]{3,30})/gi
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = mentionRegex.exec(content)) !== null) {
+    // Text before the mention
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index))
+    }
+
+    const username = match[1]
+    parts.push(
+      <span
+        key={match.index}
+        className="text-(--brand-yellow) font-medium cursor-pointer hover:underline"
+        role="link"
+        onClick={(e) => {
+          e.stopPropagation()
+          navigate(`/app/profile/${username}`)
+        }}
+      >
+        @{username}
+      </span>,
+    )
+    lastIndex = mentionRegex.lastIndex
+  }
+
+  // Remaining text after last mention
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex))
+  }
+
+  return parts
+}
+
 /** Single comment with avatar, content, like button, and optional reply button. */
 const CommentBox: React.FC<CommentBoxProps> = ({
   comment,
@@ -36,6 +78,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
   onDelete,
   onReport,
 }) => {
+  const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const displayName = comment.author.name || comment.author.username
   const initials = displayName.slice(0, 2).toUpperCase()
@@ -70,7 +113,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
         </div>
 
         <p className="text-sm text-(--text-primary) mt-0.5 break-words">
-          {comment.content}
+          {renderContentWithMentions(comment.content, navigate)}
         </p>
 
         {/* Actions row */}

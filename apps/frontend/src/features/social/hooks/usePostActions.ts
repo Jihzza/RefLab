@@ -140,7 +140,7 @@ export function usePostActions({
   )
 
   const handleShare = useCallback(async (post: Post) => {
-    const url = `${window.location.origin}/app/social?post=${post.id}`
+    const url = `${window.location.origin}/app/post/${post.id}`
 
     if (navigator.share) {
       try {

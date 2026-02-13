@@ -1,118 +1,76 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/features/auth/components/useAuth'
-import {
-  getActiveNotifications,
-  markAsRead,
-  remindLater,
-  dismissPermanently,
-  type Notification,
-} from '../api/notificationsApi'
+import { Bell } from 'lucide-react'
+import { useNotifications } from '../hooks/useNotifications'
+import NotificationBanner, {
+  NotificationBannerSkeleton,
+} from './NotificationBanner'
 
 /**
- * NotificationsPage - Displays user notifications with action buttons.
+ * NotificationsPage - Displays all user notifications with read/unread styling.
  *
- * Features:
- * - Lists all active notifications (not permanently dismissed, due to show)
- * - Mark as read: Marks notification as seen but keeps it visible
- * - Remind me later: Hides notification, shows again tomorrow
- * - Don't remind again: Permanently dismisses notification
+ * Behavior:
+ * - On page entry, all unread notifications are marked as read in the DB
+ * - Newly-read notifications keep their "unread" visual styling for the session
+ * - On next visit, all notifications appear as read
  *
  * Route: /app/notifications
  */
 export default function NotificationsPage() {
-  const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-
-  // Fetch notifications on mount
-  useEffect(() => {
-    if (!user?.id) return
-
-    setTimeout(() => {
-      setLoading(false)
-    }, 1000)
-    getActiveNotifications(user.id).then(({ notifications: data }) => {
-      setNotifications(data ?? [])
-      setLoading(false)
-    })
-  }, [user?.id])
-
-  // Mark a single notification as read (keeps it in the list)
-  const handleMarkAsRead = async (id: string) => {
-    await markAsRead(id)
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    )
-  }
-
-  // Snooze notification - hides it and shows again tomorrow at 9am
-  const handleRemindLater = async (id: string) => {
-    await remindLater(id)
-    // Remove from current list (will reappear tomorrow)
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-  }
-
-  // Permanently dismiss - user won't see this notification again
-  const handleDismiss = async (id: string) => {
-    await dismissPermanently(id)
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
-  }
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="p-4">
-        <h1 className="text-xl font-bold text-(--text-primary) mb-4">Notifications</h1>
-        <p className="text-(--text-muted)">Loading...</p>
-      </div>
-    )
-  }
+  const { notifications, loading, error, isVisuallyUnread } =
+    useNotifications()
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold mb-4">Notifications</h1>
+    <div className="flex flex-col h-full">
+      {/* Page header */}
+      <div className="px-4 pt-4 pb-2">
+        <h1 className="text-xl font-bold text-(--text-primary)">
+          Notifications
+        </h1>
+      </div>
+
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="divide-y divide-(--border-subtle)">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <NotificationBannerSkeleton key={i} />
+          ))}
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !loading && (
+        <div className="px-4 py-8 text-center">
+          <p className="text-(--text-muted) text-sm">{error}</p>
+        </div>
+      )}
 
       {/* Empty state */}
-      {notifications.length === 0 ? (
-        <p className="text-(--text-muted)">No notifications</p>
-      ) : (
-        // Notification list
-        <div className="space-y-3">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`p-4 border rounded-lg ${
-                notification.read ? 'bg-(--bg-surface)' : 'bg-(--bg-surface-2)'
-              }`}
-            >
-              {/* Notification content */}
-              <h3 className="font-medium text-(--text-primary)">{notification.title}</h3>
-              <p className="text-(--text-secondary) text-sm mt-1">{notification.message}</p>
+      {!loading && !error && notifications.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
+          <div className="w-16 h-16 rounded-full bg-(--bg-surface-2) flex items-center justify-center mb-4 border border-(--border-subtle)">
+            <Bell className="w-8 h-8 text-(--text-muted)" aria-hidden="true" />
+          </div>
+          <p className="text-(--text-muted) text-sm text-center">
+            No notifications yet
+          </p>
+          <p className="text-(--text-muted) text-xs text-center mt-1">
+            When someone interacts with your content, you'll see it here.
+          </p>
+        </div>
+      )}
 
-              {/* Action buttons */}
-              <div className="flex gap-2 mt-3">
-                {!notification.read && (
-                  <button
-                    onClick={() => handleMarkAsRead(notification.id)}
-                    className="text-sm text-(--info) hover:underline"
-                  >
-                    Mark as read
-                  </button>
-                )}
-                <button
-                  onClick={() => handleRemindLater(notification.id)}
-                  className="text-sm text-(--text-muted) hover:underline"
-                >
-                  Remind me later
-                </button>
-                <button
-                  onClick={() => handleDismiss(notification.id)}
-                  className="text-sm text-(--error) hover:underline"
-                >
-                  Don't remind again
-                </button>
-              </div>
-            </div>
+      {/* Notification list */}
+      {!loading && !error && notifications.length > 0 && (
+        <div
+          className="divide-y divide-(--border-subtle) pb-4"
+          role="list"
+          aria-label="Notifications list"
+        >
+          {notifications.map((notification) => (
+            <NotificationBanner
+              key={notification.id}
+              notification={notification}
+              isUnread={isVisuallyUnread(notification.id)}
+            />
           ))}
         </div>
       )}
