@@ -32,10 +32,10 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
   return (
     <div
       className={`
-        flex flex-col h-full p-6 rounded-(--radius-card) shadow-(--shadow-soft) bg-(--bg-surface)
+        flex flex-col min-h-[360px] p-6 rounded-(--radius-card) shadow-(--shadow-soft) bg-(--bg-surface)
         ${
           isHighlighted
-            ? "border-2 border-(--info) ring-2 ring-(--info)/20"
+            ? "border-2 border-(--brand-yellow) ring-2 ring-(--brand-yellow)/20"
             : "border border-(--border-subtle)"
         }
       `}
@@ -44,7 +44,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
       <h3
         className={`
           text-xl font-semibold text-center mb-2
-          ${isHighlighted ? "text-blue-600" : "text-gray-700"}
+          ${isHighlighted ? "text-(--brand-yellow)" : "text-(--text-primary)"}
         `}
       >
         {name}
@@ -92,11 +92,11 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
       <button
         onClick={() => onSelect(id)}
         className={`
-          w-full py-2 px-4 rounded-md font-medium transition-colors
-          focus:outline-none focus:ring-2 focus:ring-(--info) focus:ring-offset-2
+          w-full py-2 px-4 rounded-(--radius-button) font-medium transition-colors
+          focus:outline-none focus:ring-2 focus:ring-(--brand-yellow) focus:ring-offset-2
           ${
             isHighlighted
-              ? "bg-(--info) text-(--text-primary) hover:bg-(--info)/80"
+              ? "bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)"
               : "border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover)"
           }
         `}

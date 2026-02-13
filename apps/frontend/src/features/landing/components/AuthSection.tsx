@@ -49,8 +49,8 @@ export default function AuthSection() {
             onClick={() => setCurrentView("login")}
             className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
               currentView === "login"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-(--brand-yellow) text-(--brand-yellow)"
+                : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
             }`}
           >
             Log in
@@ -62,8 +62,8 @@ export default function AuthSection() {
             onClick={() => setCurrentView("signup")}
             className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
               currentView === "signup"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-(--brand-yellow) text-(--brand-yellow)"
+                : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
             }`}
           >
             Sign up

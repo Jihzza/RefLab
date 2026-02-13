@@ -29,12 +29,12 @@ export default function HeroSection() {
       </div>
 
       {/* Main title */}
-      <h1 className="text-2xl md:text-3xl font-bold text-gray-700 mb-4">
+      <h1 className="text-2xl md:text-3xl font-bold text-(--text-primary) mb-4">
         Your Referee Training Laboratory
       </h1>
 
       {/* Value proposition description */}
-      <p className="text-gray-500 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+      <p className="text-(--text-secondary) text-base md:text-lg max-w-xl mx-auto leading-relaxed">
         A dedicated hub for football referees to study, rehearse, and stay
         aligned with the Laws of the Game. Master your craft with authoritative
         knowledge, deliberate practice, and AI-powered guidance.

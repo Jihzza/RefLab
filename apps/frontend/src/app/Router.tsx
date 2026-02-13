@@ -19,6 +19,7 @@ import PostDetailPage from "@/features/social/components/PostDetailPage";
 import MessagesPage from "@/features/messages/components/MessagesPage";
 import ConversationPage from "@/features/messages/components/ConversationPage";
 import SearchPage from "@/features/search/components/SearchPage";
+import PoliciesPage from "@/features/policies/components/PoliciesPage";
 import RequireAuth from "./RequireAuth";
 import RequireGuest from "./RequireGuest";
 import AppShell from "./AppShell";
@@ -32,6 +33,11 @@ export default function Router() {
         <Route path="/reset-password" element={<ResetPassword />} />
         {/* OAuth/email callback - handles PKCE code exchange */}
         <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+
+        {/* Public policy pages - no auth required */}
+        <Route path="/privacy" element={<PoliciesPage defaultTab="privacy" />} />
+        <Route path="/terms" element={<PoliciesPage defaultTab="terms" />} />
+        <Route path="/cookies" element={<PoliciesPage defaultTab="cookies" />} />
 
         {/* Protected routes - wrapped in auth check and app layout */}
         <Route
