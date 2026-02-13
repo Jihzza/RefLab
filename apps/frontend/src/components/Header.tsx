@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/useAuth';
 import NotificationBell from '@/features/notifications/components/NotificationBell';
-import logo from '@/assets/logos/RefLab Logo No BG.svg';
+import logo from '@/assets/logos/RefLab-Logo-No-BG.svg';
 
 /**
  * Hamburger Menu Icon

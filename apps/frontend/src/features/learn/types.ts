@@ -8,6 +8,7 @@ export interface Test {
   id: string
   slug: string
   title: string
+  topic: string | null
   is_active: boolean
   updated_at: string
 }
@@ -54,6 +55,20 @@ export interface TestAttemptAnswer {
 
 // Helper type for option letters
 export type OptionLetter = 'A' | 'B' | 'C' | 'D'
+
+// A video scenario for match simulation
+export interface VideoScenario {
+  id: string
+  title: string
+  description: string | null
+  video_url: string
+  topic: string | null
+  correct_action: string
+  correct_sanction: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
 
 // Tab options for the Learn page navigation
 export type LearnTab = 'tests' | 'questions' | 'videos' | 'course' | 'resources'

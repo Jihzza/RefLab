@@ -80,7 +80,7 @@ export default function TestsTab() {
             onClick={() => navigate(`/app/learn/test/${test.slug}`)}
             className="w-full text-left bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6 hover:border-(--info) hover:shadow-sm transition-all"
           >
-            <h3 className="text-lg font-semibold text-gray-900">{test.title}</h3>
+            <h3 className="text-lg font-semibold text-(--text-primary)">{test.title}</h3>
             <p className="mt-1 text-sm text-(--text-muted)">
               Click to start test
             </p>

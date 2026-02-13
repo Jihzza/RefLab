@@ -56,8 +56,16 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
         {/* Actions */}
         <div className="space-y-3">
           <button
-            onClick={() => navigate('/app/learn')}
+            onClick={() => navigate('/app/dashboard')}
             className="w-full py-3 px-4 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+            aria-label="View dashboard"
+          >
+            View Dashboard
+          </button>
+          <button
+            onClick={() => navigate('/app/learn')}
+            className="w-full py-3 px-4 bg-(--bg-surface-2) text-(--text-secondary) rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors border border-(--border-subtle)"
+            aria-label="Back to learn"
           >
             Back to Learn
           </button>
