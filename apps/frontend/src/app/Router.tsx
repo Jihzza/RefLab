@@ -8,7 +8,6 @@ import TestsList from "@/features/tests/components/TestsList";
 import LearnPage from "@/features/learn/components/LearnPage";
 import TestPage from "@/features/learn/components/TestPage";
 import NotificationsPage from "@/features/notifications/components/NotificationsPage";
-import LeaderboardPage from "@/features/leaderboard/components/LeaderboardPage";
 import ProfilePage from "@/features/profile/components/ProfilePage";
 import EditProfilePage from "../features/profile/components/EditProfilePage";
 import SettingsPage from "@/features/settings/components/SettingsPage";
@@ -60,8 +59,6 @@ export default function Router() {
           <Route path="learn/test/:slug" element={<TestPage />} />
           {/* /app/notifications shows user notifications */}
           <Route path="notifications" element={<NotificationsPage />} />
-          {/* /app/leaderboards shows rankings */}
-          <Route path="leaderboards" element={<LeaderboardPage />} />
           {/* /app/pricing shows unified pricing & billing page */}
           <Route path="pricing" element={<PricingPage />} />
           {/* Redirects from old billing routes */}
