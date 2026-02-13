@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import LandingPage from "@/features/landing/components/LandingPage";
 import ResetPassword from "@/features/auth/components/ResetPassword";
@@ -13,8 +13,7 @@ import ProfilePage from "@/features/profile/components/ProfilePage";
 import EditProfilePage from "../features/profile/components/EditProfilePage";
 import SettingsPage from "@/features/settings/components/SettingsPage";
 import PublicProfilePage from "@/features/social/components/PublicProfilePage";
-import BillingDashboard from "@/features/billing/components/BillingDashboard";
-import PricingPage from "@/features/billing/components/PricingPage";
+import PricingPage from "@/features/pricing/components/PricingPage";
 import SocialPage from "@/features/social/components/SocialPage";
 import PostDetailPage from "@/features/social/components/PostDetailPage";
 import MessagesPage from "@/features/messages/components/MessagesPage";
@@ -57,10 +56,11 @@ export default function Router() {
           <Route path="notifications" element={<NotificationsPage />} />
           {/* /app/leaderboards shows rankings */}
           <Route path="leaderboards" element={<LeaderboardPage />} />
-          {/* /app/billing shows billing dashboard */}
-          <Route path="billing" element={<BillingDashboard />} />
-          {/* /app/billing/pricing shows plan selection */}
-          <Route path="billing/pricing" element={<PricingPage />} />
+          {/* /app/pricing shows unified pricing & billing page */}
+          <Route path="pricing" element={<PricingPage />} />
+          {/* Redirects from old billing routes */}
+          <Route path="billing" element={<Navigate to="/app/pricing" replace />} />
+          <Route path="billing/pricing" element={<Navigate to="/app/pricing" replace />} />
           {/* /app/social shows the social feed */}
           <Route path="social" element={<SocialPage />} />
           {/* /app/post/:postId shows a single post (from notifications, share links) */}

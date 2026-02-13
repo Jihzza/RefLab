@@ -50,7 +50,7 @@ function getNotificationRoute(notification: EnrichedNotification): string | null
   }
 
   if (type === 'welcome_to_plan' || type === 'plan_expired' || type === 'plan_expiration_reminder') {
-    return '/app/billing'
+    return '/app/pricing'
   }
 
   if (type === 'new_content_available') {
