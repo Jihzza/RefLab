@@ -1,0 +1,40 @@
+/**
+ * FooterSection — Landing page footer with legal policy links.
+ *
+ * Renders links to Privacy Policy, Terms of Service, and Cookies Policy
+ * pages using React Router for SPA navigation.
+ */
+
+import { Link } from 'react-router-dom';
+
+const FOOTER_LINKS = [
+  { label: 'Privacy Policy', to: '/privacy' },
+  { label: 'Terms of Service', to: '/terms' },
+  { label: 'Cookies Policy', to: '/cookies' },
+];
+
+export default function FooterSection() {
+  return (
+    <footer className="border-t border-(--border-subtle) mt-8 py-6 px-6">
+      <div className="max-w-xl mx-auto text-center">
+        {/* Policy links */}
+        <nav aria-label="Legal" className="flex flex-wrap justify-center gap-4 mb-4">
+          {FOOTER_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="text-sm text-(--text-muted) hover:text-(--text-secondary) transition-colors"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Copyright */}
+        <p className="text-xs text-(--text-muted)">
+          &copy; {new Date().getFullYear()} RefLab. All rights reserved.
+        </p>
+      </div>
+    </footer>
+  );
+}

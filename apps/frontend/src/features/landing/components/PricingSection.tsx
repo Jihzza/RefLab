@@ -119,7 +119,7 @@ export default function PricingSection() {
       <style>{swiperStyles}</style>
 
       {/* Section title */}
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-700 text-center mb-8 px-6">
+      <h2 className="text-2xl md:text-3xl font-bold text-(--text-primary) text-center mb-8 px-6">
         Choose Your Plan
       </h2>
 

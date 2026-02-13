@@ -12,6 +12,7 @@
 import HeroSection from "./HeroSection";
 import AuthSection from "./AuthSection";
 import PricingSection from "./PricingSection";
+import FooterSection from "./FooterSection";
 
 export default function LandingPage() {
   return (
@@ -24,6 +25,9 @@ export default function LandingPage() {
 
       {/* Pricing: Carousel with subscription plans */}
       <PricingSection />
+
+      {/* Footer: Legal policy links */}
+      <FooterSection />
     </main>
   );
 }
