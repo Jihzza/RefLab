@@ -68,7 +68,7 @@ const PRICING_PLANS: PricingPlan[] = [
   {
     id: "pro",
     name: "Pro",
-    pricePerMonth: 9,
+    pricePerMonth: 4.99,
     benefits: [
       "Everything in Free",
       "Full video scenario library",
@@ -83,7 +83,7 @@ const PRICING_PLANS: PricingPlan[] = [
   {
     id: "plus",
     name: "Plus",
-    pricePerMonth: 29,
+    pricePerMonth: 9.99,
     benefits: [
       "Everything in Pro",
       "Advanced analytics insights",
@@ -110,7 +110,7 @@ export default function PricingSection() {
    */
   const handlePlanSelect = (planId: string) => {
     void planId;
-    navigate('/app/billing/pricing');
+    navigate('/app/pricing');
   };
 
   return (

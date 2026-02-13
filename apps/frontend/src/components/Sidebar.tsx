@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { label: 'Notifications', path: '/app/notifications', icon: Bell },
   { label: 'Leaderboards', path: '/app/leaderboards', icon: Trophy },
   { label: 'Profile', path: '/app/profile', icon: UserCircle },
-  { label: 'Billing', path: '/app/billing', icon: CreditCard },
+  { label: 'Pricing', path: '/app/pricing', icon: CreditCard },
   { label: 'Settings', path: '/app/settings', icon: Settings },
 ];
 
