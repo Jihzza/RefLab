@@ -1,43 +1,81 @@
-import SearchInput from './SearchInput'
-import UserListItem from './UserListItem'
-import SearchHistoryItem from './SearchHistoryItem'
-import { useSearch } from '@/features/search/hooks/useSearch'
+import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import UserSearchBar from '@/features/messages/components/UserSearchBar'
+import { useUserSearch } from '@/features/messages/hooks/useUserSearch'
+import type { UserSearchResult } from '@/features/messages/types'
+import { useSearchHistory } from '../hooks/useSearchHistory'
+import type { SearchHistoryEntry } from '../types'
+import SearchResultsList from './SearchResultsList'
+import SearchHistory from './SearchHistory'
 
+/**
+ * Search page — lets users search for other users in real time
+ * and keeps a history of recently visited profiles.
+ */
 export default function SearchPage() {
-  const { searchTerm, setSearchTerm, results, isLoading, historyUsers, clearHistoryUsers, selectHistoryUser, addHistoryUser } = useSearch()
+  const navigate = useNavigate()
+
+  // Live search (debounced, with stale-request handling)
+  const { query, results, isSearching, handleSearch, clearSearch } =
+    useUserSearch()
+
+  // Search history (localStorage-backed, max 10 entries)
+  const { history, addEntry, removeEntry, clearAll } = useSearchHistory()
+
+  /** Save user to history and navigate to their profile. */
+  const handleSelectResult = useCallback(
+    (user: UserSearchResult) => {
+      const entry: SearchHistoryEntry = {
+        id: user.id,
+        username: user.username,
+        name: user.name,
+        photo_url: user.photo_url,
+      }
+      addEntry(entry)
+      navigate(`/app/profile/${encodeURIComponent(user.username)}`)
+    },
+    [addEntry, navigate],
+  )
+
+  /** Bump history entry to top and navigate to their profile. */
+  const handleSelectHistory = useCallback(
+    (entry: SearchHistoryEntry) => {
+      addEntry(entry)
+      navigate(`/app/profile/${encodeURIComponent(entry.username)}`)
+    },
+    [addEntry, navigate],
+  )
+
+  const hasQuery = !!query.trim()
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-xl font-bold mb-4">Search users</h2>
+    <div className="flex flex-col h-full">
+      {/* Search bar */}
+      <div className="p-4 pb-2">
+        <UserSearchBar
+          query={query}
+          onChange={handleSearch}
+          onClear={clearSearch}
+          placeholder="Search users..."
+        />
+      </div>
 
-      <SearchInput value={searchTerm} onChange={setSearchTerm} placeholder="Search by name or username" />
-
-      {historyUsers.length > 0 && (
-        <div className="mt-3 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-(--text-muted)">Recent searches</div>
-            <div>
-              <button onClick={clearHistoryUsers} className="text-xs text-(--text-muted) hover:underline">Clear</button>
-            </div>
-          </div>
-
-          <div className="mt-2 flex flex-col gap-2">
-            {historyUsers.map((u) => (
-              <SearchHistoryItem key={u.username} user={u} onClick={() => selectHistoryUser(u)} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-4 bg-(--bg-primary) border border-(--border-subtle) rounded-(--radius-input)">
-        {isLoading ? (
-          <div className="p-4 text-(--text-muted)">Searching…</div>
-        ) : searchTerm.trim() === '' ? (
-          null
-        ) : results.length === 0 ? (
-          <div className="p-4 text-(--text-muted)">No results</div>
+      {/* Content: live results when typing, history when idle */}
+      <div className="flex-1 overflow-y-auto pb-20">
+        {hasQuery ? (
+          <SearchResultsList
+            results={results}
+            isSearching={isSearching}
+            query={query}
+            onSelect={handleSelectResult}
+          />
         ) : (
-          results.map((u) => <UserListItem key={u.id} user={u} onSelect={addHistoryUser} />)
+          <SearchHistory
+            history={history}
+            onSelect={handleSelectHistory}
+            onRemove={removeEntry}
+            onClearAll={clearAll}
+          />
         )}
       </div>
     </div>

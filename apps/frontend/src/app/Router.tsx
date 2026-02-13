@@ -66,7 +66,7 @@ export default function Router() {
           <Route path="messages" element={<MessagesPage />} />
           {/* /app/messages/:conversationId shows a conversation */}
           <Route path="messages/:conversationId" element={<ConversationPage />} />
-          {/* /app/search shows user search */}
+          {/* /app/search shows user search with history */}
           <Route path="search" element={<SearchPage />} />
           {/* /app/profile shows user profile */}
           <Route path="profile" element={<ProfilePage />} />

@@ -115,13 +115,14 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
 
   // --- Search Logic ---
   const handleSearchClick = () => {
-    // navigate directly to the dedicated search page (protected route)
     navigate('/app/search');
+    setIsNotificationsOpen(false);
   };
 
   // --- Notifications Logic ---
   const handleNotificationsClick = () => {
     setIsNotificationsOpen((prev) => !prev);
+    setIsSearchOpen(false);
   };
 
   return (
@@ -148,8 +149,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
           <BellIcon onClick={handleNotificationsClick} />
         </div>
       </header>
-
-
 
       {/* Notifications Dropdown */}
       {isNotificationsOpen && (
