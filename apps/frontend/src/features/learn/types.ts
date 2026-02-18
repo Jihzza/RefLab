@@ -24,6 +24,7 @@ export interface TestQuestion {
   option_c: string
   option_d: string
   correct_option: 'A' | 'B' | 'C' | 'D'
+  topic: string | null  // Topic category (Offside, Fouls, Handball, etc.)
   updated_at: string
 }
 
@@ -31,13 +32,16 @@ export interface TestQuestion {
 export interface TestAttempt {
   id: string
   user_id: string
-  test_id: string
+  test_id: string | null  // null for random tests
   status: 'in_progress' | 'submitted'
   started_at: string
   submitted_at: string | null
   score_correct: number | null
   score_total: number | null
   score_percent: number | null
+  time_limit_seconds: number  // Time limit in seconds (default 2400 = 40 min)
+  time_elapsed_seconds: number | null  // Actual time taken
+  auto_submitted: boolean  // True if auto-submitted when timer expired
   updated_at: string
 }
 
@@ -72,3 +76,44 @@ export interface VideoScenario {
 
 // Tab options for the Learn page navigation
 export type LearnTab = 'tests' | 'questions' | 'videos' | 'course' | 'resources'
+
+// Topic performance breakdown (for strong/weak analysis)
+export interface TopicPerformance {
+  topic: string
+  accuracy: number
+  correct: number
+  total: number
+}
+
+// Test KPIs for landing page
+export interface TestKPIs {
+  testsThisWeek: number
+  averageScore: number | null  // percentage
+  bestScore: number | null  // percentage
+  averageTime: number | null  // seconds
+}
+
+// Comprehensive test results (for results page)
+export interface TestResults {
+  attempt: TestAttempt
+  score: {
+    correct: number
+    total: number
+    percentage: number
+  }
+  timing: {
+    elapsed: number  // seconds
+    limit: number  // seconds
+    autoSubmitted: boolean
+  }
+  breakdown: {
+    strong: TopicPerformance[]
+    weak: TopicPerformance[]
+  }
+  corrections: Array<{
+    question: TestQuestion
+    selectedOption: string
+    correctOption: string
+    isCorrect: boolean
+  }>
+}

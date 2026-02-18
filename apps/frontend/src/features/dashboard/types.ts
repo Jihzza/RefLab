@@ -30,6 +30,8 @@ export interface ProgressStats {
   total_questions_answered: number
   total_tests_completed: number
   total_tests_passed: number
+  average_test_duration: number | null  // Average test duration in seconds
+  last_test_duration: number | null  // Last test duration in seconds
 }
 
 /** Habit metrics section */

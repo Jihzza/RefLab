@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, TestKPIs } from '../types'
 
 /**
  * Fetch all active tests
@@ -359,4 +359,196 @@ export async function saveVideoAttempt(
     .single()
 
   return { data, error }
+}
+
+/**
+ * Generate a random test with 20 questions
+ * Creates a test attempt and returns questions
+ */
+export async function generateRandomTest() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  // Call RPC to get 20 random questions
+  const { data: questions, error: questionsError } = await supabase
+    .rpc('get_random_questions')
+
+  if (questionsError || !questions) {
+    return { data: null, error: questionsError }
+  }
+
+  // Create test attempt
+  const { data: attempt, error: attemptError } = await supabase
+    .from('test_attempts')
+    .insert({
+      user_id: user.id,
+      test_id: null, // Random tests don't belong to a specific test
+      status: 'in_progress',
+      time_limit_seconds: 2400, // 40 minutes
+    })
+    .select()
+    .single()
+
+  if (attemptError || !attempt) {
+    return { data: null, error: attemptError }
+  }
+
+  return {
+    data: {
+      questions: questions as TestQuestion[],
+      attemptId: attempt.id,
+    },
+    error: null,
+  }
+}
+
+/**
+ * Submit random test with timing data
+ */
+export async function submitRandomTest(
+  attemptId: string,
+  timeElapsedSeconds: number,
+  autoSubmitted: boolean
+) {
+  // Get all answers with their questions
+  const { data: answers, error: answersError } = await supabase
+    .from('test_attempt_answers')
+    .select(`
+      id,
+      question_id,
+      selected_option,
+      test_questions!inner (correct_option)
+    `)
+    .eq('attempt_id', attemptId)
+
+  if (answersError || !answers) {
+    return { data: null, error: answersError }
+  }
+
+  // Calculate score
+  let correct = 0
+  const total = answers.length
+
+  // Update each answer with is_correct
+  for (const answer of answers) {
+    const question = answer.test_questions as unknown as { correct_option: string }
+    const isCorrect = answer.selected_option === question.correct_option
+
+    if (isCorrect) correct++
+
+    await supabase
+      .from('test_attempt_answers')
+      .update({ is_correct: isCorrect })
+      .eq('id', answer.id)
+  }
+
+  const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
+
+  // Update attempt with score and timing
+  const { data: updatedAttempt, error: updateError } = await supabase
+    .from('test_attempts')
+    .update({
+      status: 'submitted',
+      submitted_at: new Date().toISOString(),
+      score_correct: correct,
+      score_total: total,
+      score_percent: scorePercent,
+      time_elapsed_seconds: timeElapsedSeconds,
+      auto_submitted: autoSubmitted,
+    })
+    .eq('id', attemptId)
+    .select()
+    .single()
+
+  return { data: updatedAttempt as TestAttempt | null, error: updateError }
+}
+
+/**
+ * Get topic performance breakdown for an attempt
+ * Returns strong (>=75%) and weak (<50%) topics
+ */
+export async function getAttemptTopicBreakdown(attemptId: string) {
+  const { data, error } = await supabase
+    .rpc('get_attempt_topic_breakdown', { p_attempt_id: attemptId })
+
+  if (error) {
+    return { data: null, error }
+  }
+
+  // Parse the JSON response
+  const breakdown = data as { strong: TopicPerformance[]; weak: TopicPerformance[] }
+  return { data: breakdown, error: null }
+}
+
+/**
+ * Get test KPIs for landing page
+ */
+export async function getTestKPIs() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  // Tests completed this week (from Monday)
+  const weekStart = new Date()
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay()) // Start of week (Sunday)
+  if (weekStart.getDay() === 0) {
+    // If it's Sunday, go back to Monday
+    weekStart.setDate(weekStart.getDate() - 6)
+  }
+  weekStart.setHours(0, 0, 0, 0)
+
+  const { count: testsThisWeek } = await supabase
+    .from('test_attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('status', 'submitted')
+    .gte('submitted_at', weekStart.toISOString())
+
+  // Last 5 tests average score
+  const { data: recentTests } = await supabase
+    .from('test_attempts')
+    .select('score_percent')
+    .eq('user_id', user.id)
+    .eq('status', 'submitted')
+    .order('submitted_at', { ascending: false })
+    .limit(5)
+
+  const averageScore = recentTests?.length
+    ? Math.round(recentTests.reduce((sum, t) => sum + (t.score_percent || 0), 0) / recentTests.length)
+    : null
+
+  // Best score all time
+  const { data: bestTest } = await supabase
+    .from('test_attempts')
+    .select('score_percent')
+    .eq('user_id', user.id)
+    .eq('status', 'submitted')
+    .order('score_percent', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // Average time (from tests with timing data)
+  const { data: timedTests } = await supabase
+    .from('test_attempts')
+    .select('time_elapsed_seconds')
+    .eq('user_id', user.id)
+    .eq('status', 'submitted')
+    .not('time_elapsed_seconds', 'is', null)
+
+  const averageTime = timedTests?.length
+    ? Math.round(timedTests.reduce((sum, t) => sum + t.time_elapsed_seconds!, 0) / timedTests.length)
+    : null
+
+  return {
+    data: {
+      testsThisWeek: testsThisWeek || 0,
+      averageScore,
+      bestScore: bestTest?.score_percent || null,
+      averageTime, // in seconds
+    },
+    error: null,
+  }
 }

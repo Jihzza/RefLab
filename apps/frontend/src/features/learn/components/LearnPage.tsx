@@ -15,6 +15,9 @@ import {
   getVideoPublicUrl,
 } from '../api/testsApi'
 import type { Test, TestQuestion, TestAttempt, OptionLetter, VideoScenario } from '../types'
+import RandomTestLanding from './test/RandomTestLanding'
+import RandomTestRunner from './test/RandomTestRunner'
+import RandomTestResults from './test/RandomTestResults'
 
 /* ─── Helpers ─── */
 
@@ -103,271 +106,65 @@ function WarningModal({
   )
 }
 
-/* ─── Test View (DB-backed, inline flow) ─── */
+/* ─── Test View (Random Test Mode) ─── */
 
-type TestViewState = 'list' | 'test' | 'review' | 'history' | 'history-review'
+type TestViewState = 'landing' | 'test' | 'results' | 'history'
 
 function TestView() {
-  // Tests list
-  const [tests, setTests] = useState<Test[]>([])
-  const [testsLoading, setTestsLoading] = useState(true)
-
-  // View state
-  const [view, setView] = useState<TestViewState>('list')
-  const [testLoading, setTestLoading] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-
-  // Active test state
-  const [activeTest, setActiveTest] = useState<Test | null>(null)
-  const [questions, setQuestions] = useState<TestQuestion[]>([])
-  const [attempt, setAttempt] = useState<TestAttempt | null>(null)
-  const [answers, setAnswers] = useState<Record<string, number>>({})
-  const [questionIndex, setQuestionIndex] = useState(0)
-  const [selectedOption, setSelectedOption] = useState<number | null>(null)
-
-  // Review state (after submit or from history)
-  const [reviewAttempt, setReviewAttempt] = useState<TestAttempt | null>(null)
-  const [reviewAnswers, setReviewAnswers] = useState<Record<string, { selected: number; isCorrect: boolean }>>({})
-
-  // History
-  const [completedAttempts, setCompletedAttempts] = useState<TestAttempt[]>([])
+  const [view, setView] = useState<TestViewState>('landing')
+  const [attemptId, setAttemptId] = useState<string>('')
+  const [history, setHistory] = useState<TestAttempt[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
-  // Modals
-  const [showLeaveWarning, setShowLeaveWarning] = useState(false)
-  const [showRedoWarning, setShowRedoWarning] = useState(false)
-
-  // Derived
-  const currentQuestion = questions[questionIndex]
-  const answeredCount = Object.keys(answers).length
-
-  // Fetch tests on mount
+  // Auto-start test if ?action=start-test in URL
   useEffect(() => {
-    let cancelled = false
-    async function fetch() {
-      const { data } = await getTests()
-      if (!cancelled) {
-        setTests(data || [])
-        setTestsLoading(false)
-      }
+    const searchParams = new URLSearchParams(window.location.search)
+    if (searchParams.get('action') === 'start-test') {
+      setView('test')
     }
-    fetch()
-    return () => { cancelled = true }
   }, [])
 
-  /* ── Actions ── */
-
-  const startTest = async (test: Test) => {
-    setActiveTest(test)
-    setTestLoading(true)
-    setView('test')
-    setQuestionIndex(0)
-    setSelectedOption(null)
-    setAnswers({})
-
-    const { data: qs } = await getQuestions(test.id)
-    if (!qs || qs.length === 0) {
-      setTestLoading(false)
-      return
-    }
-    setQuestions(qs)
-
-    const { data: att } = await getOrCreateAttempt(test.id)
-    if (!att) {
-      setTestLoading(false)
-      return
-    }
-    setAttempt(att)
-
-    // Load existing answers (for resume)
-    const { data: existingAnswers } = await getAttemptAnswers(att.id)
-    if (existingAnswers) {
-      const restored: Record<string, number> = {}
-      existingAnswers.forEach((a) => {
-        restored[a.question_id] = letterToIndex(a.selected_option)
-      })
-      setAnswers(restored)
-    }
-
-    setTestLoading(false)
-  }
-
-  const navigateTo = (idx: number) => {
-    setQuestionIndex(idx)
-    setSelectedOption(answers[questions[idx]?.id] ?? null)
-  }
-
-  const finishTest = async (finalAnswers?: Record<string, number>) => {
-    if (!attempt) return
-    setSubmitting(true)
-
-    const usedAnswers = finalAnswers || answers
-    const { data: submittedAttempt } = await submitAttempt(attempt.id)
-    if (!submittedAttempt) {
-      setSubmitting(false)
-      return
-    }
-
-    // Build review data from questions + answers
-    const review: Record<string, { selected: number; isCorrect: boolean }> = {}
-    for (const q of questions) {
-      const selectedIdx = usedAnswers[q.id]
-      if (selectedIdx !== undefined) {
-        review[q.id] = {
-          selected: selectedIdx,
-          isCorrect: indexToLetter(selectedIdx) === q.correct_option,
-        }
-      }
-    }
-
-    setReviewAttempt(submittedAttempt)
-    setReviewAnswers(review)
-    setSubmitting(false)
-    setView('review')
-  }
-
-  const handleNext = async () => {
-    if (!currentQuestion || !attempt) return
-
-    const isLocked = answers[currentQuestion.id] !== undefined
-    const isLast = questionIndex >= questions.length - 1
-
-    if (isLocked) {
-      if (isLast) {
-        await finishTest()
-      } else {
-        navigateTo(questionIndex + 1)
-      }
-      return
-    }
-
-    if (selectedOption === null) return
-
-    // Lock the answer optimistically
-    const updated = { ...answers, [currentQuestion.id]: selectedOption }
-    setAnswers(updated)
-
-    if (isLast) {
-      await saveAnswer(attempt.id, currentQuestion.id, indexToLetter(selectedOption))
-      await finishTest(updated)
-    } else {
-      setQuestionIndex(questionIndex + 1)
-      setSelectedOption(null)
-      // Save in background (non-blocking for responsiveness)
-      saveAnswer(attempt.id, currentQuestion.id, indexToLetter(selectedOption))
-    }
-  }
-
-  const goToList = () => {
-    setView('list')
-    setShowLeaveWarning(false)
-  }
-
-  const confirmRedo = () => {
-    setShowRedoWarning(false)
-    if (activeTest) startTest(activeTest)
-  }
-
-  const openHistory = async () => {
+  const handleViewHistory = async () => {
     setHistoryLoading(true)
     setView('history')
     const { data } = await getUserCompletedAttempts()
-    setCompletedAttempts(data || [])
+    setHistory(data || [])
     setHistoryLoading(false)
   }
 
-  const startHistoryReview = async (att: TestAttempt) => {
-    const test = tests.find((t) => t.id === att.test_id)
-    if (!test) return
-
-    setTestLoading(true)
-    setActiveTest(test)
-    setReviewAttempt(att)
-    setView('history-review')
-
-    const { data: qs } = await getQuestions(test.id)
-    if (!qs) {
-      setTestLoading(false)
-      return
-    }
-    setQuestions(qs)
-
-    const { data: attAnswers } = await getAttemptAnswers(att.id)
-    if (attAnswers) {
-      const review: Record<string, { selected: number; isCorrect: boolean }> = {}
-      attAnswers.forEach((a) => {
-        review[a.question_id] = {
-          selected: letterToIndex(a.selected_option),
-          isCorrect: a.is_correct ?? false,
-        }
-      })
-      setReviewAnswers(review)
-    }
-
-    setQuestionIndex(0)
-    setTestLoading(false)
-  }
-
-  /* ── Tests List ── */
-
-  if (view === 'list') {
-    if (testsLoading) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        </div>
-      )
-    }
-
-    if (tests.length === 0) {
-      return (
-        <div className="text-center py-16">
-          <p className="text-(--text-muted) text-sm">No tests available yet.</p>
-        </div>
-      )
-    }
-
+  if (view === 'landing') {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-(--text-primary)">Tests</h2>
-          <button
-            onClick={openHistory}
-            className="text-xs text-(--info) font-medium hover:underline"
-          >
-            Test History
-          </button>
-        </div>
-        <div className="space-y-2">
-          {tests.map((test) => (
-            <button
-              key={test.id}
-              onClick={() => startTest(test)}
-              disabled={testLoading}
-              className="w-full flex items-center justify-between p-4 bg-(--bg-surface) rounded-lg border border-(--border-subtle) text-left hover:bg-(--bg-surface-2) transition-colors disabled:opacity-50"
-            >
-              <div>
-                <h3 className="font-medium text-(--text-primary)">{test.title}</h3>
-                {test.topic && (
-                  <p className="text-xs text-(--text-muted) mt-0.5">{test.topic}</p>
-                )}
-              </div>
-              <span className="text-(--text-muted) text-sm">&rarr;</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <RandomTestLanding
+        onStartTest={() => setView('test')}
+        onViewHistory={handleViewHistory}
+      />
     )
   }
 
-  /* ── Test History List ── */
+  if (view === 'test') {
+    return (
+      <RandomTestRunner
+        onComplete={(id) => { setAttemptId(id); setView('results') }}
+      />
+    )
+  }
+
+  if (view === 'results' && attemptId) {
+    return (
+      <RandomTestResults
+        attemptId={attemptId}
+        onRestart={() => setView('test')}
+        onBackToTests={() => setView('landing')}
+      />
+    )
+  }
 
   if (view === 'history') {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={goToList}
+            onClick={() => setView('landing')}
             className="text-sm text-(--text-muted) hover:text-(--text-primary)"
           >
             &larr; Back
@@ -379,326 +176,41 @@ function TestView() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
           </div>
-        ) : completedAttempts.length === 0 ? (
+        ) : history.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-(--text-muted) text-sm">No completed tests yet.</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {completedAttempts.map((entry) => {
-              const test = tests.find((t) => t.id === entry.test_id)
+            {history.map((entry) => {
               const pct = entry.score_percent ?? 0
+              const isPassing = pct >= 80
+              const date = entry.submitted_at
+                ? new Date(entry.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+                : '—'
+              const duration = entry.time_elapsed_seconds !== null
+                ? `${Math.floor(entry.time_elapsed_seconds / 60)}:${String(entry.time_elapsed_seconds % 60).padStart(2, '0')}`
+                : null
+
               return (
-                <button
+                <div
                   key={entry.id}
-                  onClick={() => startHistoryReview(entry)}
-                  disabled={testLoading}
-                  className="w-full flex items-center justify-between p-4 bg-(--bg-surface) rounded-lg border border-(--border-subtle) text-left hover:bg-(--bg-surface-2) transition-colors disabled:opacity-50"
+                  className="flex items-center justify-between p-4 bg-(--bg-surface) rounded-xl border border-(--border-subtle)"
                 >
                   <div>
-                    <h3 className="font-medium text-(--text-primary)">
-                      {test?.title || 'Unknown Test'}
-                    </h3>
+                    <p className="text-sm text-(--text-primary) font-medium">{date}</p>
                     <p className="text-xs text-(--text-muted) mt-0.5">
-                      {entry.score_correct}/{entry.score_total} correct &middot; {pct}%
+                      {entry.score_correct}/{entry.score_total} correct
+                      {duration && ` · ${duration}`}
                     </p>
                   </div>
-                  <span className="text-(--text-muted) text-sm">&rarr;</span>
-                </button>
+                  <span className={`text-sm font-bold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}>
+                    {pct}%
+                  </span>
+                </div>
               )
             })}
           </div>
-        )}
-      </div>
-    )
-  }
-
-  /* ── Test Runner ── */
-
-  if (view === 'test') {
-    if (testLoading || !currentQuestion) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        </div>
-      )
-    }
-
-    const isLocked = answers[currentQuestion.id] !== undefined
-    const isLast = questionIndex >= questions.length - 1
-    const displayedSelection = isLocked ? answers[currentQuestion.id] : selectedOption
-    const options = getOptions(currentQuestion)
-
-    return (
-      <div className="flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => setShowLeaveWarning(true)}
-            className="text-sm text-(--text-muted) hover:text-(--text-primary)"
-          >
-            &larr; Leave
-          </button>
-          <span className="text-sm font-medium text-(--text-primary)">
-            {activeTest?.title}
-          </span>
-          <span className="text-xs text-(--text-muted)">
-            {questionIndex + 1} / {questions.length}
-          </span>
-        </div>
-
-        {/* Progress */}
-        <div className="w-full bg-(--bg-surface-2) h-1 rounded-full mb-6">
-          <div
-            className="bg-(--info) h-full rounded-full transition-all"
-            style={{ width: `${(answeredCount / questions.length) * 100}%` }}
-          />
-        </div>
-
-        {/* Question */}
-        <h3 className="text-base font-medium text-(--text-primary) mb-4">
-          {currentQuestion.question_text}
-        </h3>
-        <div className="space-y-2">
-          {options.map((opt, idx) => (
-            <button
-              key={idx}
-              onClick={() => !isLocked && setSelectedOption(idx)}
-              disabled={isLocked}
-              className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
-                displayedSelection === idx
-                  ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                  : isLocked
-                    ? 'border-(--border-subtle) text-(--text-muted)'
-                    : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-              } ${isLocked ? 'cursor-default' : ''}`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-(--border-subtle)">
-          <div className="flex gap-3">
-            <button
-              onClick={() => navigateTo(questionIndex - 1)}
-              disabled={questionIndex === 0}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary) disabled:opacity-40"
-            >
-              &larr; Back
-            </button>
-            <button
-              onClick={handleNext}
-              disabled={(!isLocked && selectedOption === null) || submitting}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium text-white disabled:opacity-40 transition-colors ${
-                isLast ? 'bg-(--success)' : 'bg-(--info)'
-              }`}
-            >
-              {submitting ? 'Submitting...' : isLast ? 'End Test' : 'Next \u2192'}
-            </button>
-          </div>
-        </div>
-
-        {showLeaveWarning && (
-          <WarningModal
-            title="Leave test?"
-            message="Your progress will be lost. Are you sure you want to leave?"
-            confirmLabel="Leave"
-            onConfirm={goToList}
-            onCancel={() => setShowLeaveWarning(false)}
-          />
-        )}
-      </div>
-    )
-  }
-
-  /* ── Review Page (after completing test) ── */
-
-  if (view === 'review' && reviewAttempt) {
-    const pct = reviewAttempt.score_percent ?? 0
-
-    return (
-      <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-(--text-primary) text-center">
-          {activeTest?.title}
-        </h2>
-
-        {/* Score */}
-        <div className="text-center py-4">
-          <div className="text-4xl font-bold text-(--text-primary)">
-            {reviewAttempt.score_correct}/{reviewAttempt.score_total}
-          </div>
-          <p className="text-sm text-(--text-muted) mt-1">{pct}% correct</p>
-        </div>
-
-        {/* Question summary */}
-        <div className="space-y-2">
-          {questions.map((q) => {
-            const answer = reviewAnswers[q.id]
-            if (!answer) return null
-            const options = getOptions(q)
-            const correctIdx = letterToIndex(q.correct_option)
-            return (
-              <div
-                key={q.id}
-                className={`p-3 rounded-lg border text-sm ${
-                  answer.isCorrect
-                    ? 'border-(--success)/30 bg-(--success)/5'
-                    : 'border-(--error)/30 bg-(--error)/5'
-                }`}
-              >
-                <div className="flex items-start gap-2">
-                  <span
-                    className={`shrink-0 text-xs font-bold mt-0.5 ${
-                      answer.isCorrect ? 'text-(--success)' : 'text-(--error)'
-                    }`}
-                  >
-                    {answer.isCorrect ? '\u2713' : '\u2717'}
-                  </span>
-                  <div>
-                    <p className="text-(--text-primary)">{q.question_text}</p>
-                    <p className="text-xs text-(--text-muted) mt-1">
-                      Your answer: {options[answer.selected]}
-                      {!answer.isCorrect && ` \u00B7 Correct: ${options[correctIdx]}`}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={goToList}
-            className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
-          >
-            Back to Tests
-          </button>
-          <button
-            onClick={() => setShowRedoWarning(true)}
-            className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-          >
-            Redo Test
-          </button>
-        </div>
-
-        {showRedoWarning && (
-          <WarningModal
-            title="Redo test?"
-            message="This will start the test from the beginning. Continue?"
-            confirmLabel="Redo"
-            onConfirm={confirmRedo}
-            onCancel={() => setShowRedoWarning(false)}
-          />
-        )}
-      </div>
-    )
-  }
-
-  /* ── History Review (read-only, question by question) ── */
-
-  if (view === 'history-review' && reviewAttempt) {
-    if (testLoading || !questions.length) {
-      return (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        </div>
-      )
-    }
-
-    const q = questions[questionIndex]
-    const answer = reviewAnswers[q?.id]
-    const options = q ? getOptions(q) : []
-    const correctIdx = q ? letterToIndex(q.correct_option) : -1
-    const isLast = questionIndex >= questions.length - 1
-
-    return (
-      <div className="flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => setShowLeaveWarning(true)}
-            className="text-sm text-(--text-muted) hover:text-(--text-primary)"
-          >
-            &larr; Leave
-          </button>
-          <span className="text-sm font-medium text-(--text-primary)">
-            {activeTest?.title} (Review)
-          </span>
-          <span className="text-xs text-(--text-muted)">
-            {questionIndex + 1} / {questions.length}
-          </span>
-        </div>
-
-        {/* Question */}
-        {q && (
-          <>
-            <h3 className="text-base font-medium text-(--text-primary) mb-4">
-              {q.question_text}
-            </h3>
-            <div className="space-y-2">
-              {options.map((opt, idx) => {
-                const isCorrectOpt = idx === correctIdx
-                const isUserOpt = idx === answer?.selected
-                let styles = 'w-full text-left px-4 py-3 rounded-lg border-2 text-sm '
-
-                if (isCorrectOpt) {
-                  styles += 'border-(--success) bg-(--success)/10 text-(--text-primary)'
-                } else if (isUserOpt) {
-                  styles += 'border-(--error) bg-(--error)/10 text-(--text-primary)'
-                } else {
-                  styles += 'border-(--border-subtle) text-(--text-muted)'
-                }
-
-                return (
-                  <div key={idx} className={styles}>
-                    {opt}
-                  </div>
-                )
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Footer */}
-        <div className="mt-8 pt-4 border-t border-(--border-subtle)">
-          <div className="flex gap-3">
-            <button
-              onClick={() => setQuestionIndex((i) => i - 1)}
-              disabled={questionIndex === 0}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary) disabled:opacity-40"
-            >
-              &larr; Back
-            </button>
-            {isLast ? (
-              <button
-                onClick={goToList}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-              >
-                End Review
-              </button>
-            ) : (
-              <button
-                onClick={() => setQuestionIndex((i) => i + 1)}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-              >
-                Next &rarr;
-              </button>
-            )}
-          </div>
-        </div>
-
-        {showLeaveWarning && (
-          <WarningModal
-            title="Leave review?"
-            message="Are you sure you want to leave the test review?"
-            confirmLabel="Leave"
-            onConfirm={goToList}
-            onCancel={() => setShowLeaveWarning(false)}
-          />
         )}
       </div>
     )

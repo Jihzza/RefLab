@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Clock, PlayCircle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { ProgressStats } from '../types'
 import StatCard from './StatCard'
 
@@ -11,11 +12,14 @@ interface ProgressSectionProps {
  * and total tests passed.
  */
 export default function ProgressSection({ progress }: ProgressSectionProps) {
+  const navigate = useNavigate()
   const {
     accuracy_change,
     total_questions_answered,
     total_tests_completed,
     total_tests_passed,
+    average_test_duration,
+    last_test_duration,
   } = progress
 
   return (
@@ -54,8 +58,44 @@ export default function ProgressSection({ progress }: ProgressSectionProps) {
           subtext="With score &ge; 80%"
         />
       </div>
+
+      {/* Test Timing Metrics — 2 column grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard
+          label="Avg Test Time"
+          value={average_test_duration !== null ? formatDuration(average_test_duration) : '—'}
+          valueColor="text-(--text-primary)"
+          subtext="Average duration"
+          emptyText="Complete a test to see stats"
+        />
+        <StatCard
+          label="Last Test Time"
+          value={last_test_duration !== null ? formatDuration(last_test_duration) : '—'}
+          valueColor="text-(--text-primary)"
+          subtext="Most recent"
+          emptyText="No recent tests"
+        />
+      </div>
+
+      {/* Quick Start Test Button */}
+      <button
+        onClick={() => navigate('/app/learn?action=start-test')}
+        className="w-full mt-2 py-3 bg-(--info) text-white rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+      >
+        <PlayCircle size={18} />
+        Start New Test
+      </button>
     </section>
   )
+}
+
+/**
+ * Format duration from seconds to MM:SS
+ */
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
 /**
