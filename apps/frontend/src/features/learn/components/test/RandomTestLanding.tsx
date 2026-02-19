@@ -96,20 +96,6 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
         <History size={18} />
         View Test History
       </button>
-
-      {/* Info Box */}
-      <div className="p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-        <h3 className="font-semibold text-(--text-primary) mb-2 text-sm">
-          What to Expect
-        </h3>
-        <ul className="text-sm text-(--text-secondary) space-y-1">
-          <li>• 20 randomly selected questions from all topics</li>
-          <li>• 40-minute time limit with countdown timer</li>
-          <li>• Answers lock after selection</li>
-          <li>• Detailed feedback on strong and weak areas</li>
-          <li>• Review correct answers after submission</li>
-        </ul>
-      </div>
     </div>
   )
 }

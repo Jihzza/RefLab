@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, TestKPIs } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, TestKPIs, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
 
 /**
  * Fetch all active tests
@@ -551,4 +551,229 @@ export async function getTestKPIs() {
     },
     error: null,
   }
+}
+
+// ─── Question Practice Sessions ───────────────────────────────────────────────
+
+/**
+ * Create a new question practice session
+ *
+ * Called when the user starts a session from QuestionsSetup or via Quick mode.
+ * The session row is created before the user answers any questions.
+ */
+export async function createQuestionSession(
+  mode: QuestionSessionMode,
+  filterLaws: number[] | null,
+  filterAreas: string[] | null
+) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  const { data, error } = await supabase
+    .from('question_sessions')
+    .insert({
+      user_id: user.id,
+      mode,
+      filter_laws: filterLaws,
+      filter_areas: filterAreas,
+    })
+    .select()
+    .single()
+
+  return { data: data as QuestionSession | null, error }
+}
+
+/**
+ * Mark a question session as complete
+ *
+ * Called when the user clicks "End Session". Writes the final score and duration.
+ */
+export async function completeQuestionSession(
+  sessionId: string,
+  startedAt: string,
+  totalAnswered: number,
+  totalCorrect: number
+) {
+  const endedAt = new Date().toISOString()
+  const durationSeconds = Math.round(
+    (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
+  )
+
+  const { data, error } = await supabase
+    .from('question_sessions')
+    .update({
+      ended_at: endedAt,
+      duration_seconds: durationSeconds,
+      total_answered: totalAnswered,
+      total_correct: totalCorrect,
+    })
+    .eq('id', sessionId)
+    .select()
+    .single()
+
+  return { data: data as QuestionSession | null, error }
+}
+
+/**
+ * Get KPIs for the Questions landing dashboard
+ *
+ * Returns: sessions this week, total questions answered, overall accuracy,
+ * and average session accuracy (across all completed sessions).
+ */
+export async function getQuestionSessionKPIs() {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  // Sessions completed this week (from Monday)
+  const weekStart = new Date()
+  const day = weekStart.getDay()
+  const daysToMonday = day === 0 ? 6 : day - 1
+  weekStart.setDate(weekStart.getDate() - daysToMonday)
+  weekStart.setHours(0, 0, 0, 0)
+
+  const { count: sessionsThisWeek } = await supabase
+    .from('question_sessions')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .not('ended_at', 'is', null)
+    .gte('started_at', weekStart.toISOString())
+
+  // Overall accuracy from all practice answers
+  const { data: allAnswers } = await supabase
+    .from('question_practice_answers')
+    .select('is_correct')
+    .eq('user_id', user.id)
+
+  const totalQuestionsAnswered = allAnswers?.length ?? 0
+  const totalCorrect = allAnswers?.filter(a => a.is_correct).length ?? 0
+  const overallAccuracy = totalQuestionsAnswered > 0
+    ? Math.round((totalCorrect / totalQuestionsAnswered) * 100)
+    : null
+
+  // Average session accuracy across completed sessions
+  const { data: completedSessions } = await supabase
+    .from('question_sessions')
+    .select('total_answered, total_correct')
+    .eq('user_id', user.id)
+    .not('ended_at', 'is', null)
+    .gt('total_answered', 0)
+
+  const avgSessionAccuracy = completedSessions?.length
+    ? Math.round(
+        completedSessions.reduce(
+          (sum, s) => sum + (s.total_correct / s.total_answered) * 100,
+          0
+        ) / completedSessions.length
+      )
+    : null
+
+  return {
+    data: {
+      sessionsThisWeek: sessionsThisWeek ?? 0,
+      totalQuestionsAnswered,
+      overallAccuracy,
+      avgSessionAccuracy,
+    } satisfies QuestionSessionKPIs,
+    error: null,
+  }
+}
+
+/**
+ * Fetch questions filtered by law numbers and/or area (topic) names
+ *
+ * With no filters (Quick mode) returns all questions.
+ * With laws filter, returns questions matching any of the provided law numbers.
+ * With areas filter, returns questions matching any of the provided topic strings.
+ */
+export async function getQuestionsByFilters(params: {
+  laws?: number[]
+  areas?: string[]
+}) {
+  let query = supabase.from('test_questions').select('*')
+
+  if (params.laws && params.laws.length > 0) {
+    query = query.in('law', params.laws)
+  }
+
+  if (params.areas && params.areas.length > 0) {
+    query = query.in('topic', params.areas)
+  }
+
+  const { data, error } = await query
+
+  return { data: data as TestQuestion[] | null, error }
+}
+
+/**
+ * Get the distinct FIFA law numbers present in test_questions
+ *
+ * Used to populate the By Law filter chip list in QuestionsSetup.
+ */
+export async function getDistinctLaws() {
+  const { data, error } = await supabase
+    .from('test_questions')
+    .select('law')
+    .not('law', 'is', null)
+
+  if (error || !data) {
+    return { data: null, error }
+  }
+
+  const unique = [...new Set(data.map(r => r.law as number))].sort((a, b) => a - b)
+  return { data: unique, error: null }
+}
+
+/**
+ * Get the distinct area (topic) strings present in test_questions
+ *
+ * Used to populate the By Area filter chip list in QuestionsSetup.
+ */
+export async function getDistinctAreas() {
+  const { data, error } = await supabase
+    .from('test_questions')
+    .select('topic')
+    .not('topic', 'is', null)
+
+  if (error || !data) {
+    return { data: null, error }
+  }
+
+  const unique = [...new Set(data.map(r => r.topic as string))].sort()
+  return { data: unique, error: null }
+}
+
+/**
+ * Save a practice answer linked to a session
+ *
+ * Like savePracticeAnswer but also writes the session_id FK.
+ * Used in QuestionsSession to track all answers within the session.
+ */
+export async function savePracticeAnswerWithSession(
+  questionId: string,
+  selectedOption: OptionLetter,
+  isCorrect: boolean,
+  sessionId: string
+) {
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { data: null, error: new Error('Not authenticated') }
+  }
+
+  const { data, error } = await supabase
+    .from('question_practice_answers')
+    .insert({
+      user_id: user.id,
+      question_id: questionId,
+      selected_option: selectedOption,
+      is_correct: isCorrect,
+      session_id: sessionId,
+    })
+    .select()
+    .single()
+
+  return { data, error }
 }
