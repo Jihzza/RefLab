@@ -13,11 +13,9 @@ export interface Test {
   updated_at: string
 }
 
-// A question within a test
+// A question from the question_bank table
 export interface TestQuestion {
   id: string
-  test_id: string
-  order_index: number
   question_text: string
   option_a: string
   option_b: string
@@ -26,6 +24,7 @@ export interface TestQuestion {
   correct_option: 'A' | 'B' | 'C' | 'D'
   topic: string | null  // Topic category (Offside, Fouls, Handball, etc.)
   law: number | null    // FIFA Law of the Game number (1-17)
+  created_at: string
   updated_at: string
 }
 

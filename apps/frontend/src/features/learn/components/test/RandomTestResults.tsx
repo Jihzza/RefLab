@@ -72,7 +72,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
         // Fetch all questions
         const { data: questionsData } = await supabase
-          .from('test_questions')
+          .from('question_bank')
           .select('*')
           .in('id', questionIds)
 

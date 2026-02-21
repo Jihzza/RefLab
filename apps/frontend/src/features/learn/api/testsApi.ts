@@ -35,16 +35,25 @@ export async function getTestBySlug(slug: string) {
 /**
  * Fetch all questions for a test
  *
- * Returns questions ordered by order_index (1, 2, 3, etc.)
+ * Queries the bridge table test_question_items to get the ordered
+ * question_bank entries for the given test.
  */
 export async function getQuestions(testId: string) {
   const { data, error } = await supabase
-    .from('test_questions')
-    .select('*')
+    .from('test_question_items')
+    .select('order_index, question_bank!inner(*)')
     .eq('test_id', testId)
     .order('order_index')
 
-  return { data: data as TestQuestion[] | null, error }
+  if (error || !data) {
+    return { data: null, error }
+  }
+
+  // Flatten: extract the nested question_bank object from each row
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const questions = data.map((row: any) => row.question_bank as TestQuestion)
+
+  return { data: questions, error: null }
 }
 
 /**
@@ -150,14 +159,14 @@ export async function saveAnswer(
  * 3. Mark each answer as correct/incorrect
  */
 export async function submitAttempt(attemptId: string) {
-  // Get all answers for this attempt with their questions
+  // Get all answers for this attempt with their questions from question_bank
   const { data: answers, error: answersError } = await supabase
     .from('test_attempt_answers')
     .select(`
       id,
       question_id,
       selected_option,
-      test_questions!inner (
+      question_bank!inner (
         correct_option
       )
     `)
@@ -173,7 +182,7 @@ export async function submitAttempt(attemptId: string) {
 
   // Update each answer with is_correct
   for (const answer of answers) {
-    const question = answer.test_questions as unknown as { correct_option: string }
+    const question = answer.question_bank as unknown as { correct_option: string }
     const isCorrect = answer.selected_option === question.correct_option
 
     if (isCorrect) correct++
@@ -246,11 +255,11 @@ export async function getUserCompletedAttempts() {
 }
 
 /**
- * Fetch all questions across all active tests (for practice mode)
+ * Fetch all questions from the question bank (for practice mode)
  */
 export async function getAllQuestions() {
   const { data, error } = await supabase
-    .from('test_questions')
+    .from('question_bank')
     .select('*')
 
   return { data: data as TestQuestion[] | null, error }
@@ -412,14 +421,14 @@ export async function submitRandomTest(
   timeElapsedSeconds: number,
   autoSubmitted: boolean
 ) {
-  // Get all answers with their questions
+  // Get all answers with their questions from question_bank
   const { data: answers, error: answersError } = await supabase
     .from('test_attempt_answers')
     .select(`
       id,
       question_id,
       selected_option,
-      test_questions!inner (correct_option)
+      question_bank!inner (correct_option)
     `)
     .eq('attempt_id', attemptId)
 
@@ -433,7 +442,7 @@ export async function submitRandomTest(
 
   // Update each answer with is_correct
   for (const answer of answers) {
-    const question = answer.test_questions as unknown as { correct_option: string }
+    const question = answer.question_bank as unknown as { correct_option: string }
     const isCorrect = answer.selected_option === question.correct_option
 
     if (isCorrect) correct++
@@ -685,7 +694,7 @@ export async function getQuestionSessionKPIs() {
 /**
  * Fetch questions filtered by law numbers and/or area (topic) names
  *
- * With no filters (Quick mode) returns all questions.
+ * With no filters (Quick mode) returns all questions from question_bank.
  * With laws filter, returns questions matching any of the provided law numbers.
  * With areas filter, returns questions matching any of the provided topic strings.
  */
@@ -693,7 +702,7 @@ export async function getQuestionsByFilters(params: {
   laws?: number[]
   areas?: string[]
 }) {
-  let query = supabase.from('test_questions').select('*')
+  let query = supabase.from('question_bank').select('*')
 
   if (params.laws && params.laws.length > 0) {
     query = query.in('law', params.laws)
@@ -709,13 +718,13 @@ export async function getQuestionsByFilters(params: {
 }
 
 /**
- * Get the distinct FIFA law numbers present in test_questions
+ * Get the distinct FIFA law numbers present in question_bank
  *
  * Used to populate the By Law filter chip list in QuestionsSetup.
  */
 export async function getDistinctLaws() {
   const { data, error } = await supabase
-    .from('test_questions')
+    .from('question_bank')
     .select('law')
     .not('law', 'is', null)
 
@@ -728,13 +737,13 @@ export async function getDistinctLaws() {
 }
 
 /**
- * Get the distinct area (topic) strings present in test_questions
+ * Get the distinct area (topic) strings present in question_bank
  *
  * Used to populate the By Area filter chip list in QuestionsSetup.
  */
 export async function getDistinctAreas() {
   const { data, error } = await supabase
-    .from('test_questions')
+    .from('question_bank')
     .select('topic')
     .not('topic', 'is', null)
 
