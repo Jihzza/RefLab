@@ -13,11 +13,9 @@ export interface Test {
   updated_at: string
 }
 
-// A question within a test
+// A question from the question_bank table
 export interface TestQuestion {
   id: string
-  test_id: string
-  order_index: number
   question_text: string
   option_a: string
   option_b: string
@@ -25,6 +23,8 @@ export interface TestQuestion {
   option_d: string
   correct_option: 'A' | 'B' | 'C' | 'D'
   topic: string | null  // Topic category (Offside, Fouls, Handball, etc.)
+  law: number | null    // FIFA Law of the Game number (1-17)
+  created_at: string
   updated_at: string
 }
 
@@ -91,6 +91,50 @@ export interface TestKPIs {
   averageScore: number | null  // percentage
   bestScore: number | null  // percentage
   averageTime: number | null  // seconds
+}
+
+// ── Question practice sessions ──
+
+export type QuestionSessionMode = 'quick' | 'by_law' | 'by_area'
+
+export interface QuestionSession {
+  id: string
+  user_id: string
+  mode: QuestionSessionMode
+  filter_laws: number[] | null
+  filter_areas: string[] | null
+  started_at: string
+  ended_at: string | null
+  duration_seconds: number | null
+  total_answered: number
+  total_correct: number
+  created_at: string
+}
+
+export interface QuestionSessionKPIs {
+  sessionsThisWeek: number
+  totalQuestionsAnswered: number
+  overallAccuracy: number | null   // percentage 0-100, null if no answers yet
+  avgSessionAccuracy: number | null // average accuracy across completed sessions
+}
+
+// A single answered question tracked within a session (held in React state)
+export interface AnsweredQuestion {
+  question: TestQuestion
+  selectedOption: OptionLetter
+  selectedIndex: number
+  isCorrect: boolean
+}
+
+// Passed from QuestionsSession → QuestionsReview on session end
+export interface SessionResult {
+  sessionId: string
+  startedAt: string
+  endedAt: string
+  durationSeconds: number
+  totalAnswered: number
+  totalCorrect: number
+  answers: AnsweredQuestion[]
 }
 
 // Comprehensive test results (for results page)

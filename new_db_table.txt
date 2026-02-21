@@ -1,0 +1,32 @@
+create table public.question_bank (
+  id uuid not null default gen_random_uuid(),
+  question_text text not null,
+  option_a text not null,
+  option_b text not null,
+  option_c text not null,
+  option_d text not null,
+  correct_option text not null,
+  topic text null,
+  law smallint null,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+  constraint question_bank_pkey primary key (id),
+  constraint question_bank_correct_option_check check (
+    correct_option = any (array['A','B','C','D'])
+  ),
+  constraint question_bank_law_check check (
+    (law is null) or ((law >= 1) and (law <= 17))
+  )
+);
+
+create index if not exists idx_question_bank_topic
+on public.question_bank using btree (topic)
+where topic is not null;
+
+create index if not exists idx_question_bank_law
+on public.question_bank using btree (law)
+where law is not null;
+
+create trigger trg_question_bank_updated_at
+before update on public.question_bank
+for each row execute function set_updated_at();

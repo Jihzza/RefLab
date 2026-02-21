@@ -118,14 +118,14 @@ export const BottomNav: React.FC = () => {
     <nav className="fixed bottom-0 left-0 w-full h-16 bg-(--bg-surface) border-t border-(--border-subtle) flex justify-between items-center z-50 pb-safe">
       <div className="w-full h-full grid grid-cols-5">
         <BottomNavItem
-          title="Learn"
-          icon={<LearnIcon />}
-          to="/app/learn"
-        />
-        <BottomNavItem
           title="Dashboard"
           icon={<DashboardIcon />}
           to="/app/dashboard"
+        />
+        <BottomNavItem
+          title="Learn"
+          icon={<LearnIcon />}
+          to="/app/learn"
         />
         <BottomNavItem
           title="Social"

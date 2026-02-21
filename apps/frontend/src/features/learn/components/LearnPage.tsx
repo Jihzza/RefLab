@@ -8,23 +8,30 @@ import {
   saveAnswer,
   submitAttempt,
   getUserCompletedAttempts,
-  getAllQuestions,
-  savePracticeAnswer,
   getVideoScenarios,
   saveVideoAttempt,
   getVideoPublicUrl,
+  createQuestionSession,
 } from '../api/testsApi'
-import type { Test, TestQuestion, TestAttempt, OptionLetter, VideoScenario } from '../types'
+import type { Test, TestAttempt, VideoScenario, QuestionSessionMode, SessionResult } from '../types'
 import RandomTestLanding from './test/RandomTestLanding'
 import RandomTestRunner from './test/RandomTestRunner'
 import RandomTestResults from './test/RandomTestResults'
+import QuestionsLanding from './questions/QuestionsLanding'
+import QuestionsSetup from './questions/QuestionsSetup'
+import QuestionsSession from './questions/QuestionsSession'
+import QuestionsReview from './questions/QuestionsReview'
 
 /* ─── Helpers ─── */
 
-const LETTERS: OptionLetter[] = ['A', 'B', 'C', 'D']
-const getOptions = (q: TestQuestion): string[] => [q.option_a, q.option_b, q.option_c, q.option_d]
-const indexToLetter = (idx: number): OptionLetter => LETTERS[idx]
-const letterToIndex = (letter: OptionLetter): number => LETTERS.indexOf(letter)
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
 
 /* ─── Navigation Tabs ─── */
 
@@ -219,155 +226,113 @@ function TestView() {
   return null
 }
 
-/* ─── Questions View (DB-backed, one at a time) ─── */
+/* ─── Questions View (session-based, with KPI dashboard and filtering) ─── */
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
+type QuestionsViewState = 'landing' | 'setup_by_law' | 'setup_by_area' | 'session' | 'review'
+
+interface ActiveSession {
+  sessionId: string
+  mode: QuestionSessionMode
+  filterLaws: number[] | null
+  filterAreas: string[] | null
+  startedAt: string
 }
 
 function QuestionsView() {
-  const [allQuestions, setAllQuestions] = useState<TestQuestion[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedOption, setSelectedOption] = useState<number | null>(null)
-  const [showAnswer, setShowAnswer] = useState(false)
+  const [view, setView] = useState<QuestionsViewState>('landing')
+  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null)
+  const [lastResult, setLastResult] = useState<SessionResult | null>(null)
+  const [creating, setCreating] = useState(false)
 
-  useEffect(() => {
-    let cancelled = false
-    async function fetch() {
-      const { data } = await getAllQuestions()
-      if (!cancelled && data) {
-        setAllQuestions(shuffle(data).slice(0, 10))
-      }
-      if (!cancelled) setLoading(false)
+  const startSession = async (
+    mode: QuestionSessionMode,
+    filterLaws: number[] | null,
+    filterAreas: string[] | null
+  ) => {
+    if (creating) return
+    setCreating(true)
+    const { data, error } = await createQuestionSession(mode, filterLaws, filterAreas)
+    setCreating(false)
+    if (error || !data) return
+    setActiveSession({
+      sessionId: data.id,
+      mode,
+      filterLaws,
+      filterAreas,
+      startedAt: data.started_at,
+    })
+    setView('session')
+  }
+
+  const handleStartQuick = () => startSession('quick', null, null)
+  const handleStartByLaw = () => setView('setup_by_law')
+  const handleStartByArea = () => setView('setup_by_area')
+
+  const handleSetupConfirm = (laws: number[], areas: string[]) => {
+    const mode: QuestionSessionMode = view === 'setup_by_law' ? 'by_law' : 'by_area'
+    startSession(mode, mode === 'by_law' ? laws : null, mode === 'by_area' ? areas : null)
+  }
+
+  const handleSessionEnd = (result: SessionResult) => {
+    setLastResult(result)
+    setView('review')
+  }
+
+  const handleRestart = () => {
+    if (!activeSession) { setView('landing'); return }
+    if (activeSession.mode === 'quick') {
+      handleStartQuick()
+    } else if (activeSession.mode === 'by_law') {
+      setView('setup_by_law')
+    } else {
+      setView('setup_by_area')
     }
-    fetch()
-    return () => { cancelled = true }
-  }, [])
+  }
 
-  if (loading) {
+  if (view === 'landing') {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-      </div>
+      <QuestionsLanding
+        onStartQuick={handleStartQuick}
+        onStartByLaw={handleStartByLaw}
+        onStartByArea={handleStartByArea}
+      />
     )
   }
 
-  if (allQuestions.length === 0) {
+  if (view === 'setup_by_law' || view === 'setup_by_area') {
     return (
-      <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">No practice questions available yet.</p>
-      </div>
+      <QuestionsSetup
+        mode={view === 'setup_by_law' ? 'by_law' : 'by_area'}
+        onStart={handleSetupConfirm}
+        onBack={() => setView('landing')}
+      />
     )
   }
 
-  const q = allQuestions[currentIndex]
-  const options = getOptions(q)
-  const correctIdx = letterToIndex(q.correct_option)
-
-  const handleCheck = () => {
-    if (selectedOption === null) return
-    setShowAnswer(true)
-
-    // Save to DB in background (feeds dashboard metrics)
-    const isCorrect = selectedOption === correctIdx
-    savePracticeAnswer(q.id, indexToLetter(selectedOption), isCorrect)
+  if (view === 'session' && activeSession) {
+    return (
+      <QuestionsSession
+        sessionId={activeSession.sessionId}
+        mode={activeSession.mode}
+        filterLaws={activeSession.filterLaws}
+        filterAreas={activeSession.filterAreas}
+        startedAt={activeSession.startedAt}
+        onEndSession={handleSessionEnd}
+      />
+    )
   }
 
-  const goTo = (idx: number) => {
-    setCurrentIndex(idx)
-    setSelectedOption(null)
-    setShowAnswer(false)
+  if (view === 'review' && lastResult) {
+    return (
+      <QuestionsReview
+        result={lastResult}
+        onStartNew={() => setView('landing')}
+        onRestart={handleRestart}
+      />
+    )
   }
 
-  const restart = () => {
-    setAllQuestions(shuffle(allQuestions))
-    goTo(0)
-  }
-
-  return (
-    <div className="flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-medium text-(--text-primary)">Practice Questions</h2>
-        <span className="text-xs text-(--text-muted)">
-          {currentIndex + 1} / {allQuestions.length}
-        </span>
-      </div>
-
-      {/* Question */}
-      <h3 className="text-base font-medium text-(--text-primary) mb-4">{q.question_text}</h3>
-      <div className="space-y-2">
-        {options.map((opt, idx) => {
-          let styles = 'w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors '
-          if (showAnswer) {
-            if (idx === correctIdx)
-              styles += 'border-(--success) bg-(--success)/10 text-(--text-primary)'
-            else if (idx === selectedOption)
-              styles += 'border-(--error) bg-(--error)/10 text-(--text-primary)'
-            else styles += 'border-(--border-subtle) text-(--text-muted)'
-          } else if (idx === selectedOption) {
-            styles += 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-          } else {
-            styles += 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-          }
-
-          return (
-            <button
-              key={idx}
-              onClick={() => !showAnswer && setSelectedOption(idx)}
-              disabled={showAnswer}
-              className={`${styles} ${showAnswer ? 'cursor-default' : ''}`}
-            >
-              {opt}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 pt-4 border-t border-(--border-subtle)">
-        <div className="flex gap-3">
-          <button
-            onClick={() => goTo(currentIndex - 1)}
-            disabled={currentIndex === 0}
-            className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary) disabled:opacity-40"
-          >
-            &larr; Back
-          </button>
-
-          {!showAnswer ? (
-            <button
-              onClick={handleCheck}
-              disabled={selectedOption === null}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
-            >
-              Check
-            </button>
-          ) : currentIndex < allQuestions.length - 1 ? (
-            <button
-              onClick={() => goTo(currentIndex + 1)}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-            >
-              Next &rarr;
-            </button>
-          ) : (
-            <button
-              onClick={restart}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--success) text-white transition-colors"
-            >
-              Start Over
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+  return null
 }
 
 /* ─── Videos View (DB-backed, two-step: action → sanction → result) ─── */
