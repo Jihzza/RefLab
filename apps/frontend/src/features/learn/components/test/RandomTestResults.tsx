@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Trophy, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, RotateCcw, Home } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
-import { getAttemptTopicBreakdown, getAttemptAnswers, getQuestions } from '../../api/testsApi'
+import { getAttemptTopicBreakdown, getAttemptAnswers } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
-import type { TestAttempt, TestQuestion, TestAttemptAnswer, TopicPerformance } from '../../types'
+import type { TestAttempt, TestQuestion, TopicPerformance } from '../../types'
 
 interface RandomTestResultsProps {
   attemptId: string

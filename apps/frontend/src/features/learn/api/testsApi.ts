@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, TestKPIs, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
 
 /**
  * Fetch all active tests
@@ -279,14 +279,15 @@ export async function getVideoScenarios() {
 }
 
 /**
- * Get the public URL for a video file stored in the "Learn Videos" bucket.
+ * Get the public URL for a video file stored in Cloudflare R2.
  *
- * The video_url column stores just the filename (e.g., "penalty-area-challenge.mp4").
- * This function builds the full Supabase Storage public URL.
+ * The video_url column stores the R2 key (e.g., "clips/A1.mp4").
+ * This function builds the full R2 public URL.
  */
+const R2_BASE_URL = 'https://pub-a1f801f17afb4e44b8c270828fefc392.r2.dev'
+
 export function getVideoPublicUrl(filename: string): string {
-  const { data } = supabase.storage.from('learn-videos').getPublicUrl(filename)
-  return data.publicUrl
+  return `${R2_BASE_URL}/${filename}`
 }
 
 /**
