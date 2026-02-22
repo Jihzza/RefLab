@@ -1,19 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { FileText, GraduationCap, Loader2 } from 'lucide-react'
+import { Loader2, Play, Pause, Volume2, VolumeX, Maximize, Minimize, RotateCcw, RotateCw } from 'lucide-react'
 import {
-  getTests,
-  getQuestions,
-  getOrCreateAttempt,
-  getAttemptAnswers,
-  saveAnswer,
-  submitAttempt,
   getUserCompletedAttempts,
   getVideoScenarios,
   saveVideoAttempt,
-  getVideoPublicUrl,
   createQuestionSession,
 } from '../api/testsApi'
-import type { Test, TestAttempt, VideoScenario, QuestionSessionMode, SessionResult } from '../types'
+import type { TestAttempt, VideoScenario, QuestionSessionMode, SessionResult } from '../types'
 import RandomTestLanding from './test/RandomTestLanding'
 import RandomTestRunner from './test/RandomTestRunner'
 import RandomTestResults from './test/RandomTestResults'
@@ -23,7 +16,6 @@ import QuestionsSession from './questions/QuestionsSession'
 import QuestionsReview from './questions/QuestionsReview'
 
 /* ─── Helpers ─── */
-
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -33,10 +25,10 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+const R2_BASE_URL = "https://pub-a1f801f17afb4e44b8c270828fefc392.r2.dev"
+
 /* ─── Navigation Tabs ─── */
-
 type TabKey = 'test' | 'questions' | 'videos' | 'courses' | 'resources'
-
 const tabLabels: { key: TabKey; label: string }[] = [
   { key: 'test', label: 'Test' },
   { key: 'questions', label: 'Questions' },
@@ -45,13 +37,7 @@ const tabLabels: { key: TabKey; label: string }[] = [
   { key: 'resources', label: 'Resources' },
 ]
 
-function LearnNav({
-  activeTab,
-  setActiveTab,
-}: {
-  activeTab: TabKey
-  setActiveTab: (tab: TabKey) => void
-}) {
+function LearnNav({ activeTab, setActiveTab }: { activeTab: TabKey; setActiveTab: (tab: TabKey) => void }) {
   return (
     <nav className="border-b border-(--border-subtle) mb-6 -mx-4 px-4">
       <div className="flex overflow-x-auto no-scrollbar py-3 gap-4 md:justify-center">
@@ -64,7 +50,6 @@ function LearnNav({
                 ? 'border-(--text-primary) text-(--text-primary)'
                 : 'border-transparent text-(--text-muted) hover:text-(--text-secondary)'
             }`}
-            aria-current={activeTab === tab.key ? 'page' : undefined}
           >
             {tab.label}
           </button>
@@ -74,62 +59,12 @@ function LearnNav({
   )
 }
 
-/* ─── Warning Modal ─── */
-
-function WarningModal({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onCancel,
-}: {
-  title: string
-  message: string
-  confirmLabel: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-(--bg-surface) p-6 rounded-lg max-w-sm w-full border border-(--border-subtle)">
-        <h3 className="font-semibold text-(--text-primary) mb-2">{title}</h3>
-        <p className="text-sm text-(--text-secondary) mb-6">{message}</p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2 rounded-lg bg-(--bg-surface-2) text-(--text-secondary) font-medium text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg bg-(--error) text-white font-medium text-sm"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─── Test View (Random Test Mode) ─── */
-
-type TestViewState = 'landing' | 'test' | 'results' | 'history'
-
+/* ─── Vistas de Test y Preguntas (Sin cambios) ─── */
 function TestView() {
-  const [view, setView] = useState<TestViewState>('landing')
+  const [view, setView] = useState<'landing' | 'test' | 'results' | 'history'>('landing')
   const [attemptId, setAttemptId] = useState<string>('')
   const [history, setHistory] = useState<TestAttempt[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-
-  // Auto-start test if ?action=start-test in URL
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    if (searchParams.get('action') === 'start-test') {
-      setView('test')
-    }
-  }, [])
 
   const handleViewHistory = async () => {
     setHistoryLoading(true)
@@ -139,625 +74,258 @@ function TestView() {
     setHistoryLoading(false)
   }
 
-  if (view === 'landing') {
-    return (
-      <RandomTestLanding
-        onStartTest={() => setView('test')}
-        onViewHistory={handleViewHistory}
-      />
-    )
-  }
-
-  if (view === 'test') {
-    return (
-      <RandomTestRunner
-        onComplete={(id) => { setAttemptId(id); setView('results') }}
-      />
-    )
-  }
-
-  if (view === 'results' && attemptId) {
-    return (
-      <RandomTestResults
-        attemptId={attemptId}
-        onRestart={() => setView('test')}
-        onBackToTests={() => setView('landing')}
-      />
-    )
-  }
-
-  if (view === 'history') {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setView('landing')}
-            className="text-sm text-(--text-muted) hover:text-(--text-primary)"
-          >
-            &larr; Back
-          </button>
-          <h2 className="text-lg font-semibold text-(--text-primary)">Test History</h2>
+  if (view === 'landing') return <RandomTestLanding onStartTest={() => setView('test')} onViewHistory={handleViewHistory} />
+  if (view === 'test') return <RandomTestRunner onComplete={(id) => { setAttemptId(id); setView('results') }} />
+  if (view === 'results') return <RandomTestResults attemptId={attemptId} onRestart={() => setView('test')} onBackToTests={() => setView('landing')} />
+  
+  return (
+    <div className="space-y-4">
+      <button onClick={() => setView('landing')} className="text-sm text-(--text-muted) hover:text-(--text-primary)">&larr; Volver</button>
+      {historyLoading ? <Loader2 className="animate-spin mx-auto text-(--info)" /> : (
+        <div className="space-y-2">
+          {history.map(h => (
+            <div key={h.id} className="p-4 bg-(--bg-surface) rounded-xl border border-(--border-subtle) flex justify-between items-center">
+              <span className="text-sm">{new Date(h.submitted_at!).toLocaleDateString()}</span>
+              <span className={`font-bold ${h.score_percent! >= 80 ? 'text-(--success)' : 'text-(--error)'}`}>{h.score_percent}%</span>
+            </div>
+          ))}
         </div>
-
-        {historyLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-          </div>
-        ) : history.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm">No completed tests yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {history.map((entry) => {
-              const pct = entry.score_percent ?? 0
-              const isPassing = pct >= 80
-              const date = entry.submitted_at
-                ? new Date(entry.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
-                : '—'
-              const duration = entry.time_elapsed_seconds !== null
-                ? `${Math.floor(entry.time_elapsed_seconds / 60)}:${String(entry.time_elapsed_seconds % 60).padStart(2, '0')}`
-                : null
-
-              return (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between p-4 bg-(--bg-surface) rounded-xl border border-(--border-subtle)"
-                >
-                  <div>
-                    <p className="text-sm text-(--text-primary) font-medium">{date}</p>
-                    <p className="text-xs text-(--text-muted) mt-0.5">
-                      {entry.score_correct}/{entry.score_total} correct
-                      {duration && ` · ${duration}`}
-                    </p>
-                  </div>
-                  <span className={`text-sm font-bold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}>
-                    {pct}%
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  return null
-}
-
-/* ─── Questions View (session-based, with KPI dashboard and filtering) ─── */
-
-type QuestionsViewState = 'landing' | 'setup_by_law' | 'setup_by_area' | 'session' | 'review'
-
-interface ActiveSession {
-  sessionId: string
-  mode: QuestionSessionMode
-  filterLaws: number[] | null
-  filterAreas: string[] | null
-  startedAt: string
+      )}
+    </div>
+  )
 }
 
 function QuestionsView() {
-  const [view, setView] = useState<QuestionsViewState>('landing')
-  const [activeSession, setActiveSession] = useState<ActiveSession | null>(null)
+  const [view, setView] = useState<'landing' | 'setup_by_law' | 'setup_by_area' | 'session' | 'review'>('landing')
+  const [activeSession, setActiveSession] = useState<any>(null)
   const [lastResult, setLastResult] = useState<SessionResult | null>(null)
-  const [creating, setCreating] = useState(false)
 
-  const startSession = async (
-    mode: QuestionSessionMode,
-    filterLaws: number[] | null,
-    filterAreas: string[] | null
-  ) => {
-    if (creating) return
-    setCreating(true)
-    const { data, error } = await createQuestionSession(mode, filterLaws, filterAreas)
-    setCreating(false)
-    if (error || !data) return
-    setActiveSession({
-      sessionId: data.id,
-      mode,
-      filterLaws,
-      filterAreas,
-      startedAt: data.started_at,
-    })
-    setView('session')
-  }
-
-  const handleStartQuick = () => startSession('quick', null, null)
-  const handleStartByLaw = () => setView('setup_by_law')
-  const handleStartByArea = () => setView('setup_by_area')
-
-  const handleSetupConfirm = (laws: number[], areas: string[]) => {
-    const mode: QuestionSessionMode = view === 'setup_by_law' ? 'by_law' : 'by_area'
-    startSession(mode, mode === 'by_law' ? laws : null, mode === 'by_area' ? areas : null)
-  }
-
-  const handleSessionEnd = (result: SessionResult) => {
-    setLastResult(result)
-    setView('review')
-  }
-
-  const handleRestart = () => {
-    if (!activeSession) { setView('landing'); return }
-    if (activeSession.mode === 'quick') {
-      handleStartQuick()
-    } else if (activeSession.mode === 'by_law') {
-      setView('setup_by_law')
-    } else {
-      setView('setup_by_area')
+  const startSession = async (mode: QuestionSessionMode, laws: number[] | null, areas: string[] | null) => {
+    const { data } = await createQuestionSession(mode, laws, areas)
+    if (data) {
+      setActiveSession({ sessionId: data.id, mode, filterLaws: laws, filterAreas: areas, startedAt: data.started_at })
+      setView('session')
     }
   }
 
-  if (view === 'landing') {
-    return (
-      <QuestionsLanding
-        onStartQuick={handleStartQuick}
-        onStartByLaw={handleStartByLaw}
-        onStartByArea={handleStartByArea}
-      />
-    )
-  }
-
-  if (view === 'setup_by_law' || view === 'setup_by_area') {
-    return (
-      <QuestionsSetup
-        mode={view === 'setup_by_law' ? 'by_law' : 'by_area'}
-        onStart={handleSetupConfirm}
-        onBack={() => setView('landing')}
-      />
-    )
-  }
-
-  if (view === 'session' && activeSession) {
-    return (
-      <QuestionsSession
-        sessionId={activeSession.sessionId}
-        mode={activeSession.mode}
-        filterLaws={activeSession.filterLaws}
-        filterAreas={activeSession.filterAreas}
-        startedAt={activeSession.startedAt}
-        onEndSession={handleSessionEnd}
-      />
-    )
-  }
-
-  if (view === 'review' && lastResult) {
-    return (
-      <QuestionsReview
-        result={lastResult}
-        onStartNew={() => setView('landing')}
-        onRestart={handleRestart}
-      />
-    )
-  }
-
+  if (view === 'landing') return <QuestionsLanding onStartQuick={() => startSession('quick', null, null)} onStartByLaw={() => setView('setup_by_law')} onStartByArea={() => setView('setup_by_area')} />
+  if (view === 'setup_by_law' || view === 'setup_by_area') return <QuestionsSetup mode={view === 'setup_by_law' ? 'by_law' : 'by_area'} onStart={(l, a) => startSession(view === 'setup_by_law' ? 'by_law' : 'by_area', l, a)} onBack={() => setView('landing')} />
+  if (view === 'session' && activeSession) return <QuestionsSession {...activeSession} onEndSession={(r: any) => { setLastResult(r); setView('review') }} />
+  if (view === 'review' && lastResult) return <QuestionsReview result={lastResult} onStartNew={() => setView('landing')} onRestart={() => setView('session')} />
   return null
 }
 
-/* ─── Videos View (DB-backed, two-step: action → sanction → result) ─── */
-
-const ACTION_OPTIONS = [
-  'Play on — no offence',
-  'Indirect free kick',
-  'Direct free kick',
-  'Penalty kick',
-  'Goal kick',
-  'Corner kick',
-  'Drop ball',
-  'Goal disallowed',
-  'Retake',
-]
-
-const SANCTION_OPTIONS = [
-  'No card',
-  'Yellow card (caution)',
-  'Red card (sending off)',
-]
-
-type VideoStep = 'action' | 'sanction' | 'result'
+/* ─── Videos View (R2 + Pro Player) ─── */
+const ACTION_OPTIONS = ['Play on — no offence', 'Indirect free kick', 'Direct free kick', 'Penalty kick', 'Goal kick', 'Corner kick', 'Drop ball', 'Goal disallowed', 'Retake']
+const SANCTION_OPTIONS = ['No card', 'Yellow card (caution)', 'Red card (sending off)']
+const SPEEDS = [0.5, 1, 1.5, 2]
 
 function VideosView() {
   const [scenarios, setScenarios] = useState<VideoScenario[]>([])
-  const [actionOptionsPerScenario, setActionOptionsPerScenario] = useState<string[][]>([])
+  const [actionOptions, setActionOptions] = useState<string[][]>([])
   const [loading, setLoading] = useState(true)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [step, setStep] = useState<VideoStep>('action')
-
-  // Selections
+  const [step, setStep] = useState<'action' | 'sanction' | 'result'>('action')
   const [selectedAction, setSelectedAction] = useState<number | null>(null)
   const [selectedSanction, setSelectedSanction] = useState<number | null>(null)
-
-  // Result data (set after sanction is confirmed)
-  const [actionCorrect, setActionCorrect] = useState(false)
-  const [sanctionCorrect, setSanctionCorrect] = useState(false)
-
-  // Video player
+  const [results, setResults] = useState({ action: false, sanction: false })
+  
+  // Player states
   const [isPlaying, setIsPlaying] = useState(false)
+  const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
+  const [playbackSpeed, setPlaybackSpeed] = useState(1)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(0)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const [videoError, setVideoError] = useState<string | null>(null)
+  
   const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let cancelled = false
     async function fetch() {
       const { data } = await getVideoScenarios()
-      if (!cancelled) {
-        const loaded = data || []
-        setScenarios(loaded)
-        // Build shuffled action options for each scenario
-        if (loaded.length > 0) {
-          setActionOptionsPerScenario(loaded.map((scenario) => {
-            // Use other scenarios' correct_action as distractors, then fall back to predefined list
-            const fromScenarios = loaded
-              .filter((s) => s.id !== scenario.id && s.correct_action !== scenario.correct_action)
-              .map((s) => s.correct_action)
-            const fromPredefined = ACTION_OPTIONS
-              .filter((a) => a !== scenario.correct_action && !fromScenarios.includes(a))
-            const pool = [...fromScenarios, ...fromPredefined]
-            const distractors = shuffle(pool).slice(0, 3)
-            return shuffle([scenario.correct_action, ...distractors])
-          }))
-        }
-        setLoading(false)
+      if (data) {
+        setScenarios(data)
+        setActionOptions(data.map(s => shuffle([s.correct_action, ...shuffle(ACTION_OPTIONS.filter(a => a !== s.correct_action)).slice(0, 3)])))
       }
+      setLoading(false)
     }
     fetch()
-    return () => { cancelled = true }
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-      </div>
-    )
-  }
+  // Sincronizar estado de pantalla completa
+  useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handleFsChange)
+    return () => document.removeEventListener('fullscreenchange', handleFsChange)
+  }, [])
 
-  if (scenarios.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">No video scenarios available yet.</p>
-      </div>
-    )
-  }
-
+  if (loading) return <div className="flex justify-center py-16"><Loader2 className="animate-spin text-(--info)" /></div>
   const current = scenarios[currentIndex]
-  const isLastVideo = currentIndex >= scenarios.length - 1
-  const currentActionOptions = actionOptionsPerScenario[currentIndex] || []
 
-  const handleConfirmAction = () => {
-    if (selectedAction === null) return
-    setStep('sanction')
-  }
-
-  const handleConfirmSanction = () => {
-    if (selectedAction === null || selectedSanction === null) return
-
-    const chosenAction = currentActionOptions[selectedAction]
-    const chosenSanction = SANCTION_OPTIONS[selectedSanction]
-    const isActionCorrect = chosenAction === current.correct_action
-    const isSanctionCorrect = chosenSanction === current.correct_sanction
-
-    setActionCorrect(isActionCorrect)
-    setSanctionCorrect(isSanctionCorrect)
-    setStep('result')
-
-    // Save to DB in background
-    saveVideoAttempt(current.id, chosenAction, chosenSanction, isActionCorrect, isSanctionCorrect)
-  }
-
-  const goToNext = () => {
-    if (isLastVideo) return
-    setCurrentIndex(currentIndex + 1)
-    resetState()
-  }
-
-  const handleRestart = () => {
-    setCurrentIndex(0)
-    resetState()
-  }
-
-  const resetState = () => {
-    setStep('action')
-    setSelectedAction(null)
-    setSelectedSanction(null)
-    setActionCorrect(false)
-    setSanctionCorrect(false)
-    setIsPlaying(false)
-    setVideoError(null)
-    if (videoRef.current) {
-      videoRef.current.pause()
-      videoRef.current.currentTime = 0
-    }
-  }
-
+  // Video Actions
   const togglePlay = () => {
     if (!videoRef.current) return
-    if (videoRef.current.paused) {
-      videoRef.current.play().catch(() => {
-        setVideoError(current.video_url)
-      })
-      setIsPlaying(true)
-    } else {
-      videoRef.current.pause()
-      setIsPlaying(false)
+    if (videoRef.current.paused) videoRef.current.play(); else videoRef.current.pause()
+  }
+
+  const handleTimeUpdate = () => {
+    if (videoRef.current) setCurrentTime(videoRef.current.currentTime)
+  }
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) setDuration(videoRef.current.duration)
+  }
+
+  const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const time = parseFloat(e.target.value)
+    if (videoRef.current) {
+      videoRef.current.currentTime = time
+      setCurrentTime(time)
     }
   }
 
-  const toggleMute = () => {
-    if (!videoRef.current) return
-    videoRef.current.muted = !videoRef.current.muted
-    setIsMuted(!isMuted)
+  const toggleFullScreen = () => {
+    if (!containerRef.current) return
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().catch(err => console.error(err))
+    } else {
+      document.exitFullscreen()
+    }
   }
 
-  /* ── Result screen ── */
+  const handleFinish = () => {
+    const aCorr = actionOptions[currentIndex][selectedAction!] === current.correct_action
+    const sCorr = SANCTION_OPTIONS[selectedSanction!] === current.correct_sanction
+    setResults({ action: aCorr, sanction: sCorr })
+    setStep('result')
+    saveVideoAttempt(current.id, actionOptions[currentIndex][selectedAction!], SANCTION_OPTIONS[selectedSanction!], aCorr, sCorr)
+  }
+
   if (step === 'result') {
-    const bothCorrect = actionCorrect && sanctionCorrect
-    const chosenAction = selectedAction !== null ? currentActionOptions[selectedAction] : ''
-    const chosenSanction = selectedSanction !== null ? SANCTION_OPTIONS[selectedSanction] : ''
-
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-(--text-primary)">Video Analysis</h2>
-          <span className="text-xs text-(--text-muted)">
-            {currentIndex + 1} / {scenarios.length}
-          </span>
-        </div>
-
-        <div className="bg-(--bg-surface) rounded-lg border border-(--border-subtle) p-5 space-y-4">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-(--text-primary)">{current.title}</h3>
-            <p className={`text-2xl font-bold mt-1 ${bothCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-              {bothCorrect ? 'Both Correct' : actionCorrect || sanctionCorrect ? 'Partially Correct' : 'Incorrect'}
-            </p>
+      <div className="space-y-4 animate-in fade-in zoom-in duration-300">
+        <div className="text-center p-8 bg-(--bg-surface) rounded-2xl border border-(--border-subtle) shadow-sm">
+          <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center text-white text-2xl ${results.action && results.sanction ? 'bg-(--success)' : 'bg-(--error)'}`}>
+            {results.action && results.sanction ? '✓' : '✕'}
           </div>
-
-          {/* Action result */}
-          <div className={`p-4 rounded-lg border-2 ${actionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">Action</span>
-              <span className={`text-xs font-medium ${actionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-                {actionCorrect ? 'Correct' : 'Incorrect'}
-              </span>
-            </div>
-            <p className="text-sm text-(--text-primary) font-medium">{chosenAction}</p>
-            {!actionCorrect && (
-              <p className="text-sm text-(--success) mt-1">Correct: {current.correct_action}</p>
-            )}
-          </div>
-
-          {/* Sanction result */}
-          <div className={`p-4 rounded-lg border-2 ${sanctionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">Sanction</span>
-              <span className={`text-xs font-medium ${sanctionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-                {sanctionCorrect ? 'Correct' : 'Incorrect'}
-              </span>
-            </div>
-            <p className="text-sm text-(--text-primary) font-medium">{chosenSanction}</p>
-            {!sanctionCorrect && (
-              <p className="text-sm text-(--success) mt-1">Correct: {current.correct_sanction}</p>
-            )}
+          <h3 className="text-xl font-bold mb-4">{results.action && results.sanction ? 'Excelente' : 'Revisa la jugada'}</h3>
+          <div className="space-y-2 text-left bg-(--bg-primary) p-4 rounded-lg border border-(--border-subtle)">
+            <p className="text-sm"><span className="text-(--text-muted)">Acción correcta:</span> <span className="font-medium text-(--text-primary)">{current.correct_action}</span></p>
+            <p className="text-sm"><span className="text-(--text-muted)">Sanción correcta:</span> <span className="font-medium text-(--text-primary)">{current.correct_sanction}</span></p>
           </div>
         </div>
-
-        <button
-          onClick={isLastVideo ? handleRestart : goToNext}
-          className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-        >
-          {isLastVideo ? 'Start Over' : 'Next Video'}
-        </button>
+        <button onClick={() => { setCurrentIndex(prev => (prev + 1) % scenarios.length); setStep('action'); setSelectedAction(null); setSelectedSanction(null); setVideoError(null) }} className="w-full py-3.5 bg-(--info) hover:bg-(--info-hover) text-white rounded-xl font-semibold transition-colors">Siguiente Jugada</button>
       </div>
     )
   }
 
-  /* ── Video + Questions ── */
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-(--text-primary)">Video Analysis</h2>
-        <span className="text-xs text-(--text-muted)">
-          {currentIndex + 1} / {scenarios.length}
-        </span>
-      </div>
-
-      {/* Video Player */}
-      <div className="bg-black rounded-lg aspect-video relative overflow-hidden group">
-        <video
-          key={current.id}
-          ref={videoRef}
-          className="w-full h-full object-contain"
-          playsInline
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+    <div className="space-y-6">
+      <div ref={containerRef} className="aspect-video bg-black rounded-2xl overflow-hidden relative group shadow-xl">
+        <video 
+          key={current.id} ref={videoRef} className="w-full h-full cursor-pointer" playsInline 
+          onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onClick={togglePlay}
           onError={() => setVideoError(current.video_url)}
         >
-          <source src={getVideoPublicUrl(current.video_url)} type="video/mp4" />
+          <source src={`${R2_BASE_URL}/${current.video_url}`} type="video/mp4" />
         </video>
 
-        {/* Error overlay */}
-        {videoError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-4 text-center">
-            <p className="text-sm text-(--error) font-medium mb-2">Video failed to load</p>
-            <p className="text-xs text-white/60 break-all mb-1">File: {videoError}</p>
-            <p className="text-xs text-white/40">
-              Upload this file to the &quot;learn-videos&quot; bucket in Supabase Storage and make the bucket public.
-            </p>
+        {videoError && <div className="absolute inset-0 flex items-center justify-center bg-black/90 text-white p-6 text-center text-sm">Error al cargar video.</div>}
+
+        {/* Controls Overlay */}
+        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/95 via-black/50 to-transparent pt-8 pb-4 px-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          
+          {/* Progress Bar */}
+          <div className="flex items-center gap-3 mb-3">
+            <span className="text-[10px] text-white/80 tabular-nums w-8">{Math.floor(currentTime / 60)}:{String(Math.floor(currentTime % 60)).padStart(2, '0')}</span>
+            <input 
+              type="range" min="0" max={duration || 0} step="0.1" value={currentTime}
+              onChange={handleProgressChange}
+              className="flex-1 accent-(--info) h-1.5 bg-white/20 rounded-lg cursor-pointer appearance-none"
+            />
+            <span className="text-[10px] text-white/80 tabular-nums w-8">{Math.floor(duration / 60)}:{String(Math.floor(duration % 60)).padStart(2, '0')}</span>
           </div>
-        )}
 
-        {/* Play overlay */}
-        {!isPlaying && !videoError && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <button
-              onClick={togglePlay}
-              className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-            >
-              <span className="text-3xl ml-0.5 text-white">{'\u25B6'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={togglePlay} className="text-white text-sm hover:text-(--info)">
-            {isPlaying ? '\u23F8' : '\u25B6'}
-          </button>
-          <button onClick={toggleMute} className="text-white text-sm hover:text-(--info)">
-            {isMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A'}
-          </button>
-        </div>
-      </div>
-
-      {/* Scenario info */}
-      {current.description && (
-        <p className="text-sm text-(--text-secondary)">{current.description}</p>
-      )}
-
-      {/* Step indicator */}
-      <div className="flex gap-2">
-        <div className={`flex-1 h-1 rounded-full ${step === 'action' ? 'bg-(--info)' : 'bg-(--success)'}`} />
-        <div className={`flex-1 h-1 rounded-full ${step === 'sanction' ? 'bg-(--info)' : 'bg-(--bg-surface-2)'}`} />
-      </div>
-
-      {/* Action question */}
-      {step === 'action' && (
-        <div className="space-y-3">
-          <h3 className="text-base font-medium text-(--text-primary)">
-            What action should the referee take?
-          </h3>
-
-          <div className="space-y-2">
-            {currentActionOptions.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedAction(idx)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
-                  selectedAction === idx
-                    ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                    : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-                }`}
-              >
-                {option}
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-4">
+              <button onClick={togglePlay} className="hover:text-(--info) transition-colors">
+                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" />}
               </button>
-            ))}
-          </div>
+              
+              <button onClick={() => { if(videoRef.current) videoRef.current.currentTime -= 5 }} className="hover:text-(--info) transition-colors"><RotateCcw size={18} /></button>
+              <button onClick={() => { if(videoRef.current) videoRef.current.currentTime += 5 }} className="hover:text-(--info) transition-colors"><RotateCw size={18} /></button>
 
-          <button
-            onClick={handleConfirmAction}
-            disabled={selectedAction === null}
-            className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
-          >
-            Next — Sanction
-          </button>
-        </div>
-      )}
+              <div className="flex items-center gap-2 group/volume relative">
+                <button onClick={() => { if(videoRef.current) { videoRef.current.muted = !isMuted; setIsMuted(!isMuted) }}} className="hover:text-(--info) transition-colors">
+                  {isMuted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                </button>
+                <input 
+                  type="range" min="0" max="1" step="0.05" value={isMuted ? 0 : volume} 
+                  onChange={(e) => { setVolume(parseFloat(e.target.value)); if(videoRef.current) videoRef.current.volume = parseFloat(e.target.value) }}
+                  className="w-0 group-hover/volume:w-16 transition-all duration-300 accent-white h-1 bg-white/20 rounded-lg cursor-pointer appearance-none"
+                />
+              </div>
 
-      {/* Sanction question */}
-      {step === 'sanction' && (
-        <div className="space-y-3">
-          <h3 className="text-base font-medium text-(--text-primary)">
-            What sanction should be applied?
-          </h3>
-
-          <div className="space-y-2">
-            {SANCTION_OPTIONS.map((option, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedSanction(idx)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
-                  selectedSanction === idx
-                    ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                    : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-                }`}
-              >
-                {option}
+              <button onClick={() => { const next = SPEEDS[(SPEEDS.indexOf(playbackSpeed) + 1) % SPEEDS.length]; setPlaybackSpeed(next); if(videoRef.current) videoRef.current.playbackRate = next }} className="text-[10px] font-bold border border-white/40 px-1.5 py-0.5 rounded hover:bg-white/20">
+                {playbackSpeed}x
               </button>
-            ))}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep('action')}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary)"
-            >
-              &larr; Back
-            </button>
-            <button
-              onClick={handleConfirmSanction}
-              disabled={selectedSanction === null}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
-            >
-              Confirm
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ─── Other Tabs ─── */
-
-function PlaceholderTab({ icon: Icon, title }: { icon: typeof FileText; title: string }) {
-  return (
-    <div className="text-center py-16">
-      <Icon className="w-10 h-10 text-(--text-muted) mx-auto mb-3" />
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{title}</h2>
-      <p className="text-sm text-(--text-muted)">Coming soon.</p>
-    </div>
-  )
-}
-
-function ResourcesView() {
-  const resources = [
-    { id: 1, title: 'Laws of the Game 2024/25', type: 'PDF', size: '2.4 MB' },
-    { id: 2, title: 'Referee Positioning Guide', type: 'PDF', size: '1.1 MB' },
-    { id: 3, title: 'Match Report Template', type: 'DOCX', size: '0.5 MB' },
-    { id: 4, title: 'Fitness Test Standards', type: 'PDF', size: '0.8 MB' },
-    { id: 5, title: 'VAR Protocol Handbook', type: 'PDF', size: '3.2 MB' },
-  ]
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-(--text-primary)">Study Resources</h2>
-      <div className="space-y-2">
-        {resources.map((res) => (
-          <div
-            key={res.id}
-            className="flex items-center justify-between p-3 bg-(--bg-surface) rounded-lg border border-(--border-subtle)"
-          >
-            <div>
-              <h3 className="text-sm font-medium text-(--text-primary)">{res.title}</h3>
-              <p className="text-xs text-(--text-muted)">
-                {res.type} &middot; {res.size}
-              </p>
             </div>
-            <button className="text-xs text-(--info) hover:underline">Download</button>
+            
+            <button onClick={toggleFullScreen} className="hover:text-(--info) transition-colors">
+              {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
+            </button>
           </div>
-        ))}
+        </div>
+      </div>
+
+      <div className="space-y-4 bg-(--bg-surface) p-6 rounded-2xl border border-(--border-subtle)">
+        <h3 className="text-lg font-semibold text-(--text-primary)">{step === 'action' ? '¿Qué decisión técnica debe tomar el árbitro?' : '¿Qué sanción disciplinaria corresponde?'}</h3>
+        <div className="grid gap-2">
+          {(step === 'action' ? actionOptions[currentIndex] : SANCTION_OPTIONS).map((opt, i) => (
+            <button 
+              key={i} onClick={() => step === 'action' ? setSelectedAction(i) : setSelectedSanction(i)}
+              className={`p-4 text-left text-sm rounded-xl border-2 transition-all ${(step === 'action' ? selectedAction : selectedSanction) === i ? 'border-(--info) bg-(--info)/5 text-(--text-primary)' : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--text-muted)'}`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+        <button 
+          disabled={(step === 'action' ? selectedAction : selectedSanction) === null}
+          onClick={() => step === 'action' ? setStep('sanction') : handleFinish()}
+          className="w-full py-3.5 bg-(--info) hover:bg-(--info-hover) text-white rounded-xl font-semibold shadow-md disabled:opacity-40"
+        >
+          {step === 'action' ? 'Continuar a Sanción' : 'Finalizar Análisis'}
+        </button>
       </div>
     </div>
   )
 }
 
 /* ─── Main Page ─── */
-
 export default function LearnPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('test')
 
   return (
-    <div className="min-h-screen bg-(--bg-primary) pb-24">
+    <div className="min-h-screen bg-(--bg-primary) pb-24 text-(--text-primary)">
       <div className="px-4 max-w-3xl mx-auto">
+        <header className="py-6">
+          <h1 className="text-2xl font-bold">Aprendizaje</h1>
+          <p className="text-sm text-(--text-muted)">Mejora tus conocimientos arbitrales</p>
+        </header>
         <LearnNav activeTab={activeTab} setActiveTab={setActiveTab} />
         <main>
           {activeTab === 'test' && <TestView />}
           {activeTab === 'questions' && <QuestionsView />}
           {activeTab === 'videos' && <VideosView />}
-          {activeTab === 'courses' && <PlaceholderTab icon={GraduationCap} title="Courses" />}
-          {activeTab === 'resources' && <ResourcesView />}
+          {activeTab === 'courses' && <div className="text-center py-20 bg-(--bg-surface) rounded-2xl border border-(--border-subtle)">Cursos en desarrollo</div>}
+          {activeTab === 'resources' && <div className="text-center py-20 bg-(--bg-surface) rounded-2xl border border-(--border-subtle)">Recursos próximamente</div>}
         </main>
       </div>
     </div>
