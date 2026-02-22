@@ -16,6 +16,8 @@ const DEFAULT_STATS: DashboardStats = {
     total_questions_answered: 0,
     total_tests_completed: 0,
     total_tests_passed: 0,
+    average_test_duration: null,
+    last_test_duration: null,
   },
   habits: {
     calendar: [],

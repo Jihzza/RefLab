@@ -1,19 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { FileText, GraduationCap, Loader2 } from 'lucide-react'
 import {
-  getTests,
-  getQuestions,
-  getOrCreateAttempt,
-  getAttemptAnswers,
-  saveAnswer,
-  submitAttempt,
   getUserCompletedAttempts,
   getVideoScenarios,
   saveVideoAttempt,
   getVideoPublicUrl,
   createQuestionSession,
 } from '../api/testsApi'
-import type { Test, TestAttempt, VideoScenario, QuestionSessionMode, SessionResult } from '../types'
+import type { TestAttempt, VideoScenario, QuestionSessionMode, SessionResult } from '../types'
 import RandomTestLanding from './test/RandomTestLanding'
 import RandomTestRunner from './test/RandomTestRunner'
 import RandomTestResults from './test/RandomTestResults'
@@ -71,45 +65,6 @@ function LearnNav({
         ))}
       </div>
     </nav>
-  )
-}
-
-/* ─── Warning Modal ─── */
-
-function WarningModal({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onCancel,
-}: {
-  title: string
-  message: string
-  confirmLabel: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-(--bg-surface) p-6 rounded-lg max-w-sm w-full border border-(--border-subtle)">
-        <h3 className="font-semibold text-(--text-primary) mb-2">{title}</h3>
-        <p className="text-sm text-(--text-secondary) mb-6">{message}</p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2 rounded-lg bg-(--bg-surface-2) text-(--text-secondary) font-medium text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg bg-(--error) text-white font-medium text-sm"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
   )
 }
 

@@ -62,19 +62,19 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
         <KPICard
           icon={<TrendingUp size={18} />}
           label="Avg Score (Last 5)"
-          value={loading ? '—' : kpis?.averageScore !== null ? `${kpis.averageScore}%` : '—'}
+          value={loading ? '—' : kpis && kpis.averageScore !== null ? `${kpis.averageScore}%` : '—'}
           emptyText="Complete tests to see stats"
         />
         <KPICard
           icon={<Trophy size={18} />}
           label="Best Score"
-          value={loading ? '—' : kpis?.bestScore !== null ? `${kpis.bestScore}%` : '—'}
+          value={loading ? '—' : kpis && kpis.bestScore !== null ? `${kpis.bestScore}%` : '—'}
           emptyText="No tests completed"
         />
         <KPICard
           icon={<Clock size={18} />}
           label="Avg Time"
-          value={loading ? '—' : kpis?.averageTime !== null ? formatTime(kpis.averageTime) : '—'}
+          value={loading ? '—' : kpis && kpis.averageTime !== null ? formatTime(kpis.averageTime) : '—'}
           emptyText="No timing data"
         />
       </div>

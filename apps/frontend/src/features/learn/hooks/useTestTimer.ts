@@ -19,7 +19,7 @@ export function useTestTimer(
 ) {
   const [timeRemaining, setTimeRemaining] = useState(limitSeconds)
   const startTimeRef = useRef<number>(Date.now())
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onExpireRef = useRef(onExpire)
 
   // Keep onExpire callback up to date

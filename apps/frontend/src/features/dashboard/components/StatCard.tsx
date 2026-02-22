@@ -4,7 +4,7 @@ interface StatCardProps {
   /** Card title displayed as uppercase label */
   label: string
   /** The main metric value (null triggers empty state) */
-  value: number | null
+  value: number | string | null
   /** Text appended after value (e.g. "%", "days") */
   suffix?: string
   /** Small description text below the value */

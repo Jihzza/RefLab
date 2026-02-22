@@ -98,7 +98,7 @@ export default function QuestionsSession({
   onEndSession,
 }: QuestionsSessionProps) {
   const [pool, setPool] = useState<TestQuestion[]>([])
-  const [queue, setQueue] = useState<TestQuestion[]>([])
+  const [, setQueue] = useState<TestQuestion[]>([])
   const [loading, setLoading] = useState(true)
 
   const [currentQ, setCurrentQ] = useState<TestQuestion | null>(null)

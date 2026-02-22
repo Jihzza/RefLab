@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, Clock, PlayCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, PlayCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import type { ProgressStats } from '../types'
 import StatCard from './StatCard'

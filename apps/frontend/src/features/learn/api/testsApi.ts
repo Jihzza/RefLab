@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, TestKPIs, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
 
 /**
  * Fetch all active tests
