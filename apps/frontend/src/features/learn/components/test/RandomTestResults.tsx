@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Trophy, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, RotateCcw, Home } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabaseClient'
 import { getAttemptTopicBreakdown, getAttemptAnswers } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
@@ -23,6 +24,7 @@ interface RandomTestResultsProps {
  * - Restart and Back buttons
  */
 export default function RandomTestResults({ attemptId, onRestart, onBackToTests }: RandomTestResultsProps) {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [strong, setStrong] = useState<TopicPerformance[]>([])
@@ -105,7 +107,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--info) mx-auto mb-4" />
-          <p className="text-sm text-(--text-secondary)">Loading results...</p>
+          <p className="text-sm text-(--text-secondary)">{t('Loading results...')}</p>
         </div>
       </div>
     )
@@ -114,12 +116,12 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
   if (!attempt) {
     return (
       <div className="text-center py-20">
-        <p className="text-(--text-primary) font-semibold">Failed to load results</p>
+        <p className="text-(--text-primary) font-semibold">{t('Failed to load results')}</p>
         <button
           onClick={onBackToTests}
           className="mt-4 px-6 py-2 bg-(--info) text-white rounded-xl font-semibold hover:opacity-90"
         >
-          Back to Tests
+          {t('Back to Tests')}
         </button>
       </div>
     )
@@ -140,14 +142,14 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
           {attempt.score_correct}/{attempt.score_total}
         </h2>
         <p className="text-lg text-(--text-secondary) mb-4">
-          {scorePercent}% {isPassing ? 'Pass' : 'Review Recommended'}
+          {scorePercent}% {isPassing ? t('Pass') : t('Review Recommended')}
         </p>
 
         {attempt.time_elapsed_seconds !== null && (
           <div className="flex items-center justify-center gap-2 text-sm text-(--text-secondary)">
             <Clock size={16} />
-            <span>Time: {formatTime(attempt.time_elapsed_seconds)}</span>
-            {attempt.auto_submitted && <span className="text-(--warning)">(Auto-submitted)</span>}
+            <span>{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
+            {attempt.auto_submitted && <span className="text-(--warning)">({t('Auto-submitted')})</span>}
           </div>
         )}
       </div>
@@ -157,7 +159,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
         <div className="p-5 bg-(--success)/10 border border-(--success)/30 rounded-xl">
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp size={20} className="text-(--success)" />
-            <h3 className="font-semibold text-(--text-primary)">Strong Points</h3>
+            <h3 className="font-semibold text-(--text-primary)">{t('Strong Points')}</h3>
           </div>
           <div className="space-y-2">
             {strong.map((topic) => (
@@ -177,7 +179,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
         <div className="p-5 bg-(--error)/10 border border-(--error)/30 rounded-xl">
           <div className="flex items-center gap-2 mb-3">
             <TrendingDown size={20} className="text-(--error)" />
-            <h3 className="font-semibold text-(--text-primary)">Areas to Improve</h3>
+            <h3 className="font-semibold text-(--text-primary)">{t('Areas to Improve')}</h3>
           </div>
           <div className="space-y-2">
             {weak.map((topic) => (
@@ -198,7 +200,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
           onClick={() => setShowCorrections(!showCorrections)}
           className="w-full flex items-center justify-between"
         >
-          <h3 className="font-semibold text-(--text-primary)">Review All Questions</h3>
+          <h3 className="font-semibold text-(--text-primary)">{t('Review All Questions')}</h3>
           {showCorrections ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
 
@@ -224,7 +226,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
                   )}
                   <div className="flex-1">
                     <p className="font-medium text-(--text-primary) text-sm mb-1">
-                      Question {index + 1}
+                      {t('Question {{number}}', { number: index + 1 })}
                     </p>
                     <p className="text-sm text-(--text-primary) mb-3">
                       {correction.question.question_text}
@@ -232,7 +234,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
                     <div className="space-y-1 text-xs">
                       <p>
-                        <span className="text-(--text-secondary)">Your answer: </span>
+                        <span className="text-(--text-secondary)">{t('Your answer')}: </span>
                         <span
                           className={correction.isCorrect ? 'text-(--success)' : 'text-(--error)'}
                         >
@@ -241,7 +243,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
                       </p>
                       {!correction.isCorrect && (
                         <p>
-                          <span className="text-(--text-secondary)">Correct answer: </span>
+                          <span className="text-(--text-secondary)">{t('Correct answer')}: </span>
                           <span className="text-(--success) font-semibold">
                             {correction.correctOption}
                           </span>
@@ -263,14 +265,14 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) font-semibold hover:bg-(--bg-hover) transition-colors"
         >
           <Home size={18} />
-          Back to Tests
+          {t('Back to Tests')}
         </button>
         <button
           onClick={onRestart}
           className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity"
         >
           <RotateCcw size={18} />
-          Take Another Test
+          {t('Take Another Test')}
         </button>
       </div>
     </div>

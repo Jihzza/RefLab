@@ -1,4 +1,5 @@
 import type { SearchHistoryEntry } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface SearchResultItemProps {
   user: SearchHistoryEntry
@@ -16,6 +17,7 @@ export default function SearchResultItem({
   onClick,
   onRemove,
 }: SearchResultItemProps) {
+  const { t } = useTranslation()
   const displayName = user.name || user.username
   const initials = displayName.slice(0, 2).toUpperCase()
 
@@ -26,7 +28,7 @@ export default function SearchResultItem({
         type="button"
         onClick={onClick}
         className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
-        aria-label={`View profile of ${displayName}`}
+        aria-label={t('View profile of {{name}}', { name: displayName })}
       >
         {/* Avatar */}
         {user.photo_url ? (
@@ -63,7 +65,7 @@ export default function SearchResultItem({
             onRemove()
           }}
           className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-surface-2) hover:text-(--text-primary) transition-colors flex-shrink-0 cursor-pointer"
-          aria-label={`Remove ${displayName} from search history`}
+          aria-label={t('Remove {{name}} from search history', { name: displayName })}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

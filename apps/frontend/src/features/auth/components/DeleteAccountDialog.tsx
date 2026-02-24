@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { mapAuthError } from '../api/authErrors'
+import { useTranslation } from 'react-i18next'
 
 interface DeleteAccountDialogProps {
   isOpen: boolean
@@ -9,6 +10,7 @@ interface DeleteAccountDialogProps {
 }
 
 export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDialogProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { deleteAccount } = useAuth()
   const [loading, setLoading] = useState(false)
@@ -55,11 +57,10 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
       {/* Modal */}
       <div className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)">
         <h2 className="text-lg font-semibold text-(--error) mb-2">
-          Eliminar Cuenta
+          {t('Eliminar Cuenta')}
         </h2>
         <p className="text-(--text-secondary) text-sm mb-4">
-          Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu
-          perfil y progreso, seran eliminados permanentemente.
+          {t('Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu perfil y progreso, seran eliminados permanentemente.')}
         </p>
 
         {error && (
@@ -76,7 +77,7 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
               text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
               disabled:opacity-50"
           >
-            Cancelar
+            {t('Cancelar')}
           </button>
           <button
             onClick={handleDelete}
@@ -86,7 +87,7 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
               hover:opacity-90
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Eliminando...' : 'Confirmar'}
+            {loading ? t('Eliminando...') : t('Confirmar')}
           </button>
         </div>
       </div>

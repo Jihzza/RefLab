@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, ExternalLink, Receipt } from 'lucide-react'
 import { useInvoices } from '../hooks/useInvoices'
+import { useTranslation } from 'react-i18next'
 
 /** Format cents to EUR display string */
 function formatAmount(amountInCents: number, currency: string): string {
-  return new Intl.NumberFormat('en-IE', {
+  return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: currency.toUpperCase(),
   }).format(amountInCents / 100)
@@ -12,7 +13,7 @@ function formatAmount(amountInCents: number, currency: string): string {
 
 /** Format unix timestamp to readable date */
 function formatDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+  return new Date(timestamp * 1000).toLocaleDateString('pt-PT', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -35,6 +36,7 @@ function getStatusStyle(status: string): string {
 }
 
 export default function InvoiceHistory() {
+  const { t } = useTranslation()
   const { invoices, loading, error, fetchInvoices } = useInvoices()
   const [expanded, setExpanded] = useState(false)
   const [hasFetched, setHasFetched] = useState(false)
@@ -51,7 +53,7 @@ export default function InvoiceHistory() {
   }
 
   return (
-    <section aria-label="Purchase history">
+    <section aria-label={t('Purchase history')}>
       {/* Collapsible header */}
       <button
         onClick={handleToggle}
@@ -60,7 +62,7 @@ export default function InvoiceHistory() {
       >
         <div className="flex items-center gap-2">
           <Receipt className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
-          <span className="text-sm font-semibold">Purchase History</span>
+          <span className="text-sm font-semibold">{t('Purchase History')}</span>
         </div>
         {expanded
           ? <ChevronUp className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
@@ -94,7 +96,7 @@ export default function InvoiceHistory() {
                 onClick={() => fetchInvoices()}
                 className="mt-2 text-sm text-(--brand-yellow) hover:underline"
               >
-                Retry
+                {t('Retry')}
               </button>
             </div>
           )}
@@ -102,7 +104,7 @@ export default function InvoiceHistory() {
           {/* Empty state */}
           {!loading && !error && invoices.length === 0 && (
             <div className="p-4 text-center">
-              <p className="text-sm text-(--text-muted)">No transactions yet.</p>
+              <p className="text-sm text-(--text-muted)">{t('No transactions yet.')}</p>
             </div>
           )}
 
@@ -136,7 +138,7 @@ export default function InvoiceHistory() {
                       aria-label={`View invoice from ${formatDate(invoice.created)}`}
                       className="flex items-center gap-1 text-xs text-(--brand-yellow) hover:underline shrink-0 ml-2"
                     >
-                      View
+                      {t('View')}
                       <ExternalLink className="w-3 h-3" aria-hidden="true" />
                     </a>
                   )}

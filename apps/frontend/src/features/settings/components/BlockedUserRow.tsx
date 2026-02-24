@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface BlockedUserRowProps {
   username: string
   name: string | null
@@ -18,6 +20,8 @@ export default function BlockedUserRow({
   onUnblock,
   loading = false,
 }: BlockedUserRowProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       {/* Avatar */}
@@ -52,9 +56,9 @@ export default function BlockedUserRow({
           border border-(--border-subtle) text-(--text-secondary)
           hover:bg-(--bg-hover) transition-colors
           disabled:opacity-50 disabled:cursor-not-allowed"
-        aria-label={`Unblock ${username}`}
+        aria-label={`${t('Unblock')} ${username}`}
       >
-        {loading ? 'Unblocking...' : 'Unblock'}
+        {loading ? t('Unblocking...') : t('Unblock')}
       </button>
     </div>
   )

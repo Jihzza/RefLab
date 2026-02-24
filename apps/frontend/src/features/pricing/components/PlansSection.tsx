@@ -4,6 +4,7 @@ import { useBilling } from '@/features/billing/components/useBilling'
 import { createCheckoutSession } from '@/features/billing/api/billingApi'
 import type { PlanId } from '@/features/billing/types'
 import type { PlanConfig } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /** Plan definitions with correct prices */
 const PLANS: PlanConfig[] = [
@@ -56,6 +57,7 @@ interface PlansSectionProps {
 }
 
 export default function PlansSection({ onChangePlan }: PlansSectionProps) {
+  const { t } = useTranslation()
   const { planId: currentPlan, subscription, isLoading: billingLoading } = useBilling()
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -85,7 +87,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
     // Free plan card
     if (plan.id === 'free') {
       return {
-        label: isCurrentPlan ? 'Current Plan' : 'Free Forever',
+        label: isCurrentPlan ? t('Current Plan') : t('Free Forever'),
         disabled: true,
         onClick: () => {},
         className: 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed',
@@ -95,7 +97,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
     // Current paid plan
     if (isCurrentPlan) {
       return {
-        label: isCancelPending ? 'Cancellation Pending' : 'Current Plan',
+        label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
         disabled: true,
         onClick: () => {},
         className: 'bg-(--brand-yellow)/20 text-(--brand-yellow) cursor-not-allowed',
@@ -105,7 +107,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
     // Free user looking at a paid plan
     if (currentPlan === 'free') {
       return {
-        label: loadingPlan === plan.id ? 'Redirecting...' : 'Subscribe',
+        label: loadingPlan === plan.id ? t('Redirecting...') : t('Subscribe'),
         disabled: billingLoading || loadingPlan !== null,
         onClick: () => handleSubscribe(plan.id as Exclude<PlanId, 'free'>),
         className: plan.isHighlighted
@@ -116,7 +118,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
 
     // Paid user looking at a different paid plan
     return {
-      label: isCancelPending ? 'Resubscribe Required' : `Switch to ${plan.name}`,
+      label: isCancelPending ? t('Resubscribe Required') : t('Switch to {{plan}}', { plan: plan.name }),
       disabled: isCancelPending || billingLoading,
       onClick: () => onChangePlan(plan.id as 'pro' | 'plus'),
       className: plan.isHighlighted
@@ -126,10 +128,10 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
   }
 
   return (
-    <section className="mb-6" aria-label="Available plans">
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">Choose Your Plan</h2>
+    <section className="mb-6" aria-label={t('Choose Your Plan')}>
+      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t('Choose Your Plan')}</h2>
       <p className="text-sm text-(--text-muted) mb-4">
-        Upgrade to unlock advanced training tools and AI-powered feedback.
+        {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
       </p>
 
       {error && (
@@ -157,11 +159,11 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
               {/* Recommended badge */}
               {plan.isHighlighted && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-(--brand-yellow) text-(--bg-primary) text-xs font-bold px-3 py-1 rounded-full">
-                  Recommended
+                  {t('Recommended')}
                 </div>
               )}
 
-              <h3 className="text-lg font-bold text-(--text-primary) mb-1">{plan.name}</h3>
+              <h3 className="text-lg font-bold text-(--text-primary) mb-1">{t(plan.name)}</h3>
 
               <div className="mb-4">
                 <span className="text-2xl font-bold text-(--text-primary)">{plan.price}</span>
@@ -175,7 +177,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
                 {plan.benefits.map((benefit) => (
                   <li key={benefit} className="flex items-start gap-2 text-sm text-(--text-secondary)">
                     <Check className="w-4 h-4 text-(--success) shrink-0 mt-0.5" aria-hidden="true" />
-                    {benefit}
+                    {t(benefit)}
                   </li>
                 ))}
               </ul>

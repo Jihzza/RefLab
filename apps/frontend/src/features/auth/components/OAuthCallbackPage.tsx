@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
+import { useTranslation } from 'react-i18next'
 
 /**
  * OAuthCallbackPage - Landing page for all auth redirects
@@ -15,6 +16,7 @@ import { useAuth } from './useAuth'
  * once the auth state resolves.
  */
 export default function OAuthCallbackPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { authStatus } = useAuth()
   const [error, setError] = useState<string | null>(null)
@@ -29,7 +31,7 @@ export default function OAuthCallbackPage() {
     // If unauthenticated after a timeout, something went wrong
     const timeout = setTimeout(() => {
       if (authStatus === 'unauthenticated') {
-        setError('Authentication failed. Please try signing in again.')
+        setError(t('Authentication failed. Please try signing in again.'))
       }
     }, 5000)
 
@@ -46,7 +48,7 @@ export default function OAuthCallbackPage() {
               onClick={() => navigate('/', { replace: true })}
               className="text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
             >
-              Back to login
+              {t('Back to login')}
             </button>
           </div>
         </div>
@@ -58,7 +60,7 @@ export default function OAuthCallbackPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
       <div className="text-center">
         <div className="animate-spin w-8 h-8 border-2 border-(--brand-yellow) border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-(--text-secondary)">Signing you in...</p>
+        <p className="text-(--text-secondary)">{t('Signing you in...')}</p>
       </div>
     </div>
   )

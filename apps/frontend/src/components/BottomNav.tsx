@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/useAuth';
 import { getTotalUnreadCount } from '@/features/messages/api/messagesApi';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Props for individual navigation items
@@ -85,6 +86,7 @@ const SocialIcon = () => (
  * Note: This component is only rendered when user is authenticated (handled in Layout.tsx)
  */
 export const BottomNav: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -118,28 +120,28 @@ export const BottomNav: React.FC = () => {
     <nav className="fixed bottom-0 left-0 w-full h-16 bg-(--bg-surface) border-t border-(--border-subtle) flex justify-between items-center z-50 pb-safe">
       <div className="w-full h-full grid grid-cols-5">
         <BottomNavItem
-          title="Dashboard"
+          title={t('Dashboard')}
           icon={<DashboardIcon />}
           to="/app/dashboard"
         />
         <BottomNavItem
-          title="Learn"
+          title={t('Learn')}
           icon={<LearnIcon />}
           to="/app/learn"
         />
         <BottomNavItem
-          title="Social"
+          title={t('Social')}
           icon={<SocialIcon />}
           to="/app/social"
         />
         <BottomNavItem
-          title="Messages"
+          title={t('Messages')}
           icon={<MessagesIcon />}
           to="/app/messages"
           badge={unreadCount}
         />
         <BottomNavItem
-          title="Profile"
+          title={t('Profile')}
           icon={<ProfileIcon />}
           to="/app/profile"
         />

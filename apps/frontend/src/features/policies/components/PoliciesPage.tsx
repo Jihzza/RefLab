@@ -15,6 +15,7 @@ import { ArrowLeft } from 'lucide-react';
 import PrivacyPolicyTab from './PrivacyPolicyTab';
 import TermsOfServiceTab from './TermsOfServiceTab';
 import CookiesPolicyTab from './CookiesPolicyTab';
+import { useTranslation } from 'react-i18next';
 
 type PolicyTab = 'privacy' | 'terms' | 'cookies';
 
@@ -37,12 +38,13 @@ function PoliciesNav({
   activeTab: PolicyTab;
   setActiveTab: (tab: PolicyTab) => void;
 }) {
+  const { t } = useTranslation();
   const tabs: PolicyTab[] = ['privacy', 'terms', 'cookies'];
 
   return (
     <nav
       className="border-b border-(--border-subtle) mb-6 -mx-4 px-4"
-      aria-label="Policy sections"
+      aria-label={t('Policy sections')}
     >
       <div className="flex overflow-x-auto no-scrollbar py-3 gap-4 md:justify-center">
         {tabs.map((tab) => (
@@ -56,7 +58,7 @@ function PoliciesNav({
             }`}
             aria-current={activeTab === tab ? 'page' : undefined}
           >
-            {TAB_LABELS[tab]}
+            {t(TAB_LABELS[tab])}
           </button>
         ))}
       </div>
@@ -65,6 +67,7 @@ function PoliciesNav({
 }
 
 export default function PoliciesPage({ defaultTab }: PoliciesPageProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<PolicyTab>(defaultTab);
 
   return (
@@ -74,18 +77,18 @@ export default function PoliciesPage({ defaultTab }: PoliciesPageProps) {
         <Link
           to="/"
           className="inline-flex items-center gap-1.5 text-sm text-(--text-muted) hover:text-(--text-primary) transition-colors mb-6"
-          aria-label="Back to home"
+          aria-label={t('Back to Home')}
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Home
+          {t('Back to Home')}
         </Link>
 
         {/* Page title */}
         <h1 className="text-2xl font-bold text-(--text-primary) text-center mb-2">
-          Legal
+          {t('Legal')}
         </h1>
         <p className="text-sm text-(--text-muted) text-center mb-6">
-          Review our policies and terms
+          {t('Review our policies and terms')}
         </p>
 
         {/* Tab navigation */}

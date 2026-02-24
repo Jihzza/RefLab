@@ -14,6 +14,7 @@ import {
   Settings,
   LogOut,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -21,19 +22,20 @@ interface SidebarProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
-  { label: 'Tests', path: '/app/tests', icon: ClipboardList },
-  { label: 'Learn', path: '/app/learn', icon: BookOpen },
-  { label: 'Social', path: '/app/social', icon: Users },
-  { label: 'Messages', path: '/app/messages', icon: MessageSquare },
-  { label: 'Search', path: '/app/search', icon: Search },
-  { label: 'Notifications', path: '/app/notifications', icon: Bell },
-  { label: 'Profile', path: '/app/profile', icon: UserCircle },
-  { label: 'Pricing', path: '/app/pricing', icon: CreditCard },
-  { label: 'Settings', path: '/app/settings', icon: Settings },
+  { key: 'Dashboard', path: '/app/dashboard', icon: LayoutDashboard },
+  { key: 'Tests', path: '/app/tests', icon: ClipboardList },
+  { key: 'Learn', path: '/app/learn', icon: BookOpen },
+  { key: 'Social', path: '/app/social', icon: Users },
+  { key: 'Messages', path: '/app/messages', icon: MessageSquare },
+  { key: 'Search', path: '/app/search', icon: Search },
+  { key: 'Notifications', path: '/app/notifications', icon: Bell },
+  { key: 'Profile', path: '/app/profile', icon: UserCircle },
+  { key: 'Pricing', path: '/app/pricing', icon: CreditCard },
+  { key: 'Settings', path: '/app/settings', icon: Settings },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -70,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         className={`fixed top-16 left-0 ${user ? 'bottom-16' : 'bottom-0'} w-64 bg-(--bg-surface) border-r border-(--border-subtle) shadow-xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        aria-label="Sidebar"
+        aria-label={t('Sidebar')}
       >
         {/* Navigation Links (Top) */}
         <div className="p-4 grow overflow-y-auto">
@@ -84,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium"
                 >
                   <Icon className="w-4.5 h-4.5 shrink-0" />
-                  <span>{item.label}</span>
+                  <span>{t(item.key)}</span>
                 </button>
               );
             })}
@@ -123,17 +125,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 text-(--error) hover:bg-(--error)/10 rounded-(--radius-button) transition-colors border border-(--error)/20 hover:border-(--error)/40 text-sm font-medium"
               >
                 <LogOut className="w-4 h-4" />
-                Log Out
+                {t('Log Out')}
               </button>
             </div>
           ) : (
              <div className="flex flex-col gap-3">
-                <p className="text-sm text-(--text-muted) px-1">Guest</p>
+                <p className="text-sm text-(--text-muted) px-1">{t('Guest')}</p>
                 <button
                   onClick={() => handleNavigation('/')}
                   className="w-full px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors text-sm font-bold"
                 >
-                  Log In
+                  {t('Log In')}
                 </button>
              </div>
           )}

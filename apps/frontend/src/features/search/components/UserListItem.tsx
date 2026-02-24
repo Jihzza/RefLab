@@ -1,6 +1,7 @@
 import React from 'react'
 import type { SearchedUser } from '../types'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   user: SearchedUser
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function UserListItem({ user, onSelect }: Props) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const openProfile = () => {
@@ -47,13 +49,13 @@ export default function UserListItem({ user, onSelect }: Props) {
       </div>
       <div className="flex items-center gap-2">
         {user.is_following ? (
-          <span className="px-3 py-1 text-xs bg-(--bg-surface-2) text-(--text-muted) rounded-full">Following</span>
+          <span className="px-3 py-1 text-xs bg-(--bg-surface-2) text-(--text-muted) rounded-full">{t('People I follow')}</span>
         ) : (
           <button
             onClick={(e) => { e.stopPropagation(); openProfile() }}
             className="px-3 py-1 bg-(--brand-yellow) text-(--bg-primary) rounded-full text-sm font-medium hover:bg-(--brand-yellow-soft)"
           >
-            View
+            {t('View')}
           </button>
         )}
       </div>

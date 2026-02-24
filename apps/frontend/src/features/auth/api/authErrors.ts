@@ -17,16 +17,16 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
   // Context-specific mappings
   if (context === 'login') {
     if (msg.includes('Invalid login credentials')) {
-      return { message: 'Invalid email or password' }
+      return { message: 'Email ou palavra-passe inválidos.' }
     }
     if (msg.includes('Email not confirmed')) {
-      return { message: 'Please confirm your email before logging in' }
+      return { message: 'Confirma o teu email antes de iniciares sessão.' }
     }
   }
 
   if (context === 'signup') {
     if (msg.includes('User already registered')) {
-      return { field: 'email', message: 'An account with this email already exists' }
+      return { field: 'email', message: 'Já existe uma conta com este email.' }
     }
     if (msg.includes('Password')) {
       return { field: 'password', message: msg }
@@ -35,16 +35,16 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
 
   if (context === 'update-password') {
     if (msg.includes('New password should be different')) {
-      return { message: 'New password must be different from your current password' }
+      return { message: 'A nova palavra-passe deve ser diferente da atual.' }
     }
   }
 
   // Generic mappings (apply to any context)
   if (msg.includes('Auth session missing')) {
-    return { message: 'Your session has expired. Please sign in again.' }
+    return { message: 'A tua sessão expirou. Inicia sessão novamente.' }
   }
   if (msg.includes('rate limit')) {
-    return { message: 'Too many requests. Please try again later.' }
+    return { message: 'Demasiados pedidos. Tenta novamente mais tarde.' }
   }
 
   // Fallback: pass through raw message

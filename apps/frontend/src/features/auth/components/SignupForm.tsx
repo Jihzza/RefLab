@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "./useAuth";
 import { mapAuthError } from "../api/authErrors";
 import type { AuthFormErrors } from "../types";
+import { useTranslation } from "react-i18next";
 
 /**
  * SignupForm - Email/password registration form with Google OAuth option
@@ -14,6 +15,7 @@ import type { AuthFormErrors } from "../types";
  * - Shows success message after signup (email confirmation required)
  */
 export default function SignupForm() {
+  const { t } = useTranslation();
   const { signUp, signInWithGoogle } = useAuth();
 
   // Form state
@@ -31,21 +33,21 @@ export default function SignupForm() {
     const newErrors: AuthFormErrors = {};
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = t("Email is required");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Please enter a valid email";
+      newErrors.email = t("Please enter a valid email");
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t("Password is required");
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = t("Password must be at least 6 characters");
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
+      newErrors.confirmPassword = t("Please confirm your password");
     } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+      newErrors.confirmPassword = t("Passwords do not match");
     }
 
     setErrors(newErrors);
@@ -77,7 +79,7 @@ export default function SignupForm() {
     // Success - show confirmation message
     // User needs to confirm their email before they can log in
     setSuccessMessage(
-      "Account created! Please check your email to confirm your account."
+      t("Account created! Please check your email to confirm your account.")
     );
     setLoading(false);
 
@@ -120,7 +122,7 @@ export default function SignupForm() {
       {/* Email field */}
       <div className="space-y-2">
         <label htmlFor="signup-email" className="block text-sm font-medium text-(--text-secondary)">
-          Email
+          {t("Email")}
         </label>
         <input
           id="signup-email"
@@ -137,7 +139,7 @@ export default function SignupForm() {
             focus:border-(--brand-yellow) 
             focus:ring-1 focus:ring-(--brand-yellow)
             disabled:opacity-50 disabled:cursor-not-allowed"
-          placeholder="you@example.com"
+          placeholder="tu@exemplo.com"
         />
         {errors.email && (
           <p className="text-sm text-(--error)">{errors.email}</p>
@@ -147,7 +149,7 @@ export default function SignupForm() {
       {/* Password field */}
       <div className="space-y-2">
         <label htmlFor="signup-password" className="block text-sm font-medium text-(--text-secondary)">
-          Password
+          {t("Password")}
         </label>
         <input
           id="signup-password"
@@ -169,13 +171,13 @@ export default function SignupForm() {
         {errors.password && (
           <p className="text-sm text-(--error)">{errors.password}</p>
         )}
-        <p className="text-xs text-(--text-muted)">Minimum 6 characters</p>
+        <p className="text-xs text-(--text-muted)">{t("Minimum 6 characters")}</p>
       </div>
 
       {/* Confirm password field */}
       <div className="space-y-2">
         <label htmlFor="signup-confirm" className="block text-sm font-medium text-(--text-secondary)">
-          Confirm Password
+          {t("Confirm Password")}
         </label>
         <input
           id="signup-confirm"
@@ -211,7 +213,7 @@ export default function SignupForm() {
           hover:shadow-[0_0_15px_rgb(var(--brand-yellow)_/_0.3)]
           disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "Creating account..." : "Create account"}
+        {loading ? t("Creating account...") : t("Create account")}
       </button>
 
       {/* Divider */}
@@ -220,7 +222,7 @@ export default function SignupForm() {
           <div className="w-full border-t border-(--border-subtle)"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-(--bg-surface) text-(--text-muted)">or</span>
+          <span className="px-2 bg-(--bg-surface) text-(--text-muted)">{t("or")}</span>
         </div>
       </div>
 
@@ -256,7 +258,7 @@ export default function SignupForm() {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-        <span className="font-medium">Continue with Google</span>
+        <span className="font-medium">{t("Continue with Google")}</span>
       </button>
     </form>
   );

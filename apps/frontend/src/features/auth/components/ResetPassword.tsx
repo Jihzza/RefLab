@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
 import { mapAuthError } from "../api/authErrors";
+import { useTranslation } from "react-i18next";
 
 /**
  * ResetPassword - Page for setting a new password after clicking reset link
@@ -17,6 +18,7 @@ import { mapAuthError } from "../api/authErrors";
  * Important: This page should only be accessible via the email reset link.
  */
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { updatePassword, user, recoveryMode } = useAuth();
 
@@ -43,7 +45,7 @@ export default function ResetPassword() {
     const timer = setTimeout(() => {
       if (!user && !recoveryMode) {
         setError(
-          "Invalid or expired reset link. Please request a new password reset."
+          t("Invalid or expired reset link. Please request a new password reset.")
         );
       }
     }, 5000);
@@ -53,17 +55,17 @@ export default function ResetPassword() {
 
   const validateForm = (): boolean => {
     if (!password) {
-      setError("Password is required");
+      setError(t("Password is required"));
       return false;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("Password must be at least 6 characters"));
       return false;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("Passwords do not match"));
       return false;
     }
 
@@ -112,8 +114,8 @@ export default function ResetPassword() {
       <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
         <div className="w-full max-w-md text-center">
           <div className="p-4 rounded-(--radius-card) bg-(--success)/10 border border-(--success)/20 text-(--success)">
-            <h2 className="text-lg font-semibold mb-2">Password updated!</h2>
-            <p>Redirecting you to the dashboard...</p>
+            <h2 className="text-lg font-semibold mb-2">{t("Password updated!")}</h2>
+            <p>{t("Redirecting you to the dashboard...")}</p>
           </div>
         </div>
       </div>
@@ -125,9 +127,9 @@ export default function ResetPassword() {
       <div className="w-full max-w-md p-8 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-(--shadow-soft)">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-(--text-primary)">Set new password</h1>
+          <h1 className="text-2xl font-bold text-(--text-primary)">{t("Set new password")}</h1>
           <p className="mt-2 text-(--text-secondary)">
-            Enter your new password below.
+            {t("Enter your new password below.")}
           </p>
         </div>
 
@@ -145,7 +147,7 @@ export default function ResetPassword() {
               htmlFor="new-password"
               className="block text-sm font-medium text-(--text-secondary)"
             >
-              New Password
+              {t("New Password")}
             </label>
             <input
               id="new-password"
@@ -164,7 +166,7 @@ export default function ResetPassword() {
                 disabled:opacity-50 disabled:cursor-not-allowed"
               placeholder="••••••••"
             />
-            <p className="text-xs text-(--text-muted)">Minimum 6 characters</p>
+            <p className="text-xs text-(--text-muted)">{t("Minimum 6 characters")}</p>
           </div>
 
           {/* Confirm password field */}
@@ -173,7 +175,7 @@ export default function ResetPassword() {
               htmlFor="confirm-new-password"
               className="block text-sm font-medium text-(--text-secondary)"
             >
-              Confirm New Password
+              {t("Confirm New Password")}
             </label>
             <input
               id="confirm-new-password"
@@ -206,7 +208,7 @@ export default function ResetPassword() {
               hover:shadow-[0_0_15px_rgb(var(--brand-yellow)_/_0.3)]
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Updating..." : "Update password"}
+            {loading ? t("Updating...") : t("Update password")}
           </button>
 
           {/* Back to login link */}
@@ -216,7 +218,7 @@ export default function ResetPassword() {
               onClick={() => navigate("/")}
               className="text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
             >
-              Back to login
+              {t("Back to login")}
             </button>
           </div>
         </form>

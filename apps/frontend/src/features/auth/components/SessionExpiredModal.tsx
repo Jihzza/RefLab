@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 interface SessionExpiredModalProps {
   isOpen: boolean
@@ -6,6 +7,7 @@ interface SessionExpiredModalProps {
 }
 
 export default function SessionExpiredModal({ isOpen, onClose }: SessionExpiredModalProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   if (!isOpen) return null
@@ -23,16 +25,16 @@ export default function SessionExpiredModal({ isOpen, onClose }: SessionExpiredM
       {/* Modal */}
       <div className="relative bg-(--bg-surface) rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
         <h2 className="text-lg font-semibold text-(--text-primary) mb-2">
-          Session Expired
+          {t('Session Expired')}
         </h2>
         <p className="text-gray-600 mb-6">
-          Your session has expired. Please log in again to continue.
+          {t('Your session has expired. Please log in again to continue.')}
         </p>
         <button
           onClick={handleLogin}
           className="w-full bg-(--brand-yellow) text-(--bg-primary) py-2 px-4 rounded-lg hover:bg-(--brand-yellow-soft) transition-colors"
         >
-          Log In
+          {t('Log In')}
         </button>
       </div>
     </div>

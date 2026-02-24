@@ -2,6 +2,7 @@ import { Target, Video } from 'lucide-react'
 import type { PerformanceStats } from '../types'
 import StatCard from './StatCard'
 import TopicAccuracyCard from './TopicAccuracyCard'
+import { useTranslation } from 'react-i18next'
 
 interface PerformanceSectionProps {
   performance: PerformanceStats
@@ -12,6 +13,7 @@ interface PerformanceSectionProps {
  * match simulation accuracy, and pass rate metrics.
  */
 export default function PerformanceSection({ performance }: PerformanceSectionProps) {
+  const { t } = useTranslation()
   const {
     overall_accuracy,
     accuracy_by_topic,
@@ -24,17 +26,17 @@ export default function PerformanceSection({ performance }: PerformanceSectionPr
       {/* Section header */}
       <div className="flex items-center gap-2">
         <Target size={18} className="text-(--text-muted)" aria-hidden="true" />
-        <h2 className="text-base font-semibold text-(--text-primary)">Performance</h2>
+        <h2 className="text-base font-semibold text-(--text-primary)">{t('Performance')}</h2>
       </div>
 
       {/* Overall Accuracy — full width */}
       <StatCard
-        label="Overall Accuracy"
+        label={t('Overall Accuracy')}
         value={overall_accuracy}
         suffix="%"
         showBar
         barPercent={overall_accuracy ?? 0}
-        emptyText="Complete your first test to see accuracy"
+        emptyText={t('Complete your first test to see accuracy')}
       />
 
       {/* Accuracy by Topic — full width list */}
@@ -43,21 +45,21 @@ export default function PerformanceSection({ performance }: PerformanceSectionPr
       {/* Match Sim Accuracy + Pass Rate — 2 column grid */}
       <div className="grid grid-cols-2 gap-4">
         <StatCard
-          label="Match Simulation"
+          label={t('Match Simulation')}
           value={match_simulation_accuracy}
           suffix="%"
           showBar
           barPercent={match_simulation_accuracy ?? 0}
-          emptyText="No video data yet"
+          emptyText={t('No video data yet')}
           emptyIcon={<Video size={18} />}
         />
         <StatCard
-          label="Pass Rate"
+          label={t('Pass Rate')}
           value={pass_rate}
           suffix="%"
           showBar
           barPercent={pass_rate ?? 0}
-          emptyText="Complete tests to see pass rate"
+          emptyText={t('Complete tests to see pass rate')}
         />
       </div>
     </section>

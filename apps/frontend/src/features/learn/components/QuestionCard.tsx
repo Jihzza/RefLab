@@ -1,4 +1,5 @@
 import type { TestQuestion, OptionLetter } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface QuestionCardProps {
   question: TestQuestion
@@ -23,6 +24,7 @@ export default function QuestionCard({
   onSelectOption,
   isLocked = false,
 }: QuestionCardProps) {
+  const { t } = useTranslation()
   const options: { letter: OptionLetter; text: string }[] = [
     { letter: 'A', text: question.option_a },
     { letter: 'B', text: question.option_b },
@@ -35,7 +37,7 @@ export default function QuestionCard({
       {/* Question header */}
       <div className="mb-4">
         <span className="text-sm text-(--text-muted)">
-          Question {questionNumber} of {totalQuestions}
+          {t('Question {{current}} of {{total}}', { current: questionNumber, total: totalQuestions })}
         </span>
       </div>
 

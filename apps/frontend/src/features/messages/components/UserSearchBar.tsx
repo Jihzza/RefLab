@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 interface UserSearchBarProps {
   query: string
   onChange: (value: string) => void
@@ -13,6 +15,8 @@ export default function UserSearchBar({
   disabled = false,
   placeholder = 'Search users...',
 }: UserSearchBarProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex items-center gap-2 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) px-3 py-2">
       <svg
@@ -34,7 +38,7 @@ export default function UserSearchBar({
         value={query}
         onChange={e => onChange(e.target.value)}
         disabled={disabled}
-        placeholder={placeholder}
+        placeholder={t(placeholder)}
         className="w-full bg-transparent text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none"
       />
 
@@ -42,7 +46,7 @@ export default function UserSearchBar({
         <button
           onClick={onClear}
           className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-          aria-label="Clear search"
+          aria-label={t('Clear search')}
           type="button"
         >
           <svg

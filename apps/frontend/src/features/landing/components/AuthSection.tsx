@@ -2,6 +2,7 @@ import { useState } from "react";
 import LoginForm from "@/features/auth/components/LoginForm";
 import SignupForm from "@/features/auth/components/SignupForm";
 import ForgotPassword from "@/features/auth/components/ForgotPassword";
+import { useTranslation } from "react-i18next";
 
 // The three views this component can show
 type AuthView = "login" | "signup" | "forgot-password";
@@ -25,6 +26,7 @@ type AuthView = "login" | "signup" | "forgot-password";
  * └─────────────────────────────────────┘
  */
 export default function AuthSection() {
+  const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<AuthView>("login");
 
   // Handle "Forgot password?" click from LoginForm
@@ -53,7 +55,7 @@ export default function AuthSection() {
                 : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
             }`}
           >
-            Log in
+            {t("Log In")}
           </button>
 
           {/* Signup tab */}
@@ -66,7 +68,7 @@ export default function AuthSection() {
                 : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
             }`}
           >
-            Sign up
+            {t("Sign up")}
           </button>
         </div>
       )}

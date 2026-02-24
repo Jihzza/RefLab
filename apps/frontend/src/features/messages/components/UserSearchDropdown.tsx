@@ -1,4 +1,5 @@
 import type { UserSearchResult } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface UserSearchDropdownProps {
   query: string
@@ -15,6 +16,8 @@ export default function UserSearchDropdown({
   onSelect,
   isOpen,
 }: UserSearchDropdownProps) {
+  const { t } = useTranslation()
+
   if (!isOpen) return null
 
   return (
@@ -27,7 +30,7 @@ export default function UserSearchDropdown({
 
       {!isSearching && results.length === 0 && (
         <div className="px-4 py-3 text-sm text-(--text-muted)">
-          {query.trim() ? 'No users found' : 'Type to search'}
+          {query.trim() ? t('No users found') : t('Type to search')}
         </div>
       )}
 

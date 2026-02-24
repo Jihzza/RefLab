@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Zap, Scale, MapPin, BarChart3, Target, TrendingUp, BookOpen } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getQuestionSessionKPIs } from '../../api/testsApi'
 import type { QuestionSessionKPIs } from '../../types'
 
@@ -22,6 +23,7 @@ export default function QuestionsLanding({
   onStartByLaw,
   onStartByArea,
 }: QuestionsLandingProps) {
+  const { t } = useTranslation()
   const [kpis, setKpis] = useState<QuestionSessionKPIs | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -48,10 +50,10 @@ export default function QuestionsLanding({
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-(--text-primary) mb-2">
-          Practice Questions
+          {t('Practice Questions')}
         </h2>
         <p className="text-sm text-(--text-secondary)">
-          Answer at your own pace · No time limit
+          {t('Answer at your own pace · No time limit')}
         </p>
       </div>
 
@@ -59,27 +61,27 @@ export default function QuestionsLanding({
       <div className="grid grid-cols-2 gap-3">
         <KPICard
           icon={<BarChart3 size={18} />}
-          label="Sessions This Week"
+          label={t('Sessions This Week')}
           value={loading ? '—' : kpis?.sessionsThisWeek.toString() || '0'}
-          emptyText="No sessions yet"
+          emptyText={t('No sessions yet')}
         />
         <KPICard
           icon={<BookOpen size={18} />}
-          label="Questions Answered"
+          label={t('Questions Answered')}
           value={loading ? '—' : kpis?.totalQuestionsAnswered.toString() || '0'}
-          emptyText="No answers yet"
+          emptyText={t('No answers yet')}
         />
         <KPICard
           icon={<Target size={18} />}
-          label="Overall Accuracy"
+          label={t('Overall Accuracy')}
           value={loading ? '—' : kpis?.overallAccuracy !== null && kpis?.overallAccuracy !== undefined ? `${kpis.overallAccuracy}%` : '—'}
-          emptyText="Answer questions to see"
+          emptyText={t('Answer questions to see')}
         />
         <KPICard
           icon={<TrendingUp size={18} />}
-          label="Avg Session Accuracy"
+          label={t('Avg Session Accuracy')}
           value={loading ? '—' : kpis?.avgSessionAccuracy !== null && kpis?.avgSessionAccuracy !== undefined ? `${kpis.avgSessionAccuracy}%` : '—'}
-          emptyText="Complete a session"
+          emptyText={t('Complete a session')}
         />
       </div>
 
@@ -90,7 +92,7 @@ export default function QuestionsLanding({
           className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md"
         >
           <Zap size={22} />
-          Quick Questions
+          {t('Quick Questions')}
         </button>
 
         <button
@@ -98,7 +100,7 @@ export default function QuestionsLanding({
           className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
         >
           <Scale size={18} />
-          By Law
+          {t('By Law')}
         </button>
 
         <button
@@ -106,7 +108,7 @@ export default function QuestionsLanding({
           className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
         >
           <MapPin size={18} />
-          By Area
+          {t('By Area')}
         </button>
       </div>
     </div>

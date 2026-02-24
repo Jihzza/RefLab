@@ -6,6 +6,7 @@
  */
 
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const FOOTER_LINKS = [
   { label: 'Privacy Policy', to: '/privacy' },
@@ -14,6 +15,8 @@ const FOOTER_LINKS = [
 ];
 
 export default function FooterSection() {
+  const { t } = useTranslation();
+
   return (
     <footer className="border-t border-(--border-subtle) mt-8 py-6 px-6">
       <div className="max-w-xl mx-auto text-center">
@@ -25,14 +28,14 @@ export default function FooterSection() {
               to={link.to}
               className="text-sm text-(--text-muted) hover:text-(--text-secondary) transition-colors"
             >
-              {link.label}
+              {t(link.label)}
             </Link>
           ))}
         </nav>
 
         {/* Copyright */}
         <p className="text-xs text-(--text-muted)">
-          &copy; {new Date().getFullYear()} RefLab. All rights reserved.
+          {t('© {{year}} RefLab. All rights reserved.', { year: new Date().getFullYear() })}
         </p>
       </div>
     </footer>

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getUnreadCount } from '../api/notificationsApi'
+import { useTranslation } from 'react-i18next'
 
 /**
  * NotificationBell - Header bell icon with unread count badge.
@@ -12,6 +13,7 @@ import { getUnreadCount } from '../api/notificationsApi'
  * visiting the notifications page (which marks all as read).
  */
 export default function NotificationBell() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -36,8 +38,8 @@ export default function NotificationBell() {
       className="relative p-2"
       aria-label={
         unreadCount > 0
-          ? `Notifications (${unreadCount} unread)`
-          : 'Notifications'
+          ? `${t('Notifications')} (${unreadCount})`
+          : t('Notifications')
       }
     >
       <Bell className="w-6 h-6 text-(--text-secondary) hover:text-(--text-primary) transition-colors" />

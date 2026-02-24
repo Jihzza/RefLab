@@ -3,6 +3,7 @@ import { useAuth } from '@/features/auth/components/useAuth'
 import { useComments } from '../hooks/useComments'
 import CommentBox from './CommentBox'
 import MentionDropdown from './MentionDropdown'
+import { useTranslation } from 'react-i18next'
 
 interface CommentSectionProps {
   postId: string
@@ -14,6 +15,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   postId,
   onCommentCountChange,
 }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const {
     comments,
@@ -136,14 +138,14 @@ const CommentSection: React.FC<CommentSectionProps> = ({
           {replyingTo && (
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px] text-(--text-muted)">
-                Replying to comment
+                {t('Replying to comment')}
               </span>
               <button
                 type="button"
                 onClick={() => setReplyingTo(null)}
                 className="text-[11px] text-(--info) hover:underline"
               >
-                Cancel
+                {t('Cancel')}
               </button>
             </div>
           )}
@@ -152,7 +154,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             type="text"
             value={newComment}
             onChange={handleInputChange}
-            placeholder={replyingTo ? 'Write a reply...' : 'Add a comment...'}
+            placeholder={replyingTo ? t('Write a reply...') : t('Add a comment...')}
             className="w-full px-3 py-2 text-sm bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
           />
           {mentionQuery !== null && (
@@ -168,7 +170,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
           disabled={!newComment.trim() || isSubmitting}
           className="px-3 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
         >
-          Post
+          {t('Post')}
         </button>
       </form>
 
@@ -216,7 +218,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       {/* Empty state */}
       {!isLoading && comments.length === 0 && (
         <p className="text-center text-(--text-muted) text-xs py-2">
-          No comments yet. Be the first!
+          {t('No comments yet. Be the first!')}
         </p>
       )}
     </div>

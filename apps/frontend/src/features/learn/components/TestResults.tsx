@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { TestAttempt } from '../types'
 
 interface TestResultsProps {
@@ -12,6 +13,7 @@ interface TestResultsProps {
  * Shows correct/total, percentage, and a button to go back.
  */
 export default function TestResults({ attempt, testTitle }: TestResultsProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const scorePercent = attempt.score_percent ?? 0
@@ -26,9 +28,9 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
   }
 
   const getScoreMessage = () => {
-    if (scorePercent >= 80) return 'Excellent work!'
-    if (scorePercent >= 60) return 'Good effort!'
-    return 'Keep practicing!'
+    if (scorePercent >= 80) return t('Excellent work!')
+    if (scorePercent >= 60) return t('Good effort!')
+    return t('Keep practicing!')
   }
 
   return (
@@ -36,7 +38,7 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
       <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-8 max-w-md w-full text-center">
         {/* Title */}
         <h1 className="text-xl font-bold text-(--text-primary) mb-2">{testTitle}</h1>
-        <p className="text-(--text-muted) mb-6">Test Completed</p>
+        <p className="text-(--text-muted) mb-6">{t('Test Completed')}</p>
 
         {/* Score circle */}
         <div className="mb-6">
@@ -44,7 +46,7 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
             {scorePercent}%
           </div>
           <p className="text-(--text-secondary) mt-2">
-            {scoreCorrect} out of {scoreTotal} correct
+            {t('{{correct}} out of {{total}} correct', { correct: scoreCorrect, total: scoreTotal })}
           </p>
         </div>
 
@@ -58,16 +60,16 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
           <button
             onClick={() => navigate('/app/dashboard')}
             className="w-full py-3 px-4 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            aria-label="View dashboard"
+            aria-label={t('View dashboard')}
           >
-            View Dashboard
+            {t('View Dashboard')}
           </button>
           <button
             onClick={() => navigate('/app/learn')}
             className="w-full py-3 px-4 bg-(--bg-surface-2) text-(--text-secondary) rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors border border-(--border-subtle)"
-            aria-label="Back to learn"
+            aria-label={t('Back to learn')}
           >
-            Back to Learn
+            {t('Back to Learn')}
           </button>
         </div>
       </div>

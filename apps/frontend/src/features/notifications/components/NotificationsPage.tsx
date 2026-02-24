@@ -3,6 +3,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import NotificationBanner, {
   NotificationBannerSkeleton,
 } from './NotificationBanner'
+import { useTranslation } from 'react-i18next'
 
 /**
  * NotificationsPage - Displays all user notifications with read/unread styling.
@@ -15,6 +16,7 @@ import NotificationBanner, {
  * Route: /app/notifications
  */
 export default function NotificationsPage() {
+  const { t } = useTranslation()
   const { notifications, loading, error, isVisuallyUnread } =
     useNotifications()
 
@@ -23,7 +25,7 @@ export default function NotificationsPage() {
       {/* Page header */}
       <div className="px-4 pt-4 pb-2">
         <h1 className="text-xl font-bold text-(--text-primary)">
-          Notifications
+          {t('Notifications')}
         </h1>
       </div>
 
@@ -50,10 +52,10 @@ export default function NotificationsPage() {
             <Bell className="w-8 h-8 text-(--text-muted)" aria-hidden="true" />
           </div>
           <p className="text-(--text-muted) text-sm text-center">
-            No notifications yet
+            {t('No notifications yet')}
           </p>
           <p className="text-(--text-muted) text-xs text-center mt-1">
-            When someone interacts with your content, you'll see it here.
+            {t("When someone interacts with your content, you'll see it here.")}
           </p>
         </div>
       )}
@@ -63,7 +65,7 @@ export default function NotificationsPage() {
         <div
           className="divide-y divide-(--border-subtle) pb-4"
           role="list"
-          aria-label="Notifications list"
+          aria-label={t('Notifications list')}
         >
           {notifications.map((notification) => (
             <NotificationBanner

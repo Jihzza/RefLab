@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface MessageInputProps {
   onSend: (content: string, mediaFile?: File) => void | Promise<void>
@@ -9,6 +10,7 @@ const ACCEPT_MIME =
   'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/webm'
 
 export default function MessageInput({ onSend, isSending }: MessageInputProps) {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -65,7 +67,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
             onClick={removeMedia}
             type="button"
             className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-            aria-label="Remove attachment"
+            aria-label={t('Remove attachment')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +88,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
           type="button"
           onClick={() => fileInputRef.current?.click()}
           className="w-10 h-10 rounded-(--radius-button) flex items-center justify-center text-(--text-secondary) hover:bg-(--bg-hover) hover:text-(--brand-yellow) transition-colors"
-          aria-label="Attach media"
+          aria-label={t('Attach media')}
           disabled={isSending}
         >
           <svg
@@ -114,7 +116,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
               void handleSend()
             }
           }}
-          placeholder="Write message..:"
+          placeholder={t('Write message..:')}
           className="flex-1 h-10 px-4 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
           disabled={isSending}
         />
@@ -124,9 +126,9 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
           onClick={() => void handleSend()}
           disabled={!canSend}
           className="h-10 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
-          aria-label="Send"
+          aria-label={t('Send')}
         >
-          {isSending ? 'Sending...' : 'Send'}
+          {isSending ? t('Sending...') : t('Send')}
         </button>
 
         <input

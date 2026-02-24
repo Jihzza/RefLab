@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface PublicProfileMenuProps {
   username: string
@@ -19,6 +20,7 @@ export default function PublicProfileMenu({
   onShare,
   onCopyLink,
 }: PublicProfileMenuProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleAction = (action: () => void) => {
@@ -32,7 +34,7 @@ export default function PublicProfileMenu({
         type="button"
         onClick={() => setIsOpen(prev => !prev)}
         className="w-9 h-9 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-        aria-label={`Open actions for @${username}`}
+        aria-label={t('Open actions for @{{username}}', { username })}
         disabled={isBusy}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -50,9 +52,9 @@ export default function PublicProfileMenu({
             <button
               type="button"
               onClick={() => handleAction(onToggleBlock)}
-              className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors"
-            >
-              {isBlockedByViewer ? 'Unblock User' : 'Block User'}
+            className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors"
+          >
+              {isBlockedByViewer ? t('Unblock User') : t('Block User')}
             </button>
 
             <button
@@ -60,7 +62,7 @@ export default function PublicProfileMenu({
               onClick={() => handleAction(onReport)}
               className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
             >
-              Report User
+              {t('Report User')}
             </button>
 
             <button
@@ -68,7 +70,7 @@ export default function PublicProfileMenu({
               onClick={() => handleAction(onShare)}
               className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
             >
-              Share Profile
+              {t('Share Profile')}
             </button>
 
             <button
@@ -76,7 +78,7 @@ export default function PublicProfileMenu({
               onClick={() => handleAction(onCopyLink)}
               className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
             >
-              Copy Link
+              {t('Copy Link')}
             </button>
           </div>
         </>

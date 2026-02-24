@@ -1,10 +1,14 @@
+import { useTranslation } from 'react-i18next'
+
 /**
  * DashboardSkeleton — Loading placeholder that mirrors the dashboard layout.
  * Shows animated pulse blocks for each section while data loads.
  */
 export default function DashboardSkeleton() {
+  const { t } = useTranslation()
+
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
+    <div className="space-y-6" aria-busy="true" aria-label={t('Loading dashboard')}>
       {/* Performance section */}
       <div className="space-y-4">
         <div className="h-5 w-32 bg-(--bg-surface-2) rounded animate-pulse" />

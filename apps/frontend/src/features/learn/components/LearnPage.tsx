@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { FileText, GraduationCap, Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   getUserCompletedAttempts,
   getVideoScenarios,
@@ -46,6 +47,8 @@ function LearnNav({
   activeTab: TabKey
   setActiveTab: (tab: TabKey) => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <nav className="border-b border-(--border-subtle) mb-6 -mx-4 px-4">
       <div className="flex overflow-x-auto no-scrollbar py-3 gap-4 md:justify-center">
@@ -60,7 +63,7 @@ function LearnNav({
             }`}
             aria-current={activeTab === tab.key ? 'page' : undefined}
           >
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>
@@ -73,6 +76,7 @@ function LearnNav({
 type TestViewState = 'landing' | 'test' | 'results' | 'history'
 
 function TestView() {
+  const { t, i18n } = useTranslation()
   const [view, setView] = useState<TestViewState>('landing')
   const [attemptId, setAttemptId] = useState<string>('')
   const [history, setHistory] = useState<TestAttempt[]>([])
@@ -129,9 +133,9 @@ function TestView() {
             onClick={() => setView('landing')}
             className="text-sm text-(--text-muted) hover:text-(--text-primary)"
           >
-            &larr; Back
+            &larr; {t('Back')}
           </button>
-          <h2 className="text-lg font-semibold text-(--text-primary)">Test History</h2>
+          <h2 className="text-lg font-semibold text-(--text-primary)">{t('Test History')}</h2>
         </div>
 
         {historyLoading ? (
@@ -140,7 +144,7 @@ function TestView() {
           </div>
         ) : history.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm">No completed tests yet.</p>
+            <p className="text-(--text-muted) text-sm">{t('No completed tests yet.')}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -148,7 +152,7 @@ function TestView() {
               const pct = entry.score_percent ?? 0
               const isPassing = pct >= 80
               const date = entry.submitted_at
-                ? new Date(entry.submitted_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+                ? new Date(entry.submitted_at).toLocaleDateString(i18n.language || 'pt-PT', { day: 'numeric', month: 'short', year: 'numeric' })
                 : '—'
               const duration = entry.time_elapsed_seconds !== null
                 ? `${Math.floor(entry.time_elapsed_seconds / 60)}:${String(entry.time_elapsed_seconds % 60).padStart(2, '0')}`
@@ -162,7 +166,7 @@ function TestView() {
                   <div>
                     <p className="text-sm text-(--text-primary) font-medium">{date}</p>
                     <p className="text-xs text-(--text-muted) mt-0.5">
-                      {entry.score_correct}/{entry.score_total} correct
+                      {t('{{correct}}/{{total}} correct', { correct: entry.score_correct, total: entry.score_total })}
                       {duration && ` · ${duration}`}
                     </p>
                   </div>
@@ -313,6 +317,7 @@ const SANCTION_OPTIONS = [
 type VideoStep = 'action' | 'sanction' | 'result'
 
 function VideosView() {
+  const { t } = useTranslation()
   const [scenarios, setScenarios] = useState<VideoScenario[]>([])
   const [actionOptionsPerScenario, setActionOptionsPerScenario] = useState<string[][]>([])
   const [loading, setLoading] = useState(true)
@@ -372,7 +377,7 @@ function VideosView() {
   if (scenarios.length === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">No video scenarios available yet.</p>
+        <p className="text-(--text-muted) text-sm">{t('No video scenarios available yet.')}</p>
       </div>
     )
   }
@@ -455,7 +460,7 @@ function VideosView() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-(--text-primary)">Video Analysis</h2>
+          <h2 className="text-sm font-medium text-(--text-primary)">{t('Video Analysis')}</h2>
           <span className="text-xs text-(--text-muted)">
             {currentIndex + 1} / {scenarios.length}
           </span>
@@ -465,35 +470,39 @@ function VideosView() {
           <div className="text-center">
             <h3 className="text-lg font-semibold text-(--text-primary)">{current.title}</h3>
             <p className={`text-2xl font-bold mt-1 ${bothCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-              {bothCorrect ? 'Both Correct' : actionCorrect || sanctionCorrect ? 'Partially Correct' : 'Incorrect'}
+              {bothCorrect ? t('Both Correct') : actionCorrect || sanctionCorrect ? t('Partially Correct') : t('Incorrect')}
             </p>
           </div>
 
           {/* Action result */}
           <div className={`p-4 rounded-lg border-2 ${actionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">Action</span>
+              <span className="text-xs font-medium text-(--text-muted)">{t('Action')}</span>
               <span className={`text-xs font-medium ${actionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-                {actionCorrect ? 'Correct' : 'Incorrect'}
+                {actionCorrect ? t('Correct') : t('Incorrect')}
               </span>
             </div>
-            <p className="text-sm text-(--text-primary) font-medium">{chosenAction}</p>
+            <p className="text-sm text-(--text-primary) font-medium">{t(chosenAction)}</p>
             {!actionCorrect && (
-              <p className="text-sm text-(--success) mt-1">Correct: {current.correct_action}</p>
+              <p className="text-sm text-(--success) mt-1">
+                {t('Correct')}: {t(current.correct_action)}
+              </p>
             )}
           </div>
 
           {/* Sanction result */}
           <div className={`p-4 rounded-lg border-2 ${sanctionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">Sanction</span>
+              <span className="text-xs font-medium text-(--text-muted)">{t('Sanction')}</span>
               <span className={`text-xs font-medium ${sanctionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
-                {sanctionCorrect ? 'Correct' : 'Incorrect'}
+                {sanctionCorrect ? t('Correct') : t('Incorrect')}
               </span>
             </div>
-            <p className="text-sm text-(--text-primary) font-medium">{chosenSanction}</p>
+            <p className="text-sm text-(--text-primary) font-medium">{t(chosenSanction)}</p>
             {!sanctionCorrect && (
-              <p className="text-sm text-(--success) mt-1">Correct: {current.correct_sanction}</p>
+              <p className="text-sm text-(--success) mt-1">
+                {t('Correct')}: {t(current.correct_sanction)}
+              </p>
             )}
           </div>
         </div>
@@ -502,7 +511,7 @@ function VideosView() {
           onClick={isLastVideo ? handleRestart : goToNext}
           className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
         >
-          {isLastVideo ? 'Start Over' : 'Next Video'}
+          {isLastVideo ? t('Start Over') : t('Next Video')}
         </button>
       </div>
     )
@@ -512,7 +521,7 @@ function VideosView() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-(--text-primary)">Video Analysis</h2>
+        <h2 className="text-sm font-medium text-(--text-primary)">{t('Video Analysis')}</h2>
         <span className="text-xs text-(--text-muted)">
           {currentIndex + 1} / {scenarios.length}
         </span>
@@ -535,10 +544,10 @@ function VideosView() {
         {/* Error overlay */}
         {videoError && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-4 text-center">
-            <p className="text-sm text-(--error) font-medium mb-2">Video failed to load</p>
-            <p className="text-xs text-white/60 break-all mb-1">File: {videoError}</p>
+            <p className="text-sm text-(--error) font-medium mb-2">{t('Video failed to load')}</p>
+            <p className="text-xs text-white/60 break-all mb-1">{t('File')}: {videoError}</p>
             <p className="text-xs text-white/40">
-              Upload this file to the &quot;learn-videos&quot; bucket in Supabase Storage and make the bucket public.
+              {t('Upload this file to the "learn-videos" bucket in Supabase Storage and make the bucket public.')}
             </p>
           </div>
         )}
@@ -581,7 +590,7 @@ function VideosView() {
       {step === 'action' && (
         <div className="space-y-3">
           <h3 className="text-base font-medium text-(--text-primary)">
-            What action should the referee take?
+            {t('What action should the referee take?')}
           </h3>
 
           <div className="space-y-2">
@@ -595,7 +604,7 @@ function VideosView() {
                     : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
                 }`}
               >
-                {option}
+                {t(option)}
               </button>
             ))}
           </div>
@@ -605,7 +614,7 @@ function VideosView() {
             disabled={selectedAction === null}
             className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
           >
-            Next — Sanction
+            {t('Next — Sanction')}
           </button>
         </div>
       )}
@@ -614,7 +623,7 @@ function VideosView() {
       {step === 'sanction' && (
         <div className="space-y-3">
           <h3 className="text-base font-medium text-(--text-primary)">
-            What sanction should be applied?
+            {t('What sanction should be applied?')}
           </h3>
 
           <div className="space-y-2">
@@ -628,7 +637,7 @@ function VideosView() {
                     : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
                 }`}
               >
-                {option}
+                {t(option)}
               </button>
             ))}
           </div>
@@ -638,14 +647,14 @@ function VideosView() {
               onClick={() => setStep('action')}
               className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary)"
             >
-              &larr; Back
+              &larr; {t('Back')}
             </button>
             <button
               onClick={handleConfirmSanction}
               disabled={selectedSanction === null}
               className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
             >
-              Confirm
+              {t('Confirm')}
             </button>
           </div>
         </div>
@@ -657,16 +666,19 @@ function VideosView() {
 /* ─── Other Tabs ─── */
 
 function PlaceholderTab({ icon: Icon, title }: { icon: typeof FileText; title: string }) {
+  const { t } = useTranslation()
+
   return (
     <div className="text-center py-16">
       <Icon className="w-10 h-10 text-(--text-muted) mx-auto mb-3" />
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{title}</h2>
-      <p className="text-sm text-(--text-muted)">Coming soon.</p>
+      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t(title)}</h2>
+      <p className="text-sm text-(--text-muted)">{t('Coming soon.')}</p>
     </div>
   )
 }
 
 function ResourcesView() {
+  const { t } = useTranslation()
   const resources = [
     { id: 1, title: 'Laws of the Game 2024/25', type: 'PDF', size: '2.4 MB' },
     { id: 2, title: 'Referee Positioning Guide', type: 'PDF', size: '1.1 MB' },
@@ -677,7 +689,7 @@ function ResourcesView() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-(--text-primary)">Study Resources</h2>
+      <h2 className="text-lg font-semibold text-(--text-primary)">{t('Study Resources')}</h2>
       <div className="space-y-2">
         {resources.map((res) => (
           <div
@@ -685,12 +697,12 @@ function ResourcesView() {
             className="flex items-center justify-between p-3 bg-(--bg-surface) rounded-lg border border-(--border-subtle)"
           >
             <div>
-              <h3 className="text-sm font-medium text-(--text-primary)">{res.title}</h3>
+              <h3 className="text-sm font-medium text-(--text-primary)">{t(res.title)}</h3>
               <p className="text-xs text-(--text-muted)">
                 {res.type} &middot; {res.size}
               </p>
             </div>
-            <button className="text-xs text-(--info) hover:underline">Download</button>
+            <button className="text-xs text-(--info) hover:underline">{t('Download')}</button>
           </div>
         ))}
       </div>

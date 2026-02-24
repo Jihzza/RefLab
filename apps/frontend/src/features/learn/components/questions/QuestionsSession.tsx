@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Loader2, Timer } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import {
   getQuestionsByFilters,
   savePracticeAnswerWithSession,
@@ -44,6 +45,8 @@ function WarningModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
+
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
       <div className="bg-(--bg-surface) p-6 rounded-lg max-w-sm w-full border border-(--border-subtle)">
@@ -54,7 +57,7 @@ function WarningModal({
             onClick={onCancel}
             className="flex-1 py-2 rounded-lg bg-(--bg-surface-2) text-(--text-secondary) font-medium text-sm"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -97,6 +100,7 @@ export default function QuestionsSession({
   startedAt,
   onEndSession,
 }: QuestionsSessionProps) {
+  const { t } = useTranslation()
   const [pool, setPool] = useState<TestQuestion[]>([])
   const [, setQueue] = useState<TestQuestion[]>([])
   const [loading, setLoading] = useState(true)
@@ -228,7 +232,7 @@ export default function QuestionsSession({
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        <p className="text-sm text-(--text-muted)">Loading questions…</p>
+        <p className="text-sm text-(--text-muted)">{t('Loading questions…')}</p>
       </div>
     )
   }
@@ -236,12 +240,12 @@ export default function QuestionsSession({
   if (!currentQ) {
     return (
       <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">No questions found for the selected filters.</p>
+        <p className="text-(--text-muted) text-sm">{t('No questions found for the selected filters.')}</p>
         <button
           onClick={handleEndSession}
           className="mt-4 px-4 py-2 text-sm rounded-lg bg-(--bg-surface-2) text-(--text-secondary)"
         >
-          Go Back
+          {t('Go Back')}
         </button>
       </div>
     )
@@ -255,9 +259,12 @@ export default function QuestionsSession({
     <>
       {showEndConfirm && (
         <WarningModal
-          title="End Session?"
-          message={`You've answered ${totalAnswered} question${totalAnswered !== 1 ? 's' : ''} so far. Your results will be shown on the next screen.`}
-          confirmLabel="End Session"
+          title={t('End Session?')}
+          message={t("You've answered {{total}} {{label}} so far. Your results will be shown on the next screen.", {
+            total: totalAnswered,
+            label: t(totalAnswered === 1 ? 'question' : 'questions'),
+          })}
+          confirmLabel={t('End Session')}
           onConfirm={handleEndSession}
           onCancel={() => setShowEndConfirm(false)}
         />
@@ -272,14 +279,14 @@ export default function QuestionsSession({
           </div>
 
           <span className="text-xs text-(--text-muted)">
-            {totalCorrect}/{totalAnswered} correct
+            {t('{{correct}}/{{total}} correct', { correct: totalCorrect, total: totalAnswered })}
           </span>
 
           <button
             onClick={() => setShowEndConfirm(true)}
             className="text-xs font-medium text-(--error) hover:opacity-80 transition-opacity"
           >
-            End Session
+            {t('End Session')}
           </button>
         </div>
 
@@ -327,14 +334,14 @@ export default function QuestionsSession({
               disabled={selectedOption === null}
               className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
             >
-              Check Answer
+              {t('Check Answer')}
             </button>
           ) : (
             <button
               onClick={advanceQuestion}
               className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
             >
-              Next Question &rarr;
+              {t('Next Question')} &rarr;
             </button>
           )}
         </div>

@@ -8,6 +8,7 @@ import type { UserSearchResult } from '../types'
 import ConversationItem from './ConversationItem'
 import UserSearchBar from './UserSearchBar'
 import UserSearchDropdown from './UserSearchDropdown'
+import { useTranslation } from 'react-i18next'
 
 function ConversationSkeleton() {
   return (
@@ -26,6 +27,7 @@ function ConversationSkeleton() {
 }
 
 export default function MessagesPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
 
@@ -49,7 +51,7 @@ export default function MessagesPage() {
       setIsStarting(false)
 
       if (startError || !conversationId) {
-        setActionError(startError?.message ?? 'Failed to start conversation.')
+        setActionError(startError?.message ?? t('Failed to start conversation.'))
         return
       }
 
@@ -77,7 +79,7 @@ export default function MessagesPage() {
             onChange={handleSearch}
             onClear={clearSearch}
             disabled={!user?.id || isStarting}
-            placeholder="Search"
+            placeholder={t('Search')}
           />
 
           <UserSearchDropdown
@@ -108,13 +110,13 @@ export default function MessagesPage() {
         {error && !isLoading && (
           <div className="text-center py-12">
             <p className="text-(--text-muted) text-sm mb-3">
-              Something went wrong loading your conversations.
+              {t('Something went wrong loading your conversations.')}
             </p>
             <button
               onClick={refresh}
               className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
             >
-              Try Again
+              {t('Try Again')}
             </button>
           </div>
         )}
@@ -148,10 +150,10 @@ export default function MessagesPage() {
               </svg>
             </div>
             <h3 className="text-base font-medium text-(--text-primary) mb-1">
-              No conversations yet
+              {t('No conversations yet')}
             </h3>
             <p className="text-sm text-(--text-muted)">
-              Search for someone above to start a conversation.
+              {t('Search for someone above to start a conversation.')}
             </p>
           </div>
         )}

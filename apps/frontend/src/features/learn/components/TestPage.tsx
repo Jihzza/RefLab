@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   getTestBySlug,
   getQuestions,
@@ -23,6 +24,7 @@ import TestResults from './TestResults'
  * - Submit to see results
  */
 export default function TestPage() {
+  const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
 
@@ -42,7 +44,7 @@ export default function TestPage() {
   useEffect(() => {
     async function loadTest() {
       if (!slug) {
-        setError('No test specified')
+        setError(t('No test specified'))
         setLoading(false)
         return
       }
@@ -54,7 +56,7 @@ export default function TestPage() {
         // 1. Get the test
         const { data: testData, error: testError } = await getTestBySlug(slug)
         if (testError || !testData) {
-          setError(testError?.message || 'Test not found')
+          setError(testError?.message || t('Test not found'))
           setLoading(false)
           return
         }
@@ -63,7 +65,7 @@ export default function TestPage() {
         // 2. Get questions
         const { data: questionsData, error: questionsError } = await getQuestions(testData.id)
         if (questionsError || !questionsData) {
-          setError(questionsError?.message || 'Failed to load questions')
+          setError(questionsError?.message || t('Failed to load questions'))
           setLoading(false)
           return
         }
@@ -72,7 +74,7 @@ export default function TestPage() {
         // 3. Get or create attempt
         const { data: attemptData, error: attemptError } = await getOrCreateAttempt(testData.id)
         if (attemptError || !attemptData) {
-          setError(attemptError?.message || 'Failed to create attempt')
+          setError(attemptError?.message || t('Failed to create attempt'))
           setLoading(false)
           return
         }
@@ -90,13 +92,13 @@ export default function TestPage() {
 
         setLoading(false)
       } catch (err) {
-        setError('An unexpected error occurred')
+        setError(t('An unexpected error occurred'))
         setLoading(false)
       }
     }
 
     loadTest()
-  }, [slug])
+  }, [slug, t])
 
   // Handle selecting an option
   const handleSelectOption = async (option: OptionLetter) => {
@@ -133,7 +135,7 @@ export default function TestPage() {
     const { data: updatedAttempt, error: submitError } = await submitAttempt(attempt.id)
 
     if (submitError || !updatedAttempt) {
-      setError(submitError?.message || 'Failed to submit test')
+      setError(submitError?.message || t('Failed to submit test'))
       setSubmitting(false)
       return
     }
@@ -164,7 +166,7 @@ export default function TestPage() {
             onClick={() => navigate('/app/learn')}
             className="mt-4 text-(--info) hover:underline"
           >
-            Back to Learn
+            {t('Back to Learn')}
           </button>
         </div>
       </div>
@@ -173,7 +175,7 @@ export default function TestPage() {
 
   // Show results if test is submitted
   if (attempt?.status === 'submitted') {
-    return <TestResults attempt={attempt} testTitle={test?.title || 'Test'} />
+    return <TestResults attempt={attempt} testTitle={test?.title || t('Test')} />
   }
 
   // Current question
@@ -192,12 +194,12 @@ export default function TestPage() {
               onClick={() => navigate('/app/learn')}
               className="text-(--text-muted) hover:text-(--text-secondary) text-sm mb-1"
             >
-              &larr; Back to Learn
+              &larr; {t('Back to Learn')}
             </button>
             <h1 className="text-xl font-bold text-(--text-primary)">{test?.title}</h1>
           </div>
           <div className="text-sm text-(--text-muted)">
-            {answeredCount} / {questions.length} answered
+            {t('{{answered}} / {{total}} answered', { answered: answeredCount, total: questions.length })}
           </div>
         </div>
       </div>
@@ -227,7 +229,7 @@ export default function TestPage() {
               }
             `}
           >
-            Previous
+            {t('Previous')}
           </button>
 
           {/* Question dots */}
@@ -249,7 +251,7 @@ export default function TestPage() {
                         : 'bg-(--bg-surface-2)'
                     }
                   `}
-                  aria-label={`Go to question ${idx + 1}`}
+                  aria-label={t('Go to question {{number}}', { number: idx + 1 })}
                 />
               )
             })}
@@ -267,14 +269,14 @@ export default function TestPage() {
                 }
               `}
             >
-              {submitting ? 'Submitting...' : 'Submit'}
+              {submitting ? t('Submitting...') : t('Submit')}
             </button>
           ) : (
             <button
               onClick={handleNext}
               className="px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) font-medium hover:bg-(--brand-yellow-soft)"
             >
-              Next
+              {t('Next')}
             </button>
           )}
         </div>

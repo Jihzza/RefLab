@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { PlayCircle, BarChart3, TrendingUp, Trophy, Clock, History } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getTestKPIs } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
 import type { TestKPIs } from '../../types'
@@ -18,6 +19,7 @@ interface RandomTestLandingProps {
  * - Link to test history
  */
 export default function RandomTestLanding({ onStartTest, onViewHistory }: RandomTestLandingProps) {
+  const { t } = useTranslation()
   const [kpis, setKpis] = useState<TestKPIs | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -44,10 +46,10 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
       {/* Header */}
       <div className="text-center">
         <h2 className="text-2xl font-bold text-(--text-primary) mb-2">
-          Referee Knowledge Test
+          {t('Referee Knowledge Test')}
         </h2>
         <p className="text-sm text-(--text-secondary)">
-          20 random questions · 40 minute time limit
+          {t('20 random questions · 40 minute time limit')}
         </p>
       </div>
 
@@ -55,27 +57,27 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
       <div className="grid grid-cols-2 gap-3">
         <KPICard
           icon={<BarChart3 size={18} />}
-          label="Tests This Week"
+          label={t('Tests This Week')}
           value={loading ? '—' : kpis?.testsThisWeek.toString() || '0'}
-          emptyText="No tests yet"
+          emptyText={t('No tests yet')}
         />
         <KPICard
           icon={<TrendingUp size={18} />}
-          label="Avg Score (Last 5)"
+          label={t('Avg Score (Last 5)')}
           value={loading ? '—' : kpis && kpis.averageScore !== null ? `${kpis.averageScore}%` : '—'}
-          emptyText="Complete tests to see stats"
+          emptyText={t('Complete tests to see stats')}
         />
         <KPICard
           icon={<Trophy size={18} />}
-          label="Best Score"
+          label={t('Best Score')}
           value={loading ? '—' : kpis && kpis.bestScore !== null ? `${kpis.bestScore}%` : '—'}
-          emptyText="No tests completed"
+          emptyText={t('No tests completed')}
         />
         <KPICard
           icon={<Clock size={18} />}
-          label="Avg Time"
+          label={t('Avg Time')}
           value={loading ? '—' : kpis && kpis.averageTime !== null ? formatTime(kpis.averageTime) : '—'}
-          emptyText="No timing data"
+          emptyText={t('No timing data')}
         />
       </div>
 
@@ -85,7 +87,7 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
         className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md"
       >
         <PlayCircle size={24} />
-        Start Test
+        {t('Start Test')}
       </button>
 
       {/* View History Link */}
@@ -94,7 +96,7 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
         className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
       >
         <History size={18} />
-        View Test History
+        {t('View Test History')}
       </button>
     </div>
   )

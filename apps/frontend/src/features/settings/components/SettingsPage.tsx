@@ -7,8 +7,10 @@ import NotificationsSection from './NotificationsSection'
 import PrivacySection from './PrivacySection'
 import LearningSection from './LearningSection'
 import LegalSection from './LegalSection'
+import { useTranslation } from 'react-i18next'
 
 export default function SettingsPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const {
     settings,
@@ -24,9 +26,9 @@ export default function SettingsPage() {
     return (
       <section className="p-4 pb-20">
         <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">Settings</h1>
+          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
           <p className="mt-2 text-sm text-(--error)">
-            You must be signed in to access settings.
+            {t('You must be signed in to access settings.')}
           </p>
         </div>
       </section>
@@ -38,7 +40,7 @@ export default function SettingsPage() {
       {/* Page header */}
       <div className="flex items-center gap-2 mb-4">
         <Settings className="w-5 h-5 text-(--text-muted)" />
-        <h1 className="text-xl font-semibold text-(--text-primary)">Settings</h1>
+        <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
       </div>
 
       {/* Error banner */}
@@ -47,7 +49,7 @@ export default function SettingsPage() {
           className="mb-4 p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm"
           role="alert"
         >
-          Failed to load settings: {error}
+          {t('Failed to load settings: {{error}}', { error })}
         </div>
       )}
 

@@ -1,5 +1,6 @@
 import { Flame } from 'lucide-react'
 import type { CalendarDay } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface TrainingCalendarProps {
   /** 30-day array of { date, active } from the RPC */
@@ -15,6 +16,7 @@ const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
  * Green circles for trained days, subtle circles for rest, ring highlight on today.
  */
 export default function TrainingCalendar({ calendar, currentStreak }: TrainingCalendarProps) {
+  const { t } = useTranslation()
   // Build cells with padding for weekday alignment
   const cells = buildCalendarCells(calendar)
   const todayStr = new Date().toISOString().split('T')[0]
@@ -23,17 +25,17 @@ export default function TrainingCalendar({ calendar, currentStreak }: TrainingCa
     <div
       className="bg-(--bg-surface) rounded-2xl p-4 shadow-sm border border-(--border-subtle)"
       role="region"
-      aria-label="Training calendar"
+      aria-label={t('Training calendar')}
     >
       {/* Header with title and streak */}
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider">
-          Training Calendar
+          {t('Training Calendar')}
         </h3>
         <div className="flex items-center gap-1 text-xs font-medium">
           <Flame size={14} className="text-(--brand-yellow)" aria-hidden="true" />
-          <span className="text-(--text-muted)">Streak:</span>
-          <span className="text-(--brand-yellow)">{currentStreak} {currentStreak === 1 ? 'day' : 'days'}</span>
+          <span className="text-(--text-muted)">{t('Streak:')}</span>
+          <span className="text-(--brand-yellow)">{currentStreak} {currentStreak === 1 ? t('day') : t('days')}</span>
         </div>
       </div>
 
@@ -73,7 +75,7 @@ export default function TrainingCalendar({ calendar, currentStreak }: TrainingCa
                   : ''
               }`}
               role="img"
-              aria-label={`${cell.date}: ${cell.active ? 'trained' : 'rest day'}${isToday ? ' (today)' : ''}`}
+              aria-label={`${cell.date}: ${cell.active ? t('trained') : t('rest day')}${isToday ? ` (${t('today')})` : ''}`}
             />
           )
         })}
@@ -83,15 +85,15 @@ export default function TrainingCalendar({ calendar, currentStreak }: TrainingCa
       <div className="flex items-center gap-4 mt-3 pt-3 border-t border-(--border-subtle)">
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-(--success)" aria-hidden="true" />
-          <span className="text-[10px] text-(--text-muted)">Trained</span>
+          <span className="text-[10px] text-(--text-muted)">{t('Trained')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-(--bg-surface-2)" aria-hidden="true" />
-          <span className="text-[10px] text-(--text-muted)">Rest</span>
+          <span className="text-[10px] text-(--text-muted)">{t('Rest')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2.5 h-2.5 rounded-full bg-(--bg-surface-2) ring-1.5 ring-(--brand-yellow)" aria-hidden="true" />
-          <span className="text-[10px] text-(--text-muted)">Today</span>
+          <span className="text-[10px] text-(--text-muted)">{t('Today')}</span>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getTests } from '../api/testsApi'
 import type { Test } from '../types'
 
@@ -10,6 +11,7 @@ import type { Test } from '../types'
  * For now, clicking a test just logs to console - we'll add navigation later.
  */
 export default function TestsTab() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [tests, setTests] = useState<Test[]>([])
   const [loading, setLoading] = useState(true)
@@ -53,7 +55,7 @@ export default function TestsTab() {
     return (
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-(--error)">Error loading tests: {error}</p>
+          <p className="text-(--error)">{t('Error loading tests: {{error}}', { error })}</p>
         </div>
       </div>
     )
@@ -64,7 +66,7 @@ export default function TestsTab() {
     return (
       <div className="p-6">
         <div className="text-center py-12">
-          <p className="text-(--text-muted)">No tests available yet.</p>
+          <p className="text-(--text-muted)">{t('No tests available yet.')}</p>
         </div>
       </div>
     )
@@ -82,7 +84,7 @@ export default function TestsTab() {
           >
             <h3 className="text-lg font-semibold text-(--text-primary)">{test.title}</h3>
             <p className="mt-1 text-sm text-(--text-muted)">
-              Click to start test
+              {t('Click to start test')}
             </p>
           </button>
         ))}

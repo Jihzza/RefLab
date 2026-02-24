@@ -1,10 +1,7 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
-const PRESET_REASONS = [
-  'Spam or scam',
-  'Harassment or bullying',
-  'Inappropriate content',
-]
+const PRESET_REASONS = ['Spam or scam', 'Harassment or bullying', 'Inappropriate content']
 
 interface ReportDialogProps {
   type: 'post' | 'user'
@@ -14,6 +11,7 @@ interface ReportDialogProps {
 
 /** Dialog for reporting a post or user with preset or custom reasons. */
 const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) => {
+  const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [customReason, setCustomReason] = useState('')
 
@@ -25,7 +23,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
     onSubmit(reason)
   }
 
-  const title = type === 'post' ? 'Report Post' : 'Report User'
+  const title = type === 'post' ? t('Report Post') : t('Report User')
 
   return (
     <>
@@ -44,7 +42,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-              aria-label="Close"
+              aria-label={t('Close')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -55,7 +53,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
           {/* Body */}
           <div className="px-5 py-4 space-y-3">
             <p className="text-sm text-(--text-muted)">
-              Why are you reporting this {type}?
+              {t('Why are you reporting this {{type}}?', { type })}
             </p>
 
             {/* Preset reasons */}
@@ -73,7 +71,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
                       : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover)'
                   }`}
                 >
-                  {preset}
+                  {t(preset)}
                 </button>
               ))}
             </div>
@@ -85,7 +83,7 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
                 setCustomReason(e.target.value)
                 if (e.target.value.trim()) setSelectedPreset(null)
               }}
-              placeholder="Describe the issue..."
+              placeholder={t('Describe the issue...')}
               rows={3}
               className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-muted) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
             />
@@ -97,14 +95,14 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
               onClick={onClose}
               className="px-4 py-2 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary) transition-colors"
             >
-              Cancel
+              {t('Cancel')}
             </button>
             <button
               onClick={handleSubmit}
               disabled={!canSubmit}
               className="px-5 py-2 text-sm font-semibold bg-(--error) text-white rounded-(--radius-button) hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              Submit Report
+              {t('Submit Report')}
             </button>
           </div>
         </div>

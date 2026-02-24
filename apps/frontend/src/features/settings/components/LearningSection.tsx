@@ -4,8 +4,10 @@ import { useAuth } from '@/features/auth/components/useAuth'
 import { clearLearningHistory } from '../api/settingsApi'
 import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
+import { useTranslation } from 'react-i18next'
 
 export default function LearningSection() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -36,11 +38,10 @@ export default function LearningSection() {
 
   return (
     <>
-      <SettingsSection title="Learning" icon={<GraduationCap className="w-4.5 h-4.5" />}>
+      <SettingsSection title={t('Learning')} icon={<GraduationCap className="w-4.5 h-4.5" />}>
         <div className="px-4 py-3">
           <p className="text-sm text-(--text-secondary) mb-3">
-            Clear your test history, question attempts, video watch history, streak data,
-            and all learning progress. This cannot be undone.
+            {t('Clear your test history, question attempts, video watch history, streak data, and all learning progress. This cannot be undone.')}
           </p>
 
           <button
@@ -49,14 +50,14 @@ export default function LearningSection() {
             className="text-sm font-medium px-4 py-2 rounded-(--radius-button)
               border border-(--error)/20 text-(--error)
               hover:bg-(--error)/10 transition-colors"
-            aria-label="Clear learning history"
+            aria-label={t('Clear Learning History')}
           >
-            Clear Learning History
+            {t('Clear Learning History')}
           </button>
 
           {success && (
             <p className="text-xs text-(--success) mt-2" role="status">
-              Learning history cleared successfully.
+              {t('Learning history cleared successfully.')}
             </p>
           )}
 
@@ -72,9 +73,9 @@ export default function LearningSection() {
         isOpen={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleClear}
-        title="Clear Learning History"
-        description="This will permanently delete all your test attempts, question progress, video history, and streak data. This action cannot be undone."
-        confirmLabel="Clear History"
+        title={t('Clear Learning History')}
+        description={t('This will permanently delete all your test attempts, question progress, video history, and streak data. This action cannot be undone.')}
+        confirmLabel={t('Clear History')}
         variant="warning"
         loading={loading}
       />
