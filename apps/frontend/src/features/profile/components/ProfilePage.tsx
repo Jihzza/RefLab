@@ -76,7 +76,7 @@ export default function ProfilePage() {
     user?.user_metadata?.full_name ||
     profile?.username ||
     user?.email?.split('@')[0] ||
-    'User'
+    t('User')
   const username =
     profile?.username ||
     user?.user_metadata?.username ||
@@ -198,7 +198,7 @@ export default function ProfilePage() {
               ref={menuButtonRef}
               type="button"
               className="w-9 h-9 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors flex items-center justify-center"
-              aria-label="Profile actions"
+              aria-label={t('Profile actions')}
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen(prev => !prev)}
@@ -213,7 +213,7 @@ export default function ProfilePage() {
             <div
               ref={menuRef}
               role="menu"
-              aria-label="Profile menu"
+              aria-label={t('Profile menu')}
               className="absolute right-4 top-14 z-20 min-w-44 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl py-1"
             >
               <button

@@ -25,7 +25,7 @@ export default function ProgressSection({ progress }: ProgressSectionProps) {
   } = progress
 
   return (
-    <section aria-label="Progress metrics" className="space-y-4">
+    <section aria-label={t('Progress metrics')} className="space-y-4">
       {/* Section header */}
       <div className="flex items-center gap-2">
         <TrendingUp size={18} className="text-(--text-muted)" aria-hidden="true" />
@@ -127,7 +127,7 @@ function AccuracyChangeCard({ change }: { change: number | null }) {
     <div
       className="bg-(--bg-surface) rounded-2xl p-4 shadow-sm border border-(--border-subtle) flex flex-col"
       role="region"
-      aria-label="Accuracy change"
+      aria-label={t('Accuracy change')}
     >
       <h3 className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider mb-2">
         {t('Accuracy Change')}

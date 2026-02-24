@@ -101,7 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 {user.user_metadata?.avatar_url ? (
                   <img
                     src={user.user_metadata.avatar_url}
-                    alt="Profile"
+                    alt={t('Profile avatar')}
                     className="w-10 h-10 rounded-full object-cover border border-(--border-subtle)"
                   />
                 ) : (

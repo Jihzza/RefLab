@@ -55,16 +55,23 @@ const SearchIcon = ({ onClick, ariaLabel }: { onClick: () => void; ariaLabel: st
  * RefLab Logo
  */
 const RefLabLogo = ({ onClick }: { onClick: () => void }) => (
-  <div
-    className="flex items-center gap-2 cursor-pointer"
-    onClick={onClick}
-    role="button"
-    aria-label="RefLab Home"
-  >
-    <img src={logo} alt="RefLab Logo" className="h-6 w-auto" />
-    <span className="text-xl font-bold text-(--text-primary)">RefLab</span>
-  </div>
+  <RefLabLogoInner onClick={onClick} />
 );
+
+const RefLabLogoInner = ({ onClick }: { onClick: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="flex items-center gap-2 cursor-pointer"
+      onClick={onClick}
+      role="button"
+      aria-label={t('RefLab Home')}
+    >
+      <img src={logo} alt={t('RefLab Logo')} className="h-6 w-auto" />
+      <span className="text-xl font-bold text-(--text-primary)">RefLab</span>
+    </div>
+  );
+};
 
 interface HeaderProps {
   onMenuToggle: () => void;

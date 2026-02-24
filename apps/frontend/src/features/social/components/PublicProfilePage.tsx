@@ -18,6 +18,7 @@ import BlockConfirmDialog from './BlockConfirmDialog'
 import PostBox from './PostBox'
 import PublicProfileMenu from './PublicProfileMenu'
 import ReportDialog from './ReportDialog'
+import { useTranslation } from 'react-i18next'
 
 function PostSkeleton() {
   return (
@@ -47,6 +48,7 @@ function getProfileLink(username: string): string {
 }
 
 export default function PublicProfilePage() {
+  const { t } = useTranslation()
   const { username: usernameParam } = useParams<{ username: string }>()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
@@ -103,7 +105,7 @@ export default function PublicProfilePage() {
 
   const loadProfileView = useCallback(async () => {
     if (!username) {
-      setProfileError('Missing username.')
+      setProfileError(t('Missing username.'))
       setIsProfileLoading(false)
       return
     }
@@ -131,7 +133,7 @@ export default function PublicProfilePage() {
 
     setProfileView(publicProfile)
     setIsProfileLoading(false)
-  }, [username, user])
+  }, [username, user, t])
 
   useEffect(() => {
     if (isOwnProfileRoute || !user?.id) return
@@ -291,7 +293,7 @@ export default function PublicProfilePage() {
     setIsStartingConversation(false)
 
     if (conversationError || !conversationId) {
-      setActionError(conversationError?.message ?? 'Failed to open conversation.')
+      setActionError(conversationError?.message ?? t('Failed to open conversation.'))
       return
     }
 
@@ -313,7 +315,7 @@ export default function PublicProfilePage() {
       if (reportError) {
         setActionError(reportError.message)
       } else {
-        showToast('Report submitted')
+        showToast(t('Report submitted'))
       }
 
       setShowReportDialog(false)
@@ -329,7 +331,7 @@ export default function PublicProfilePage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `@${profileView.username} on RefLab`,
+          title: t('@{{username}} on RefLab', { username: profileView.username }),
           url,
         })
         return
@@ -339,15 +341,15 @@ export default function PublicProfilePage() {
     }
 
     await navigator.clipboard.writeText(url)
-    showToast('Profile link copied')
-  }, [profileView, showToast])
+    showToast(t('Profile link copied'))
+  }, [profileView, showToast, t])
 
   const handleCopyProfileLink = useCallback(async () => {
     if (!profileView) return
 
     await navigator.clipboard.writeText(getProfileLink(profileView.username))
-    showToast('Profile link copied')
-  }, [profileView, showToast])
+    showToast(t('Profile link copied'))
+  }, [profileView, showToast, t])
 
   if (isOwnProfileRoute) {
     return null
@@ -384,16 +386,16 @@ export default function PublicProfilePage() {
               onClick={() => void loadProfileView()}
               className="h-9 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors"
             >
-              Try again
+              {t('Try Again')}
             </button>
           </div>
         )}
 
         {!isProfileLoading && !profileError && !profileView && (
           <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
-            <h1 className="text-lg font-semibold text-(--text-primary) mb-2">Profile not found</h1>
+            <h1 className="text-lg font-semibold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
             <p className="text-sm text-(--text-muted)">
-              We could not find a public profile for @{username}.
+              {t('We could not find a public profile for @{{username}}.', { username })}
             </p>
           </div>
         )}
@@ -446,7 +448,7 @@ export default function PublicProfilePage() {
 
               {profileView.has_blocked_viewer ? (
                 <p className="mt-4 text-sm text-(--text-muted)">
-                  This user is unavailable.
+                  {t('This user is unavailable.')}
                 </p>
               ) : (
                 <>
@@ -465,10 +467,10 @@ export default function PublicProfilePage() {
                           : 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
                       }`}
                       aria-label={
-                        profileView.is_following ? 'Unfollow user' : 'Follow user'
+                        profileView.is_following ? t('Unfollow user') : t('Follow user')
                       }
                     >
-                      {profileView.is_following ? 'Unfollow' : 'Follow'}
+                      {profileView.is_following ? t('Unfollow') : t('Follow')}
                     </button>
 
                     <button
@@ -480,15 +482,15 @@ export default function PublicProfilePage() {
                         profileView.is_blocked_by_viewer
                       }
                       className="h-10 rounded-(--radius-button) border border-(--border-subtle) text-sm font-semibold text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label="Send message"
+                      aria-label={t('Send message')}
                     >
-                      {isStartingConversation ? 'Opening...' : 'Message'}
+                      {isStartingConversation ? t('Opening...') : t('Message')}
                     </button>
                   </div>
 
                   {profileView.is_blocked_by_viewer && (
                     <p className="mt-3 text-sm text-(--text-muted)">
-                      You blocked this user. Unblock to view their posts.
+                      {t('You blocked this user. Unblock to view their posts.')}
                     </p>
                   )}
                 </>
@@ -518,7 +520,7 @@ export default function PublicProfilePage() {
             {canShowFeed && error && !isLoading && (
               <div className="text-center py-12">
                 <p className="text-(--text-muted) text-sm mb-3">
-                  Something went wrong loading this profile feed.
+                  {t('Something went wrong loading this profile feed.')}
                 </p>
                 <button
                   type="button"
@@ -558,7 +560,7 @@ export default function PublicProfilePage() {
 
             {canShowFeed && !isLoading && !hasMore && posts.length > 0 && (
               <p className="text-center text-(--text-muted) text-xs py-4">
-                You're all caught up!
+                {t("You're all caught up!")}
               </p>
             )}
 
@@ -570,10 +572,10 @@ export default function PublicProfilePage() {
                   </svg>
                 </div>
                 <h3 className="text-base font-medium text-(--text-primary) mb-1">
-                  No posts yet
+                  {t('No posts yet')}
                 </h3>
                 <p className="text-sm text-(--text-muted)">
-                  This user has not posted yet.
+                  {t('This user has not posted yet.')}
                 </p>
               </div>
             )}

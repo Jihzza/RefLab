@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/useAuth";
+import { useTranslation } from "react-i18next";
 
 interface RequireGuestProps {
   children: ReactNode;
@@ -15,12 +16,13 @@ interface RequireGuestProps {
  * 3. Renders public content if unauthenticated
  */
 export default function RequireGuest({ children }: RequireGuestProps) {
+  const { t } = useTranslation();
   const { authStatus } = useAuth();
 
   if (authStatus === "checking_session") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">Loading...</div>
+        <div className="text-gray-500">{t('Loading...')}</div>
       </div>
     );
   }

@@ -192,7 +192,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 {mediaType === 'image' && (
                   <img
                     src={mediaPreview}
-                    alt="Upload preview"
+                    alt={t('Upload preview')}
                     className="w-full max-h-64 object-contain rounded-lg"
                   />
                 )}

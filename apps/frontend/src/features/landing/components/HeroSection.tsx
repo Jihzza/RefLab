@@ -25,7 +25,7 @@ export default function HeroSection() {
       <div className="flex justify-center mb-6">
         <img
           src={BannerLogo}
-          alt="RefLab - Referee Training Laboratory"
+          alt={t('RefLab - Referee Training Laboratory')}
           className="h-16 md:h-20 w-auto"
         />
       </div>

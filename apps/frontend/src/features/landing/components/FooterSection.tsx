@@ -21,7 +21,7 @@ export default function FooterSection() {
     <footer className="border-t border-(--border-subtle) mt-8 py-6 px-6">
       <div className="max-w-xl mx-auto text-center">
         {/* Policy links */}
-        <nav aria-label="Legal" className="flex flex-wrap justify-center gap-4 mb-4">
+        <nav aria-label={t('Legal')} className="flex flex-wrap justify-center gap-4 mb-4">
           {FOOTER_LINKS.map((link) => (
             <Link
               key={link.to}

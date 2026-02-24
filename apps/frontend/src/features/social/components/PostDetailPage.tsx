@@ -6,6 +6,7 @@ import { getPostById } from '../api/socialApi'
 import { usePostActions } from '../hooks/usePostActions'
 import PostBox from './PostBox'
 import type { Post } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * PostDetailPage - Displays a single post with comments auto-expanded.
@@ -14,6 +15,7 @@ import type { Post } from '../types'
  * Used by notification links, share URLs, and deep links.
  */
 export default function PostDetailPage() {
+  const { t } = useTranslation()
   const { postId } = useParams<{ postId: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -72,7 +74,7 @@ export default function PostDetailPage() {
       if (cancelled) return
 
       if (fetchError || !data) {
-        setError('Post not found or has been deleted.')
+        setError(t('Post not found or has been deleted.'))
         setLoading(false)
         return
       }
@@ -85,7 +87,7 @@ export default function PostDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [user?.id, postId])
+  }, [user?.id, postId, t])
 
   const handleCommentCountChange = useCallback(
     (_postId: string, delta: number) => {
@@ -108,11 +110,11 @@ export default function PostDetailPage() {
         <button
           onClick={() => navigate(-1)}
           className="p-1 text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-          aria-label="Go back"
+          aria-label={t('Go back')}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-bold text-(--text-primary)">Post</h1>
+        <h1 className="text-lg font-bold text-(--text-primary)">{t('Post')}</h1>
       </div>
 
       {/* Content */}
@@ -132,7 +134,7 @@ export default function PostDetailPage() {
               onClick={() => navigate('/app/social')}
               className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
             >
-              Back to Feed
+              {t('Back to Feed')}
             </button>
           </div>
         )}

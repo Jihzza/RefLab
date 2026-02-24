@@ -41,7 +41,7 @@ export default function NotificationsPage() {
       {/* Error state */}
       {error && !loading && (
         <div className="px-4 py-8 text-center">
-          <p className="text-(--text-muted) text-sm">{error}</p>
+          <p className="text-(--text-muted) text-sm">{t(error)}</p>
         </div>
       )}
 

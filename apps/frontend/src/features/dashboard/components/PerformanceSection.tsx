@@ -22,7 +22,7 @@ export default function PerformanceSection({ performance }: PerformanceSectionPr
   } = performance
 
   return (
-    <section aria-label="Performance metrics" className="space-y-4">
+    <section aria-label={t('Performance metrics')} className="space-y-4">
       {/* Section header */}
       <div className="flex items-center gap-2">
         <Target size={18} className="text-(--text-muted)" aria-hidden="true" />

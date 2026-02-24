@@ -1,6 +1,7 @@
 import React from 'react'
 import { getMediaPublicUrl } from '../api/socialApi'
 import type { PostMediaType } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface MediaDisplayProps {
   mediaType: PostMediaType
@@ -14,6 +15,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
   mediaUrl,
   mediaMetadata,
 }) => {
+  const { t } = useTranslation()
   if (!mediaUrl || mediaType === 'text') return null
 
   const publicUrl = getMediaPublicUrl(mediaUrl)
@@ -22,7 +24,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
     return (
       <img
         src={publicUrl}
-        alt="Post media"
+        alt={t('Post media')}
         loading="lazy"
         className="w-full max-h-96 object-cover rounded-lg mt-3"
         style={
@@ -41,7 +43,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
         controls
         preload="metadata"
         className="w-full max-h-96 rounded-lg mt-3 bg-black"
-        aria-label="Post video"
+        aria-label={t('Post video')}
       />
     )
   }
@@ -54,7 +56,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
           controls
           preload="none"
           className="w-full"
-          aria-label="Post audio"
+          aria-label={t('Post audio')}
         />
       </div>
     )

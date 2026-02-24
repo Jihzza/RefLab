@@ -106,7 +106,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
         {!isCancelPending && (
           <button
             onClick={onCancel}
-            aria-label="Cancel subscription"
+            aria-label={t('Cancel subscription')}
             className="flex-1 py-2.5 rounded-(--radius-button) text-sm font-medium border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
           >
             {t('Cancel Subscription')}
@@ -116,7 +116,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
         <button
             onClick={handleManageSubscription}
             disabled={portalLoading}
-            aria-label="Manage subscription via Stripe"
+            aria-label={t('Manage subscription via Stripe')}
             className="flex-1 py-2.5 bg-(--bg-surface-2) text-(--text-primary) rounded-(--radius-button) text-sm font-medium hover:bg-(--bg-surface-2)/80 border border-(--border-subtle) transition-colors disabled:opacity-50"
           >
           {portalLoading ? t('Opening...') : t('Manage via Stripe')}
