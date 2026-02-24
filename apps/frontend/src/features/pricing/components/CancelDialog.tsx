@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cancelSubscription } from '../api/pricingApi'
 import type { Subscription } from '@/features/billing/types'
+import { useTranslation } from 'react-i18next'
 
 interface CancelDialogProps {
   isOpen: boolean
@@ -10,18 +11,19 @@ interface CancelDialogProps {
 }
 
 export default function CancelDialog({ isOpen, onClose, subscription, onSuccess }: CancelDialogProps) {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   if (!isOpen) return null
 
   const endDate = subscription.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString('en-US', {
+    ? new Date(subscription.current_period_end).toLocaleDateString('pt-PT', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       })
-    : 'the end of your billing period'
+    : 'fim do período de faturação'
 
   const handleConfirm = async () => {
     setLoading(true)
@@ -61,15 +63,14 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
           id="cancel-dialog-title"
           className="text-lg font-semibold mb-2 text-(--warning)"
         >
-          Cancel Subscription
+          {t('Cancel Subscription')}
         </h2>
 
         <p
           id="cancel-dialog-description"
           className="text-(--text-secondary) text-sm mb-4"
         >
-          Your subscription will remain active until <strong className="text-(--text-primary)">{endDate}</strong>.
-          After that, you'll be downgraded to the Free plan and lose access to premium features.
+          {t("Your subscription will remain active until {{date}}. After that, you'll be downgraded to the Free plan and lose access to premium features.", { date: endDate })}
         </p>
 
         {error && (
@@ -88,7 +89,7 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
             disabled={loading}
             className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50"
           >
-            Keep Subscription
+            {t('Keep Subscription')}
           </button>
           <button
             type="button"
@@ -96,7 +97,7 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
             disabled={loading}
             className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold bg-(--warning) text-(--bg-primary) hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Canceling...' : 'Cancel Plan'}
+            {loading ? t('Canceling...') : t('Cancel Plan')}
           </button>
         </div>
       </div>

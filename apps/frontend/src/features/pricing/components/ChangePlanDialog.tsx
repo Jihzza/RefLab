@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { changeSubscriptionPlan } from '../api/pricingApi'
 import type { Subscription } from '@/features/billing/types'
+import { useTranslation } from 'react-i18next'
 
 /** Plan display info */
 const PLAN_INFO: Record<'pro' | 'plus', { name: string; price: string }> = {
@@ -23,6 +24,7 @@ export default function ChangePlanDialog({
   targetPlan,
   onSuccess,
 }: ChangePlanDialogProps) {
+  const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -71,16 +73,17 @@ export default function ChangePlanDialog({
           id="change-plan-dialog-title"
           className="text-lg font-semibold mb-2 text-(--text-primary)"
         >
-          Switch to {target.name}
+          {t('Switch to {{plan}}', { plan: target.name })}
         </h2>
 
         <p
           id="change-plan-dialog-description"
           className="text-(--text-secondary) text-sm mb-4"
         >
-          Your plan will be updated to <strong className="text-(--text-primary)">{target.name}</strong> at{' '}
-          <strong className="text-(--text-primary)">{target.price}</strong>.
-          The new price will apply starting from your next billing cycle. No proration charges will be applied.
+          {t('Your plan will be updated to {{plan}} at {{price}}. The new price will apply starting from your next billing cycle. No proration charges will be applied.', {
+            plan: target.name,
+            price: target.price,
+          })}
         </p>
 
         {error && (
@@ -99,7 +102,7 @@ export default function ChangePlanDialog({
             disabled={loading}
             className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="button"
@@ -107,7 +110,7 @@ export default function ChangePlanDialog({
             disabled={loading}
             className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft) transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Switching...' : `Switch to ${target.name}`}
+            {loading ? t('Switching...') : t('Switch to {{plan}}', { plan: target.name })}
           </button>
         </div>
       </div>

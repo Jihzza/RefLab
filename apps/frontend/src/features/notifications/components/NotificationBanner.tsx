@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import type { EnrichedNotification, NotificationType } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface NotificationBannerProps {
   notification: EnrichedNotification
@@ -8,12 +9,12 @@ interface NotificationBannerProps {
 }
 
 /** Formats a timestamp into a relative time string (e.g. "5m", "2h", "3d"). */
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(dateString: string, nowLabel: string): string {
   const now = Date.now()
   const date = new Date(dateString).getTime()
   const seconds = Math.floor((now - date) / 1000)
 
-  if (seconds < 60) return 'now'
+  if (seconds < 60) return nowLabel
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
@@ -81,6 +82,7 @@ export default function NotificationBanner({
   notification,
   isUnread,
 }: NotificationBannerProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { actor, message, created_at } = notification
 
@@ -104,7 +106,7 @@ export default function NotificationBanner({
           : 'bg-(--bg-surface)'
       }`}
       role="listitem"
-      aria-label={`${isUnread ? 'Unread notification' : 'Notification'}: ${displayName} ${message}`}
+      aria-label={`${isUnread ? t('Unread notification') : t('Notification')}: ${displayName} ${message}`}
       onClick={handleClick}
     >
       {/* Avatar */}
@@ -140,7 +142,7 @@ export default function NotificationBanner({
           {message}
         </p>
         <span className="text-xs text-(--text-muted) mt-0.5 block">
-          {formatRelativeTime(created_at)}
+          {formatRelativeTime(created_at, t('now'))}
         </span>
       </div>
 

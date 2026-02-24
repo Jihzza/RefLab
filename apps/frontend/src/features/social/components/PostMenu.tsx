@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface PostMenuProps {
   isOwnPost: boolean
@@ -16,6 +17,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
   onBlockUser,
   onDelete,
 }) => {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleAction = (action: () => void) => {
@@ -28,7 +30,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="p-1 rounded-full hover:bg-(--bg-hover) transition-colors text-(--text-muted)"
-        aria-label="Post options"
+        aria-label={t('Post options')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
           <circle cx="12" cy="5" r="2" />
@@ -52,7 +54,7 @@ const PostMenu: React.FC<PostMenuProps> = ({
                 onClick={() => handleAction(onDelete)}
                 className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors"
               >
-                Delete Post
+                {t('Delete Post')}
               </button>
             ) : (
               <>
@@ -60,19 +62,19 @@ const PostMenu: React.FC<PostMenuProps> = ({
                   onClick={() => handleAction(onReportPost)}
                   className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
                 >
-                  Report Post
+                  {t('Report Post')}
                 </button>
                 <button
                   onClick={() => handleAction(onReportUser)}
                   className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
                 >
-                  Report User
+                  {t('Report User')}
                 </button>
                 <button
                   onClick={() => handleAction(onBlockUser)}
                   className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
                 >
-                  Block User
+                  {t('Block User')}
                 </button>
               </>
             )}

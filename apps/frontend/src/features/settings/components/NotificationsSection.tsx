@@ -2,6 +2,7 @@ import { Bell } from 'lucide-react'
 import SettingsSection from './SettingsSection'
 import SettingsToggle from './SettingsToggle'
 import type { InAppNotificationType, NotificationPreferences } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface NotificationsSectionProps {
   preferences: NotificationPreferences
@@ -48,15 +49,17 @@ export default function NotificationsSection({
   onToggle,
   loading,
 }: NotificationsSectionProps) {
+  const { t } = useTranslation()
+
   return (
-    <SettingsSection title="Notifications" icon={<Bell className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Notifications')} icon={<Bell className="w-4.5 h-4.5" />}>
       {/* In-app notifications */}
       <div>
-        <GroupLabel>Engagement</GroupLabel>
+        <GroupLabel>{t('Engagement')}</GroupLabel>
         {ENGAGEMENT_TOGGLES.map((item) => (
           <SettingsToggle
             key={item.key}
-            label={item.label}
+            label={t(item.label)}
             checked={preferences[item.key]}
             onChange={() => onToggle(item.key)}
             disabled={loading}
@@ -65,11 +68,11 @@ export default function NotificationsSection({
       </div>
 
       <div>
-        <GroupLabel>Social</GroupLabel>
+        <GroupLabel>{t('Social')}</GroupLabel>
         {SOCIAL_TOGGLES.map((item) => (
           <SettingsToggle
             key={item.key}
-            label={item.label}
+            label={t(item.label)}
             checked={preferences[item.key]}
             onChange={() => onToggle(item.key)}
             disabled={loading}
@@ -78,11 +81,11 @@ export default function NotificationsSection({
       </div>
 
       <div>
-        <GroupLabel>Streaks</GroupLabel>
+        <GroupLabel>{t('Streaks')}</GroupLabel>
         {STREAK_TOGGLES.map((item) => (
           <SettingsToggle
             key={item.key}
-            label={item.label}
+            label={t(item.label)}
             checked={preferences[item.key]}
             onChange={() => onToggle(item.key)}
             disabled={loading}
@@ -91,11 +94,11 @@ export default function NotificationsSection({
       </div>
 
       <div>
-        <GroupLabel>Content</GroupLabel>
+        <GroupLabel>{t('Content')}</GroupLabel>
         {CONTENT_TOGGLES.map((item) => (
           <SettingsToggle
             key={item.key}
-            label={item.label}
+            label={t(item.label)}
             checked={preferences[item.key]}
             onChange={() => onToggle(item.key)}
             disabled={loading}

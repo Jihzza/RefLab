@@ -4,6 +4,7 @@ import DashboardSkeleton from './DashboardSkeleton'
 import PerformanceSection from './PerformanceSection'
 import ProgressSection from './ProgressSection'
 import HabitsSection from './HabitsSection'
+import { useTranslation } from 'react-i18next'
 
 /**
  * DashboardPage — Main dashboard view for authenticated users.
@@ -11,6 +12,7 @@ import HabitsSection from './HabitsSection'
  * Data is fetched via a single RPC call through the useDashboard hook.
  */
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const { stats, loading, error } = useDashboard()
 
   return (
@@ -22,7 +24,7 @@ export default function DashboardPage() {
         {/* Page header */}
         <div className="flex items-center gap-2">
           <LayoutDashboard size={22} className="text-(--brand-yellow)" aria-hidden="true" />
-          <h1 className="text-xl font-bold text-(--text-primary)">Dashboard</h1>
+          <h1 className="text-xl font-bold text-(--text-primary)">{t('Dashboard')}</h1>
         </div>
 
         {/* Error banner */}
@@ -33,7 +35,7 @@ export default function DashboardPage() {
           >
             <AlertCircle size={16} className="text-(--error) shrink-0" aria-hidden="true" />
             <p className="text-sm text-(--error)">
-              Failed to load dashboard data. Please try again later.
+              {t('Failed to load dashboard data. Please try again later.')}
             </p>
           </div>
         )}

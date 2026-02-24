@@ -3,12 +3,21 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/useAuth';
 import NotificationBell from '@/features/notifications/components/NotificationBell';
 import logo from '@/assets/logos/RefLab-Logo-No-BG.svg';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Hamburger Menu Icon
  * Accepts onClick and onDoubleClick handlers.
  */
-const MenuIcon = ({ onClick, onDoubleClick }: { onClick: () => void; onDoubleClick: () => void }) => (
+const MenuIcon = ({
+  onClick,
+  onDoubleClick,
+  ariaLabel,
+}: {
+  onClick: () => void;
+  onDoubleClick: () => void;
+  ariaLabel: string;
+}) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="h-6 w-6 cursor-pointer text-(--text-secondary) hover:text-(--text-primary) transition-colors"
@@ -17,7 +26,7 @@ const MenuIcon = ({ onClick, onDoubleClick }: { onClick: () => void; onDoubleCli
     stroke="currentColor"
     onClick={onClick}
     onDoubleClick={onDoubleClick}
-    aria-label="Open menu"
+    aria-label={ariaLabel}
     role="button"
   >
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -27,7 +36,7 @@ const MenuIcon = ({ onClick, onDoubleClick }: { onClick: () => void; onDoubleCli
 /**
  * Search Icon
  */
-const SearchIcon = ({ onClick }: { onClick: () => void }) => (
+const SearchIcon = ({ onClick, ariaLabel }: { onClick: () => void; ariaLabel: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="h-6 w-6 cursor-pointer text-(--text-secondary) hover:text-(--text-primary) transition-colors"
@@ -35,7 +44,7 @@ const SearchIcon = ({ onClick }: { onClick: () => void }) => (
     viewBox="0 0 24 24"
     stroke="currentColor"
     onClick={onClick}
-    aria-label="Search"
+    aria-label={ariaLabel}
     role="button"
   >
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -69,6 +78,7 @@ interface HeaderProps {
  * Sidebar state is managed by the parent (AppShell) via onMenuToggle/onMenuClose props.
  */
 export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -100,6 +110,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
         <MenuIcon
           onClick={onMenuToggle}
           onDoubleClick={onMenuClose}
+          ariaLabel={t('Open menu')}
         />
       </div>
 
@@ -110,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
 
       {/* [SEARCH AND NOTIFICATIONS ICON 20%] */}
       <div className="w-[20%] flex justify-end items-center gap-3 sm:gap-4">
-        <SearchIcon onClick={handleSearchClick} />
+        <SearchIcon onClick={handleSearchClick} ariaLabel={t('Search')} />
         <NotificationBell />
       </div>
     </header>

@@ -5,15 +5,19 @@
  * Styled with the app's design tokens for consistency.
  */
 
+import { useTranslation } from 'react-i18next';
+
 export default function PrivacyPolicyTab() {
+  const { t } = useTranslation();
+
   return (
     <article className="space-y-4">
       {/* Header */}
       <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
         <h2 className="text-lg font-semibold text-(--text-primary) mb-1">
-          Privacy Policy
+          {t('Privacy Policy')}
         </h2>
-        <p className="text-xs text-(--text-muted)">Last updated: February 2026</p>
+        <p className="text-xs text-(--text-muted)">{t('Last updated: February 2026')}</p>
       </section>
 
       {/* Information We Collect */}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CheckCircle2, XCircle, ChevronDown, ChevronUp, Clock, Target, RotateCcw, ArrowLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { formatTime } from '../../hooks/useTestTimer'
 import type { SessionResult, AnsweredQuestion } from '../../types'
 
@@ -24,6 +25,7 @@ const getOption = (q: AnsweredQuestion['question'], idx: number) =>
  * All data comes from the result prop — no async loading needed.
  */
 export default function QuestionsReview({ result, onStartNew, onRestart }: QuestionsReviewProps) {
+  const { t } = useTranslation()
   const [showCorrections, setShowCorrections] = useState(false)
 
   const { totalAnswered, totalCorrect, durationSeconds, answers } = result
@@ -34,7 +36,7 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
     <div className="space-y-6">
       {/* Score summary card */}
       <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl text-center space-y-4">
-        <h2 className="text-xl font-bold text-(--text-primary)">Session Complete</h2>
+        <h2 className="text-xl font-bold text-(--text-primary)">{t('Session Complete')}</h2>
 
         <div
           className={`text-5xl font-bold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}
@@ -43,11 +45,11 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
         </div>
 
         <p className="text-sm text-(--text-secondary)">
-          {totalCorrect} correct out of {totalAnswered} answered
+          {t('{{correct}} correct out of {{answered}} answered', { correct: totalCorrect, answered: totalAnswered })}
         </p>
 
         <div className="flex items-center justify-center gap-6 pt-2">
-          <StatPill icon={<Target size={14} />} label={`${scorePercent}% accuracy`} />
+          <StatPill icon={<Target size={14} />} label={t('{{score}}% accuracy', { score: scorePercent })} />
           <StatPill icon={<Clock size={14} />} label={formatTime(durationSeconds)} />
         </div>
       </div>
@@ -59,7 +61,7 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
             onClick={() => setShowCorrections(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 bg-(--bg-surface) border border-(--border-subtle) rounded-xl text-sm font-medium text-(--text-primary) hover:bg-(--bg-hover) transition-colors"
           >
-            <span>Review Answers ({answers.length})</span>
+            <span>{t('Review Answers ({{count}})', { count: answers.length })}</span>
             {showCorrections ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
 
@@ -93,14 +95,14 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
 
                     <div className="space-y-1 ml-6">
                       <p className="text-xs text-(--text-secondary)">
-                        <span className="font-medium">Your answer:</span>{' '}
+                        <span className="font-medium">{t('Your answer')}:</span>{' '}
                         <span className={isCorrect ? 'text-(--success)' : 'text-(--error)'}>
                           {LETTERS[selectedIndex]}. {selectedText}
                         </span>
                       </p>
                       {!isCorrect && (
                         <p className="text-xs text-(--text-secondary)">
-                          <span className="font-medium">Correct answer:</span>{' '}
+                          <span className="font-medium">{t('Correct answer')}:</span>{' '}
                           <span className="text-(--success)">
                             {question.correct_option}. {correctText}
                           </span>
@@ -122,14 +124,14 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
           className="flex-1 py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors text-sm"
         >
           <ArrowLeft size={16} />
-          Back
+          {t('Back')}
         </button>
         <button
           onClick={onRestart}
           className="flex-1 py-3 bg-(--info) text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm"
         >
           <RotateCcw size={16} />
-          Practice Again
+          {t('Practice Again')}
         </button>
       </div>
     </div>

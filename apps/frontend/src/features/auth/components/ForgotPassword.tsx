@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "./useAuth";
+import { useTranslation } from "react-i18next";
 
 interface ForgotPasswordProps {
   onBackToLogin: () => void;
@@ -15,6 +16,7 @@ interface ForgotPasswordProps {
  * 4. User clicks link → goes to /reset-password page (Step 2.5)
  */
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
+  const { t } = useTranslation();
   const { resetPassword } = useAuth();
 
   // Form state
@@ -34,12 +36,12 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
 
     // Basic validation
     if (!email) {
-      setError("Email is required");
+      setError(t("Email is required"));
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError("Please enter a valid email");
+      setError(t("Please enter a valid email"));
       return;
     }
 
@@ -56,7 +58,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
     // Success - show message
     // Note: Supabase doesn't reveal if email exists for security reasons
     setSuccessMessage(
-      "If an account exists with this email, you will receive a password reset link."
+      t("If an account exists with this email, you will receive a password reset link.")
     );
     setLoading(false);
   };
@@ -69,12 +71,12 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
         onClick={onBackToLogin}
         className="mb-4 text-sm text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline flex items-center gap-1"
       >
-        <span>&larr;</span> Back to login
+        <span>&larr;</span> {t("Back to login")}
       </button>
 
-      <h2 className="text-xl font-bold text-(--text-primary) mb-2">Reset your password</h2>
+      <h2 className="text-xl font-bold text-(--text-primary) mb-2">{t("Reset your password")}</h2>
       <p className="text-(--text-secondary) text-sm mb-4">
-        Enter your email address and we'll send you a link to reset your password.
+        {t("Enter your email address and we'll send you a link to reset your password.")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +95,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
         {/* Email field */}
         <div className="space-y-2">
           <label htmlFor="forgot-email" className="block text-sm font-medium text-(--text-secondary)">
-            Email
+            {t("Email")}
           </label>
           <input
             id="forgot-email"
@@ -110,7 +112,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
               focus:border-(--brand-yellow) 
               focus:ring-1 focus:ring-(--brand-yellow)
               disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="you@example.com"
+            placeholder="tu@exemplo.com"
           />
         </div>
 
@@ -126,7 +128,7 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
             hover:shadow-[0_0_15px_rgb(var(--brand-yellow)/0.3)]
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {loading ? t("Sending...") : t("Send reset link")}
         </button>
       </form>
     </div>

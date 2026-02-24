@@ -1,4 +1,5 @@
 import type { LearnTab } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface LearnTabsProps {
   activeTab: LearnTab
@@ -21,9 +22,11 @@ const tabs: { id: LearnTab; label: string }[] = [
  * Active tab is highlighted with a bottom border
  */
 export default function LearnTabs({ activeTab, onTabChange }: LearnTabsProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="border-b border-gray-200">
-      <nav className="flex space-x-8 px-6" aria-label="Learn navigation">
+      <nav className="flex space-x-8 px-6" aria-label={t('Learn navigation')}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
 
@@ -41,7 +44,7 @@ export default function LearnTabs({ activeTab, onTabChange }: LearnTabsProps) {
               `}
               aria-current={isActive ? 'page' : undefined}
             >
-              {tab.label}
+              {t(tab.label)}
             </button>
           )
         })}

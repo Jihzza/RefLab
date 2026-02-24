@@ -4,6 +4,7 @@ import SettingsRadioGroup from './SettingsRadioGroup'
 import BlockedUserRow from './BlockedUserRow'
 import { useBlockedUsers } from '../hooks/useBlockedUsers'
 import type { MessagingPrivacy, UserSettings } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface PrivacySectionProps {
   settings: UserSettings
@@ -23,14 +24,19 @@ export default function PrivacySection({
   onMessagingPrivacyChange,
   loading,
 }: PrivacySectionProps) {
+  const { t } = useTranslation()
   const { blockedUsers, loading: blockedLoading, unblocking, unblock } = useBlockedUsers()
 
   return (
-    <SettingsSection title="Privacy & Safety" icon={<ShieldCheck className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Privacy & Safety')} icon={<ShieldCheck className="w-4.5 h-4.5" />}>
       {/* Who can message me */}
       <SettingsRadioGroup
-        label="Who can message me"
-        options={MESSAGING_OPTIONS}
+        label={t('Who can message me')}
+        options={MESSAGING_OPTIONS.map((option) => ({
+          ...option,
+          label: t(option.label),
+          description: t(option.description),
+        }))}
         value={settings.messaging_privacy}
         onChange={onMessagingPrivacyChange}
         disabled={loading}
@@ -40,16 +46,16 @@ export default function PrivacySection({
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
           <UserX className="w-4 h-4 text-(--text-muted)" />
-          <span className="text-sm font-medium text-(--text-secondary)">Blocked Users</span>
+          <span className="text-sm font-medium text-(--text-secondary)">{t('Blocked Users')}</span>
         </div>
 
         {blockedLoading && (
-          <p className="text-xs text-(--text-muted) py-2">Loading blocked users...</p>
+          <p className="text-xs text-(--text-muted) py-2">{t('Loading blocked users...')}</p>
         )}
 
         {!blockedLoading && blockedUsers.length === 0 && (
           <p className="text-xs text-(--text-muted) py-2">
-            You haven't blocked anyone.
+            {t("You haven't blocked anyone.")}
           </p>
         )}
 
@@ -70,7 +76,7 @@ export default function PrivacySection({
 
         {!blockedLoading && blockedUsers.length > 0 && (
           <p className="text-xs text-(--text-muted) mt-2">
-            Blocked users cannot see your profile, follow you, message you, or comment on your posts.
+            {t('Blocked users cannot see your profile, follow you, message you, or comment on your posts.')}
           </p>
         )}
       </div>

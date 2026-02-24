@@ -1,17 +1,18 @@
 import type { Conversation } from '../types'
 import { useAuth } from '@/features/auth/components/useAuth'
+import { useTranslation } from 'react-i18next'
 
 interface ConversationItemProps {
   conversation: Conversation
   onClick: () => void
 }
 
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(dateString: string, nowLabel: string): string {
   const now = Date.now()
   const date = new Date(dateString).getTime()
   const seconds = Math.floor((now - date) / 1000)
 
-  if (seconds < 60) return 'now'
+  if (seconds < 60) return nowLabel
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
@@ -25,37 +26,41 @@ function formatRelativeTime(dateString: string): string {
 
 function getLastMessagePreview(
   conversation: Conversation,
-  currentUserId?: string
+  currentUserId?: string,
+  t?: (key: string) => string
 ): string {
+  const translate = t ?? ((key: string) => key)
   const last = conversation.last_message
-  if (!last) return 'No messages yet'
+  if (!last) return translate('No messages yet.')
 
   const text = last.content?.trim()
   let preview = text ?? ''
 
   if (!preview) {
-    if (last.media_type === 'image') preview = '[Image]'
-    else if (last.media_type === 'video') preview = '[Video]'
-    else if (last.media_type === 'audio') preview = '[Audio]'
-    else preview = 'No messages yet'
+    if (last.media_type === 'image') preview = '[Imagem]'
+    else if (last.media_type === 'video') preview = '[Vídeo]'
+    else if (last.media_type === 'audio') preview = '[Áudio]'
+    else preview = translate('No messages yet.')
   }
 
   if (currentUserId && last.sender_id === currentUserId) {
-    return `You: ${preview}`
+    return `Tu: ${preview}`
   }
 
   return preview
 }
 
 export default function ConversationItem({ conversation, onClick }: ConversationItemProps) {
+  const { t } = useTranslation()
   const { user: authUser } = useAuth()
   const otherUser = conversation.other_user
   const displayName = otherUser.name || otherUser.username
   const initials = displayName.slice(0, 2).toUpperCase()
 
-  const preview = getLastMessagePreview(conversation, authUser?.id)
+  const preview = getLastMessagePreview(conversation, authUser?.id, t)
   const timestamp = formatRelativeTime(
-    conversation.last_message?.created_at ?? conversation.updated_at
+    conversation.last_message?.created_at ?? conversation.updated_at,
+    t('now'),
   )
 
   return (

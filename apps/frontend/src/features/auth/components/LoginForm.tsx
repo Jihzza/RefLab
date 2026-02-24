@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
 import { mapAuthError } from "../api/authErrors";
 import type { AuthFormErrors } from "../types";
+import { useTranslation } from "react-i18next";
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -19,6 +20,7 @@ interface LoginFormProps {
  * - Redirects to /app/dashboard on success
  */
 export default function LoginForm({ onForgotPassword }: LoginFormProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { signIn, signInWithGoogle } = useAuth();
 
@@ -35,13 +37,13 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
     const newErrors: AuthFormErrors = {};
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = t("Email is required");
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = "Please enter a valid email";
+      newErrors.email = t("Please enter a valid email");
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t("Password is required");
     }
 
     setErrors(newErrors);
@@ -99,10 +101,10 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
         {/* Título */}
         <div className="mb-8 text-center">
           <h2 className="text-2xl font-bold text-(--text-primary)">
-            Bienvenido de nuevo
+            {t("Bienvenido de nuevo")}
           </h2>
           <p className="mt-2 text-sm text-(--text-secondary)">
-            Ingresa tus credenciales para acceder a RefLab
+            {t("Ingresa tus credenciales para acceder a RefLab")}
           </p>
         </div>
 
@@ -118,7 +120,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
           {/* Campo Email */}
           <div className="space-y-2">
             <label htmlFor="login-email" className="block text-sm font-medium text-(--text-secondary)">
-              Correo Electrónico
+              {t("Correo Electrónico")}
             </label>
             <input
               id="login-email"
@@ -126,7 +128,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              placeholder="nombre@ejemplo.com"
+              placeholder="nome@exemplo.com"
               className="w-full px-4 py-3 outline-none transition-all
                 bg-(--bg-surface-2) 
                 border border-(--border-subtle) 
@@ -146,7 +148,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <label htmlFor="login-password" className="block text-sm font-medium text-(--text-secondary)">
-                Contraseña
+                {t("Contraseña")}
               </label>
             </div>
             
@@ -178,7 +180,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
                 onClick={onForgotPassword}
                 className="text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
               >
-                ¿Olvidaste tu contraseña?
+                {t("¿Olvidaste tu contraseña?")}
               </button>
             </div>
           </div>
@@ -195,7 +197,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
               hover:shadow-[0_0_15px_rgb(var(--brand-yellow)_/_0.3)]
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            {loading ? t("Iniciando sesión...") : t("Iniciar Sesión")}
           </button>
 
           {/* Divisor */}
@@ -205,7 +207,7 @@ export default function LoginForm({ onForgotPassword }: LoginFormProps) {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-2 bg-(--bg-surface) text-(--text-muted)">
-                o continuar con
+                {t("o continuar con")}
               </span>
             </div>
           </div>

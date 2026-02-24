@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Post } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface PostFooterProps {
   post: Post
@@ -26,6 +27,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
   onSave,
   onShare,
 }) => {
+  const { t } = useTranslation()
   return (
     <div className="flex items-center justify-between pt-3 mt-3 border-t border-(--border-subtle)">
       {/* Like */}
@@ -36,7 +38,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
             ? 'text-(--error)'
             : 'text-(--text-muted) hover:text-(--error)'
         }`}
-        aria-label={post.is_liked ? 'Unlike post' : 'Like post'}
+        aria-label={post.is_liked ? t('Unlike post') : t('Like post')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24"
           fill={post.is_liked ? 'currentColor' : 'none'}
@@ -53,7 +55,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
       <button
         onClick={onComment}
         className="flex items-center gap-1 text-xs text-(--text-muted) hover:text-(--info) transition-colors"
-        aria-label="Comments"
+        aria-label={t('Comments')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round"
@@ -71,7 +73,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
             ? 'text-(--success)'
             : 'text-(--text-muted) hover:text-(--success)'
         }`}
-        aria-label={post.is_reposted ? 'Undo repost' : 'Repost'}
+        aria-label={post.is_reposted ? t('Undo repost') : t('Repost')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round"
@@ -89,7 +91,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
             ? 'text-(--brand-yellow)'
             : 'text-(--text-muted) hover:text-(--brand-yellow)'
         }`}
-        aria-label={post.is_saved ? 'Unsave post' : 'Save post'}
+        aria-label={post.is_saved ? t('Unsave post') : t('Save post')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24"
           fill={post.is_saved ? 'currentColor' : 'none'}
@@ -106,7 +108,7 @@ const PostFooter: React.FC<PostFooterProps> = ({
       <button
         onClick={onShare}
         className="flex items-center gap-1 text-xs text-(--text-muted) hover:text-(--text-primary) transition-colors"
-        aria-label="Share post"
+        aria-label={t('Share post')}
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round"

@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { createPost } from '../api/socialApi'
 import type { Post, PostMediaType } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface CreatePostModalProps {
   onClose: () => void
@@ -13,6 +14,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   onClose,
   onPostCreated,
 }) => {
+  const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [content, setContent] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
@@ -61,15 +63,15 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
   const handleSubmit = async () => {
     if (!user?.id) {
-      setError('You must be logged in to post.')
+      setError(t('You must be logged in to post.'))
       return
     }
     if (!profile) {
-      setError('Your profile is still loading. Please try again.')
+      setError(t('Your profile is still loading. Please try again.'))
       return
     }
     if (!content.trim() && !mediaFile) {
-      setError('Please write something or attach media.')
+      setError(t('Please write something or attach media.'))
       return
     }
 
@@ -113,7 +115,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
 
       onClose()
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      const message = err instanceof Error ? err.message : t('Something went wrong. Please try again.')
       setError(message)
       setIsSubmitting(false)
     }
@@ -142,12 +144,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
             <h2 className="text-lg font-semibold text-(--text-primary)">
-              New Post
+              {t('New Post')}
             </h2>
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-              aria-label="Close"
+              aria-label={t('Close')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -169,7 +171,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               ref={textareaRef}
               value={content}
               onChange={handleTextareaInput}
-              placeholder="What's on your mind?"
+              placeholder={t("What's on your mind?")}
               rows={3}
               className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-muted) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
             />
@@ -180,7 +182,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
                 <button
                   onClick={removeMedia}
                   className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-(--bg-primary)/80 flex items-center justify-center text-(--text-primary) hover:bg-(--bg-primary) transition-colors"
-                  aria-label="Remove media"
+                  aria-label={t('Remove media')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -220,12 +222,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-2 px-3 py-2 text-sm text-(--text-secondary) hover:text-(--brand-yellow) hover:bg-(--bg-hover) rounded-(--radius-button) transition-colors"
-              aria-label="Attach media"
+              aria-label={t('Attach media')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
               </svg>
-              <span>Media</span>
+              <span>{t('Media')}</span>
             </button>
 
             <button
@@ -233,7 +235,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
               disabled={!canSubmit}
               className="px-5 py-2 text-sm font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
             >
-              {isSubmitting ? 'Publishing...' : 'Publish'}
+              {isSubmitting ? t('Publishing...') : t('Publish')}
             </button>
           </div>
 

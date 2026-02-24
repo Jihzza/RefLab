@@ -7,12 +7,14 @@ import { useSearchHistory } from '../hooks/useSearchHistory'
 import type { SearchHistoryEntry } from '../types'
 import SearchResultsList from './SearchResultsList'
 import SearchHistory from './SearchHistory'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Search page — lets users search for other users in real time
  * and keeps a history of recently visited profiles.
  */
 export default function SearchPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   // Live search (debounced, with stale-request handling)
@@ -56,7 +58,7 @@ export default function SearchPage() {
           query={query}
           onChange={handleSearch}
           onClear={clearSearch}
-          placeholder="Search users..."
+          placeholder={t('Search users...')}
         />
       </div>
 

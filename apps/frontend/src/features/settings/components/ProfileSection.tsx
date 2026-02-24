@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { User, ChevronRight } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import SettingsSection from './SettingsSection'
+import { useTranslation } from 'react-i18next'
 
 function getInitials(name: string | null, username: string): string {
   const source = (name?.trim() || username.trim() || 'U')
@@ -9,6 +10,7 @@ function getInitials(name: string | null, username: string): string {
 }
 
 export default function ProfileSection() {
+  const { t } = useTranslation()
   const { profile } = useAuth()
 
   if (!profile) return null
@@ -18,11 +20,11 @@ export default function ProfileSection() {
   const initials = getInitials(profile.name, profile.username)
 
   return (
-    <SettingsSection title="Profile" icon={<User className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Profile')} icon={<User className="w-4.5 h-4.5" />}>
       <Link
         to="/app/profile/edit"
         className="flex items-center gap-3 px-4 py-4 hover:bg-(--bg-hover) transition-colors"
-        aria-label="Edit profile"
+        aria-label={t('Edit profile')}
       >
         {/* Avatar */}
         <div className="w-14 h-14 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden shrink-0">

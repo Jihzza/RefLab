@@ -6,6 +6,7 @@ import PostBox from '@/features/social/components/PostBox'
 import { usePostActions } from '@/features/social/hooks/usePostActions'
 import { useProfileFeed } from '../hooks/useProfileFeed'
 import type { Post } from '@/features/social/types'
+import { useTranslation } from 'react-i18next'
 
 function PostSkeleton() {
   return (
@@ -31,6 +32,7 @@ function PostSkeleton() {
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
   const {
@@ -223,7 +225,7 @@ export default function ProfilePage() {
                   navigate('/app/profile/edit')
                 }}
               >
-                Edit Profile
+                {t('Edit Profile')}
               </button>
               <button
                 type="button"
@@ -234,7 +236,7 @@ export default function ProfilePage() {
                   navigate('/app/settings')
                 }}
               >
-                Settings
+                {t('Settings')}
               </button>
             </div>
           )}
@@ -282,13 +284,13 @@ export default function ProfilePage() {
         {error && !isLoading && (
           <div className="text-center py-12">
             <p className="text-(--text-muted) text-sm mb-3">
-              Something went wrong loading your posts.
+              {t('Something went wrong loading your posts.')}
             </p>
             <button
               onClick={refresh}
               className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
             >
-              Try Again
+              {t('Try Again')}
             </button>
           </div>
         )}
@@ -318,7 +320,7 @@ export default function ProfilePage() {
 
         {!isLoading && !hasMore && posts.length > 0 && (
           <p className="text-center text-(--text-muted) text-xs py-4">
-            You're all caught up!
+            {t("You're all caught up!")}
           </p>
         )}
 
@@ -330,10 +332,10 @@ export default function ProfilePage() {
               </svg>
             </div>
             <h2 className="text-base font-medium text-(--text-primary) mb-1">
-              No posts yet
+              {t('No posts yet')}
             </h2>
             <p className="text-sm text-(--text-muted)">
-              Your posts and reposts will appear here.
+              {t('Your posts and reposts will appear here.')}
             </p>
           </div>
         )}
@@ -341,7 +343,7 @@ export default function ProfilePage() {
 
       {copiedToast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
-          Link copied to clipboard
+          {t('Link copied to clipboard')}
         </div>
       )}
     </div>

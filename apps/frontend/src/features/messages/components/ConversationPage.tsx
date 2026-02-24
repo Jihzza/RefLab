@@ -6,12 +6,14 @@ import { useMessages } from '../hooks/useMessages'
 import type { MessageUser } from '../types'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
+import { useTranslation } from 'react-i18next'
 
 type LocationState = {
   otherUser?: MessageUser
 }
 
 export default function ConversationPage() {
+  const { t } = useTranslation()
   const { conversationId } = useParams<{ conversationId: string }>()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -82,8 +84,8 @@ export default function ConversationPage() {
 
   const displayName = useMemo(() => {
     if (otherUser) return otherUser.name || otherUser.username
-    return 'Conversation'
-  }, [otherUser])
+    return t('Conversation')
+  }, [otherUser, t])
   const profileUsername = otherUser?.username ?? null
   const canOpenProfile = !!profileUsername
 
@@ -92,7 +94,7 @@ export default function ConversationPage() {
   if (!conversationId) {
     return (
       <div className="p-4">
-        <p className="text-(--text-muted) text-sm">Missing conversation ID.</p>
+        <p className="text-(--text-muted) text-sm">{t('Missing conversation ID.')}</p>
       </div>
     )
   }
@@ -104,7 +106,7 @@ export default function ConversationPage() {
         <button
           onClick={() => navigate('/app/messages')}
           className="w-9 h-9 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-          aria-label="Back"
+          aria-label={t('Back')}
           type="button"
         >
           <svg
@@ -126,7 +128,7 @@ export default function ConversationPage() {
               navigate(`/app/profile/${encodeURIComponent(profileUsername!)}`)
             }
             className="flex items-center gap-3 min-w-0"
-            aria-label={`Open ${displayName} profile`}
+            aria-label={t('Open {{name}} profile', { name: displayName })}
           >
             {otherUser?.photo_url ? (
               <img
@@ -218,7 +220,7 @@ export default function ConversationPage() {
 
         {!isLoading && !error && messages.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-(--text-muted) text-sm">No messages yet.</p>
+            <p className="text-(--text-muted) text-sm">{t('No messages yet.')}</p>
           </div>
         )}
       </div>

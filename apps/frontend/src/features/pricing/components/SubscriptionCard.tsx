@@ -3,6 +3,7 @@ import PlanBadge from '@/features/billing/components/PlanBadge'
 import { createPortalSession } from '@/features/billing/api/billingApi'
 import type { Subscription } from '@/features/billing/types'
 import type { PlanId } from '@/features/billing/types'
+import { useTranslation } from 'react-i18next'
 
 interface SubscriptionCardProps {
   subscription: Subscription
@@ -11,13 +12,14 @@ interface SubscriptionCardProps {
 }
 
 export default function SubscriptionCard({ subscription, planId, onCancel }: SubscriptionCardProps) {
+  const { t } = useTranslation()
   const [portalLoading, setPortalLoading] = useState(false)
 
   const isCancelPending = subscription.cancel_at_period_end
 
   /** Format a date string for display */
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString('pt-PT', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -49,12 +51,12 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
   return (
     <section
       className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5 mb-6"
-      aria-label="Your subscription"
+      aria-label={t('Current Plan')}
     >
       {/* Plan name and badge */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-sm text-(--text-muted) mb-1">Current Plan</h2>
+          <h2 className="text-sm text-(--text-muted) mb-1">{t('Current Plan')}</h2>
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold text-(--text-primary) capitalize">{planId}</span>
             <PlanBadge planId={planId} />
@@ -65,7 +67,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
       {/* Subscription details */}
       <div className="space-y-2 text-sm">
         <div className="flex justify-between text-(--text-secondary)">
-          <span>Status</span>
+          <span>{t('Status')}</span>
           <span className={`font-medium capitalize ${statusColor}`}>
             {subscription.status.replace('_', ' ')}
           </span>
@@ -73,7 +75,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
 
         {subscription.current_period_end && (
           <div className="flex justify-between text-(--text-secondary)">
-            <span>{isCancelPending ? 'Active until' : 'Next renewal'}</span>
+            <span>{isCancelPending ? t('Active until') : t('Next renewal')}</span>
             <span>{formatDate(subscription.current_period_end)}</span>
           </div>
         )}
@@ -85,7 +87,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
           className="bg-(--warning)/10 border border-(--warning)/20 text-(--warning) text-sm px-3 py-2 rounded-lg mt-3"
           role="alert"
         >
-          Your subscription will be canceled at the end of the current billing period.
+          {t('Your subscription will be canceled at the end of the current billing period.')}
         </div>
       )}
 
@@ -95,7 +97,7 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
           className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mt-3"
           role="alert"
         >
-          Your last payment failed. Please update your payment method to keep your subscription.
+          {t('Your last payment failed. Please update your payment method to keep your subscription.')}
         </div>
       )}
 
@@ -107,17 +109,17 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
             aria-label="Cancel subscription"
             className="flex-1 py-2.5 rounded-(--radius-button) text-sm font-medium border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
           >
-            Cancel Subscription
+            {t('Cancel Subscription')}
           </button>
         )}
 
         <button
-          onClick={handleManageSubscription}
-          disabled={portalLoading}
-          aria-label="Manage subscription via Stripe"
-          className="flex-1 py-2.5 bg-(--bg-surface-2) text-(--text-primary) rounded-(--radius-button) text-sm font-medium hover:bg-(--bg-surface-2)/80 border border-(--border-subtle) transition-colors disabled:opacity-50"
-        >
-          {portalLoading ? 'Opening...' : 'Manage via Stripe'}
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+            aria-label="Manage subscription via Stripe"
+            className="flex-1 py-2.5 bg-(--bg-surface-2) text-(--text-primary) rounded-(--radius-button) text-sm font-medium hover:bg-(--bg-surface-2)/80 border border-(--border-subtle) transition-colors disabled:opacity-50"
+          >
+          {portalLoading ? t('Opening...') : t('Manage via Stripe')}
         </button>
       </div>
     </section>

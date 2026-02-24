@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronLeft, ChevronRight, Clock, AlertTriangle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { generateRandomTest, saveAnswer, submitRandomTest } from '../../api/testsApi'
 import { useTestTimer, getTimerColorClass } from '../../hooks/useTestTimer'
 import type { TestQuestion, OptionLetter } from '../../types'
@@ -20,6 +21,7 @@ interface RandomTestRunnerProps {
  * - Navigation between questions
  */
 export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) {
+  const { t } = useTranslation()
   // Loading states
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -125,7 +127,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--info) mx-auto mb-4" />
-          <p className="text-sm text-(--text-secondary)">Generating your test...</p>
+          <p className="text-sm text-(--text-secondary)">{t('Generating your test...')}</p>
         </div>
       </div>
     )
@@ -136,8 +138,8 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
     return (
       <div className="text-center py-20">
         <AlertTriangle size={48} className="text-(--error) mx-auto mb-4" />
-        <p className="text-(--text-primary) font-semibold">Failed to load test</p>
-        <p className="text-sm text-(--text-secondary) mt-2">Please try again</p>
+        <p className="text-(--text-primary) font-semibold">{t('Failed to load test')}</p>
+        <p className="text-sm text-(--text-secondary) mt-2">{t('Please try again')}</p>
       </div>
     )
   }
@@ -153,7 +155,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
           </span>
         </div>
         <div className="text-sm text-(--text-secondary)">
-          Question {currentIndex + 1} of {questions.length}
+          {t('Question {{current}} of {{total}}', { current: currentIndex + 1, total: questions.length })}
         </div>
       </div>
 
@@ -165,7 +167,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
         />
       </div>
       <p className="text-xs text-(--text-secondary) text-center">
-        {answeredCount} of {questions.length} answered
+        {t('{{answered}} of {{total}} answered', { answered: answeredCount, total: questions.length })}
       </p>
 
       {/* Question Card */}
@@ -210,7 +212,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
 
         {isAnswered && (
           <p className="text-xs text-(--text-secondary) mt-4 text-center">
-            Answer locked. Use navigation buttons to continue.
+            {t('Answer locked. Use navigation buttons to continue.')}
           </p>
         )}
       </div>
@@ -223,7 +225,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
           className="flex items-center gap-2 px-4 py-3 rounded-xl border border-(--border-subtle) bg-(--bg-surface) text-(--text-primary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={18} />
-          Back
+          {t('Back')}
         </button>
 
         {isLastQuestion ? (
@@ -232,7 +234,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
             disabled={submitting || answeredCount < questions.length}
             className="flex-1 px-6 py-3 rounded-xl bg-(--success) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Submitting...' : 'Submit Test'}
+            {submitting ? t('Submitting...') : t('Submit Test')}
           </button>
         ) : (
           <button
@@ -240,7 +242,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
             disabled={!isAnswered}
             className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            {t('Next')}
             <ChevronRight size={18} />
           </button>
         )}

@@ -26,6 +26,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import PricingCard from "./PricingCard";
 import type { PricingPlan } from "../types";
+import { useTranslation } from "react-i18next";
 
 // Import Swiper core styles
 import "swiper/css";
@@ -102,6 +103,7 @@ const PRICING_PLANS: PricingPlan[] = [
 const CAROUSEL_SLIDES = [...PRICING_PLANS, ...PRICING_PLANS];
 
 export default function PricingSection() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   /**
@@ -120,7 +122,7 @@ export default function PricingSection() {
 
       {/* Section title */}
       <h2 className="text-2xl md:text-3xl font-bold text-(--text-primary) text-center mb-8 px-6">
-        Choose Your Plan
+        {t("Choose Your Plan")}
       </h2>
 
       {/* Swiper carousel */}

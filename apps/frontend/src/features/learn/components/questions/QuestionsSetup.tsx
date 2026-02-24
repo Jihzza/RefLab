@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { getDistinctLaws, getDistinctAreas } from '../../api/testsApi'
 
 // Human-readable names for FIFA laws that appear in the question bank
@@ -23,6 +24,7 @@ interface QuestionsSetupProps {
  * one before the "Start Session" CTA is enabled.
  */
 export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetupProps) {
+  const { t } = useTranslation()
   const [laws, setLaws] = useState<number[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedLaws, setSelectedLaws] = useState<number[]>([])
@@ -78,17 +80,17 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
           onClick={onBack}
           className="text-sm text-(--text-muted) hover:text-(--text-primary) transition-colors"
         >
-          &larr; Back
+          &larr; {t('Back')}
         </button>
         <h2 className="text-lg font-semibold text-(--text-primary)">
-          {mode === 'by_law' ? 'Select Laws' : 'Select Areas'}
+          {mode === 'by_law' ? t('Select Laws') : t('Select Areas')}
         </h2>
       </div>
 
       <p className="text-sm text-(--text-secondary) -mt-3">
         {mode === 'by_law'
-          ? 'Choose one or more FIFA laws to practise. Questions from all selected laws will appear.'
-          : 'Choose one or more areas to practise. Questions from all selected areas will appear.'}
+          ? t('Choose one or more FIFA laws to practise. Questions from all selected laws will appear.')
+          : t('Choose one or more areas to practise. Questions from all selected areas will appear.')}
       </p>
 
       {loading ? (
@@ -103,13 +105,13 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
               onClick={mode === 'by_law' ? selectAllLaws : selectAllAreas}
               className="text-xs text-(--info) hover:underline"
             >
-              Select all
+              {t('Select all')}
             </button>
             <button
               onClick={mode === 'by_law' ? clearLaws : clearAreas}
               className="text-xs text-(--text-muted) hover:underline"
             >
-              Clear
+              {t('Clear')}
             </button>
           </div>
 
@@ -129,7 +131,7 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
                         : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--info)/50 hover:bg-(--bg-surface-2)'
                     }`}
                   >
-                    Law {law} — {name}
+                    {t('Law {{law}} — {{name}}', { law, name: t(name) })}
                   </button>
                 )
               })}
@@ -163,15 +165,15 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
         disabled={!canStart}
         className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg hover:opacity-90 transition-opacity shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        Start Session
+        {t('Start Session')}
         {mode === 'by_law' && selectedLaws.length > 0 && (
           <span className="ml-2 text-sm font-normal opacity-80">
-            ({selectedLaws.length} law{selectedLaws.length > 1 ? 's' : ''} selected)
+            ({selectedLaws.length} {t(selectedLaws.length > 1 ? 'laws selected' : 'law selected')})
           </span>
         )}
         {mode === 'by_area' && selectedAreas.length > 0 && (
           <span className="ml-2 text-sm font-normal opacity-80">
-            ({selectedAreas.length} area{selectedAreas.length > 1 ? 's' : ''} selected)
+            ({selectedAreas.length} {t(selectedAreas.length > 1 ? 'areas selected' : 'area selected')})
           </span>
         )}
       </button>

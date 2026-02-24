@@ -10,10 +10,12 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const STORAGE_KEY = 'cookie-consent';
 
 export default function CookieConsentBanner() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   // Check localStorage on mount — only show if no consent recorded
@@ -41,19 +43,18 @@ export default function CookieConsentBanner() {
   return (
     <div
       role="dialog"
-      aria-label="Cookie consent"
+      aria-label={t('Cookie consent')}
       className="fixed bottom-0 left-0 right-0 z-50 p-4"
     >
       <div className="max-w-lg mx-auto bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 shadow-lg">
         {/* Message */}
         <p className="text-sm text-(--text-secondary) mb-4 leading-relaxed">
-          We use cookies to improve your experience. By continuing to use RefLab,
-          you agree to our{' '}
+          {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
           <Link
             to="/cookies"
             className="text-(--info) hover:underline"
           >
-            Cookies Policy
+            {t('Cookies Policy')}
           </Link>
           .
         </p>
@@ -63,16 +64,16 @@ export default function CookieConsentBanner() {
           <button
             onClick={handleAccept}
             className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) transition-colors hover:opacity-90"
-            aria-label="Accept cookies"
+            aria-label={t('Accept cookies')}
           >
-            Accept
+            {t('Accept')}
           </button>
           <button
             onClick={handleDecline}
             className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-secondary) transition-colors hover:bg-(--bg-hover)"
-            aria-label="Decline cookies"
+            aria-label={t('Decline cookies')}
           >
-            Decline
+            {t('Decline')}
           </button>
         </div>
       </div>

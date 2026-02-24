@@ -7,8 +7,10 @@ import SubscriptionCard from './SubscriptionCard'
 import InvoiceHistory from './InvoiceHistory'
 import CancelDialog from './CancelDialog'
 import ChangePlanDialog from './ChangePlanDialog'
+import { useTranslation } from 'react-i18next'
 
 export default function PricingPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const { subscription, planId, isLoading, refreshBilling } = useBilling()
 
@@ -69,7 +71,7 @@ export default function PricingPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="text-(--text-muted)">Loading...</div>
+        <div className="text-(--text-muted)">{t('Loading...')}</div>
       </div>
     )
   }
@@ -79,7 +81,7 @@ export default function PricingPage() {
       {/* Page header */}
       <div className="flex items-center gap-2 mb-6">
         <CreditCard className="w-5 h-5 text-(--text-muted)" aria-hidden="true" />
-        <h1 className="text-xl font-bold text-(--text-primary)">Pricing & Billing</h1>
+        <h1 className="text-xl font-bold text-(--text-primary)">{t('Pricing & Billing')}</h1>
       </div>
 
       {/* Checkout success banner */}
@@ -89,8 +91,10 @@ export default function PricingPage() {
           role="status"
         >
           {subscription
-            ? `Welcome to ${subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1)}!`
-            : 'Processing your subscription...'}
+            ? t('Welcome to {{plan}}!', {
+                plan: subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1),
+              })
+            : t('Processing your subscription...')}
         </div>
       )}
 

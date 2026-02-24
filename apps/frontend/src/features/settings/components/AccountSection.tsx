@@ -4,8 +4,10 @@ import { Shield, Mail, KeyRound, LogOut, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
+import { useTranslation } from 'react-i18next'
 
 export default function AccountSection() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, signOut, resetPassword, deleteAccount } = useAuth()
 
@@ -50,18 +52,18 @@ export default function AccountSection() {
 
   return (
     <>
-      <SettingsSection title="Account & Security" icon={<Shield className="w-4.5 h-4.5" />}>
+      <SettingsSection title={t('Account & Security')} icon={<Shield className="w-4.5 h-4.5" />}>
         {/* Email */}
         <div className="px-4 py-3">
           <div className="flex items-center gap-2 mb-1">
             <Mail className="w-4 h-4 text-(--text-muted)" />
-            <span className="text-sm text-(--text-secondary)">Email</span>
+            <span className="text-sm text-(--text-secondary)">{t('Email')}</span>
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm text-(--text-primary) truncate flex-1">{email}</p>
             {isGoogleAccount && (
               <span className="text-xs px-2 py-0.5 rounded-(--radius-pill) bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-muted) whitespace-nowrap">
-                Managed by Google
+                {t('Managed by Google')}
               </span>
             )}
           </div>
@@ -75,19 +77,19 @@ export default function AccountSection() {
               onClick={handleResetPassword}
               disabled={resetStatus === 'sending'}
               className="flex items-center gap-2 text-sm text-(--text-primary) hover:text-(--brand-yellow) transition-colors disabled:opacity-50"
-              aria-label="Reset password"
+              aria-label={t('Reset Password')}
             >
               <KeyRound className="w-4 h-4" />
-              <span>Reset Password</span>
+              <span>{t('Reset Password')}</span>
             </button>
             {resetStatus === 'sent' && (
               <p className="text-xs text-(--success) mt-1">
-                Password reset email sent. Check your inbox.
+                {t('Password reset email sent. Check your inbox.')}
               </p>
             )}
             {resetStatus === 'error' && (
               <p className="text-xs text-(--error) mt-1">
-                Failed to send reset email. Please try again.
+                {t('Failed to send reset email. Please try again.')}
               </p>
             )}
           </div>
@@ -100,10 +102,10 @@ export default function AccountSection() {
             onClick={handleLogout}
             disabled={logoutLoading}
             className="flex items-center gap-2 text-sm text-(--text-primary) hover:text-(--brand-yellow) transition-colors disabled:opacity-50"
-            aria-label="Log out"
+            aria-label={t('Log Out')}
           >
             <LogOut className="w-4 h-4" />
-            <span>{logoutLoading ? 'Logging out...' : 'Log Out'}</span>
+            <span>{logoutLoading ? `${t('Loading...')}` : t('Log Out')}</span>
           </button>
         </div>
 
@@ -113,10 +115,10 @@ export default function AccountSection() {
             type="button"
             onClick={() => setDeleteOpen(true)}
             className="flex items-center gap-2 text-sm text-(--error) hover:opacity-80 transition-colors"
-            aria-label="Delete account"
+            aria-label={t('Delete Account')}
           >
             <Trash2 className="w-4 h-4" />
-            <span>Delete Account</span>
+            <span>{t('Delete Account')}</span>
           </button>
           {deleteError && (
             <p className="text-xs text-(--error) mt-1">{deleteError}</p>
@@ -132,9 +134,9 @@ export default function AccountSection() {
           setDeleteError(null)
         }}
         onConfirm={handleDeleteAccount}
-        title="Delete Account"
-        description="This action is permanent and cannot be undone. All your data, including your profile, posts, and progress, will be permanently deleted."
-        confirmLabel="Delete Account"
+        title={t('Delete Account')}
+        description={t('This action is permanent and cannot be undone. All your data, including your profile, posts, and progress, will be permanently deleted.')}
+        confirmLabel={t('Delete Account')}
         confirmPhrase="DELETE"
         variant="danger"
         loading={deleteLoading}

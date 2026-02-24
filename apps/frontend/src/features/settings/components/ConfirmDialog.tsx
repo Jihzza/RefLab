@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -26,6 +27,7 @@ export default function ConfirmDialog({
   variant = 'danger',
   loading = false,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation()
   const [typedPhrase, setTypedPhrase] = useState('')
 
   if (!isOpen) return null
@@ -89,9 +91,7 @@ export default function ConfirmDialog({
         {confirmPhrase && (
           <div className="mb-4">
             <label className="block text-xs text-(--text-muted) mb-1.5">
-              Type <span className="font-mono font-semibold text-(--text-primary)">
-                {confirmPhrase}
-              </span> to confirm
+              {t('Type {{phrase}} to confirm', { phrase: confirmPhrase })}
             </label>
             <input
               type="text"
@@ -122,7 +122,7 @@ export default function ConfirmDialog({
               text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
               disabled:opacity-50"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="button"
@@ -132,7 +132,7 @@ export default function ConfirmDialog({
               ${styles.buttonBg}
               disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {loading ? 'Processing...' : confirmLabel}
+            {loading ? t('Processing...') : confirmLabel}
           </button>
         </div>
       </div>

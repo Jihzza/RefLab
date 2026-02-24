@@ -1,31 +1,33 @@
 import React from 'react'
 import type { FeedFilter } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface NavigationBarProps {
   filter: FeedFilter
   onFilterChange: (filter: FeedFilter) => void
 }
 
-const FILTERS: { label: string; value: FeedFilter }[] = [
-  { label: 'All', value: 'all' },
-  { label: 'Text', value: 'text' },
-  { label: 'Image', value: 'image' },
-  { label: 'Video', value: 'video' },
-  { label: 'Audio', value: 'audio' },
-]
-
 /** Horizontal filter tabs for the social feed. */
 const NavigationBar: React.FC<NavigationBarProps> = ({
   filter,
   onFilterChange,
 }) => {
+  const { t } = useTranslation()
+  const filters: { label: string; value: FeedFilter }[] = [
+    { label: t('All'), value: 'all' },
+    { label: t('Text'), value: 'text' },
+    { label: t('Image'), value: 'image' },
+    { label: t('Video'), value: 'video' },
+    { label: t('Audio'), value: 'audio' },
+  ]
+
   return (
     <nav
       className="sticky top-0 z-10 bg-(--bg-surface) border-b border-(--border-subtle)"
-      aria-label="Feed filter"
+      aria-label={t('Feed filter')}
     >
       <div className="flex justify-center overflow-x-auto no-scrollbar">
-        {FILTERS.map(({ label, value }) => {
+        {filters.map(({ label, value }) => {
           const isActive = filter === value
           return (
             <button

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface BlockConfirmDialogProps {
   username: string
@@ -12,6 +13,7 @@ const BlockConfirmDialog: React.FC<BlockConfirmDialogProps> = ({
   onConfirm,
   onClose,
 }) => {
+  const { t } = useTranslation()
   return (
     <>
       {/* Backdrop */}
@@ -26,10 +28,10 @@ const BlockConfirmDialog: React.FC<BlockConfirmDialogProps> = ({
           {/* Body */}
           <div className="px-5 py-6 text-center">
             <h2 className="text-lg font-semibold text-(--text-primary) mb-2">
-              Block @{username}?
+              {t('Block @{{username}}?', { username })}
             </h2>
             <p className="text-sm text-(--text-muted)">
-              They won't be able to see your posts and you won't see theirs.
+              {t("They won't be able to see your posts and you won't see theirs.")}
             </p>
           </div>
 
@@ -37,15 +39,15 @@ const BlockConfirmDialog: React.FC<BlockConfirmDialogProps> = ({
           <div className="flex border-t border-(--border-subtle)">
             <button
               onClick={onClose}
-              className="flex-1 py-3 text-sm font-medium text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-r border-(--border-subtle)"
-            >
-              Cancel
+            className="flex-1 py-3 text-sm font-medium text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-r border-(--border-subtle)"
+          >
+              {t('Cancel')}
             </button>
             <button
               onClick={onConfirm}
               className="flex-1 py-3 text-sm font-semibold text-(--error) hover:bg-(--bg-hover) transition-colors"
             >
-              Block
+              {t('Block')}
             </button>
           </div>
         </div>

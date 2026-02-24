@@ -18,6 +18,7 @@
  */
 
 import type { PricingPlan } from "../types";
+import { useTranslation } from "react-i18next";
 
 interface PricingCardProps {
   /** The pricing plan data to display */
@@ -27,6 +28,7 @@ interface PricingCardProps {
 }
 
 export default function PricingCard({ plan, onSelect }: PricingCardProps) {
+  const { t } = useTranslation();
   const { id, name, pricePerMonth, benefits, isHighlighted, buttonText } = plan;
 
   return (
@@ -47,16 +49,16 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           ${isHighlighted ? "text-(--brand-yellow)" : "text-(--text-primary)"}
         `}
       >
-        {name}
+        {t(name)}
       </h3>
 
       {/* Price display */}
       <div className="text-center mb-4">
         <span className="text-3xl font-bold text-(--text-primary)">
-          {pricePerMonth === 0 ? "Free" : `€${pricePerMonth}`}
+          {pricePerMonth === 0 ? t("Free") : `€${pricePerMonth}`}
         </span>
         {pricePerMonth > 0 && (
-          <span className="text-(--text-muted) text-sm"> / month</span>
+          <span className="text-(--text-muted) text-sm">{t("/ month")}</span>
         )}
       </div>
 
@@ -83,7 +85,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
                 clipRule="evenodd"
               />
             </svg>
-            <span>{benefit}</span>
+            <span>{t(benefit)}</span>
           </li>
         ))}
       </ul>
@@ -101,7 +103,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           }
         `}
       >
-        {buttonText}
+        {t(buttonText)}
       </button>
     </div>
   );
