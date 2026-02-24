@@ -483,6 +483,57 @@ const ptPT = {
   'Policy sections': 'Secções legais',
   'Review our policies and terms': 'Consulta as nossas políticas e termos',
   'Last updated: February 2026': 'Última atualização: fevereiro de 2026',
+  '1. Information We Collect': '1. Informações que recolhemos',
+  'We collect information you provide directly, such as your name, email address, and profile details when you create an account. We also collect usage data automatically, including pages visited, features used, and interaction patterns to improve our services.':
+    'Recolhemos informações que nos forneces diretamente, como o teu nome, endereço de email e dados de perfil quando crias uma conta. Também recolhemos automaticamente dados de utilização, incluindo páginas visitadas, funcionalidades usadas e padrões de interação, para melhorar os nossos serviços.',
+  '2. How We Use Your Information': '2. Como usamos as tuas informações',
+  'Your information is used to provide and maintain our services, personalize your experience, communicate important updates, and ensure account security. We may also use aggregated, anonymized data for analytics and service improvements.':
+    'As tuas informações são usadas para prestar e manter os nossos serviços, personalizar a tua experiência, comunicar atualizações importantes e garantir a segurança da conta. Também podemos usar dados agregados e anonimizados para análises e melhoria dos serviços.',
+  '3. Data Sharing': '3. Partilha de dados',
+  'We do not sell your personal information. We may share data with trusted third-party service providers who assist in operating our platform, subject to strict confidentiality agreements. We may also disclose information when required by law or to protect our rights.':
+    'Não vendemos as tuas informações pessoais. Podemos partilhar dados com prestadores de serviços terceiros de confiança que apoiam o funcionamento da nossa plataforma, sujeitos a acordos rigorosos de confidencialidade. Também podemos divulgar informações quando exigido por lei ou para proteger os nossos direitos.',
+  '4. Your Rights': '4. Os teus direitos',
+  'You have the right to access, update, or delete your personal information at any time through your account settings. You may also request a copy of your data or opt out of certain data processing activities by contacting our support team.':
+    'Tens o direito de aceder, atualizar ou eliminar as tuas informações pessoais em qualquer altura através das definições da tua conta. Também podes pedir uma cópia dos teus dados ou opor-te a determinadas atividades de tratamento de dados contactando a nossa equipa de suporte.',
+  '5. Contact Us': '5. Contacta-nos',
+  'If you have any questions about this Privacy Policy, please contact us at':
+    'Se tiveres alguma questão sobre esta Política de Privacidade, contacta-nos em',
+  '1. Acceptance of Terms': '1. Aceitação dos termos',
+  'By accessing or using RefLab, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you may not access or use our services. We reserve the right to update these terms at any time, and continued use of the platform constitutes acceptance of the updated terms.':
+    'Ao acederes ou usares o RefLab, concordas em ficar vinculado a estes Termos de Serviço. Se não concordares com todos os termos e condições, não poderás aceder nem usar os nossos serviços. Reservamo-nos o direito de atualizar estes termos a qualquer momento, e a utilização continuada da plataforma constitui aceitação dos termos atualizados.',
+  '2. User Accounts': '2. Contas de utilizador',
+  'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You must provide accurate and complete information during registration and keep your account information up to date. You must notify us immediately of any unauthorized use of your account.':
+    'És responsável por manter a confidencialidade das credenciais da tua conta e por todas as atividades realizadas na mesma. Deves fornecer informações exatas e completas durante o registo e manter os dados da conta atualizados. Deves notificar-nos imediatamente de qualquer utilização não autorizada da tua conta.',
+  '3. Acceptable Use': '3. Utilização aceitável',
+  'You agree not to use RefLab for any unlawful purpose or in any way that could damage, disable, or impair the platform. You must not attempt to gain unauthorized access to any part of the service, other accounts, or any systems or networks connected to our servers.':
+    'Concordas em não usar o RefLab para qualquer finalidade ilegal nem de forma que possa danificar, desativar ou prejudicar a plataforma. Não deves tentar obter acesso não autorizado a qualquer parte do serviço, a outras contas ou a quaisquer sistemas ou redes ligados aos nossos servidores.',
+  '4. Intellectual Property': '4. Propriedade intelectual',
+  'All content, features, and functionality of RefLab, including but not limited to text, graphics, logos, and software, are the exclusive property of RefLab and are protected by intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.':
+    'Todo o conteúdo, funcionalidades e características do RefLab, incluindo, entre outros, texto, elementos gráficos, logótipos e software, são propriedade exclusiva do RefLab e estão protegidos por leis de propriedade intelectual. Não podes reproduzir, distribuir ou criar obras derivadas sem a nossa autorização expressa por escrito.',
+  '5. Limitation of Liability': '5. Limitação de responsabilidade',
+  'RefLab shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use or inability to use the service. Our total liability for any claims arising from or related to the service shall not exceed the amount you have paid us in the twelve months preceding the claim.':
+    'O RefLab não será responsável por quaisquer danos indiretos, incidentais, especiais ou consequenciais resultantes da tua utilização ou incapacidade de utilização do serviço. A nossa responsabilidade total por quaisquer reclamações resultantes de ou relacionadas com o serviço não excederá o montante que nos tenhas pago nos doze meses anteriores à reclamação.',
+  '1. What Are Cookies': '1. O que são cookies',
+  'Cookies are small text files that are stored on your device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the site owners. Cookies help us remember your preferences and improve your browsing experience.':
+    'Cookies são pequenos ficheiros de texto armazenados no teu dispositivo quando visitas um website. São amplamente utilizados para tornar os websites mais eficientes e para fornecer informações aos proprietários dos sites. Os cookies ajudam-nos a recordar as tuas preferências e a melhorar a tua experiência de navegação.',
+  '2. Cookies We Use': '2. Cookies que usamos',
+  'We use the following types of cookies on RefLab:':
+    'Usamos os seguintes tipos de cookies no RefLab:',
+  'Essential cookies:': 'Cookies essenciais:',
+  'Required for the platform to function, including authentication and session management.':
+    'Necessários para o funcionamento da plataforma, incluindo autenticação e gestão de sessão.',
+  'Preference cookies:': 'Cookies de preferência:',
+  'Remember your settings and preferences to provide a personalized experience.':
+    'Recordam as tuas definições e preferências para proporcionar uma experiência personalizada.',
+  'Analytics cookies:': 'Cookies de análise:',
+  'Help us understand how visitors interact with the platform so we can improve our services.':
+    'Ajudam-nos a perceber como os visitantes interagem com a plataforma, para que possamos melhorar os nossos serviços.',
+  '3. Managing Cookies': '3. Gestão de cookies',
+  'You can manage your cookie preferences through the cookie consent banner that appears when you first visit RefLab. You can also control cookies through your browser settings. Please note that disabling essential cookies may affect the functionality of the platform.':
+    'Podes gerir as tuas preferências de cookies através do banner de consentimento que aparece quando visitas o RefLab pela primeira vez. Também podes controlar os cookies através das definições do teu navegador. Tem em atenção que desativar cookies essenciais pode afetar o funcionamento da plataforma.',
+  '4. Third-Party Cookies': '4. Cookies de terceiros',
+  "Some cookies on our platform are set by third-party services that appear on our pages. We do not control these cookies. Third-party providers include analytics and authentication services. Please refer to each provider's privacy policy for more information on how they use cookies.":
+    'Alguns cookies na nossa plataforma são definidos por serviços de terceiros que aparecem nas nossas páginas. Não controlamos esses cookies. Os fornecedores terceiros incluem serviços de análise e autenticação. Consulta a política de privacidade de cada fornecedor para mais informações sobre a forma como usam cookies.',
 
   // Profile/Social generic
   All: 'Todos',
