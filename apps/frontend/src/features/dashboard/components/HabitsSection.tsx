@@ -21,7 +21,7 @@ export default function HabitsSection({ habits }: HabitsSectionProps) {
   } = habits
 
   return (
-    <section aria-label="Training habits" className="space-y-4">
+    <section aria-label={t('Training habits')} className="space-y-4">
       {/* Section header */}
       <div className="flex items-center gap-2">
         <CalendarDays size={18} className="text-(--text-muted)" aria-hidden="true" />

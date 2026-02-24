@@ -1,5 +1,6 @@
 import { getMessageMediaPublicUrl } from '../api/messagesApi'
 import type { Message } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface MessageBubbleProps {
   message: Message
@@ -24,6 +25,7 @@ function resolveMediaUrl(pathOrUrl: string): string {
 }
 
 export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
+  const { t } = useTranslation()
   const hasText = !!message.content?.trim()
   const hasMedia = !!message.media_url
   const mediaSrc = message.media_url ? resolveMediaUrl(message.media_url) : null
@@ -43,7 +45,7 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             {message.media_type === 'image' && (
               <img
                 src={mediaSrc}
-                alt="Message media"
+                alt={t('Message media')}
                 className="w-full max-h-72 object-contain rounded-lg"
               />
             )}

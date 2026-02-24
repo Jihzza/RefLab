@@ -10,6 +10,7 @@ import {
   uploadProfileAvatar,
 } from '@/features/auth/api/profilesApi'
 import { useAuth } from '@/features/auth/components/useAuth'
+import { useTranslation } from 'react-i18next'
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -48,6 +49,7 @@ function EditProfileForm({
   updateUser,
   updateUserMetadata,
 }: EditProfileFormProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [initialSnapshot] = useState<InitialSnapshot>(() => {
@@ -93,12 +95,12 @@ function EditProfileForm({
   const normalizedName = useMemo(() => name.trim(), [name])
 
   const usernameFormatError = useMemo(() => {
-    if (!normalizedUsername) return 'Username is required.'
+    if (!normalizedUsername) return t('Username is required.')
     if (!isValidUsernameFormat(normalizedUsername)) {
-      return 'Use 3-30 chars: lowercase letters, numbers, dots, or underscores.'
+      return t('Use 3-30 chars: lowercase letters, numbers, dots, or underscores.')
     }
     return null
-  }, [normalizedUsername])
+  }, [normalizedUsername, t])
 
   const hasNameChanged = normalizedName !== initialSnapshot.name
   const hasUsernameChanged = normalizedUsername !== initialSnapshot.username
@@ -167,14 +169,14 @@ function EditProfileForm({
     setFormError(null)
 
     if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
-      setAvatarError('Avatar must be JPG, PNG, WEBP, or GIF.')
+      setAvatarError(t('Avatar must be JPG, PNG, WEBP, or GIF.'))
       setAvatarFile(null)
       event.target.value = ''
       return
     }
 
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
-      setAvatarError('Avatar must be 5MB or smaller.')
+      setAvatarError(t('Avatar must be 5MB or smaller.'))
       setAvatarFile(null)
       event.target.value = ''
       return
@@ -217,13 +219,13 @@ function EditProfileForm({
 
       if (error) {
         setUsernameAvailability('error')
-        setFormError('Could not verify username availability. Please try again.')
+        setFormError(t('Could not verify username availability. Please try again.'))
         return
       }
 
       if (!available) {
         setUsernameAvailability('taken')
-        setFormError('That username is already taken.')
+        setFormError(t('That username is already taken.'))
         return
       }
 
@@ -240,7 +242,7 @@ function EditProfileForm({
         const { publicUrl, error } = await uploadProfileAvatar(user.id, avatarFile)
 
         if (error || !publicUrl) {
-          setAvatarError(error?.message ?? 'Failed to upload avatar.')
+          setAvatarError(error?.message ?? t('Failed to upload avatar.'))
           setIsSaving(false)
           return
         }
@@ -295,7 +297,7 @@ function EditProfileForm({
 
         if (metadataError) {
           setFormError(
-            'Profile updated, but metadata sync failed. Tap "Save changes" again to retry.'
+            t('Profile updated, but metadata sync failed. Tap "Save changes" again to retry.')
           )
           setIsSaving(false)
           return
@@ -318,7 +320,7 @@ function EditProfileForm({
         await deleteProfileAvatarByUrl(uploadedAvatarUrl)
       }
       const message =
-        error instanceof Error ? error.message : 'Something went wrong while saving.'
+        error instanceof Error ? error.message : t('Something went wrong while saving.')
       setFormError(message)
       setIsSaving(false)
     }
@@ -341,23 +343,23 @@ function EditProfileForm({
         className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 sm:p-6"
       >
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">Edit Profile</h1>
+          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
           <p className="mt-1 text-sm text-(--text-muted)">
-            Update your profile details and avatar.
+            {t('Update your profile details and avatar.')}
           </p>
         </div>
 
         <div className="mb-6 flex flex-col items-center">
           <button
             type="button"
-            aria-label="Upload profile image"
+            aria-label={t('Upload profile image')}
             onClick={handleAvatarClick}
             className="w-24 h-24 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden"
           >
             {displayAvatar ? (
               <img
                 src={displayAvatar}
-                alt="Profile avatar preview"
+                alt={t('Profile avatar preview')}
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -371,10 +373,10 @@ function EditProfileForm({
             onClick={handleAvatarClick}
             className="mt-3 text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft)"
           >
-            Change profile image
+            {t('Change profile image')}
           </button>
           <p className="mt-1 text-xs text-(--text-muted)">
-            JPG, PNG, WEBP, or GIF. Max size 5MB.
+            {t('JPG, PNG, WEBP, or GIF. Max size 5MB.')}
           </p>
           {avatarError && (
             <p className="mt-2 text-xs text-(--error)" role="alert" aria-live="polite">
@@ -386,7 +388,7 @@ function EditProfileForm({
         <div className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="edit-name" className="block text-sm font-medium text-(--text-secondary)">
-              Name
+              {t('Name')}
             </label>
             <input
               id="edit-name"
@@ -397,7 +399,7 @@ function EditProfileForm({
                 setFormError(null)
               }}
               disabled={isSaving}
-              placeholder="Your name"
+              placeholder={t('Your name')}
               className="w-full px-4 py-3 outline-none transition-all
                 bg-(--bg-surface-2)
                 border border-(--border-subtle)
@@ -412,7 +414,7 @@ function EditProfileForm({
 
           <div className="space-y-2">
             <label htmlFor="edit-username" className="block text-sm font-medium text-(--text-secondary)">
-              Username
+              {t('Username')}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) text-sm">
@@ -446,7 +448,7 @@ function EditProfileForm({
                 }}
                 onBlur={() => setUsernameTouched(true)}
                 disabled={isSaving}
-                placeholder="username"
+                placeholder={t('username')}
                 autoComplete="off"
                 className="w-full pl-8 pr-4 py-3 outline-none transition-all
                   bg-(--bg-surface-2)
@@ -461,7 +463,7 @@ function EditProfileForm({
             </div>
 
             <p className="text-xs text-(--text-muted)">
-              3-30 characters. Lowercase letters, numbers, dots, and underscores.
+              {t('3-30 characters. Lowercase letters, numbers, dots, and underscores.')}
             </p>
 
             {usernameTouched && usernameFormatError && (
@@ -472,25 +474,25 @@ function EditProfileForm({
 
             {showUsernameStatus && usernameAvailability === 'checking' && (
               <p className="text-xs text-(--text-muted)" aria-live="polite">
-                Checking username availability...
+                {t('Checking username availability...')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'available' && (
               <p className="text-xs text-(--success)" aria-live="polite">
-                Username is available.
+                {t('Username is available.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'taken' && (
               <p className="text-xs text-(--error)" role="alert" aria-live="polite">
-                That username is already taken.
+                {t('That username is already taken.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'error' && (
               <p className="text-xs text-(--warning)" aria-live="polite">
-                Could not verify username right now. We will check again on save.
+                {t('Could not verify username right now. We will check again on save.')}
               </p>
             )}
           </div>
@@ -513,14 +515,14 @@ function EditProfileForm({
             disabled={isSaving}
             className="flex-1 py-3 px-4 font-medium border border-(--border-subtle) text-(--text-primary) rounded-(--radius-button) bg-(--bg-surface-2) hover:bg-(--bg-hover) transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Cancel
+            {t('Cancel')}
           </button>
           <button
             type="submit"
             disabled={saveDisabled}
             className="flex-1 py-3 px-4 font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSaving ? 'Saving...' : 'Save changes'}
+            {isSaving ? t('Saving...') : t('Save changes')}
           </button>
         </div>
       </form>
@@ -537,15 +539,16 @@ function EditProfileForm({
 }
 
 export default function EditProfilePage() {
+  const { t } = useTranslation()
   const { user, profile, updateUser, updateUserMetadata } = useAuth()
 
   if (!user) {
     return (
       <section className="p-4 pb-20">
         <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">Edit Profile</h1>
+          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
           <p className="mt-2 text-sm text-(--error)">
-            You must be signed in to edit your profile.
+            {t('You must be signed in to edit your profile.')}
           </p>
         </div>
       </section>
@@ -556,8 +559,8 @@ export default function EditProfilePage() {
     return (
       <section className="p-4 pb-20">
         <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">Edit Profile</h1>
-          <p className="mt-2 text-sm text-(--text-muted)">Loading profile...</p>
+          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
+          <p className="mt-2 text-sm text-(--text-muted)">{t('Loading profile...')}</p>
         </div>
       </section>
     )

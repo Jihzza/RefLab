@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Comment } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface CommentBoxProps {
   comment: Comment
@@ -78,6 +79,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
   onDelete,
   onReport,
 }) => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
   const displayName = comment.author.name || comment.author.username
@@ -126,7 +128,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
                 ? 'text-(--error)'
                 : 'text-(--text-muted) hover:text-(--error)'
             }`}
-            aria-label={comment.is_liked ? 'Unlike comment' : 'Like comment'}
+            aria-label={comment.is_liked ? t('Unlike comment') : t('Like comment')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24"
               fill={comment.is_liked ? 'currentColor' : 'none'}
@@ -144,9 +146,9 @@ const CommentBox: React.FC<CommentBoxProps> = ({
             <button
               onClick={onReply}
               className="text-[11px] text-(--text-muted) hover:text-(--info) transition-colors"
-              aria-label="Reply to comment"
+              aria-label={t('Reply to comment')}
             >
-              Reply
+              {t('Reply')}
             </button>
           )}
 
@@ -155,7 +157,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="p-0.5 text-(--text-muted) hover:text-(--text-secondary) transition-colors"
-              aria-label="Comment options"
+              aria-label={t('Comment options')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <circle cx="5" cy="12" r="2" />
@@ -173,14 +175,14 @@ const CommentBox: React.FC<CommentBoxProps> = ({
                       onClick={() => { setMenuOpen(false); onDelete(comment.id) }}
                       className="w-full text-left px-3 py-2 text-xs text-(--error) hover:bg-(--bg-hover) transition-colors"
                     >
-                      Delete
+                      {t('Delete')}
                     </button>
                   ) : (
                     <button
                       onClick={() => { setMenuOpen(false); onReport(comment.id) }}
                       className="w-full text-left px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
                     >
-                      Report
+                      {t('Report')}
                     </button>
                   )}
                 </div>

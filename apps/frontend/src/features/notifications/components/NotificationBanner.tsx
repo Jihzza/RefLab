@@ -69,6 +69,47 @@ function getNotificationRoute(notification: EnrichedNotification): string | null
   return null
 }
 
+function getLocalizedMessage(
+  notification: EnrichedNotification,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  switch (notification.type) {
+    case 'liked_post':
+      return t('liked your post')
+    case 'comment_on_post':
+      return t('commented on your post')
+    case 'reply_to_comment':
+      return t('replied to your comment')
+    case 'mentioned_in_comment':
+      return t('mentioned you in a comment')
+    case 'reposted_post':
+      return t('reposted your post')
+    case 'new_follower':
+      return t('started following you')
+    case 'new_message':
+      return t('sent you a message')
+    case 'streak_track':
+      return t('You completed a learning activity today. Keep it up!')
+    case 'welcome_to_plan':
+      return t('Your plan is now active. Enjoy all premium features!')
+    case 'plan_expiration_reminder':
+      return t('Your plan will expire soon. Renew to keep premium features.')
+    case 'plan_expired':
+      return t('Your plan has expired. Renew to keep premium features.')
+    case 'new_content_available': {
+      const match = notification.message.match(/"([^"]+)"/)
+      if (match?.[1]) {
+        return t('A new test "{{title}}" is now available. Check it out!', { title: match[1] })
+      }
+      return t('New content is available. Check it out!')
+    }
+    case 'profile_incomplete':
+      return t('Complete your profile to unlock all features.')
+    default:
+      return t(notification.message)
+  }
+}
+
 /**
  * NotificationBanner - Renders a single clickable notification row.
  *
@@ -84,11 +125,12 @@ export default function NotificationBanner({
 }: NotificationBannerProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { actor, message, created_at } = notification
+  const { actor, created_at } = notification
 
   // Actor display info (fallback to "RefLab" for system notifications)
   const displayName = actor ? actor.name || actor.username : 'RefLab'
   const initials = displayName.slice(0, 2).toUpperCase()
+  const localizedMessage = getLocalizedMessage(notification, t)
 
   const route = getNotificationRoute(notification)
 
@@ -106,7 +148,7 @@ export default function NotificationBanner({
           : 'bg-(--bg-surface)'
       }`}
       role="listitem"
-      aria-label={`${isUnread ? t('Unread notification') : t('Notification')}: ${displayName} ${message}`}
+      aria-label={`${isUnread ? t('Unread notification') : t('Notification')}: ${displayName} ${localizedMessage}`}
       onClick={handleClick}
     >
       {/* Avatar */}
@@ -139,7 +181,7 @@ export default function NotificationBanner({
               {displayName}
             </span>
           )}{' '}
-          {message}
+          {localizedMessage}
         </p>
         <span className="text-xs text-(--text-muted) mt-0.5 block">
           {formatRelativeTime(created_at, t('now'))}

@@ -40,6 +40,7 @@ const ptPT = {
 
   // Landing
   'Your Referee Training Laboratory': 'O teu laboratório de treino de arbitragem',
+  'RefLab - Referee Training Laboratory': 'RefLab - Laboratório de Treino de Arbitragem',
   'A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance.':
     'Um espaço dedicado aos árbitros de futebol para estudar, praticar e manter-se alinhados com as Leis do Jogo. Desenvolve a tua competência com conhecimento fiável, prática deliberada e orientação com IA.',
   'Sign up': 'Criar conta',
@@ -171,6 +172,7 @@ const ptPT = {
   'No notifications yet': 'Ainda não há notificações',
   "When someone interacts with your content, you'll see it here.":
     'Quando alguém interagir com o teu conteúdo, vais ver aqui.',
+  'Failed to load notifications': 'Falha ao carregar notificações',
   'Notifications list': 'Lista de notificações',
   Notification: 'Notificação',
   'Unread notification': 'Notificação não lida',
@@ -591,6 +593,123 @@ const ptPT = {
   'Something went wrong loading the feed.': 'Ocorreu um erro ao carregar o feed.',
   'When people start posting, their posts will appear here.':
     'Quando as pessoas começarem a publicar, vais ver aqui as publicações.',
+
+  // Additional UI coverage
+  '3-30 characters. Lowercase letters, numbers, dots, and underscores.':
+    '3-30 caracteres. Letras minúsculas, números, pontos e sublinhados.',
+  '@{{username}} on RefLab': '@{{username}} no RefLab',
+  'A new test "{{title}}" is now available. Check it out!':
+    'Um novo teste "{{title}}" está disponível. Consulta-o!',
+  'Accuracy change': 'Variação de precisão',
+  'Avatar must be 5MB or smaller.': 'O avatar deve ter 5 MB ou menos.',
+  'Avatar must be JPG, PNG, WEBP, or GIF.': 'O avatar deve ser JPG, PNG, WEBP ou GIF.',
+  'Back to Feed': 'Voltar ao feed',
+  'Block User': 'Bloquear utilizador',
+  'Cancel subscription': 'Cancelar subscrição',
+  'Change profile image': 'Alterar imagem de perfil',
+  'Checking username availability...': 'A verificar disponibilidade do nome de utilizador...',
+  'Comment options': 'Opções do comentário',
+  'Complete tests to see stats': 'Conclui testes para ver estatísticas',
+  'Complete your profile to unlock all features.':
+    'Completa o teu perfil para desbloquear todas as funcionalidades.',
+  Confirmar: 'Confirmar',
+  'Copied!': 'Copiado!',
+  Copy: 'Copiar',
+  'Could not verify username availability. Please try again.':
+    'Não foi possível verificar a disponibilidade do nome de utilizador. Tenta novamente.',
+  'Could not verify username right now. We will check again on save.':
+    'Não foi possível verificar o nome de utilizador agora. Vamos verificar novamente ao guardar.',
+  Delete: 'Eliminar',
+  'Failed to open conversation.': 'Não foi possível abrir a conversa.',
+  'Failed to upload avatar.': 'Não foi possível carregar o avatar.',
+  Follow: 'Seguir',
+  'Follow user': 'Seguir utilizador',
+  'Go back': 'Voltar',
+  'JPG, PNG, WEBP, or GIF. Max size 5MB.': 'JPG, PNG, WEBP ou GIF. Tamanho máximo 5 MB.',
+  'Like comment': 'Gostar do comentário',
+  'Loading profile...': 'A carregar perfil...',
+  'Manage subscription via Stripe': 'Gerir subscrição via Stripe',
+  Message: 'Mensagem',
+  'Message media': 'Multimédia da mensagem',
+  'Missing username.': 'Falta o nome de utilizador.',
+  Name: 'Nome',
+  'New content is available. Check it out!': 'Há novo conteúdo disponível. Consulta-o!',
+  Next: 'Seguinte',
+  'Performance metrics': 'Métricas de desempenho',
+  'Please write something or attach media.': 'Escreve algo ou anexa multimédia.',
+  'Post audio': 'Áudio da publicação',
+  'Post media': 'Multimédia da publicação',
+  'Post not found or has been deleted.': 'Publicação não encontrada ou já eliminada.',
+  'Post video': 'Vídeo da publicação',
+  'Profile avatar': 'Avatar do perfil',
+  'Profile avatar preview': 'Pré-visualização do avatar do perfil',
+  'Profile not found': 'Perfil não encontrado',
+  'Profile updated, but metadata sync failed. Tap "Save changes" again to retry.':
+    'Perfil atualizado, mas a sincronização dos metadados falhou. Toca em "Guardar alterações" novamente para tentar de novo.',
+  Questions: 'Perguntas',
+  'RefLab Home': 'Início RefLab',
+  'RefLab Logo': 'Logótipo RefLab',
+  Reply: 'Responder',
+  'Reply to comment': 'Responder ao comentário',
+  Report: 'Denunciar',
+  'Save changes': 'Guardar alterações',
+  'Saving...': 'A guardar...',
+  'Send message': 'Enviar mensagem',
+  'Share Post': 'Partilhar publicação',
+  'Something went wrong loading this profile feed.':
+    'Ocorreu um erro ao carregar o feed deste perfil.',
+  'Something went wrong while saving.': 'Ocorreu um erro ao guardar.',
+  'Something went wrong. Please try again.': 'Ocorreu um erro. Tenta novamente.',
+  'That username is already taken.': 'Esse nome de utilizador já está em uso.',
+  'This is a public profile preview from the social/messages context.':
+    'Esta é uma pré-visualização de perfil público no contexto social/mensagens.',
+  'This user has not posted yet.': 'Este utilizador ainda não publicou.',
+  'This user is unavailable.': 'Este utilizador não está disponível.',
+  Unfollow: 'Deixar de seguir',
+  'Unfollow user': 'Deixar de seguir utilizador',
+  'Unlike comment': 'Remover gosto do comentário',
+  'Update your profile details and avatar.': 'Atualiza os teus dados de perfil e o avatar.',
+  'Upload preview': 'Pré-visualização do carregamento',
+  'Upload profile image': 'Carregar imagem de perfil',
+  'Use 3-30 chars: lowercase letters, numbers, dots, or underscores.':
+    'Usa 3-30 caracteres: letras minúsculas, números, pontos ou sublinhados.',
+  User: 'Utilizador',
+  Username: 'Nome de utilizador',
+  'Username is available.': 'Nome de utilizador disponível.',
+  'Username is required.': 'O nome de utilizador é obrigatório.',
+  Videos: 'Vídeos',
+  'We could not find a public profile for @{{username}}.':
+    'Não foi possível encontrar um perfil público para @{{username}}.',
+  'You blocked this user. Unblock to view their posts.':
+    'Bloqueaste este utilizador. Desbloqueia para ver as publicações.',
+  'You completed a learning activity today. Keep it up!':
+    'Concluíste uma atividade de aprendizagem hoje. Continua assim!',
+  'You must be logged in to post.': 'Tens de iniciar sessão para publicar.',
+  'You must be signed in to edit your profile.':
+    'Tens de iniciar sessão para editar o teu perfil.',
+  'Your name': 'O teu nome',
+  'Your plan has expired. Renew to keep premium features.':
+    'O teu plano expirou. Renova para manter as funcionalidades premium.',
+  'Your plan is now active. Enjoy all premium features!':
+    'O teu plano está agora ativo. Aproveita todas as funcionalidades premium!',
+  'Your plan will expire soon. Renew to keep premium features.':
+    'O teu plano vai expirar em breve. Renova para manter as funcionalidades premium.',
+  'Your posts and reposts will appear here.':
+    'As tuas publicações e republicações vão aparecer aqui.',
+  'Your profile is still loading. Please try again.':
+    'O teu perfil ainda está a carregar. Tenta novamente.',
+  'Check out this post': 'Vê esta publicação',
+  'Progress metrics': 'Métricas de progresso',
+  'Report submitted': 'Denúncia enviada',
+  'Submitting...': 'A submeter...',
+  'commented on your post': 'comentou a tua publicação',
+  'liked your post': 'gostou da tua publicação',
+  'mentioned you in a comment': 'mencionou-te num comentário',
+  'replied to your comment': 'respondeu ao teu comentário',
+  'reposted your post': 'republicou a tua publicação',
+  'sent you a message': 'enviou-te uma mensagem',
+  'started following you': 'começou a seguir-te',
+  username: 'nomeutilizador',
 
   // Fallback / misc
   'Tests Disponibles': 'Testes disponíveis',

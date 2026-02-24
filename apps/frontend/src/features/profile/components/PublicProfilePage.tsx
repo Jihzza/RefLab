@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { getPublicProfileByUsername } from '../api/publicProfilesApi'
 import type { PublicProfile } from '../types'
+import { useTranslation } from 'react-i18next'
 
 export default function PublicProfilePage() {
+  const { t } = useTranslation()
   const { username: usernameParam } = useParams<{ username: string }>()
 
   const username = useMemo(() => {
@@ -17,7 +19,7 @@ export default function PublicProfilePage() {
 
   const loadProfile = useCallback(async () => {
     if (!username) {
-      setError('Missing username.')
+      setError(t('Missing username.'))
       setIsLoading(false)
       return
     }
@@ -37,7 +39,7 @@ export default function PublicProfilePage() {
 
     setProfile(publicProfile)
     setIsLoading(false)
-  }, [username])
+  }, [username, t])
 
   useEffect(() => {
     void loadProfile()
@@ -64,16 +66,16 @@ export default function PublicProfilePage() {
             onClick={() => void loadProfile()}
             className="h-9 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors"
           >
-            Try again
+            {t('Try Again')}
           </button>
         </div>
       )}
 
       {!isLoading && !error && !profile && (
         <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
-          <h1 className="text-lg font-semibold text-(--text-primary) mb-2">Profile not found</h1>
+          <h1 className="text-lg font-semibold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
           <p className="text-sm text-(--text-muted)">
-            We could not find a public profile for @{username}.
+            {t('We could not find a public profile for @{{username}}.', { username })}
           </p>
         </div>
       )}
@@ -105,7 +107,7 @@ export default function PublicProfilePage() {
 
           <div className="mt-4 pt-4 border-t border-(--border-subtle)">
             <p className="text-sm text-(--text-secondary)">
-              This is a public profile preview from the social/messages context.
+              {t('This is a public profile preview from the social/messages context.')}
             </p>
           </div>
         </section>

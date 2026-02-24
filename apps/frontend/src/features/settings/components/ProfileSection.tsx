@@ -31,7 +31,7 @@ export default function ProfileSection() {
           {displayAvatar ? (
             <img
               src={displayAvatar}
-              alt="Profile avatar"
+              alt={t('Profile avatar')}
               className="w-full h-full object-cover"
             />
           ) : (
