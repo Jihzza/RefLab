@@ -272,3 +272,50 @@ StripeWebhookEvent: event_id(pk), type, created, processed
 3. Is there any ML/AI for test explanations?
 4. How does video decision practice work exactly?
 5. What is the "pro" vs "plus" plan difference?
+
+
+---
+
+## Open Questions — ANSWERED
+
+### Q1: What does the chatbot do?
+**A:** It's **NOT BUILT YET.** The chatbot directory (`apps/frontend/src/features/chatbot/`) contains only:
+- `api/.gitkeep`
+- `components/.gitkeep`
+- `types.ts` (empty — just exports nothing)
+
+This is a planned future feature. No functionality implemented in MVP.
+
+---
+
+### Q2: Courses tab — what's planned?
+**A:** **NOT BUILT.** No `CoursesPage.tsx` or equivalent found in the tree. The LearnPage has a `courses` tab key but no corresponding component file. It's a placeholder for future curriculum content.
+
+---
+
+### Q3: Resources tab — what's planned?
+**A:** **Placeholder only.** `ResourcesTab.tsx` exists and renders:
+```
+"Study resources coming soon."
+```
+Will display downloadable resources, rule books, etc. Not implemented.
+
+---
+
+### Q4: How does video decision practice work?
+**A:** From `LearnPage.tsx`:
+- `getVideoScenarios()` — fetches video scenarios from API
+- `getVideoPublicUrl()` — gets signed URL for video playback
+- `saveVideoAttempt()` — saves user's decision on a scenario
+
+Video scenarios are fetched from the backend, played, then user picks a decision. The `sync-video-scenarios` Edge Function syncs content. No actual video files or player UI found in the frontend code read — this is likely backend-side only at MVP stage.
+
+---
+
+### Q5: Pro vs Plus — what's the difference?
+**A:** Not fully readable from code — pricing page not in the tree read. From the Stripe Edge Functions: `change-subscription-plan` suggests multiple plan change options. Need to read `PricingPage.tsx` to answer this. But Stripe plans are `pro` and `plus` per the Edge Function naming convention.
+
+---
+
+### Q6: What is the test explanation system?
+**A:** `TestAttempt` has an `explanation_cache` field (JSONB). When a test is submitted, the system stores explanations for each question. These are shown in `RandomTestResults` per question. Source of explanations is unknown (static content in DB or AI-generated?).
