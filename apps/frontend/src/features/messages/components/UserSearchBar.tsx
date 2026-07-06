@@ -37,8 +37,15 @@ export default function UserSearchBar({
       <input
         value={query}
         onChange={e => onChange(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Escape' && onClear) {
+            e.preventDefault()
+            onClear()
+          }
+        }}
         disabled={disabled}
         placeholder={t(placeholder)}
+        aria-label={t(placeholder)}
         className="w-full bg-transparent text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none"
       />
 

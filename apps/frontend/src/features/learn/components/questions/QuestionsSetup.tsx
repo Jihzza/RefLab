@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getDistinctLaws, getDistinctAreas } from '../../api/testsApi'
@@ -30,24 +30,32 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
   const [selectedLaws, setSelectedLaws] = useState<number[]>([])
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    if (mode === 'by_law') {
+      const { data, error: fetchError } = await getDistinctLaws()
+      if (fetchError || !data) {
+        setError(fetchError?.message || t('Failed to load options.'))
+      } else {
+        setLaws(data)
+      }
+    } else {
+      const { data, error: fetchError } = await getDistinctAreas()
+      if (fetchError || !data) {
+        setError(fetchError?.message || t('Failed to load options.'))
+      } else {
+        setAreas(data)
+      }
+    }
+    setLoading(false)
+  }, [mode, t])
 
   useEffect(() => {
-    let cancelled = false
-
-    async function load() {
-      if (mode === 'by_law') {
-        const { data } = await getDistinctLaws()
-        if (!cancelled && data) setLaws(data)
-      } else {
-        const { data } = await getDistinctAreas()
-        if (!cancelled && data) setAreas(data)
-      }
-      if (!cancelled) setLoading(false)
-    }
-
     load()
-    return () => { cancelled = true }
-  }, [mode])
+  }, [load])
 
   const toggleLaw = (law: number) => {
     setSelectedLaws(prev =>
@@ -96,6 +104,17 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="text-center py-8">
+          <p className="text-(--error) text-sm mb-3">{error}</p>
+          <button
+            onClick={() => load()}
+            disabled={loading}
+            className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {t('Try Again')}
+          </button>
         </div>
       ) : (
         <>

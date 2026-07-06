@@ -184,8 +184,12 @@ export default function SocialPage() {
             </p>
             <button
               onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
+              {isRefreshing && (
+                <span className="w-4 h-4 border-2 border-(--bg-primary) border-t-transparent rounded-full animate-spin" />
+              )}
               {t('Try Again')}
             </button>
           </div>

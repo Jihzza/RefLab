@@ -21,15 +21,18 @@ export default function UserSearchDropdown({
   if (!isOpen) return null
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden">
+    <div
+      className="absolute top-full left-0 right-0 mt-2 z-20 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden"
+      role="listbox"
+    >
       {isSearching && (
-        <div className="flex items-center justify-center py-4">
+        <div className="flex items-center justify-center py-4" role="status" aria-live="polite">
           <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
       {!isSearching && results.length === 0 && (
-        <div className="px-4 py-3 text-sm text-(--text-muted)">
+        <div className="px-4 py-3 text-sm text-(--text-muted)" role="status">
           {query.trim() ? t('No users found') : t('Type to search')}
         </div>
       )}
@@ -44,6 +47,8 @@ export default function UserSearchDropdown({
               <button
                 key={user.id}
                 type="button"
+                role="option"
+                aria-selected="false"
                 onClick={() => onSelect(user)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-(--bg-hover) transition-colors"
               >

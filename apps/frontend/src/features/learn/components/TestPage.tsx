@@ -91,7 +91,7 @@ export default function TestPage() {
         }
 
         setLoading(false)
-      } catch (err) {
+      } catch {
         setError(t('An unexpected error occurred'))
         setLoading(false)
       }

@@ -34,8 +34,9 @@ export default function NotificationBell() {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
-      className="relative p-2"
+      className="relative p-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
       aria-label={
         unreadCount > 0
           ? `${t('Notifications')} (${unreadCount})`

@@ -38,7 +38,7 @@ export default function HeroSection() {
       {/* Value proposition description */}
       <p className="text-(--text-secondary) text-base md:text-lg max-w-xl mx-auto leading-relaxed">
         {t(
-          "A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance."
+          "Train as a football referee with tests, practice questions, video breakdowns, and study resources. Track your progress on a personal dashboard and join a community to debate real match decisions."
         )}
       </p>
     </section>

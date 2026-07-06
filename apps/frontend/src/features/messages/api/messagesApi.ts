@@ -156,9 +156,38 @@ export async function uploadMessageMedia(
   return { data: path, error: null }
 }
 
-/** Get the public URL for a media file stored in the message-media bucket. */
-export function getMessageMediaPublicUrl(path: string): string {
-  const { data } = supabase.storage.from('message-media').getPublicUrl(path)
-  return data.publicUrl
+const SIGNED_URL_TTL_S = 3600 // 1 hour
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>()
+
+/**
+ * Get a time-limited signed URL for a media file in the (private) message-media
+ * bucket. The bucket is private, so access is enforced by the storage RLS policy
+ * scoped to conversation participants — only a participant's request produces a
+ * working URL. Results are cached until shortly before expiry to avoid re-signing
+ * on every render. Returns null if signing fails (e.g. no access / missing file).
+ */
+export async function getMessageMediaSignedUrl(
+  path: string,
+  { forceRefresh = false }: { forceRefresh?: boolean } = {}
+): Promise<string | null> {
+  if (forceRefresh) {
+    signedUrlCache.delete(path)
+  } else {
+    const cached = signedUrlCache.get(path)
+    // Reuse while at least 60s of validity remains.
+    if (cached && cached.expiresAt - 60_000 > Date.now()) return cached.url
+  }
+
+  const { data, error } = await supabase.storage
+    .from('message-media')
+    .createSignedUrl(path, SIGNED_URL_TTL_S)
+
+  if (error || !data?.signedUrl) return null
+
+  signedUrlCache.set(path, {
+    url: data.signedUrl,
+    expiresAt: Date.now() + SIGNED_URL_TTL_S * 1000,
+  })
+  return data.signedUrl
 }
 

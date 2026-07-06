@@ -41,7 +41,13 @@ export default function NotificationsPage() {
       {/* Error state */}
       {error && !loading && (
         <div className="px-4 py-8 text-center">
-          <p className="text-(--text-muted) text-sm">{t(error)}</p>
+          <p className="text-(--text-muted) text-sm mb-3">{t(error)}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+          >
+            {t('Try Again')}
+          </button>
         </div>
       )}
 

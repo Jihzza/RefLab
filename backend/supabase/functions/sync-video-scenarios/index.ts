@@ -10,20 +10,21 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * New rows are created with:
  *   - video_url = filename
  *   - title = filename without extension, formatted as title case
- *   - correct_decision = 'TBD' (must be updated before activating)
+ *   - correct_action / correct_sanction = placeholders (update before activating)
  *   - is_active = false (won't appear in the app until configured)
  *
- * Usage:
+ * Usage (admin only — requires a valid admin session):
  *   POST /functions/v1/sync-video-scenarios
  *
  * After syncing, go to the Supabase Table Editor and update:
- *   - title, description, topic, correct_decision
+ *   - title, description, topic, correct_action, correct_sanction
  *   - Set is_active = true when ready
  */
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const BUCKET = 'learn-videos'
@@ -50,10 +51,51 @@ serve(async (req) => {
   }
 
   try {
+    // ------------------------------------------------------------------
+    // Authorization: this endpoint enumerates a storage bucket and writes
+    // content rows using the service role, so it must be admin-only. Verify a
+    // valid session, then confirm the caller has the 'admin' role before doing
+    // any privileged work.
+    // ------------------------------------------------------------------
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } },
+    )
+
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileError || profile?.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Admin privileges required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
 
     // 1. List all files in the bucket
     const { data: files, error: listError } = await supabase.storage

@@ -1,10 +1,52 @@
-import { getMessageMediaPublicUrl } from '../api/messagesApi'
+import { useEffect, useState } from 'react'
+import { getMessageMediaSignedUrl } from '../api/messagesApi'
 import type { Message } from '../types'
 import { useTranslation } from 'react-i18next'
 
 interface MessageBubbleProps {
   message: Message
   isOwn: boolean
+}
+
+function isReadyUrl(value: string): boolean {
+  return (
+    value.startsWith('blob:') ||
+    value.startsWith('http://') ||
+    value.startsWith('https://')
+  )
+}
+
+/**
+ * Resolve a stored media reference to a displayable URL. Optimistic sends use a
+ * local blob: URL and legacy rows may hold a full http(s) URL — both pass
+ * through unchanged. Bare storage paths are exchanged for a short-lived signed
+ * URL against the private message-media bucket.
+ */
+function useMessageMediaUrl(pathOrUrl: string | null): string | null {
+  const [url, setUrl] = useState<string | null>(() =>
+    pathOrUrl && isReadyUrl(pathOrUrl) ? pathOrUrl : null
+  )
+
+  useEffect(() => {
+    if (!pathOrUrl) {
+      setUrl(null)
+      return
+    }
+    if (isReadyUrl(pathOrUrl)) {
+      setUrl(pathOrUrl)
+      return
+    }
+    let cancelled = false
+    setUrl(null)
+    void getMessageMediaSignedUrl(pathOrUrl).then((signed) => {
+      if (!cancelled) setUrl(signed)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [pathOrUrl])
+
+  return url
 }
 
 function formatTimestamp(dateString: string): string {
@@ -18,17 +60,13 @@ function formatTimestamp(dateString: string): string {
   return `${hh}:${mm}:${ss} ${DD}-${MM}-${YYYY}`
 }
 
-function resolveMediaUrl(pathOrUrl: string): string {
-  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl
-  if (pathOrUrl.startsWith('blob:')) return pathOrUrl
-  return getMessageMediaPublicUrl(pathOrUrl)
-}
-
 export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   const { t } = useTranslation()
   const hasText = !!message.content?.trim()
   const hasMedia = !!message.media_url
-  const mediaSrc = message.media_url ? resolveMediaUrl(message.media_url) : null
+  const mediaSrc = useMessageMediaUrl(message.media_url ?? null)
+  // While a signed URL is being fetched, hold space so the bubble doesn't jump.
+  const mediaPending = hasMedia && !mediaSrc
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -40,6 +78,13 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             : 'bg-(--bg-surface-2) text-(--text-primary) rounded-2xl rounded-bl-md',
         ].join(' ')}
       >
+        {mediaPending && (
+          <div
+            className="mb-2 w-48 max-w-full h-40 rounded-lg bg-(--bg-surface-2) animate-pulse"
+            aria-hidden="true"
+          />
+        )}
+
         {hasMedia && mediaSrc && (
           <div className="mb-2">
             {message.media_type === 'image' && (
@@ -47,6 +92,9 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 src={mediaSrc}
                 alt={t('Message media')}
                 className="w-full max-h-72 object-contain rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
               />
             )}
 
@@ -54,12 +102,21 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
               <video
                 src={mediaSrc}
                 controls
+                aria-label={t('Message video')}
                 className="w-full max-h-72 rounded-lg bg-black"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
               />
             )}
 
             {message.media_type === 'audio' && (
-              <audio src={mediaSrc} controls className="w-full" />
+              <audio
+                src={mediaSrc}
+                controls
+                aria-label={t('Voice message')}
+                className="w-full"
+              />
             )}
           </div>
         )}
@@ -68,8 +125,8 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
 
         <div
           className={[
-            'mt-1 text-[10px]',
-            isOwn ? 'text-(--bg-primary)/70' : 'text-(--text-muted)',
+            'mt-1 text-[11px]',
+            isOwn ? 'text-(--bg-primary)/90' : 'text-(--text-secondary)',
           ].join(' ')}
         >
           {formatTimestamp(message.created_at)}

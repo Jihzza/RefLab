@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next'
 export default function PricingPage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { subscription, planId, isLoading, refreshBilling } = useBilling()
+  const { subscription, planId, isLoading, error, refreshBilling } = useBilling()
 
   // Dialog state
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
@@ -72,6 +72,20 @@ export default function PricingPage() {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="text-(--text-muted)">{t('Loading...')}</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <p className="text-(--error) text-sm mb-3">{error}</p>
+        <button
+          onClick={() => refreshBilling()}
+          className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+        >
+          {t('Retry')}
+        </button>
       </div>
     )
   }

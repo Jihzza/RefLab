@@ -1,27 +1,32 @@
+import { lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import LandingPage from "@/features/landing/components/LandingPage";
-import ResetPassword from "@/features/auth/components/ResetPassword";
-import OAuthCallbackPage from "@/features/auth/components/OAuthCallbackPage";
-import DashboardPage from "@/features/dashboard/components/DashboardPage";
-import TestsList from "@/features/tests/components/TestsList";
-import LearnPage from "@/features/learn/components/LearnPage";
-import TestPage from "@/features/learn/components/TestPage";
-import NotificationsPage from "@/features/notifications/components/NotificationsPage";
-import ProfilePage from "@/features/profile/components/ProfilePage";
-import EditProfilePage from "../features/profile/components/EditProfilePage";
-import SettingsPage from "@/features/settings/components/SettingsPage";
-import PublicProfilePage from "@/features/social/components/PublicProfilePage";
-import PricingPage from "@/features/pricing/components/PricingPage";
-import SocialPage from "@/features/social/components/SocialPage";
-import PostDetailPage from "@/features/social/components/PostDetailPage";
-import MessagesPage from "@/features/messages/components/MessagesPage";
-import ConversationPage from "@/features/messages/components/ConversationPage";
-import SearchPage from "@/features/search/components/SearchPage";
-import PoliciesPage from "@/features/policies/components/PoliciesPage";
 import RequireAuth from "./RequireAuth";
 import RequireGuest from "./RequireGuest";
 import AppShell from "./AppShell";
+
+// Route-level code splitting: each page is loaded on demand so the initial
+// bundle stays small. Suspense fallbacks live inside Layout / AppShell so the
+// app chrome stays visible while a page chunk is being fetched.
+const LandingPage = lazy(() => import("@/features/landing/components/LandingPage"));
+const ResetPassword = lazy(() => import("@/features/auth/components/ResetPassword"));
+const OAuthCallbackPage = lazy(() => import("@/features/auth/components/OAuthCallbackPage"));
+const DashboardPage = lazy(() => import("@/features/dashboard/components/DashboardPage"));
+const TestsList = lazy(() => import("@/features/tests/components/TestsList"));
+const LearnPage = lazy(() => import("@/features/learn/components/LearnPage"));
+const TestPage = lazy(() => import("@/features/learn/components/TestPage"));
+const NotificationsPage = lazy(() => import("@/features/notifications/components/NotificationsPage"));
+const ProfilePage = lazy(() => import("@/features/profile/components/ProfilePage"));
+const EditProfilePage = lazy(() => import("@/features/profile/components/EditProfilePage"));
+const SettingsPage = lazy(() => import("@/features/settings/components/SettingsPage"));
+const PublicProfilePage = lazy(() => import("@/features/social/components/PublicProfilePage"));
+const PricingPage = lazy(() => import("@/features/pricing/components/PricingPage"));
+const SocialPage = lazy(() => import("@/features/social/components/SocialPage"));
+const PostDetailPage = lazy(() => import("@/features/social/components/PostDetailPage"));
+const MessagesPage = lazy(() => import("@/features/messages/components/MessagesPage"));
+const ConversationPage = lazy(() => import("@/features/messages/components/ConversationPage"));
+const SearchPage = lazy(() => import("@/features/search/components/SearchPage"));
+const PoliciesPage = lazy(() => import("@/features/policies/components/PoliciesPage"));
 
 export default function Router() {
   return (

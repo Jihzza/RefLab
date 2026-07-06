@@ -28,11 +28,14 @@ const PostMenu: React.FC<PostMenuProps> = ({
   return (
     <div className="relative">
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="p-1 rounded-full hover:bg-(--bg-hover) transition-colors text-(--text-muted)"
+        className="p-1 rounded-full hover:bg-(--bg-hover) transition-colors text-(--text-muted) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
         aria-label={t('Post options')}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="12" cy="5" r="2" />
           <circle cx="12" cy="12" r="2" />
           <circle cx="12" cy="19" r="2" />
@@ -45,34 +48,43 @@ const PostMenu: React.FC<PostMenuProps> = ({
           <div
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Dropdown */}
-          <div className="absolute right-0 top-8 z-50 w-48 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden">
+          <div role="menu" className="absolute right-0 top-8 z-50 w-48 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden">
             {isOwnPost ? (
               <button
+                type="button"
+                role="menuitem"
                 onClick={() => handleAction(onDelete)}
-                className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors"
+                className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
               >
                 {t('Delete Post')}
               </button>
             ) : (
               <>
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => handleAction(onReportPost)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
+                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
                 >
                   {t('Report Post')}
                 </button>
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => handleAction(onReportUser)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
+                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
                 >
                   {t('Report User')}
                 </button>
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={() => handleAction(onBlockUser)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
+                  className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
                 >
                   {t('Block User')}
                 </button>

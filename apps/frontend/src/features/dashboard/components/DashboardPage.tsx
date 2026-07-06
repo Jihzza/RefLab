@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
  */
 export default function DashboardPage() {
   const { t } = useTranslation()
-  const { stats, loading, error } = useDashboard()
+  const { stats, loading, error, refresh } = useDashboard()
 
   return (
     <div className="min-h-screen bg-(--bg-primary) pb-24">
@@ -50,6 +50,24 @@ export default function DashboardPage() {
             <ProgressSection progress={stats.progress} />
             <HabitsSection habits={stats.habits} />
           </>
+        )}
+
+        {/* Empty / failed-load state */}
+        {!loading && !stats && (
+          <div className="text-center py-16">
+            <p className="text-(--text-muted) text-sm">
+              {error
+                ? t('Unable to load your dashboard data.')
+                : t('No dashboard data yet. Complete a test or analysis to get started.')}
+            </p>
+            <button
+              onClick={refresh}
+              disabled={loading}
+              className="mt-3 px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {t('Try Again')}
+            </button>
+          </div>
         )}
       </div>
     </div>

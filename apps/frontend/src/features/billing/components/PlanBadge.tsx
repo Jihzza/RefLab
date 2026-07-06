@@ -6,9 +6,9 @@ interface PlanBadgeProps {
 }
 
 const PLAN_STYLES: Record<PlanId, string> = {
-  free: 'bg-gray-500/20 text-gray-400',
+  free: 'bg-(--text-muted)/10 text-(--text-muted)',
   pro: 'bg-(--brand-yellow)/20 text-(--brand-yellow)',
-  plus: 'bg-green-500/20 text-green-400',
+  plus: 'bg-(--success)/20 text-(--success)',
 }
 
 const PLAN_LABELS: Record<PlanId, string> = {

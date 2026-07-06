@@ -195,8 +195,9 @@ export default function ConversationPage() {
         onScroll={handleScroll}
       >
         {isLoading && (
-          <div className="flex justify-center py-6">
-            <div className="w-6 h-6 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+          <div className="flex justify-center py-6" aria-live="polite" aria-busy="true" role="status">
+            <div className="w-6 h-6 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <span className="sr-only">{t('Loading messages...')}</span>
           </div>
         )}
 
@@ -220,7 +221,14 @@ export default function ConversationPage() {
 
         {!isLoading && !error && messages.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-(--text-muted) text-sm">{t('No messages yet.')}</p>
+            <p className="text-(--text-muted) text-sm mb-3">{t('No messages yet.')}</p>
+            <button
+              type="button"
+              onClick={() => navigate('/app/messages')}
+              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+            >
+              {t('Back to Conversations')}
+            </button>
           </div>
         )}
       </div>

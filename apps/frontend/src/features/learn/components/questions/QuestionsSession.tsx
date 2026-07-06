@@ -3,7 +3,7 @@ import { Loader2, Timer } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   getQuestionsByFilters,
-  savePracticeAnswerWithSession,
+  gradePracticeAnswer,
   completeQuestionSession,
 } from '../../api/testsApi'
 import type { TestQuestion, OptionLetter, QuestionSessionMode, AnsweredQuestion, SessionResult } from '../../types'
@@ -108,6 +108,11 @@ export default function QuestionsSession({
   const [currentQ, setCurrentQ] = useState<TestQuestion | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
+  // The correct option index for the current question, revealed by the server
+  // grading response once the user checks their answer.
+  const [correctIdx, setCorrectIdx] = useState<number | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [checkError, setCheckError] = useState(false)
 
   const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestion[]>([])
   const [totalCorrect, setTotalCorrect] = useState(0)
@@ -158,13 +163,15 @@ export default function QuestionsSession({
   const advanceQuestion = () => {
     setSelectedOption(null)
     setShowAnswer(false)
+    setCorrectIdx(null)
+    setCheckError(false)
 
     setQueue(prevQueue => {
       let remaining = prevQueue.slice(1)
 
       // Re-shuffle and refill when queue is nearly empty, avoiding repeat of last question
       if (remaining.length === 0) {
-        let reshuffled = shuffle(pool)
+        const reshuffled = shuffle(pool)
         if (reshuffled[0].id === lastQuestionIdRef.current && reshuffled.length > 1) {
           // Swap first and second to avoid immediate repeat
           ;[reshuffled[0], reshuffled[1]] = [reshuffled[1], reshuffled[0]]
@@ -180,23 +187,40 @@ export default function QuestionsSession({
   }
 
   const handleCheck = async () => {
-    if (selectedOption === null || !currentQ || showAnswer) return
+    if (selectedOption === null || !currentQ || showAnswer || checking) return
 
-    const isCorrect = selectedOption === letterToIndex(currentQ.correct_option)
+    setChecking(true)
+    setCheckError(false)
+
+    // Grade server-side: the answer key is never shipped to the client before
+    // the answer is recorded. The response tells us both correctness and the
+    // correct option so we can render the same immediate feedback as before.
+    const selectedLetter = indexToLetter(selectedOption)
+    const { data, error } = await gradePracticeAnswer(sessionId, currentQ.id, selectedLetter)
+
+    if (error || !data) {
+      setChecking(false)
+      setCheckError(true)
+      return
+    }
+
+    const correctLetter = data.correct_option
+    const isCorrect = data.is_correct
+
+    setCorrectIdx(letterToIndex(correctLetter))
     setShowAnswer(true)
+    setChecking(false)
 
     const answered: AnsweredQuestion = {
       question: currentQ,
-      selectedOption: indexToLetter(selectedOption),
+      selectedOption: selectedLetter,
       selectedIndex: selectedOption,
+      correctOption: correctLetter,
       isCorrect,
     }
 
     setAnsweredQuestions(prev => [...prev, answered])
     if (isCorrect) setTotalCorrect(prev => prev + 1)
-
-    // Save to DB in background
-    savePracticeAnswerWithSession(currentQ.id, indexToLetter(selectedOption), isCorrect, sessionId)
   }
 
   const handleEndSession = async () => {
@@ -252,7 +276,6 @@ export default function QuestionsSession({
   }
 
   const options = getOptions(currentQ)
-  const correctIdx = letterToIndex(currentQ.correct_option)
   const totalAnswered = answeredQuestions.length
 
   return (
@@ -284,7 +307,8 @@ export default function QuestionsSession({
 
           <button
             onClick={() => setShowEndConfirm(true)}
-            className="text-xs font-medium text-(--error) hover:opacity-80 transition-opacity"
+            disabled={ending}
+            className="text-xs font-medium text-(--error) hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
           >
             {t('End Session')}
           </button>
@@ -328,13 +352,19 @@ export default function QuestionsSession({
 
         {/* Footer */}
         <div className="mt-4 pt-4 border-t border-(--border-subtle)">
+          {checkError && (
+            <p className="mb-2 text-xs text-(--error) text-center" role="alert">
+              {t("Couldn't check your answer. Please try again.")}
+            </p>
+          )}
           {!showAnswer ? (
             <button
               onClick={handleCheck}
-              disabled={selectedOption === null}
-              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
+              disabled={selectedOption === null || checking}
+              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
             >
-              {t('Check Answer')}
+              {checking && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
+              {checking ? t('Checking…') : t('Check Answer')}
             </button>
           ) : (
             <button

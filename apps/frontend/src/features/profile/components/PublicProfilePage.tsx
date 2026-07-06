@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { getPublicProfileByUsername } from '../api/publicProfilesApi'
 import type { PublicProfile } from '../types'
 import { useTranslation } from 'react-i18next'
 
 export default function PublicProfilePage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { username: usernameParam } = useParams<{ username: string }>()
 
   const username = useMemo(() => {
@@ -74,9 +75,16 @@ export default function PublicProfilePage() {
       {!isLoading && !error && !profile && (
         <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
           <h1 className="text-lg font-semibold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
-          <p className="text-sm text-(--text-muted)">
+          <p className="text-sm text-(--text-muted) mb-4">
             {t('We could not find a public profile for @{{username}}.', { username })}
           </p>
+          <button
+            type="button"
+            onClick={() => navigate('/app/search')}
+            className="h-9 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors"
+          >
+            {t('Search for another user')}
+          </button>
         </div>
       )}
 

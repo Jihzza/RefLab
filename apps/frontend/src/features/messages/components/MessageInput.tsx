@@ -9,38 +9,73 @@ interface MessageInputProps {
 const ACCEPT_MIME =
   'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/webm'
 
+// Mirror the message-media bucket limits (backend/supabase/migrations/20260212_0006_messages_tables.sql)
+const ALLOWED_MIME = ACCEPT_MIME.split(',')
+const MAX_MEDIA_BYTES = 50 * 1024 * 1024 // 50 MB
+
 export default function MessageInput({ onSend, isSending }: MessageInputProps) {
   const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const sendingRef = useRef(false)
 
   const canSend = (!!content.trim() || !!mediaFile) && !isSending
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validate before upload so oversized/invalid files fail fast with a clear message.
+    if (!ALLOWED_MIME.includes(file.type)) {
+      setError(t('Unsupported file type. Use an image, video, or audio file.'))
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_MEDIA_BYTES) {
+      setError(t('File is too large. The maximum size is 50 MB.'))
+      e.target.value = ''
+      return
+    }
+
+    setError(null)
     setMediaFile(file)
-  }, [])
+  }, [t])
 
   const removeMedia = useCallback(() => {
     setMediaFile(null)
+    setError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
   const handleSend = useCallback(async () => {
-    if (!canSend) return
+    if (!canSend || sendingRef.current) return
+    sendingRef.current = true
     const text = content
     const file = mediaFile ?? undefined
 
     setContent('')
     removeMedia()
 
-    await onSend(text, file)
+    try {
+      await onSend(text, file)
+    } finally {
+      sendingRef.current = false
+    }
   }, [canSend, content, mediaFile, onSend, removeMedia])
 
   return (
     <div className="bg-(--bg-surface) border-t border-(--border-subtle) px-3 py-2">
+      {error && (
+        <div
+          role="alert"
+          className="mb-2 px-3 py-2 text-xs text-(--error) bg-(--error)/10 border border-(--error)/20 rounded-(--radius-input)"
+        >
+          {error}
+        </div>
+      )}
+
       {mediaFile && (
         <div className="mb-2 flex items-center gap-2">
           <div className="flex items-center gap-2 max-w-full px-3 py-2 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-card)">
@@ -51,6 +86,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -76,6 +112,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -98,6 +135,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
             viewBox="0 0 24 24"
             stroke="currentColor"
             strokeWidth={1.5}
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -117,6 +155,7 @@ export default function MessageInput({ onSend, isSending }: MessageInputProps) {
             }
           }}
           placeholder={t('Write message..:')}
+          aria-label={t('Write message..:')}
           className="flex-1 h-10 px-4 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
           disabled={isSending}
         />

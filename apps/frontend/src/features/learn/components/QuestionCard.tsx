@@ -42,7 +42,7 @@ export default function QuestionCard({
       </div>
 
       {/* Question text */}
-      <h2 className="text-lg font-medium text-gray-900 mb-6">
+      <h2 className="text-lg font-medium text-(--text-primary) mb-6">
         {question.question_text}
       </h2>
 

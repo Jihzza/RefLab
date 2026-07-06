@@ -46,11 +46,16 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     if (!text || isSubmitting) return
 
     setIsSubmitting(true)
-    await addComment(text, replyingTo || undefined)
-    setNewComment('')
-    setReplyingTo(null)
-    setIsSubmitting(false)
-    onCommentCountChange?.(1)
+    try {
+      await addComment(text, replyingTo || undefined)
+      setNewComment('')
+      setReplyingTo(null)
+      onCommentCountChange?.(1)
+    } catch (err) {
+      console.error('Failed to submit comment:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleDelete = async (commentId: string) => {

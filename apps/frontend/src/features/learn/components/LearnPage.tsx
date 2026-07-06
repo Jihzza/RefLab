@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { FileText, GraduationCap, Loader2 } from 'lucide-react'
+import { FileText, GraduationCap, Loader2, Lock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { useBilling } from '@/features/billing/components/useBilling'
 import {
   getUserCompletedAttempts,
   getVideoScenarios,
@@ -318,9 +320,13 @@ type VideoStep = 'action' | 'sanction' | 'result'
 
 function VideosView() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { isPro } = useBilling()
   const [scenarios, setScenarios] = useState<VideoScenario[]>([])
   const [actionOptionsPerScenario, setActionOptionsPerScenario] = useState<string[][]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [step, setStep] = useState<VideoStep>('action')
 
@@ -341,35 +347,56 @@ function VideosView() {
   useEffect(() => {
     let cancelled = false
     async function fetch() {
-      const { data } = await getVideoScenarios()
-      if (!cancelled) {
-        const loaded = data || []
-        setScenarios(loaded)
-        // Build shuffled action options for each scenario
-        if (loaded.length > 0) {
-          setActionOptionsPerScenario(loaded.map((scenario) => {
-            // Use other scenarios' correct_action as distractors, then fall back to predefined list
-            const fromScenarios = loaded
-              .filter((s) => s.id !== scenario.id && s.correct_action !== scenario.correct_action)
-              .map((s) => s.correct_action)
-            const fromPredefined = ACTION_OPTIONS
-              .filter((a) => a !== scenario.correct_action && !fromScenarios.includes(a))
-            const pool = [...fromScenarios, ...fromPredefined]
-            const distractors = shuffle(pool).slice(0, 3)
-            return shuffle([scenario.correct_action, ...distractors])
-          }))
-        }
+      setLoading(true)
+      setError(null)
+      const { data, error: fetchError } = await getVideoScenarios()
+      if (cancelled) return
+      if (fetchError) {
+        setError(fetchError.message || t('Failed to load video scenarios.'))
         setLoading(false)
+        return
       }
+      const loaded = data || []
+      setScenarios(loaded)
+      // Build shuffled action options for each scenario
+      if (loaded.length > 0) {
+        setActionOptionsPerScenario(loaded.map((scenario) => {
+          // Use other scenarios' correct_action as distractors, then fall back to predefined list
+          const fromScenarios = loaded
+            .filter((s) => s.id !== scenario.id && s.correct_action !== scenario.correct_action)
+            .map((s) => s.correct_action)
+          const fromPredefined = ACTION_OPTIONS
+            .filter((a) => a !== scenario.correct_action && !fromScenarios.includes(a))
+          const pool = [...fromScenarios, ...fromPredefined]
+          const distractors = shuffle(pool).slice(0, 3)
+          return shuffle([scenario.correct_action, ...distractors])
+        }))
+      }
+      setLoading(false)
     }
     fetch()
     return () => { cancelled = true }
-  }, [])
+  }, [t, reloadKey])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
+      <div className="flex items-center justify-center py-16" role="status" aria-live="polite">
+        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" aria-hidden="true" />
+        <span className="sr-only">{t('Loading video scenarios...')}</span>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-16 space-y-3">
+        <p className="text-(--text-muted) text-sm">{error}</p>
+        <button
+          onClick={() => setReloadKey((k) => k + 1)}
+          className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow)"
+        >
+          {t('Try Again')}
+        </button>
       </div>
     )
   }
@@ -526,6 +553,24 @@ function VideosView() {
           {currentIndex + 1} / {scenarios.length}
         </span>
       </div>
+
+      {!isPro && (
+        <div className="flex items-center gap-3 rounded-lg border border-(--brand-yellow)/30 bg-(--brand-yellow)/10 p-3">
+          <Lock className="w-4 h-4 shrink-0 text-(--brand-yellow)" aria-hidden="true" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-(--text-primary)">{t('Free preview')}</p>
+            <p className="text-xs text-(--text-muted)">
+              {t('Unlock the full video scenario library with Pro.')}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/app/pricing')}
+            className="shrink-0 px-3 py-1.5 text-xs font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow)"
+          >
+            {t('Upgrade')}
+          </button>
+        </div>
+      )}
 
       {/* Video Player */}
       <div className="bg-black rounded-lg aspect-video relative overflow-hidden group">

@@ -86,18 +86,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Only runs once on mount — no dependency on fetchProfile
   useEffect(() => {
     // 1. Check for existing session on mount
-    getSession().then(({ session }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      previousUserRef.current = session?.user ?? null
+    getSession()
+      .then(({ session }) => {
+        setSession(session)
+        setUser(session?.user ?? null)
+        previousUserRef.current = session?.user ?? null
 
-      if (session?.user) {
-        setAuthStatus('authenticated')
-      } else {
+        if (session?.user) {
+          setAuthStatus('authenticated')
+        } else {
+          setAuthStatus('unauthenticated')
+          setProfileStatus('loading')
+        }
+      })
+      .catch((err) => {
+        // If session bootstrap rejects (network/storage failure), don't leave
+        // the whole app stuck on the "checking_session" spinner — fall back to
+        // the unauthenticated state so the user lands on the public landing/login.
+        console.error('Failed to restore session:', err)
+        setSession(null)
+        setUser(null)
+        previousUserRef.current = null
         setAuthStatus('unauthenticated')
         setProfileStatus('loading')
-      }
-    })
+      })
 
     // 2. Subscribe to auth state changes
     // IMPORTANT: Do NOT make Supabase DB queries inside this callback —

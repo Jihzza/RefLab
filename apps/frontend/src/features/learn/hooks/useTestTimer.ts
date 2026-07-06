@@ -18,7 +18,9 @@ export function useTestTimer(
   onExpire: () => void
 ) {
   const [timeRemaining, setTimeRemaining] = useState(limitSeconds)
-  const startTimeRef = useRef<number>(Date.now())
+  // Initialized to 0 and set to the real start time inside the mount effect below.
+  // (Avoids calling the impure Date.now() during render.)
+  const startTimeRef = useRef<number>(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onExpireRef = useRef(onExpire)
 

@@ -68,8 +68,8 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
           {showCorrections && (
             <div className="space-y-3">
               {answers.map((answered, i) => {
-                const { question, selectedIndex, isCorrect } = answered
-                const correctIdx = ['A', 'B', 'C', 'D'].indexOf(question.correct_option)
+                const { question, selectedIndex, correctOption, isCorrect } = answered
+                const correctIdx = ['A', 'B', 'C', 'D'].indexOf(correctOption)
                 const selectedText = getOption(question, selectedIndex)
                 const correctText = getOption(question, correctIdx)
 
@@ -104,7 +104,7 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
                         <p className="text-xs text-(--text-secondary)">
                           <span className="font-medium">{t('Correct answer')}:</span>{' '}
                           <span className="text-(--success)">
-                            {question.correct_option}. {correctText}
+                            {correctOption}. {correctText}
                           </span>
                         </p>
                       )}

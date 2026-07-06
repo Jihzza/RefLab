@@ -11,8 +11,8 @@ export default function VideosTab() {
   return (
     <div className="p-6">
       <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">{t('Videos')}</h2>
-        <p className="mt-2 text-gray-500">{t('Training videos coming soon.')}</p>
+        <h2 className="text-xl font-semibold text-(--text-primary)">{t('Videos')}</h2>
+        <p className="mt-2 text-(--text-muted)">{t('Training videos coming soon.')}</p>
       </div>
     </div>
   )

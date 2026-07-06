@@ -13,7 +13,11 @@ export interface Test {
   updated_at: string
 }
 
-// A question from the question_bank table
+// A question from the question_bank table.
+// NOTE: correct_option is NOT selectable by clients — the DB revokes SELECT on it
+// and grading is server-side (grade_practice_answer / submit_test_attempt). It is
+// only present on payloads the server chooses to reveal post-answer, hence
+// optional here. Never rely on it being populated in pre-answer question fetches.
 export interface TestQuestion {
   id: string
   question_text: string
@@ -21,7 +25,7 @@ export interface TestQuestion {
   option_b: string
   option_c: string
   option_d: string
-  correct_option: 'A' | 'B' | 'C' | 'D'
+  correct_option?: 'A' | 'B' | 'C' | 'D'
   topic: string | null  // Topic category (Offside, Fouls, Handball, etc.)
   law: number | null    // FIFA Law of the Game number (1-17)
   created_at: string
@@ -118,11 +122,14 @@ export interface QuestionSessionKPIs {
   avgSessionAccuracy: number | null // average accuracy across completed sessions
 }
 
-// A single answered question tracked within a session (held in React state)
+// A single answered question tracked within a session (held in React state).
+// correctOption comes from the server grading response, since the question
+// payload itself no longer carries the answer key.
 export interface AnsweredQuestion {
   question: TestQuestion
   selectedOption: OptionLetter
   selectedIndex: number
+  correctOption: OptionLetter
   isCorrect: boolean
 }
 

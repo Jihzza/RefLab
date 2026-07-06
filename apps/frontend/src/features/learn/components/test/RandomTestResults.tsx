@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Trophy, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, RotateCcw, Home } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabaseClient'
-import { getAttemptTopicBreakdown, getAttemptAnswers } from '../../api/testsApi'
+import { getAttemptTopicBreakdown, getAttemptCorrections } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
 import type { TestAttempt, TestQuestion, TopicPerformance } from '../../types'
 
@@ -67,29 +67,18 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
         setWeak(breakdownData.weak || [])
       }
 
-      // Fetch corrections
-      const { data: answersData } = await getAttemptAnswers(attemptId)
-      if (answersData) {
-        const questionIds = answersData.map((a) => a.question_id)
-
-        // Fetch all questions
-        const { data: questionsData } = await supabase
-          .from('question_bank')
-          .select('*')
-          .in('id', questionIds)
-
-        if (questionsData) {
-          const correctionsData = answersData.map((answer) => {
-            const question = questionsData.find((q) => q.id === answer.question_id)
-            return {
-              question: question as TestQuestion,
-              selectedOption: answer.selected_option,
-              correctOption: question?.correct_option || '',
-              isCorrect: answer.is_correct || false,
-            }
-          })
-          setCorrections(correctionsData)
-        }
+      // Fetch corrections — the server reveals the answer key only for the
+      // caller's own submitted attempt (get_attempt_corrections RPC).
+      const { data: correctionsData } = await getAttemptCorrections(attemptId)
+      if (correctionsData) {
+        setCorrections(
+          correctionsData.map((c) => ({
+            question: c.question,
+            selectedOption: c.selected_option,
+            correctOption: c.correct_option,
+            isCorrect: c.is_correct,
+          }))
+        )
       }
 
       setLoading(false)

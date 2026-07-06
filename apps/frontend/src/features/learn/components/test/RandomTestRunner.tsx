@@ -9,6 +9,10 @@ interface RandomTestRunnerProps {
   onComplete: (attemptId: string) => void
 }
 
+// Total time budget for a random test. When the timer runs out, the elapsed
+// time is exactly this full duration.
+const TEST_DURATION_SECONDS = 2400 // 40 minutes
+
 /**
  * RandomTestRunner - Test-taking interface with timer and navigation
  *
@@ -43,12 +47,13 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
   const handleTimerExpire = useCallback(async () => {
     if (submitting) return // Prevent double submission
     setSubmitting(true)
-    const { elapsed } = timerData
-    await submitRandomTest(attemptId, elapsed, true)
+    // On natural expiry the elapsed time equals the full test duration.
+    // Using the constant avoids referencing `timerData` before it is declared.
+    await submitRandomTest(attemptId, TEST_DURATION_SECONDS, true)
     onComplete(attemptId)
   }, [attemptId, submitting, onComplete])
 
-  const timerData = useTestTimer(2400, handleTimerExpire) // 40 minutes
+  const timerData = useTestTimer(TEST_DURATION_SECONDS, handleTimerExpire)
 
   // Initialize test
   useEffect(() => {

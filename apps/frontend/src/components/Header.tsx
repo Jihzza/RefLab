@@ -80,7 +80,7 @@ interface HeaderProps {
 
 /**
  * Header Component
- * Layout: 20% Left (Menu) | 60% Center (Logo) | 20% Right (Search/Notifs)
+ * Layout: equal flex-1 columns — Left (Menu) | Center (Logo) | Right (Search/Notifs)
  *
  * Sidebar state is managed by the parent (AppShell) via onMenuToggle/onMenuClose props.
  */
@@ -112,8 +112,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
   return (
     <header className="fixed top-0 left-0 w-full h-16 bg-(--bg-surface) shadow-(--shadow-soft) z-50 flex items-center px-4 border-b border-(--border-subtle) transition-all">
 
-      {/* [HAMBURGUER MENU 20%] */}
-      <div className="w-[20%] flex justify-start items-center">
+      {/* [HAMBURGUER MENU] */}
+      <div className="flex-1 flex justify-start items-center">
         <MenuIcon
           onClick={onMenuToggle}
           onDoubleClick={onMenuClose}
@@ -121,13 +121,13 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
         />
       </div>
 
-      {/* [REFLAB LOGO 60%] */}
-      <div className="w-[60%] flex justify-center items-center">
+      {/* [REFLAB LOGO] */}
+      <div className="flex-1 flex justify-center items-center">
         <RefLabLogo onClick={handleLogoClick} />
       </div>
 
-      {/* [SEARCH AND NOTIFICATIONS ICON 20%] */}
-      <div className="w-[20%] flex justify-end items-center gap-3 sm:gap-4">
+      {/* [SEARCH AND NOTIFICATIONS ICON] */}
+      <div className="flex-1 flex justify-end items-center gap-3 sm:gap-4">
         <SearchIcon onClick={handleSearchClick} ariaLabel={t('Search')} />
         <NotificationBell />
       </div>

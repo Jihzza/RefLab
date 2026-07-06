@@ -41,8 +41,8 @@ const ptPT = {
   // Landing
   'Your Referee Training Laboratory': 'O teu laboratório de treino de arbitragem',
   'RefLab - Referee Training Laboratory': 'RefLab - Laboratório de Treino de Arbitragem',
-  'A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance.':
-    'Um espaço dedicado aos árbitros de futebol para estudar, praticar e manter-se alinhados com as Leis do Jogo. Desenvolve a tua competência com conhecimento fiável, prática deliberada e orientação com IA.',
+  'Train as a football referee with tests, practice questions, video breakdowns, and study resources. Track your progress on a personal dashboard and join a community to debate real match decisions.':
+    'Treina como árbitro de futebol com testes, perguntas de prática, análises de vídeo e recursos de estudo. Acompanha o teu progresso num painel pessoal e junta-te a uma comunidade para debater decisões de jogos reais.',
   'Sign up': 'Criar conta',
   Legal: 'Legal',
   'Privacy Policy': 'Política de Privacidade',
@@ -120,6 +120,9 @@ const ptPT = {
   // Dashboard
   'Failed to load dashboard data. Please try again later.':
     'Não foi possível carregar os dados do painel. Tenta novamente mais tarde.',
+  'Unable to load your dashboard data.': 'Não foi possível carregar os dados do teu painel.',
+  'No dashboard data yet. Complete a test or analysis to get started.':
+    'Ainda não existem dados no painel. Conclui um teste ou análise para começar.',
   Performance: 'Desempenho',
   Progress: 'Progresso',
   Habits: 'Hábitos',
@@ -182,6 +185,14 @@ const ptPT = {
   Conversation: 'Conversa',
   'Missing conversation ID.': 'Falta o ID da conversa.',
   'No messages yet.': 'Ainda não há mensagens.',
+  'Loading messages...': 'A carregar mensagens...',
+  'Back to Conversations': 'Voltar às conversas',
+  'Message video': 'Vídeo da mensagem',
+  'Voice message': 'Mensagem de voz',
+  'Unsupported file type. Use an image, video, or audio file.':
+    'Tipo de ficheiro não suportado. Usa um ficheiro de imagem, vídeo ou áudio.',
+  'File is too large. The maximum size is 50 MB.':
+    'O ficheiro é demasiado grande. O tamanho máximo é 50 MB.',
   'No conversations yet': 'Ainda não há conversas',
   'Search for someone above to start a conversation.':
     'Pesquisa alguém acima para iniciares uma conversa.',
@@ -275,6 +286,14 @@ const ptPT = {
   'Structured courses coming soon.': 'Cursos estruturados brevemente.',
   'Study resources coming soon.': 'Recursos de estudo brevemente.',
   'Practice questions coming soon.': 'Perguntas de prática brevemente.',
+  'Failed to load video scenarios.': 'Falha ao carregar os cenários de vídeo.',
+  'Loading video scenarios...': 'A carregar cenários de vídeo...',
+  'Free preview': 'Pré-visualização gratuita',
+  'Unlock the full video scenario library with Pro.':
+    'Desbloqueia a biblioteca completa de cenários de vídeo com o Pro.',
+  'Upgrade': 'Fazer upgrade',
+  'Failed to load options.': 'Falha ao carregar as opções.',
+  'Failed to load stats.': 'Falha ao carregar as estatísticas.',
   'Error loading tests: {{error}}': 'Erro ao carregar testes: {{error}}',
   'No tests available yet.': 'Ainda não há testes disponíveis.',
   'Click to start test': 'Clica para iniciar o teste',
@@ -362,6 +381,9 @@ const ptPT = {
   "You've answered {{total}} {{label}} so far. Your results will be shown on the next screen.":
     'Respondeste a {{total}} {{label}} até agora. Os resultados serão apresentados no ecrã seguinte.',
   'Check Answer': 'Verificar resposta',
+  'Checking…': 'A verificar…',
+  "Couldn't check your answer. Please try again.":
+    'Não foi possível verificar a tua resposta. Tenta novamente.',
   'Next Question': 'Próxima pergunta',
   'Referee Knowledge Test': 'Teste de Conhecimento de Arbitragem',
   '20 random questions · 40 minute time limit': '20 perguntas aleatórias · limite de 40 minutos',
@@ -574,6 +596,11 @@ const ptPT = {
   'Create new post': 'Criar nova publicação',
   'New Post': 'Nova publicação',
   "What's on your mind?": 'O que estás a pensar?',
+  'Share a decision or discuss a rule...': 'Partilha uma decisão ou debate uma regra...',
+  'Media unavailable': 'Multimédia indisponível',
+  'Upload preview video': 'Vídeo de pré-visualização do carregamento',
+  'Upload file': 'Carregar ficheiro',
+  'Search for another user': 'Pesquisar outro utilizador',
   'Remove media': 'Remover multimédia',
   Media: 'Multimédia',
   Publish: 'Publicar',

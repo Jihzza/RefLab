@@ -38,10 +38,16 @@ export async function getTestBySlug(slug: string) {
  * Queries the bridge table test_question_items to get the ordered
  * question_bank entries for the given test.
  */
+// Non-answer columns of question_bank — correct_option is intentionally excluded
+// (the DB revokes SELECT on it; grading is server-side). Keep in sync with the
+// column grant in 20260706_0056_server_side_grading.sql.
+const QUESTION_PUBLIC_COLUMNS =
+  'id, question_text, option_a, option_b, option_c, option_d, topic, law, created_at, updated_at'
+
 export async function getQuestions(testId: string) {
   const { data, error } = await supabase
     .from('test_question_items')
-    .select('order_index, question_bank!inner(*)')
+    .select(`order_index, question_bank!inner(${QUESTION_PUBLIC_COLUMNS})`)
     .eq('test_id', testId)
     .order('order_index')
 
@@ -153,63 +159,17 @@ export async function saveAnswer(
 /**
  * Submit an attempt (finish the test)
  *
- * This will:
- * 1. Calculate the score by comparing answers to correct options
- * 2. Update the attempt with the score and mark as submitted
- * 3. Mark each answer as correct/incorrect
+ * Grading is done server-side by the submit_test_attempt RPC (SECURITY DEFINER):
+ * it grades every recorded answer against the authoritative key, writes the
+ * score, and marks the attempt submitted. The answer key never reaches the
+ * client. The RPC is idempotent (a re-submit returns the already-scored row).
  */
 export async function submitAttempt(attemptId: string) {
-  // Get all answers for this attempt with their questions from question_bank
-  const { data: answers, error: answersError } = await supabase
-    .from('test_attempt_answers')
-    .select(`
-      id,
-      question_id,
-      selected_option,
-      question_bank!inner (
-        correct_option
-      )
-    `)
-    .eq('attempt_id', attemptId)
+  const { data, error } = await supabase.rpc('submit_test_attempt', {
+    p_attempt_id: attemptId,
+  })
 
-  if (answersError || !answers) {
-    return { data: null, error: answersError }
-  }
-
-  // Calculate score
-  let correct = 0
-  const total = answers.length
-
-  // Update each answer with is_correct
-  for (const answer of answers) {
-    const question = answer.question_bank as unknown as { correct_option: string }
-    const isCorrect = answer.selected_option === question.correct_option
-
-    if (isCorrect) correct++
-
-    await supabase
-      .from('test_attempt_answers')
-      .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
-  }
-
-  const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
-
-  // Update the attempt
-  const { data: updatedAttempt, error: updateError } = await supabase
-    .from('test_attempts')
-    .update({
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      score_correct: correct,
-      score_total: total,
-      score_percent: scorePercent,
-    })
-    .eq('id', attemptId)
-    .select()
-    .single()
-
-  return { data: updatedAttempt as TestAttempt | null, error: updateError }
+  return { data: data as TestAttempt | null, error }
 }
 
 /**
@@ -255,17 +215,6 @@ export async function getUserCompletedAttempts() {
 }
 
 /**
- * Fetch all questions from the question bank (for practice mode)
- */
-export async function getAllQuestions() {
-  const { data, error } = await supabase
-    .from('question_bank')
-    .select('*')
-
-  return { data: data as TestQuestion[] | null, error }
-}
-
-/**
  * Fetch all active video scenarios
  */
 export async function getVideoScenarios() {
@@ -302,38 +251,6 @@ export async function syncVideoScenarios() {
   const { data, error } = await supabase.functions.invoke('sync-video-scenarios', {
     method: 'POST',
   })
-
-  return { data, error }
-}
-
-/**
- * Save a practice question answer
- *
- * Called when the user clicks "Check" in the Questions (practice) tab.
- * This feeds into dashboard metrics: Overall Accuracy, Accuracy by Topic,
- * Accuracy Change, Total Questions Answered, and activity tracking.
- */
-export async function savePracticeAnswer(
-  questionId: string,
-  selectedOption: OptionLetter,
-  isCorrect: boolean
-) {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
-  const { data, error } = await supabase
-    .from('question_practice_answers')
-    .insert({
-      user_id: user.id,
-      question_id: questionId,
-      selected_option: selectedOption,
-      is_correct: isCorrect,
-    })
-    .select()
-    .single()
 
   return { data, error }
 }
@@ -416,63 +333,43 @@ export async function generateRandomTest() {
 
 /**
  * Submit random test with timing data
+ *
+ * Server-side grading via submit_test_attempt (see submitAttempt). Passes the
+ * elapsed time and whether the timer auto-submitted. Idempotent.
  */
 export async function submitRandomTest(
   attemptId: string,
   timeElapsedSeconds: number,
   autoSubmitted: boolean
 ) {
-  // Get all answers with their questions from question_bank
-  const { data: answers, error: answersError } = await supabase
-    .from('test_attempt_answers')
-    .select(`
-      id,
-      question_id,
-      selected_option,
-      question_bank!inner (correct_option)
-    `)
-    .eq('attempt_id', attemptId)
+  const { data, error } = await supabase.rpc('submit_test_attempt', {
+    p_attempt_id: attemptId,
+    p_time_elapsed_seconds: timeElapsedSeconds,
+    p_auto_submitted: autoSubmitted,
+  })
 
-  if (answersError || !answers) {
-    return { data: null, error: answersError }
-  }
+  return { data: data as TestAttempt | null, error }
+}
 
-  // Calculate score
-  let correct = 0
-  const total = answers.length
+/**
+ * Get per-question corrections for a submitted attempt.
+ *
+ * Uses the get_attempt_corrections RPC, which returns the answer key only for
+ * the caller's own submitted attempt — the key is never exposed on the table.
+ */
+export async function getAttemptCorrections(attemptId: string) {
+  const { data, error } = await supabase.rpc('get_attempt_corrections', {
+    p_attempt_id: attemptId,
+  })
 
-  // Update each answer with is_correct
-  for (const answer of answers) {
-    const question = answer.question_bank as unknown as { correct_option: string }
-    const isCorrect = answer.selected_option === question.correct_option
+  const corrections = (data ?? []) as Array<{
+    question: TestQuestion
+    selected_option: OptionLetter
+    correct_option: OptionLetter
+    is_correct: boolean
+  }>
 
-    if (isCorrect) correct++
-
-    await supabase
-      .from('test_attempt_answers')
-      .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
-  }
-
-  const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
-
-  // Update attempt with score and timing
-  const { data: updatedAttempt, error: updateError } = await supabase
-    .from('test_attempts')
-    .update({
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      score_correct: correct,
-      score_total: total,
-      score_percent: scorePercent,
-      time_elapsed_seconds: timeElapsedSeconds,
-      auto_submitted: autoSubmitted,
-    })
-    .eq('id', attemptId)
-    .select()
-    .single()
-
-  return { data: updatedAttempt as TestAttempt | null, error: updateError }
+  return { data: corrections, error }
 }
 
 /**
@@ -703,7 +600,7 @@ export async function getQuestionsByFilters(params: {
   laws?: number[]
   areas?: string[]
 }) {
-  let query = supabase.from('question_bank').select('*')
+  let query = supabase.from('question_bank').select(QUESTION_PUBLIC_COLUMNS)
 
   if (params.laws && params.laws.length > 0) {
     query = query.in('law', params.laws)
@@ -757,33 +654,27 @@ export async function getDistinctAreas() {
 }
 
 /**
- * Save a practice answer linked to a session
+ * Grade a practice answer server-side and record it against the session.
  *
- * Like savePracticeAnswer but also writes the session_id FK.
- * Used in QuestionsSession to track all answers within the session.
+ * Called when the user clicks "Check" in the Questions (practice) tab. The
+ * grade_practice_answer RPC (SECURITY DEFINER) verifies the session belongs to
+ * the caller, records the answer with a server-computed is_correct, and returns
+ * the outcome plus the correct option — so the browser never holds the key
+ * before the answer is submitted. Feeds dashboard accuracy metrics + activity.
  */
-export async function savePracticeAnswerWithSession(
+export async function gradePracticeAnswer(
+  sessionId: string,
   questionId: string,
-  selectedOption: OptionLetter,
-  isCorrect: boolean,
-  sessionId: string
+  selectedOption: OptionLetter
 ) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
+  const { data, error } = await supabase.rpc('grade_practice_answer', {
+    p_session_id: sessionId,
+    p_question_id: questionId,
+    p_selected_option: selectedOption,
+  })
+
+  return {
+    data: data as { is_correct: boolean; correct_option: OptionLetter } | null,
+    error,
   }
-
-  const { data, error } = await supabase
-    .from('question_practice_answers')
-    .insert({
-      user_id: user.id,
-      question_id: questionId,
-      selected_option: selectedOption,
-      is_correct: isCorrect,
-      session_id: sessionId,
-    })
-    .select()
-    .single()
-
-  return { data, error }
 }

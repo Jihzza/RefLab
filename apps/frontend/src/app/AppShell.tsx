@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
+import PageFallback from "@/components/ui/PageFallback";
 
 /**
  * AppShell - Authenticated layout wrapper.
@@ -30,7 +31,9 @@ export default function AppShell() {
 
       {/* Main content area: offset for fixed header (pt-16) and bottom nav (pb-16) */}
       <main className="flex-1 pt-16 pb-16">
-        <Outlet />
+        <Suspense fallback={<PageFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* Fixed bottom navigation */}

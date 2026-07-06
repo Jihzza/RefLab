@@ -2,12 +2,16 @@ import { supabase } from '@/lib/supabaseClient'
 import type { EnrichedNotification } from '../types'
 
 /**
- * Select clause that joins actor profile data from the profiles table.
- * Returns actor as null when actor_id is null (system notifications).
+ * Select clause that joins actor profile data via the `public_profiles` view.
+ * The view exposes only safe, publicly shareable columns (id, username, name,
+ * photo_url) — reading the base `profiles` table cross-user would leak
+ * email/role/last_login. Returns actor as null when actor_id is null (system
+ * notifications). The FK hint resolves through the base table, so the embed
+ * still works against the `notifications_actor_id_fkey` relationship.
  */
 const NOTIFICATION_SELECT = `
   *,
-  actor:profiles!notifications_actor_id_fkey (
+  actor:public_profiles!notifications_actor_id_fkey (
     id,
     username,
     name,

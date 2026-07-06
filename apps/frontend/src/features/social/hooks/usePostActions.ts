@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import {
   togglePostLike,
@@ -27,10 +27,18 @@ export function usePostActions({
 }: UsePostActionsParams) {
   const { user, profile } = useAuth()
   const [pendingAction, setPendingAction] = useState<string | null>(null)
+  // Guards against duplicate writes when a user rapidly taps like/save/repost
+  // before the first request resolves (a repost double-tap would otherwise
+  // insert two repost rows).
+  const inFlightRef = useRef<Set<string>>(new Set())
 
   const handleLike = useCallback(
     async (post: Post) => {
       if (!user?.id) return
+      const key = `like:${post.id}`
+      if (inFlightRef.current.has(key)) return
+      inFlightRef.current.add(key)
+
       const wasLiked = post.is_liked
 
       // Optimistic update
@@ -39,13 +47,17 @@ export function usePostActions({
         like_count: post.like_count + (wasLiked ? -1 : 1),
       })
 
-      const { error } = await togglePostLike(user.id, post.id, wasLiked)
-      if (error) {
-        // Rollback
-        updatePost(post.id, {
-          is_liked: wasLiked,
-          like_count: post.like_count,
-        })
+      try {
+        const { error } = await togglePostLike(user.id, post.id, wasLiked)
+        if (error) {
+          // Rollback
+          updatePost(post.id, {
+            is_liked: wasLiked,
+            like_count: post.like_count,
+          })
+        }
+      } finally {
+        inFlightRef.current.delete(key)
       }
     },
     [user?.id, updatePost]
@@ -54,6 +66,10 @@ export function usePostActions({
   const handleSave = useCallback(
     async (post: Post) => {
       if (!user?.id) return
+      const key = `save:${post.id}`
+      if (inFlightRef.current.has(key)) return
+      inFlightRef.current.add(key)
+
       const wasSaved = post.is_saved
 
       updatePost(post.id, {
@@ -61,12 +77,16 @@ export function usePostActions({
         save_count: post.save_count + (wasSaved ? -1 : 1),
       })
 
-      const { error } = await togglePostSave(user.id, post.id, wasSaved)
-      if (error) {
-        updatePost(post.id, {
-          is_saved: wasSaved,
-          save_count: post.save_count,
-        })
+      try {
+        const { error } = await togglePostSave(user.id, post.id, wasSaved)
+        if (error) {
+          updatePost(post.id, {
+            is_saved: wasSaved,
+            save_count: post.save_count,
+          })
+        }
+      } finally {
+        inFlightRef.current.delete(key)
       }
     },
     [user?.id, updatePost]
@@ -75,6 +95,11 @@ export function usePostActions({
   const handleRepost = useCallback(
     async (post: Post) => {
       if (!user?.id || !profile) return
+      const key = `repost:${post.id}`
+      if (inFlightRef.current.has(key)) return
+      inFlightRef.current.add(key)
+
+      try {
       const wasReposted = post.is_reposted
 
       if (wasReposted) {
@@ -134,6 +159,9 @@ export function usePostActions({
           }
           addPost(repost)
         }
+      }
+      } finally {
+        inFlightRef.current.delete(key)
       }
     },
     [user?.id, profile, updatePost, addPost]

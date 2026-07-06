@@ -32,6 +32,7 @@ function formatRelativeTime(dateString: string): string {
 function renderContentWithMentions(
   content: string,
   navigate: ReturnType<typeof useNavigate>,
+  t: ReturnType<typeof useTranslation>['t'],
 ): React.ReactNode[] {
   const mentionRegex = /@([a-z0-9_.]{3,30})/gi
   const parts: React.ReactNode[] = []
@@ -46,17 +47,18 @@ function renderContentWithMentions(
 
     const username = match[1]
     parts.push(
-      <span
+      <button
         key={match.index}
-        className="text-(--brand-yellow) font-medium cursor-pointer hover:underline"
-        role="link"
+        type="button"
+        className="text-(--brand-yellow) font-medium cursor-pointer hover:underline focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
         onClick={(e) => {
           e.stopPropagation()
           navigate(`/app/profile/${username}`)
         }}
+        aria-label={t('View profile of {{name}}', { name: username })}
       >
         @{username}
-      </span>,
+      </button>,
     )
     lastIndex = mentionRegex.lastIndex
   }
@@ -115,7 +117,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
         </div>
 
         <p className="text-sm text-(--text-primary) mt-0.5 break-words">
-          {renderContentWithMentions(comment.content, navigate)}
+          {renderContentWithMentions(comment.content, navigate, t)}
         </p>
 
         {/* Actions row */}

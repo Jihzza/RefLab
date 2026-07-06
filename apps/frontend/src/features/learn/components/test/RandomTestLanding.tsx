@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlayCircle, BarChart3, TrendingUp, Trophy, Clock, History } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getTestKPIs } from '../../api/testsApi'
@@ -22,24 +22,23 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
   const { t } = useTranslation()
   const [kpis, setKpis] = useState<TestKPIs | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchKPIs = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    const { data, error: kpiError } = await getTestKPIs()
+    if (kpiError) {
+      setError(kpiError.message || t('Failed to load stats.'))
+    } else {
+      setKpis(data)
+    }
+    setLoading(false)
+  }, [t])
 
   useEffect(() => {
-    let cancelled = false
-
-    async function fetchKPIs() {
-      const { data } = await getTestKPIs()
-      if (!cancelled) {
-        setKpis(data)
-        setLoading(false)
-      }
-    }
-
-    fetchKPIs()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
+    void fetchKPIs()
+  }, [fetchKPIs])
 
   return (
     <div className="space-y-6">
@@ -52,6 +51,19 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
           {t('20 random questions · 40 minute time limit')}
         </p>
       </div>
+
+      {/* Error banner */}
+      {error && !loading && (
+        <div className="text-center p-4 bg-(--error)/10 border border-(--error)/30 rounded-xl">
+          <p className="text-(--error) text-sm mb-3">{error}</p>
+          <button
+            onClick={() => void fetchKPIs()}
+            className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+          >
+            {t('Try Again')}
+          </button>
+        </div>
+      )}
 
       {/* KPIs Section */}
       <div className="grid grid-cols-2 gap-3">
