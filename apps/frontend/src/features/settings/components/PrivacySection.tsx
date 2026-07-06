@@ -28,7 +28,7 @@ export default function PrivacySection({
   const { blockedUsers, loading: blockedLoading, unblocking, unblock } = useBlockedUsers()
 
   return (
-    <SettingsSection title={t('Privacy & Safety')} icon={<ShieldCheck className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Privacy & Safety')} icon={<ShieldCheck className="w-4.5 h-4.5" aria-hidden="true" />}>
       {/* Who can message me */}
       <SettingsRadioGroup
         label={t('Who can message me')}
@@ -45,7 +45,7 @@ export default function PrivacySection({
       {/* Blocked users */}
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 mb-2">
-          <UserX className="w-4 h-4 text-(--text-muted)" />
+          <UserX className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
           <span className="text-sm font-medium text-(--text-secondary)">{t('Blocked Users')}</span>
         </div>
 

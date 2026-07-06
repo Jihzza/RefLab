@@ -1,56 +1,80 @@
 /* globals.css
-   RefLab design tokens + Tailwind v4 entrypoint
+   RefLab design system — "The Referee's Console"
+   Dark, data-forward, broadcast-analysis aesthetic.
+   Token NAMES are preserved from the original system so existing components
+   inherit the refreshed look automatically; values are refined and many new
+   tokens + signature utilities are added on top.
 */
 
-/* 1) Font (Inter) - @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* 1) Font (Inter) — @import must precede all other statements */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
-/* 2) Tailwind v4 import */
+/* 2) Tailwind v4 */
 @import "tailwindcss";
 
-/* 3) Design tokens (Dark mode default) */
+/* 3) Design tokens */
 :root {
-  /* Base surfaces */
-  --bg-primary: #14192c;
-  --bg-surface: #181f32;
-  --bg-surface-2: #18223a;
-  --border-subtle: #24304a;
-  --border-strong: #2f3c5c;
+  /* ── Base surfaces (deep navy ramp, more depth than before) ── */
+  --bg-base: #0b1020;        /* deepest — body atmosphere floor */
+  --bg-primary: #0f1524;     /* page background */
+  --bg-surface: #161d33;     /* cards / panels */
+  --bg-surface-2: #1b2440;   /* secondary surface / inputs */
+  --bg-elevated: #212c4d;    /* raised / hover elevation */
+  --border-subtle: #263250;
+  --border-strong: #35446a;
 
-  /* Text */
-  --text-primary: #f5f7fa;
-  --text-secondary: #b8c0d4;
-  --text-muted: #8a93a8;
+  /* ── Text ── */
+  --text-primary: #f6f8fc;
+  --text-secondary: #b6c0d6;
+  --text-muted: #808bA6;
+  --text-faint: #5c6584;
 
-  /* Brand */
+  /* ── Brand (referee flag) ── */
   --brand-yellow: #f6c21c;
+  --brand-yellow-strong: #ffcf2e;
   --brand-yellow-soft: #ffe58a;
-  --brand-red: #e53935;
+  --brand-red: #ef4444;
 
-  /* Semantic */
-  --success: #3ddc97;
+  /* ── Semantic (referee semantics: green=correct/advantage,
+        yellow=caution/highlight, red=sanction/error) ── */
+  --success: #34d19b;
   --warning: #f6a821;
-  --error: #e53935;
+  --error: #ef4444;
   --info: #4da3ff;
 
-  /* Interaction */
-  --bg-hover: #1e2842;
-  --focus-ring: var(--info);
+  /* ── Interaction ── */
+  --bg-hover: #202b49;
+  --focus-ring: var(--brand-yellow);
 
-  /* Shadows */
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.25);
+  /* ── Gradients ── */
+  --grad-brand: linear-gradient(135deg, #ffd75a 0%, #f6c21c 48%, #e0a800 100%);
+  --grad-flag: linear-gradient(120deg, var(--brand-yellow) 0%, var(--brand-yellow) 55%, var(--brand-red) 55%, var(--brand-red) 100%);
+  --grad-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 40%);
 
-  /* Radius */
-  --radius-card: 16px;
-  --radius-button: 14px;
+  /* ── Glow / elevation ── */
+  --glow-yellow: 0 0 0 1px rgba(246, 194, 28, 0.35), 0 10px 34px -8px rgba(246, 194, 28, 0.35);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+  --shadow-pop: 0 24px 60px -18px rgba(0, 0, 0, 0.7);
+
+  /* ── Radius ── */
+  --radius-card: 18px;
+  --radius-button: 12px;
   --radius-input: 12px;
   --radius-pill: 999px;
 
-  /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  /* ── Motion ── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+
+  /* ── Typography ── */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
-/* 4) Base app defaults */
+/* 4) Base */
 html,
 body {
   height: 100%;
@@ -59,42 +83,71 @@ body {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg-primary);
+  background: var(--bg-base);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Root container safety */
+/* Broadcast-analysis atmosphere: fixed radial glows + faint tactics grid,
+   sitting behind all content. Subtle enough to keep text crisp. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 620px at 12% -8%, rgba(246, 194, 28, 0.10), transparent 60%),
+    radial-gradient(1000px 640px at 92% -4%, rgba(77, 163, 255, 0.10), transparent 62%),
+    radial-gradient(900px 900px at 50% 120%, rgba(52, 209, 155, 0.05), transparent 60%),
+    var(--bg-base);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 70%);
+}
+
 #root {
   min-height: 100%;
+  position: relative;
 }
 
-/* Links */
 a {
   color: inherit;
   text-decoration: none;
 }
 a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  color: var(--brand-yellow);
 }
 
-/* Text selection */
 ::selection {
-  background: rgba(246, 194, 28, 0.25);
+  background: rgba(246, 194, 28, 0.28);
+  color: #fff;
 }
 
-/* Accessible focus ring */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Scrollbars (optional polish) */
+/* Scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-subtle) transparent;
+  scrollbar-color: var(--border-strong) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
@@ -103,46 +156,164 @@ a:hover {
 *::-webkit-scrollbar-thumb {
   background: var(--border-subtle);
   border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 *::-webkit-scrollbar-thumb:hover {
   background: var(--border-strong);
+  background-clip: padding-box;
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* 5) Semantic helper classes (safe in v4) */
+/* 5) Semantic helper classes */
 .surface {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-card);
 }
-
 .surface-2 {
   background: var(--bg-surface-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
 }
-
 .text-secondary {
   color: var(--text-secondary);
 }
-
 .text-muted {
   color: var(--text-muted);
 }
-
 .divider {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* 6) iOS safe-area helper (used by the fixed bottom navigation) */
+/* ── Signature utilities (Tailwind v4 @utility so they compose with variants) ── */
+
+/* Elevated glass panel: gradient sheen + layered shadow + hairline top light */
+@utility card-console {
+  position: relative;
+  background:
+    var(--grad-surface),
+    var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Frosted glass (for sticky headers / overlays) */
+@utility glass {
+  background: color-mix(in srgb, var(--bg-primary) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+
+/* Brand gradient fill for text (wordmarks, hero numerals) */
+@utility text-gradient-brand {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Controlled yellow glow ring for primary CTAs / focus moments */
+@utility glow-brand {
+  box-shadow: var(--glow-yellow);
+}
+
+/* Diagonal referee-flag accent bar (yellow → red), the recurring motif */
+@utility flag-accent {
+  background: var(--grad-flag);
+}
+
+/* Tabular, confident numerals for stats/scores */
+@utility numeral {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  letter-spacing: -0.01em;
+}
+
+/* Uppercase micro-label (section eyebrows) */
+@utility eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* Pitch-line background motif for hero / feature panels */
+@utility field-lines {
+  background-image:
+    linear-gradient(rgba(246, 194, 28, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(246, 194, 28, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Display type scale (fluid) */
+@utility text-display {
+  font-weight: 800;
+  font-size: clamp(2rem, 1.2rem + 3.4vw, 3.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+@utility text-display-sm {
+  font-weight: 800;
+  font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+}
+
+/* 6) Motion keyframes */
+@keyframes rl-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rl-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rl-shimmer {
+  100% { transform: translateX(100%); }
+}
+@keyframes rl-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@utility animate-fade-up {
+  animation: rl-fade-up var(--dur-slow) var(--ease-out) both;
+}
+@utility animate-fade-in {
+  animation: rl-fade-in var(--dur-base) var(--ease-out) both;
+}
+@utility animate-scale-in {
+  animation: rl-scale-in var(--dur-base) var(--ease-out) both;
+}
+
+/* Skeleton shimmer */
+@utility skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: rl-shimmer 1.5s infinite;
+}
+
+/* 7) iOS safe-area helper (fixed bottom navigation) */
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 7) Respect users who prefer reduced motion */
+/* 8) Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

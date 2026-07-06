@@ -6,7 +6,7 @@ import { useTestTimer, getTimerColorClass } from '../../hooks/useTestTimer'
 import type { TestQuestion, OptionLetter } from '../../types'
 
 interface RandomTestRunnerProps {
-  onComplete: (attemptId: string) => void
+  onComplete: (attemptId: string, correct: number, total: number) => void
 }
 
 // Total time budget for a random test. When the timer runs out, the elapsed
@@ -49,8 +49,8 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
     setSubmitting(true)
     // On natural expiry the elapsed time equals the full test duration.
     // Using the constant avoids referencing `timerData` before it is declared.
-    await submitRandomTest(attemptId, TEST_DURATION_SECONDS, true)
-    onComplete(attemptId)
+    const { data } = await submitRandomTest(attemptId, TEST_DURATION_SECONDS, true)
+    onComplete(attemptId, data?.score_correct ?? 0, data?.score_total ?? 0)
   }, [attemptId, submitting, onComplete])
 
   const timerData = useTestTimer(TEST_DURATION_SECONDS, handleTimerExpire)
@@ -122,8 +122,8 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
     setSubmitting(true)
 
     const { elapsed } = timerData
-    await submitRandomTest(attemptId, elapsed, false)
-    onComplete(attemptId)
+    const { data } = await submitRandomTest(attemptId, elapsed, false)
+    onComplete(attemptId, data?.score_correct ?? 0, data?.score_total ?? 0)
   }
 
   // Render loading state
@@ -150,34 +150,34 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-up">
       {/* Header: Timer and Progress */}
-      <div className="flex items-center justify-between gap-4 p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
+      <div className="glass flex items-center justify-between gap-4 p-4 border border-(--border-subtle) rounded-(--radius-card)">
         <div className="flex items-center gap-2">
           <Clock size={18} className={getTimerColorClass(timerData.timeRemaining)} />
-          <span className={`font-mono font-semibold text-sm ${getTimerColorClass(timerData.timeRemaining)}`}>
+          <span className={`numeral font-mono font-bold text-base ${getTimerColorClass(timerData.timeRemaining)}`}>
             {timerData.formatted}
           </span>
         </div>
-        <div className="text-sm text-(--text-secondary)">
+        <div className="numeral text-sm font-semibold text-(--text-secondary)">
           {t('Question {{current}} of {{total}}', { current: currentIndex + 1, total: questions.length })}
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="relative h-2 bg-(--bg-surface) rounded-full overflow-hidden">
+      <div className="relative h-2 bg-(--bg-surface-2) rounded-(--radius-pill) overflow-hidden border border-(--border-subtle)">
         <div
-          className="absolute top-0 left-0 h-full bg-(--info) transition-all duration-300"
+          className="absolute top-0 left-0 h-full rounded-(--radius-pill) bg-(--info) transition-all duration-300"
           style={{ width: `${(answeredCount / questions.length) * 100}%` }}
         />
       </div>
-      <p className="text-xs text-(--text-secondary) text-center">
+      <p className="numeral text-xs text-(--text-muted) text-center">
         {t('{{answered}} of {{total}} answered', { answered: answeredCount, total: questions.length })}
       </p>
 
       {/* Question Card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl">
-        <h3 className="text-lg font-semibold text-(--text-primary) mb-6">
+      <div className="card-console p-6">
+        <h3 className="text-lg font-semibold text-(--text-primary) leading-snug mb-6">
           {currentQuestion.question_text}
         </h3>
 
@@ -197,18 +197,26 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
                 onClick={() => handleSelectOption(index)}
                 disabled={isLocked}
                 className={`
-                  w-full p-4 text-left rounded-xl border transition-all
+                  w-full p-4 text-left rounded-(--radius-button) border-2 transition-all
                   ${
                     isSelected
-                      ? 'bg-(--info)/10 border-(--info) text-(--text-primary)'
-                      : 'bg-(--bg-primary) border-(--border-subtle) text-(--text-primary) hover:border-(--border-default)'
+                      ? 'bg-(--info)/10 border-(--info) text-(--text-primary) ring-1 ring-(--info)/40'
+                      : 'bg-(--bg-surface-2) border-(--border-subtle) text-(--text-primary) hover:border-(--border-strong)'
                   }
                   ${isLocked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
                 `}
               >
                 <div className="flex items-start gap-3">
-                  <span className="font-semibold text-sm shrink-0">{option.letter}.</span>
-                  <span className="text-sm">{option.text}</span>
+                  <span
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-button) text-sm font-bold ${
+                      isSelected
+                        ? 'bg-(--info) text-white'
+                        : 'bg-(--bg-elevated) text-(--text-muted)'
+                    }`}
+                  >
+                    {option.letter}
+                  </span>
+                  <span className="text-sm pt-0.5">{option.text}</span>
                 </div>
               </button>
             )
@@ -216,7 +224,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
         </div>
 
         {isAnswered && (
-          <p className="text-xs text-(--text-secondary) mt-4 text-center">
+          <p className="text-xs text-(--text-muted) mt-4 text-center">
             {t('Answer locked. Use navigation buttons to continue.')}
           </p>
         )}
@@ -227,7 +235,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
         <button
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-(--border-subtle) bg-(--bg-surface) text-(--text-primary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-4 py-3 rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-primary) hover:border-(--border-strong) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft size={18} />
           {t('Back')}
@@ -237,7 +245,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
           <button
             onClick={handleSubmit}
             disabled={submitting || answeredCount < questions.length}
-            className="flex-1 px-6 py-3 rounded-xl bg-(--success) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-6 py-3 rounded-(--radius-button) bg-(--success) text-(--bg-primary) font-bold transition-[filter] hover:brightness-105 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? t('Submitting...') : t('Submit Test')}
           </button>
@@ -245,7 +253,7 @@ export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) 
           <button
             onClick={handleNext}
             disabled={!isAnswered}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-(--radius-button) bg-(--info) text-white font-semibold transition-[filter] hover:brightness-110 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('Next')}
             <ChevronRight size={18} />

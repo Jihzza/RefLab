@@ -36,17 +36,17 @@ export default function NotificationBell() {
     <button
       type="button"
       onClick={handleClick}
-      className="relative p-2 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
+      className="group relative p-2 rounded-full text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
       aria-label={
         unreadCount > 0
           ? `${t('Notifications')} (${unreadCount})`
           : t('Notifications')
       }
     >
-      <Bell className="w-6 h-6 text-(--text-secondary) hover:text-(--text-primary) transition-colors" />
+      <Bell className="w-6 h-6 transition-colors" />
 
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-(--brand-red) text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+        <span className="numeral absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-(--brand-red) text-white text-[11px] font-bold leading-none rounded-full flex items-center justify-center ring-2 ring-(--bg-surface)">
           {unreadCount > 9 ? '9+' : unreadCount}
         </span>
       )}

@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { X } from 'lucide-react'
+import Button from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 
 const PRESET_REASONS = ['Spam or scam', 'Harassment or bullying', 'Inappropriate content']
@@ -29,24 +31,28 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-(--bg-base)/70 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Dialog */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-sm bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-dialog-title"
+          className="card-console w-full max-w-sm shadow-[var(--shadow-pop)] pointer-events-auto animate-scale-in"
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
-            <h2 className="text-lg font-semibold text-(--text-primary)">{title}</h2>
+            <h2 id="report-dialog-title" className="text-lg font-bold text-(--text-primary)">{title}</h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
               aria-label={t('Close')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -65,10 +71,10 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
                     setSelectedPreset(selectedPreset === preset ? null : preset)
                     setCustomReason('')
                   }}
-                  className={`w-full text-left px-4 py-2.5 text-sm rounded-(--radius-button) border transition-colors ${
+                  className={`w-full text-left px-4 py-2.5 text-sm font-medium rounded-(--radius-button) border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface) ${
                     selectedPreset === preset
                       ? 'border-(--brand-yellow) bg-(--brand-yellow)/10 text-(--text-primary)'
-                      : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover)'
+                      : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) hover:border-(--border-strong)'
                   }`}
                 >
                   {t(preset)}
@@ -85,25 +91,18 @@ const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) 
               }}
               placeholder={t('Describe the issue...')}
               rows={3}
-              className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-muted) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
+              className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-faint) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none transition-[border-color,box-shadow] duration-150 focus:outline-none focus:border-(--brand-yellow) focus:shadow-[0_0_0_3px_rgba(246,194,28,0.16)]"
             />
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-(--border-subtle)">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-            >
+          <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-(--border-subtle)">
+            <Button variant="ghost" onClick={onClose}>
               {t('Cancel')}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className="px-5 py-2 text-sm font-semibold bg-(--error) text-white rounded-(--radius-button) hover:opacity-90 transition-opacity disabled:opacity-40"
-            >
+            </Button>
+            <Button variant="danger" onClick={handleSubmit} disabled={!canSubmit}>
               {t('Submit Report')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

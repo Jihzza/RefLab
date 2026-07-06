@@ -95,11 +95,14 @@ const CommentBox: React.FC<CommentBoxProps> = ({
         <img
           src={comment.author.photo_url}
           alt={displayName}
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+          className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5 ring-1 ring-(--border-subtle)"
         />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span className="text-[10px] font-semibold text-(--bg-primary)">
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ring-1 ring-white/10"
+          style={{ backgroundImage: 'var(--grad-brand)' }}
+        >
+          <span className="text-[10px] font-bold text-(--bg-primary)">
             {initials}
           </span>
         </div>
@@ -107,21 +110,23 @@ const CommentBox: React.FC<CommentBoxProps> = ({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-(--text-primary)">
-            {displayName}
-          </span>
-          <span className="text-[10px] text-(--text-muted)">
-            {formatRelativeTime(comment.created_at)}
-          </span>
+        <div className="surface-2 px-3 py-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-(--text-primary)">
+              {displayName}
+            </span>
+            <span className="text-[10px] text-(--text-faint)">
+              {formatRelativeTime(comment.created_at)}
+            </span>
+          </div>
+
+          <p className="text-sm text-(--text-primary) mt-0.5 leading-relaxed break-words">
+            {renderContentWithMentions(comment.content, navigate, t)}
+          </p>
         </div>
 
-        <p className="text-sm text-(--text-primary) mt-0.5 break-words">
-          {renderContentWithMentions(comment.content, navigate, t)}
-        </p>
-
         {/* Actions row */}
-        <div className="flex items-center gap-4 mt-1.5">
+        <div className="flex items-center gap-4 mt-1.5 px-1">
           {/* Like */}
           <button
             onClick={() => onLike(comment.id, comment.is_liked)}
@@ -135,6 +140,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24"
               fill={comment.is_liked ? 'currentColor' : 'none'}
               stroke="currentColor" strokeWidth={comment.is_liked ? 0 : 2}
+              aria-hidden="true"
             >
               <path strokeLinecap="round" strokeLinejoin="round"
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
@@ -161,7 +167,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
               className="p-0.5 text-(--text-muted) hover:text-(--text-secondary) transition-colors"
               aria-label={t('Comment options')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="5" cy="12" r="2" />
                 <circle cx="12" cy="12" r="2" />
                 <circle cx="19" cy="12" r="2" />
@@ -171,18 +177,20 @@ const CommentBox: React.FC<CommentBoxProps> = ({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-6 z-50 w-36 bg-(--bg-surface) border border-(--border-subtle) rounded-lg shadow-xl overflow-hidden">
+                <div role="menu" className="absolute right-0 top-6 z-50 w-36 card-console shadow-[var(--shadow-pop)] overflow-hidden p-1 animate-scale-in">
                   {isOwnComment ? (
                     <button
+                      role="menuitem"
                       onClick={() => { setMenuOpen(false); onDelete(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--error) hover:bg-(--bg-hover) transition-colors"
+                      className="w-full text-left px-2.5 py-2 text-xs font-medium text-(--error) rounded-(--radius-button) hover:bg-(--error)/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
                     >
                       {t('Delete')}
                     </button>
                   ) : (
                     <button
+                      role="menuitem"
                       onClick={() => { setMenuOpen(false); onReport(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
+                      className="w-full text-left px-2.5 py-2 text-xs font-medium text-(--text-secondary) rounded-(--radius-button) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow)"
                     >
                       {t('Report')}
                     </button>

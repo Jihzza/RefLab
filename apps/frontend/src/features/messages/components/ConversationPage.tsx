@@ -7,6 +7,8 @@ import type { MessageUser } from '../types'
 import MessageBubble from './MessageBubble'
 import MessageInput from './MessageInput'
 import { useTranslation } from 'react-i18next'
+import { ArrowLeft, Loader2, MessageCircleOff } from 'lucide-react'
+import Button from '@/components/ui/Button'
 
 type LocationState = {
   otherUser?: MessageUser
@@ -91,6 +93,36 @@ export default function ConversationPage() {
 
   const initials = displayName.slice(0, 2).toUpperCase()
 
+  const identity = (
+    <>
+      {otherUser?.photo_url ? (
+        <img
+          src={otherUser.photo_url}
+          alt={displayName}
+          className="w-9 h-9 rounded-full object-cover flex-shrink-0 ring-1 ring-(--border-subtle)"
+        />
+      ) : (
+        <div
+          className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ring-1 ring-(--border-strong)"
+          style={{ backgroundImage: 'var(--grad-brand)' }}
+        >
+          <span className="text-xs font-bold text-(--bg-primary)">{initials}</span>
+        </div>
+      )}
+
+      <div className="min-w-0 text-left">
+        <div className="text-sm font-semibold text-(--text-primary) truncate">
+          {displayName}
+        </div>
+        {otherUser && (
+          <div className="text-xs text-(--text-muted) truncate">
+            @{otherUser.username}
+          </div>
+        )}
+      </div>
+    </>
+  )
+
   if (!conversationId) {
     return (
       <div className="p-4">
@@ -102,23 +134,14 @@ export default function ConversationPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Fixed header under app header */}
-      <div className="fixed top-16 left-0 right-0 z-40 bg-(--bg-surface) border-b border-(--border-subtle) px-4 py-3 flex items-center gap-3">
+      <div className="fixed top-16 left-0 right-0 z-40 glass border-b border-(--border-subtle) px-3 py-2.5 flex items-center gap-2">
         <button
           onClick={() => navigate('/app/messages')}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors flex-shrink-0"
           aria-label={t('Back')}
           type="button"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
+          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
         </button>
 
         {canOpenProfile ? (
@@ -127,63 +150,17 @@ export default function ConversationPage() {
             onClick={() =>
               navigate(`/app/profile/${encodeURIComponent(profileUsername!)}`)
             }
-            className="flex items-center gap-3 min-w-0"
+            className="flex items-center gap-3 min-w-0 rounded-(--radius-button) px-1.5 py-1 -mx-1 hover:bg-(--bg-hover) transition-colors"
             aria-label={t('Open {{name}} profile', { name: displayName })}
           >
-            {otherUser?.photo_url ? (
-              <img
-                src={otherUser.photo_url}
-                alt={displayName}
-                className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-semibold text-(--bg-primary)">
-                  {initials}
-                </span>
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-(--text-primary) truncate">
-                {displayName}
-              </div>
-              {otherUser && (
-                <div className="text-xs text-(--text-muted) truncate">
-                  @{otherUser.username}
-                </div>
-              )}
-            </div>
+            {identity}
           </button>
         ) : (
           <div
-            className="flex items-center gap-3 min-w-0 opacity-80"
+            className="flex items-center gap-3 min-w-0 px-1.5 opacity-80"
             aria-disabled="true"
           >
-            {otherUser?.photo_url ? (
-              <img
-                src={otherUser.photo_url}
-                alt={displayName}
-                className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                <span className="text-xs font-semibold text-(--bg-primary)">
-                  {initials}
-                </span>
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <div className="text-sm font-semibold text-(--text-primary) truncate">
-                {displayName}
-              </div>
-              {otherUser && (
-                <div className="text-xs text-(--text-muted) truncate">
-                  @{otherUser.username}
-                </div>
-              )}
-            </div>
+            {identity}
           </div>
         )}
       </div>
@@ -191,12 +168,12 @@ export default function ConversationPage() {
       {/* Scrollable body */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 mt-16 mb-16"
+        className="flex-1 overflow-y-auto p-4 space-y-2.5 mt-16 mb-16"
         onScroll={handleScroll}
       >
         {isLoading && (
           <div className="flex justify-center py-6" aria-live="polite" aria-busy="true" role="status">
-            <div className="w-6 h-6 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" aria-hidden="true" />
+            <Loader2 className="h-6 w-6 text-(--brand-yellow) animate-spin" aria-hidden="true" />
             <span className="sr-only">{t('Loading messages...')}</span>
           </div>
         )}
@@ -215,20 +192,23 @@ export default function ConversationPage() {
 
         {isLoadingMore && (
           <div className="flex justify-center py-4">
-            <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+            <Loader2 className="h-5 w-5 text-(--brand-yellow) animate-spin" aria-hidden="true" />
           </div>
         )}
 
         {!isLoading && !error && messages.length === 0 && (
-          <div className="text-center py-16">
-            <p className="text-(--text-muted) text-sm mb-3">{t('No messages yet.')}</p>
-            <button
-              type="button"
+          <div className="flex flex-col items-center text-center py-16 animate-fade-up">
+            <div className="w-16 h-16 mb-4 rounded-2xl surface-2 flex items-center justify-center">
+              <MessageCircleOff className="h-8 w-8 text-(--text-muted)" aria-hidden="true" />
+            </div>
+            <p className="text-(--text-secondary) text-sm mb-4">{t('No messages yet.')}</p>
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => navigate('/app/messages')}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
             >
               {t('Back to Conversations')}
-            </button>
+            </Button>
           </div>
         )}
       </div>

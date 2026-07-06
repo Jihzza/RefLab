@@ -160,7 +160,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
             value={newComment}
             onChange={handleInputChange}
             placeholder={replyingTo ? t('Write a reply...') : t('Add a comment...')}
-            className="w-full px-3 py-2 text-sm bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
+            className="w-full h-10 px-3.5 text-sm bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-(--text-primary) placeholder-(--text-faint) transition-[border-color,box-shadow] duration-150 focus:outline-none focus:border-(--brand-yellow) focus:shadow-[0_0_0_3px_rgba(246,194,28,0.16)]"
           />
           {mentionQuery !== null && (
             <MentionDropdown
@@ -173,7 +173,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         <button
           type="submit"
           disabled={!newComment.trim() || isSubmitting}
-          className="px-3 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
+          style={newComment.trim() && !isSubmitting ? { backgroundImage: 'var(--grad-brand)' } : undefined}
+          className="h-10 px-4 text-sm font-bold text-(--bg-primary) rounded-(--radius-button) shadow-[0_8px_24px_-8px_rgba(246,194,28,0.5)] transition-[filter,opacity] duration-150 hover:brightness-105 disabled:bg-(--bg-surface-2) disabled:text-(--text-faint) disabled:shadow-none disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
         >
           {t('Post')}
         </button>

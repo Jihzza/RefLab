@@ -4,86 +4,77 @@ import SignupForm from "@/features/auth/components/SignupForm";
 import ForgotPassword from "@/features/auth/components/ForgotPassword";
 import { useTranslation } from "react-i18next";
 
-// The three views this component can show
 type AuthView = "login" | "signup" | "forgot-password";
 
 /**
- * AuthSection - Container for authentication forms on the landing page
- *
- * Features:
- * - Toggle buttons at the top to switch between Login and Signup
- * - Renders the appropriate form based on current view
- * - Handles "Forgot password?" flow
- *
- * Layout:
- * ┌─────────────────────────────────────┐
- * │  [Log in]  [Sign up]               │  ← Toggle buttons
- * ├─────────────────────────────────────┤
- * │                                     │
- * │   LoginForm / SignupForm /         │  ← Current form
- * │   ForgotPassword                   │
- * │                                     │
- * └─────────────────────────────────────┘
+ * AuthSection — the authentication panel on the landing page.
+ * Owns a single elevated card with a segmented Login/Sign-up control; the forms
+ * render as pure content inside it.
  */
 export default function AuthSection() {
   const { t } = useTranslation();
   const [currentView, setCurrentView] = useState<AuthView>("login");
 
-  // Handle "Forgot password?" click from LoginForm
-  const handleForgotPassword = () => {
-    setCurrentView("forgot-password");
-  };
-
-  // Handle "Back to login" from ForgotPassword
-  const handleBackToLogin = () => {
-    setCurrentView("login");
-  };
+  const handleForgotPassword = () => setCurrentView("forgot-password");
+  const handleBackToLogin = () => setCurrentView("login");
 
   return (
-    <section className="px-6 py-4">
-      <div className="w-full max-w-md mx-auto">
-      {/* Only show toggle buttons for login/signup views */}
-      {currentView !== "forgot-password" && (
-        <div className="flex mb-6">
-          {/* Login tab */}
-          <button
-            type="button"
-            onClick={() => setCurrentView("login")}
-            className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
-              currentView === "login"
-                ? "border-(--brand-yellow) text-(--brand-yellow)"
-                : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
-            }`}
+    <div className="w-full max-w-md mx-auto animate-fade-up">
+      <div className="card-console p-6 sm:p-8">
+        {currentView !== "forgot-password" && (
+          <div
+            role="tablist"
+            aria-label={t("Log In")}
+            className="mb-7 grid grid-cols-2 gap-1 rounded-(--radius-button) bg-(--bg-surface-2) p-1"
           >
-            {t("Log In")}
-          </button>
+            <SegTab
+              active={currentView === "login"}
+              onClick={() => setCurrentView("login")}
+            >
+              {t("Log In")}
+            </SegTab>
+            <SegTab
+              active={currentView === "signup"}
+              onClick={() => setCurrentView("signup")}
+            >
+              {t("Sign up")}
+            </SegTab>
+          </div>
+        )}
 
-          {/* Signup tab */}
-          <button
-            type="button"
-            onClick={() => setCurrentView("signup")}
-            className={`flex-1 py-2 text-center font-medium border-b-2 transition-colors ${
-              currentView === "signup"
-                ? "border-(--brand-yellow) text-(--brand-yellow)"
-                : "border-transparent text-(--text-muted) hover:text-(--text-secondary)"
-            }`}
-          >
-            {t("Sign up")}
-          </button>
-        </div>
-      )}
-
-      {/* Render the appropriate form */}
-      {currentView === "login" && (
-        <LoginForm onForgotPassword={handleForgotPassword} />
-      )}
-
-      {currentView === "signup" && <SignupForm />}
-
-      {currentView === "forgot-password" && (
-        <ForgotPassword onBackToLogin={handleBackToLogin} />
-      )}
+        {currentView === "login" && <LoginForm onForgotPassword={handleForgotPassword} />}
+        {currentView === "signup" && <SignupForm />}
+        {currentView === "forgot-password" && (
+          <ForgotPassword onBackToLogin={handleBackToLogin} />
+        )}
       </div>
-    </section>
+    </div>
+  );
+}
+
+function SegTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={[
+        "h-10 rounded-[calc(var(--radius-button)-4px)] text-sm font-semibold transition-all duration-200",
+        active
+          ? "bg-(--bg-elevated) text-(--text-primary) shadow-(--shadow-soft)"
+          : "text-(--text-muted) hover:text-(--text-secondary)",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }

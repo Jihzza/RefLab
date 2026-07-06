@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { GraduationCap } from 'lucide-react'
+import { GraduationCap, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { clearLearningHistory } from '../api/settingsApi'
+import Button from '@/components/ui/Button'
 import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
 import { useTranslation } from 'react-i18next'
@@ -38,22 +39,22 @@ export default function LearningSection() {
 
   return (
     <>
-      <SettingsSection title={t('Learning')} icon={<GraduationCap className="w-4.5 h-4.5" />}>
-        <div className="px-4 py-3">
+      <SettingsSection title={t('Learning')} icon={<GraduationCap className="w-4.5 h-4.5" aria-hidden="true" />}>
+        <div className="px-4 py-3.5">
           <p className="text-sm text-(--text-secondary) mb-3">
             {t('Clear your test history, question attempts, video watch history, streak data, and all learning progress. This cannot be undone.')}
           </p>
 
-          <button
-            type="button"
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Trash2 className="w-4 h-4" aria-hidden="true" />}
             onClick={() => setDialogOpen(true)}
-            className="text-sm font-medium px-4 py-2 rounded-(--radius-button)
-              border border-(--error)/20 text-(--error)
-              hover:bg-(--error)/10 transition-colors"
             aria-label={t('Clear Learning History')}
+            className="!border-(--error)/25 !text-(--error) hover:!bg-(--error)/10"
           >
             {t('Clear Learning History')}
-          </button>
+          </Button>
 
           {success && (
             <p className="text-xs text-(--success) mt-2" role="status">

@@ -33,16 +33,16 @@ export default function QuestionCard({
   ]
 
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
+    <div className="card-console p-6">
       {/* Question header */}
       <div className="mb-4">
-        <span className="text-sm text-(--text-muted)">
+        <span className="eyebrow numeral">
           {t('Question {{current}} of {{total}}', { current: questionNumber, total: totalQuestions })}
         </span>
       </div>
 
       {/* Question text */}
-      <h2 className="text-lg font-medium text-(--text-primary) mb-6">
+      <h2 className="text-lg font-semibold text-(--text-primary) leading-snug mb-6">
         {question.question_text}
       </h2>
 
@@ -57,16 +57,22 @@ export default function QuestionCard({
               onClick={() => !isLocked && onSelectOption(option.letter)}
               disabled={isLocked}
               className={`
-                w-full text-left p-4 rounded-lg border-2 transition-all
+                w-full text-left p-4 rounded-(--radius-button) border-2 transition-all flex items-start gap-3
                 ${isSelected
-                  ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                  : 'border-(--border-subtle) hover:border-(--border-strong) hover:bg-(--bg-hover)'
+                  ? 'border-(--info) bg-(--info)/10 text-(--text-primary) ring-1 ring-(--info)/40'
+                  : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:bg-(--bg-surface-2)'
                 }
                 ${isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}
               `}
             >
-              <span className="font-medium mr-3">{option.letter}.</span>
-              {option.text}
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-(--radius-button) text-sm font-bold ${
+                  isSelected ? 'bg-(--info) text-white' : 'bg-(--bg-elevated) text-(--text-muted)'
+                }`}
+              >
+                {option.letter}
+              </span>
+              <span className="pt-0.5">{option.text}</span>
             </button>
           )
         })}

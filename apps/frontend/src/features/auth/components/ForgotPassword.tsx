@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { useAuth } from "./useAuth";
 import { useTranslation } from "react-i18next";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 interface ForgotPasswordProps {
   onBackToLogin: () => void;
@@ -65,71 +68,53 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
 
   return (
     <div>
-      {/* Back to login link */}
       <button
         type="button"
         onClick={onBackToLogin}
-        className="mb-4 text-sm text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline flex items-center gap-1"
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
       >
-        <span>&larr;</span> {t("Back to login")}
+        <ArrowLeft size={15} aria-hidden="true" /> {t("Back to login")}
       </button>
 
       <h2 className="text-xl font-bold text-(--text-primary) mb-2">{t("Reset your password")}</h2>
-      <p className="text-(--text-secondary) text-sm mb-4">
+      <p className="text-(--text-secondary) text-sm mb-5">
         {t("Enter your email address and we'll send you a link to reset your password.")}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Success message */}
+      <form onSubmit={handleSubmit} className="space-y-5">
         {successMessage && (
-          <div className="p-3 rounded-(--radius-input) bg-(--success)/10 border border-(--success)/20 text-(--success) text-sm">
+          <div
+            role="status"
+            className="p-3 rounded-(--radius-input) bg-(--success)/10 border border-(--success)/20 text-(--success) text-sm"
+          >
             {successMessage}
           </div>
         )}
 
-        {/* Error message */}
         {error && (
-          <div className="p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm text-center">{error}</div>
+          <div
+            role="alert"
+            className="p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm text-center"
+          >
+            {error}
+          </div>
         )}
 
-        {/* Email field */}
-        <div className="space-y-2">
-          <label htmlFor="forgot-email" className="block text-sm font-medium text-(--text-secondary)">
-            {t("Email")}
-          </label>
-          <input
-            id="forgot-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-            className="w-full px-4 py-3 outline-none transition-all
-              bg-(--bg-surface-2) 
-              border border-(--border-subtle) 
-              rounded-(--radius-input) 
-              text-(--text-primary) 
-              placeholder-(--text-muted)
-              focus:border-(--brand-yellow) 
-              focus:ring-1 focus:ring-(--brand-yellow)
-              disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="tu@exemplo.com"
-          />
-        </div>
-
-        {/* Submit button */}
-        <button
-          type="submit"
+        <Input
+          id="forgot-email"
+          type="email"
+          label={t("Email")}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={loading}
-          className="w-full py-3.5 px-4 font-bold transition-all transform active:scale-[0.98]
-            bg-(--brand-yellow) 
-            text-(--bg-primary) 
-            rounded-(--radius-button)
-            hover:bg-(--brand-yellow-soft) 
-            hover:shadow-[0_0_15px_rgb(var(--brand-yellow)/0.3)]
-            disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+          placeholder="nome@exemplo.com"
+          autoComplete="email"
+          leftIcon={<Mail size={17} />}
+        />
+
+        <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
           {loading ? t("Sending...") : t("Send reset link")}
-        </button>
+        </Button>
       </form>
     </div>
   );

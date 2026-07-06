@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Shield, Mail, KeyRound, LogOut, Trash2 } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
+import Button from '@/components/ui/Button'
 import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
 import { useTranslation } from 'react-i18next'
@@ -52,15 +53,15 @@ export default function AccountSection() {
 
   return (
     <>
-      <SettingsSection title={t('Account & Security')} icon={<Shield className="w-4.5 h-4.5" />}>
+      <SettingsSection title={t('Account & Security')} icon={<Shield className="w-4.5 h-4.5" aria-hidden="true" />}>
         {/* Email */}
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Mail className="w-4 h-4 text-(--text-muted)" />
-            <span className="text-sm text-(--text-secondary)">{t('Email')}</span>
+        <div className="px-4 py-3.5">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Mail className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
+            <span className="eyebrow">{t('Email')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-sm text-(--text-primary) truncate flex-1">{email}</p>
+            <p className="text-sm font-medium text-(--text-primary) truncate flex-1">{email}</p>
             {isGoogleAccount && (
               <span className="text-xs px-2 py-0.5 rounded-(--radius-pill) bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-muted) whitespace-nowrap">
                 {t('Managed by Google')}
@@ -71,58 +72,70 @@ export default function AccountSection() {
 
         {/* Reset password (email/password accounts only) */}
         {!isGoogleAccount && (
-          <div className="px-4 py-3">
-            <button
-              type="button"
+          <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+            <div className="min-w-0">
+              <p className="text-sm text-(--text-primary)">{t('Reset Password')}</p>
+              {resetStatus === 'sent' && (
+                <p className="text-xs text-(--success) mt-0.5">
+                  {t('Password reset email sent. Check your inbox.')}
+                </p>
+              )}
+              {resetStatus === 'error' && (
+                <p className="text-xs text-(--error) mt-0.5">
+                  {t('Failed to send reset email. Please try again.')}
+                </p>
+              )}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<KeyRound className="w-4 h-4" aria-hidden="true" />}
               onClick={handleResetPassword}
+              loading={resetStatus === 'sending'}
               disabled={resetStatus === 'sending'}
-              className="flex items-center gap-2 text-sm text-(--text-primary) hover:text-(--brand-yellow) transition-colors disabled:opacity-50"
               aria-label={t('Reset Password')}
+              className="shrink-0"
             >
-              <KeyRound className="w-4 h-4" />
-              <span>{t('Reset Password')}</span>
-            </button>
-            {resetStatus === 'sent' && (
-              <p className="text-xs text-(--success) mt-1">
-                {t('Password reset email sent. Check your inbox.')}
-              </p>
-            )}
-            {resetStatus === 'error' && (
-              <p className="text-xs text-(--error) mt-1">
-                {t('Failed to send reset email. Please try again.')}
-              </p>
-            )}
+              {t('Reset Password')}
+            </Button>
           </div>
         )}
 
         {/* Log out */}
-        <div className="px-4 py-3">
-          <button
-            type="button"
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+          <p className="text-sm text-(--text-primary)">{t('Log Out')}</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<LogOut className="w-4 h-4" aria-hidden="true" />}
             onClick={handleLogout}
+            loading={logoutLoading}
             disabled={logoutLoading}
-            className="flex items-center gap-2 text-sm text-(--text-primary) hover:text-(--brand-yellow) transition-colors disabled:opacity-50"
             aria-label={t('Log Out')}
+            className="shrink-0"
           >
-            <LogOut className="w-4 h-4" />
-            <span>{logoutLoading ? `${t('Loading...')}` : t('Log Out')}</span>
-          </button>
+            {logoutLoading ? `${t('Loading...')}` : t('Log Out')}
+          </Button>
         </div>
 
         {/* Delete account */}
-        <div className="px-4 py-3">
-          <button
-            type="button"
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+          <div className="min-w-0">
+            <p className="text-sm text-(--text-primary)">{t('Delete Account')}</p>
+            {deleteError && (
+              <p className="text-xs text-(--error) mt-0.5">{deleteError}</p>
+            )}
+          </div>
+          <Button
+            variant="danger"
+            size="sm"
+            leftIcon={<Trash2 className="w-4 h-4" aria-hidden="true" />}
             onClick={() => setDeleteOpen(true)}
-            className="flex items-center gap-2 text-sm text-(--error) hover:opacity-80 transition-colors"
             aria-label={t('Delete Account')}
+            className="shrink-0"
           >
-            <Trash2 className="w-4 h-4" />
-            <span>{t('Delete Account')}</span>
-          </button>
-          {deleteError && (
-            <p className="text-xs text-(--error) mt-1">{deleteError}</p>
-          )}
+            {t('Delete Account')}
+          </Button>
         </div>
       </SettingsSection>
 

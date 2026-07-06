@@ -11,6 +11,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Cookie } from 'lucide-react';
+import Button from '@/components/ui/Button';
 
 const STORAGE_KEY = 'cookie-consent';
 
@@ -44,37 +46,47 @@ export default function CookieConsentBanner() {
     <div
       role="dialog"
       aria-label={t('Cookie consent')}
-      className="fixed bottom-0 left-0 right-0 z-50 p-4"
+      className="animate-fade-up fixed inset-x-0 bottom-0 z-50 p-4"
     >
-      <div className="max-w-lg mx-auto bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 shadow-lg">
-        {/* Message */}
-        <p className="text-sm text-(--text-secondary) mb-4 leading-relaxed">
-          {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
-          <Link
-            to="/cookies"
-            className="text-(--info) hover:underline"
+      <div className="card-console glass mx-auto max-w-lg p-4 shadow-(--shadow-pop)">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden="true"
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-button) bg-(--brand-yellow)/12 text-(--brand-yellow)"
           >
-            {t('Cookies Policy')}
-          </Link>
-          .
-        </p>
+            <Cookie className="h-5 w-5" />
+          </span>
+
+          {/* Message */}
+          <p className="text-sm leading-relaxed text-(--text-secondary)">
+            {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
+            <Link to="/cookies" className="font-medium text-(--info) hover:underline">
+              {t('Cookies Policy')}
+            </Link>
+            .
+          </p>
+        </div>
 
         {/* Actions */}
-        <div className="flex gap-3">
-          <button
+        <div className="mt-4 flex gap-3">
+          <Button
+            variant="primary"
+            size="sm"
+            fullWidth
             onClick={handleAccept}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) transition-colors hover:opacity-90"
             aria-label={t('Accept cookies')}
           >
             {t('Accept')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            fullWidth
             onClick={handleDecline}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-secondary) transition-colors hover:bg-(--bg-hover)"
             aria-label={t('Decline cookies')}
           >
             {t('Decline')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

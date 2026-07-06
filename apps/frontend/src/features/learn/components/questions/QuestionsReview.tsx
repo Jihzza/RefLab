@@ -33,13 +33,15 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
   const isPassing = scorePercent >= 75
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Score summary card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl text-center space-y-4">
+      <div className="card-console field-lines relative overflow-hidden p-6 text-center space-y-3">
+        <span className="flag-accent absolute inset-x-0 top-0 h-1" aria-hidden="true" />
+        <p className="eyebrow">{t('Debrief')}</p>
         <h2 className="text-xl font-bold text-(--text-primary)">{t('Session Complete')}</h2>
 
         <div
-          className={`text-5xl font-bold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}
+          className={`numeral text-display-sm ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}
         >
           {scorePercent}%
         </div>
@@ -48,7 +50,7 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
           {t('{{correct}} correct out of {{answered}} answered', { correct: totalCorrect, answered: totalAnswered })}
         </p>
 
-        <div className="flex items-center justify-center gap-6 pt-2">
+        <div className="flex items-center justify-center gap-6 pt-1">
           <StatPill icon={<Target size={14} />} label={t('{{score}}% accuracy', { score: scorePercent })} />
           <StatPill icon={<Clock size={14} />} label={formatTime(durationSeconds)} />
         </div>
@@ -59,10 +61,10 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
         <div className="space-y-3">
           <button
             onClick={() => setShowCorrections(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3 bg-(--bg-surface) border border-(--border-subtle) rounded-xl text-sm font-medium text-(--text-primary) hover:bg-(--bg-hover) transition-colors"
+            className="w-full flex items-center justify-between px-4 py-3 card-console text-sm font-semibold text-(--text-primary) hover:border-(--border-strong) transition-colors"
           >
             <span>{t('Review Answers ({{count}})', { count: answers.length })}</span>
-            {showCorrections ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            {showCorrections ? <ChevronUp size={16} className="text-(--text-muted)" /> : <ChevronDown size={16} className="text-(--text-muted)" />}
           </button>
 
           {showCorrections && (
@@ -76,10 +78,10 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
                 return (
                   <div
                     key={`${question.id}-${i}`}
-                    className={`p-4 rounded-xl border-2 ${
+                    className={`card-console p-4 border-l-2 ${
                       isCorrect
-                        ? 'border-(--success)/40 bg-(--success)/5'
-                        : 'border-(--error)/40 bg-(--error)/5'
+                        ? 'border-l-(--success)'
+                        : 'border-l-(--error)'
                     }`}
                   >
                     <div className="flex items-start gap-2 mb-3">
@@ -94,16 +96,16 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
                     </div>
 
                     <div className="space-y-1 ml-6">
-                      <p className="text-xs text-(--text-secondary)">
-                        <span className="font-medium">{t('Your answer')}:</span>{' '}
+                      <p className="text-xs text-(--text-muted)">
+                        <span className="font-semibold">{t('Your answer')}:</span>{' '}
                         <span className={isCorrect ? 'text-(--success)' : 'text-(--error)'}>
                           {LETTERS[selectedIndex]}. {selectedText}
                         </span>
                       </p>
                       {!isCorrect && (
-                        <p className="text-xs text-(--text-secondary)">
-                          <span className="font-medium">{t('Correct answer')}:</span>{' '}
-                          <span className="text-(--success)">
+                        <p className="text-xs text-(--text-muted)">
+                          <span className="font-semibold">{t('Correct answer')}:</span>{' '}
+                          <span className="text-(--success) font-semibold">
                             {correctOption}. {correctText}
                           </span>
                         </p>
@@ -121,14 +123,14 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
       <div className="flex gap-3">
         <button
           onClick={onStartNew}
-          className="flex-1 py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors text-sm"
+          className="flex-1 py-3 card-console text-(--text-primary) rounded-(--radius-button) font-semibold flex items-center justify-center gap-2 hover:border-(--border-strong) transition-colors text-sm"
         >
           <ArrowLeft size={16} />
           {t('Back')}
         </button>
         <button
           onClick={onRestart}
-          className="flex-1 py-3 bg-(--info) text-white rounded-xl font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity text-sm"
+          className="flex-1 py-3 bg-(--info) text-white rounded-(--radius-button) font-semibold flex items-center justify-center gap-2 transition-[filter] hover:brightness-110 active:scale-[0.99] text-sm"
         >
           <RotateCcw size={16} />
           {t('Practice Again')}
@@ -140,9 +142,9 @@ export default function QuestionsReview({ result, onStartNew, onRestart }: Quest
 
 function StatPill({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
-    <div className="flex items-center gap-1.5 text-(--text-secondary) text-sm">
-      {icon}
-      <span>{label}</span>
+    <div className="inline-flex items-center gap-1.5 rounded-(--radius-pill) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-(--text-secondary) text-sm">
+      <span className="text-(--brand-yellow)">{icon}</span>
+      <span className="numeral">{label}</span>
     </div>
   )
 }

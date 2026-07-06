@@ -742,6 +742,139 @@ const ptPT = {
   'Tests Disponibles': 'Testes disponíveis',
   preguntas: 'perguntas',
   'Comenzar Test': 'Iniciar teste',
+
+  // Gamification — referee-grade ladder (ranks)
+  'Referee Candidate': 'Candidato a Árbitro',
+  'Trainee Referee': 'Árbitro Estagiário',
+  'Regional Referee': 'Árbitro Regional',
+  'District Referee': 'Árbitro Distrital',
+  'National Referee': 'Árbitro Nacional',
+  'Senior National Referee': 'Árbitro Nacional Sénior',
+  'International (FIFA)': 'Categoria Internacional (FIFA)',
+  Candidate: 'Candidato',
+  Trainee: 'Estagiário',
+  Regional: 'Regional',
+  District: 'Distrital',
+  National: 'Nacional',
+  Senior: 'Sénior',
+  FIFA: 'FIFA',
+
+  // Gamification — achievements
+  'First Whistle': 'Primeiro Apito',
+  Flawless: 'Sem Falhas',
+  Centurion: 'Centurião',
+  'Iron Streak': 'Sequência de Ferro',
+  Marathoner: 'Maratonista',
+  Specialist: 'Especialista',
+  Consistent: 'Consistente',
+  'Complete your first training activity.': 'Conclui a tua primeira atividade de treino.',
+  'Score 100% on a test.': 'Obtém 100% num teste.',
+  'Answer 100 questions.': 'Responde a 100 perguntas.',
+  'Reach a 7-day training streak.': 'Alcança uma sequência de 7 dias de treino.',
+  'Reach a 30-day training streak.': 'Alcança uma sequência de 30 dias de treino.',
+  'Reach 90% accuracy in a topic (10+ questions).':
+    'Atinge 90% de precisão num tema (10+ perguntas).',
+  'Hit your daily goal 5 days running.': 'Cumpre o teu objetivo diário 5 dias seguidos.',
+
+  // Gamification — progression, victory & transition copy
+  'Referee grade': 'Categoria de árbitro',
+  '{{xp}} XP': '{{xp}} XP',
+  '{{xp}} XP to {{grade}}': '{{xp}} XP para {{grade}}',
+  'Max grade': 'Categoria máxima',
+  'New grade: {{grade}}': 'Nova categoria: {{grade}}',
+  Score: 'Pontuação',
+  'XP earned': 'XP ganho',
+  'Promotion earned': 'Promoção conquistada',
+  'Well officiated': 'Boa arbitragem',
+  'Keep training': 'Continua a treinar',
+  'Achievement unlocked': 'Conquista desbloqueada',
+  'Review answers': 'Rever respostas',
+  '{{n}}-day streak': 'Sequência de {{n}} dias',
+  'Consistency is what makes a referee sharp. Keep it going.':
+    'A consistência é o que mantém um árbitro afiado. Continua assim.',
+  'You have reached a new referee grade.': 'Alcançaste uma nova categoria de árbitro.',
+  'Daily goal reached': 'Objetivo diário alcançado',
+  "You have completed today's training target.": 'Concluíste o objetivo de treino de hoje.',
+  'Milestone reached': 'Marco alcançado',
+  'Strong progress — stay on the whistle.': 'Bom progresso — mantém o apito.',
+  'Stay focused': 'Mantém o foco',
+  'Every decision is a rep. On to the next.':
+    'Cada decisão é um treino. Segue para a próxima.',
+  Continue: 'Continuar',
+
+  // Redesign UI — dashboard
+  'Referee Console': 'Consola do Árbitro',
+  'No accuracy data yet': 'Ainda não existem dados de precisão',
+  'Overall accuracy {{value}}%': 'Precisão global {{value}}%',
+  'Your correct-call rate across every question answered.':
+    'A tua taxa de decisões corretas em todas as perguntas respondidas.',
+  Strong: 'Forte',
+  Developing: 'Em evolução',
+  'Needs work': 'A precisar de trabalho',
+
+  // Redesign UI — learn / training
+  'Training Console': 'Consola de Treino',
+  'On the training ground': 'No campo de treino',
+  "We're building this module. Check back soon for new drills and content.":
+    'Estamos a construir este módulo. Volta em breve para novos exercícios e conteúdos.',
+  Library: 'Biblioteca',
+  Archive: 'Arquivo',
+  Assessment: 'Avaliação',
+  Result: 'Resultado',
+  Practice: 'Prática',
+  Setup: 'Configuração',
+  Debrief: 'Análise',
+  'Session complete': 'Sessão concluída',
+  'Test complete': 'Teste concluído',
+  'View debrief': 'Ver análise',
+  'View results': 'Ver resultados',
+  'Step 1': 'Passo 1',
+  'Step 2': 'Passo 2',
+  'Play video': 'Reproduzir vídeo',
+  'Pause video': 'Pausar vídeo',
+  'Mute video': 'Silenciar vídeo',
+  'Unmute video': 'Ativar som do vídeo',
+
+  // Redesign UI — landing
+  'Referee training platform': 'Plataforma de treino de arbitragem',
+  'Tests & simulations': 'Testes e simulações',
+  'Practice questions': 'Perguntas de prática',
+  'Video decision analysis': 'Análise de decisões em vídeo',
+  'Community debates': 'Debates da comunidade',
+
+  // Redesign UI — social
+  'Start the debate': 'Inicia o debate',
+  'No decisions yet. Share a call, spark a discussion, and see how others would rule.':
+    'Ainda não há decisões. Partilha uma decisão, inicia uma discussão e vê como os outros decidiriam.',
+  'Create the first post': 'Criar a primeira publicação',
+  "The Referee's Console": 'A Consola do Árbitro',
+  'What decision would you give?': 'Que decisão tomarias?',
+
+  // Redesign UI — profile
+  Admin: 'Administrador',
+  Moderator: 'Moderador',
+  Referee: 'Árbitro',
+  Role: 'Função',
+  Posts: 'Publicações',
+  Since: 'Desde',
+
+  // Redesign UI — pricing
+  Membership: 'Subscrição',
+
+  // Redesign UI — search
+  'Find people on RefLab': 'Encontra pessoas no RefLab',
+  'Search by name or username to view referee profiles and follow them.':
+    'Pesquisa por nome ou nome de utilizador para veres perfis de árbitros e os seguires.',
+
+  // Redesign UI — settings, auth & misc
+  Navigation: 'Navegação',
+  'Manage your account and preferences': 'Gere a tua conta e preferências',
+  'Toggle {{label}}': 'Alternar {{label}}',
+  'Show password': 'Mostrar palavra-passe',
+  'Hide password': 'Ocultar palavra-passe',
+  'Searching...': 'A pesquisar...',
+  '{{count}} unread': '{{count}} por ler',
+  RefLab: 'RefLab',
 }
 
 export default ptPT

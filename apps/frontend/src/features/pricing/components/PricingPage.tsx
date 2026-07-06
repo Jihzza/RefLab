@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CreditCard } from 'lucide-react'
+import { CreditCard, CheckCircle2 } from 'lucide-react'
+import Button from '@/components/ui/Button'
 import { useBilling } from '@/features/billing/components/useBilling'
 import PlansSection from './PlansSection'
 import SubscriptionCard from './SubscriptionCard'
@@ -70,8 +71,9 @@ export default function PricingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-(--text-muted)">{t('Loading...')}</div>
+      <div className="flex items-center justify-center gap-2.5 py-16 text-(--text-muted)">
+        <div className="w-4 h-4 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm">{t('Loading...')}</span>
       </div>
     )
   }
@@ -79,31 +81,39 @@ export default function PricingPage() {
   if (error) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <p className="text-(--error) text-sm mb-3">{error}</p>
-        <button
-          onClick={() => refreshBilling()}
-          className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-        >
-          {t('Retry')}
-        </button>
+        <div className="card-console flex flex-col items-center text-center px-4 py-10">
+          <p className="text-(--text-secondary) text-sm mb-4">{error}</p>
+          <Button variant="primary" size="sm" onClick={() => refreshBilling()}>
+            {t('Retry')}
+          </Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-20">
+    <div className="max-w-4xl mx-auto px-4 py-6 pb-24">
       {/* Page header */}
-      <div className="flex items-center gap-2 mb-6">
-        <CreditCard className="w-5 h-5 text-(--text-muted)" aria-hidden="true" />
-        <h1 className="text-xl font-bold text-(--text-primary)">{t('Pricing & Billing')}</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <span
+          className="flex-shrink-0 w-10 h-10 rounded-(--radius-button) bg-(--bg-surface-2) border border-(--border-subtle) flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <CreditCard className="w-5 h-5 text-(--brand-yellow)" />
+        </span>
+        <div>
+          <span className="eyebrow">{t('Membership')}</span>
+          <h1 className="text-xl font-bold text-(--text-primary) leading-tight">{t('Pricing & Billing')}</h1>
+        </div>
       </div>
 
       {/* Checkout success banner */}
       {checkoutSuccess && (
         <div
-          className="bg-(--success)/10 border border-(--success)/20 text-(--success) px-4 py-3 rounded-lg mb-6 text-center text-sm font-medium"
+          className="flex items-center justify-center gap-2 bg-(--success)/10 border border-(--success)/20 text-(--success) px-4 py-3 rounded-(--radius-button) mb-6 text-center text-sm font-semibold animate-fade-in"
           role="status"
         >
+          <CheckCircle2 className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
           {subscription
             ? t('Welcome to {{plan}}!', {
                 plan: subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1),

@@ -81,18 +81,21 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-fade-up">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pt-2">
         <button
           onClick={onBack}
-          className="text-sm text-(--text-muted) hover:text-(--text-primary) transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-sm text-(--text-secondary) transition-colors hover:border-(--border-strong) hover:text-(--text-primary)"
         >
           &larr; {t('Back')}
         </button>
-        <h2 className="text-lg font-semibold text-(--text-primary)">
-          {mode === 'by_law' ? t('Select Laws') : t('Select Areas')}
-        </h2>
+        <div>
+          <p className="eyebrow">{t('Setup')}</p>
+          <h2 className="text-lg font-bold text-(--text-primary)">
+            {mode === 'by_law' ? t('Select Laws') : t('Select Areas')}
+          </h2>
+        </div>
       </div>
 
       <p className="text-sm text-(--text-secondary) -mt-3">
@@ -144,10 +147,10 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
                   <button
                     key={law}
                     onClick={() => toggleLaw(law)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
+                    className={`px-4 py-2 rounded-(--radius-pill) text-sm font-semibold border-2 transition-colors ${
                       isSelected
-                        ? 'border-(--info) bg-(--info)/10 text-(--info)'
-                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--info)/50 hover:bg-(--bg-surface-2)'
+                        ? 'border-(--brand-yellow) bg-(--brand-yellow)/10 text-(--brand-yellow)'
+                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:bg-(--bg-surface-2)'
                     }`}
                   >
                     {t('Law {{law}} — {{name}}', { law, name: t(name) })}
@@ -163,10 +166,10 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
                   <button
                     key={area}
                     onClick={() => toggleArea(area)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
+                    className={`px-4 py-2 rounded-(--radius-pill) text-sm font-semibold border-2 transition-colors ${
                       isSelected
-                        ? 'border-(--info) bg-(--info)/10 text-(--info)'
-                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--info)/50 hover:bg-(--bg-surface-2)'
+                        ? 'border-(--brand-yellow) bg-(--brand-yellow)/10 text-(--brand-yellow)'
+                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:bg-(--bg-surface-2)'
                     }`}
                   >
                     {area}
@@ -182,7 +185,8 @@ export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetup
       <button
         onClick={handleStart}
         disabled={!canStart}
-        className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg hover:opacity-90 transition-opacity shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full py-4 text-(--bg-primary) rounded-(--radius-card) font-bold text-lg transition-[filter,transform] duration-(--dur-fast) hover:brightness-105 active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+        style={{ backgroundImage: 'var(--grad-brand)' }}
       >
         {t('Start Session')}
         {mode === 'by_law' && selectedLaws.length > 0 && (

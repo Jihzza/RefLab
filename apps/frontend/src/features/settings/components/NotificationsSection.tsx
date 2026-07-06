@@ -36,10 +36,8 @@ const CONTENT_TOGGLES: { key: InAppNotificationType; label: string }[] = [
 
 function GroupLabel({ children }: { children: string }) {
   return (
-    <div className="px-4 pt-3 pb-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-(--text-muted)">
-        {children}
-      </span>
+    <div className="px-4 pt-3.5 pb-1">
+      <span className="eyebrow">{children}</span>
     </div>
   )
 }
@@ -52,7 +50,7 @@ export default function NotificationsSection({
   const { t } = useTranslation()
 
   return (
-    <SettingsSection title={t('Notifications')} icon={<Bell className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Notifications')} icon={<Bell className="w-4.5 h-4.5" aria-hidden="true" />}>
       {/* In-app notifications */}
       <div>
         <GroupLabel>{t('Engagement')}</GroupLabel>

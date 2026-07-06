@@ -1,4 +1,6 @@
 import React from 'react'
+import { ShieldX } from 'lucide-react'
+import Button from '@/components/ui/Button'
 import { useTranslation } from 'react-i18next'
 
 interface BlockConfirmDialogProps {
@@ -18,16 +20,25 @@ const BlockConfirmDialog: React.FC<BlockConfirmDialogProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-(--bg-base)/70 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Dialog */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-xs bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="block-dialog-title"
+          className="card-console w-full max-w-xs shadow-[var(--shadow-pop)] pointer-events-auto animate-scale-in"
+        >
           {/* Body */}
           <div className="px-5 py-6 text-center">
-            <h2 className="text-lg font-semibold text-(--text-primary) mb-2">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-(--error)/12 flex items-center justify-center">
+              <ShieldX className="h-6 w-6 text-(--error)" aria-hidden="true" />
+            </div>
+            <h2 id="block-dialog-title" className="text-lg font-bold text-(--text-primary) mb-2">
               {t('Block @{{username}}?', { username })}
             </h2>
             <p className="text-sm text-(--text-muted)">
@@ -36,19 +47,13 @@ const BlockConfirmDialog: React.FC<BlockConfirmDialogProps> = ({
           </div>
 
           {/* Actions */}
-          <div className="flex border-t border-(--border-subtle)">
-            <button
-              onClick={onClose}
-            className="flex-1 py-3 text-sm font-medium text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-r border-(--border-subtle)"
-          >
+          <div className="flex items-center gap-2 px-5 py-4 border-t border-(--border-subtle)">
+            <Button variant="ghost" fullWidth onClick={onClose}>
               {t('Cancel')}
-            </button>
-            <button
-              onClick={onConfirm}
-              className="flex-1 py-3 text-sm font-semibold text-(--error) hover:bg-(--bg-hover) transition-colors"
-            >
+            </Button>
+            <Button variant="danger" fullWidth onClick={onConfirm}>
               {t('Block')}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

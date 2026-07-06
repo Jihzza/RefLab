@@ -1,3 +1,4 @@
+import { ChevronRight, X } from 'lucide-react'
 import type { SearchHistoryEntry } from '../types'
 import { useTranslation } from 'react-i18next'
 
@@ -10,7 +11,8 @@ interface SearchResultItemProps {
 
 /**
  * A single user row shared by both live search results and search history.
- * Shows avatar (photo or initials fallback), display name, and @username.
+ * Rendered as a clean card: avatar (photo or initials fallback), display name,
+ * @username, and a trailing chevron / remove affordance.
  */
 export default function SearchResultItem({
   user,
@@ -22,7 +24,7 @@ export default function SearchResultItem({
   const initials = displayName.slice(0, 2).toUpperCase()
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-(--bg-hover) transition-colors">
+    <div className="group flex items-center gap-3 rounded-(--radius-card) px-3 py-2.5 border border-transparent hover:border-(--border-subtle) hover:bg-(--bg-surface) transition-colors">
       {/* Clickable area: avatar + user info */}
       <button
         type="button"
@@ -35,11 +37,14 @@ export default function SearchResultItem({
           <img
             src={user.photo_url}
             alt=""
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            className="w-11 h-11 rounded-full object-cover flex-shrink-0 ring-1 ring-(--border-subtle)"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-semibold text-(--bg-primary)">
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ring-1 ring-(--border-subtle)"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
+          >
+            <span className="text-sm font-bold text-(--bg-primary)">
               {initials}
             </span>
           </div>
@@ -47,7 +52,7 @@ export default function SearchResultItem({
 
         {/* Name + username */}
         <div className="min-w-0">
-          <p className="text-sm font-medium text-(--text-primary) truncate">
+          <p className="text-sm font-semibold text-(--text-primary) truncate">
             {displayName}
           </p>
           <p className="text-xs text-(--text-muted) truncate">
@@ -56,28 +61,24 @@ export default function SearchResultItem({
         </div>
       </button>
 
-      {/* Remove button (only for history items) */}
-      {onRemove && (
+      {/* Trailing: remove (history) or chevron (results) */}
+      {onRemove ? (
         <button
           type="button"
-          onClick={e => {
+          onClick={(e) => {
             e.stopPropagation()
             onRemove()
           }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-surface-2) hover:text-(--text-primary) transition-colors flex-shrink-0 cursor-pointer"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-surface-2) hover:text-(--text-primary) transition-colors flex-shrink-0 cursor-pointer"
           aria-label={t('Remove {{name}} from search history', { name: displayName })}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
+      ) : (
+        <ChevronRight
+          className="w-4 h-4 text-(--text-faint) flex-shrink-0 transition-colors group-hover:text-(--brand-yellow)"
+          aria-hidden="true"
+        />
       )}
     </div>
   )

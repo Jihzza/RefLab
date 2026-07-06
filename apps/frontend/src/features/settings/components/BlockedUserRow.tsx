@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
 
 interface BlockedUserRowProps {
   username: string
@@ -48,18 +49,17 @@ export default function BlockedUserRow({
       </div>
 
       {/* Unblock button */}
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onUnblock}
+        loading={loading}
         disabled={loading}
-        className="text-xs font-medium px-3 py-1.5 rounded-(--radius-button)
-          border border-(--border-subtle) text-(--text-secondary)
-          hover:bg-(--bg-hover) transition-colors
-          disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label={`${t('Unblock')} ${username}`}
+        className="shrink-0"
       >
         {loading ? t('Unblocking...') : t('Unblock')}
-      </button>
+      </Button>
     </div>
   )
 }

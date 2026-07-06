@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 
 /**
  * DashboardSkeleton — Loading placeholder that mirrors the dashboard layout.
- * Shows animated pulse blocks for each section while data loads.
+ * Uses the shimmer `skeleton` utility on console-shaped panels while data loads.
  */
 export default function DashboardSkeleton() {
   const { t } = useTranslation()
@@ -11,36 +11,40 @@ export default function DashboardSkeleton() {
     <div className="space-y-6" aria-busy="true" aria-label={t('Loading dashboard')}>
       {/* Performance section */}
       <div className="space-y-4">
-        <div className="h-5 w-32 bg-(--bg-surface-2) rounded animate-pulse" />
-        {/* Overall Accuracy */}
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-32 animate-pulse" />
-        {/* Topic Accuracy */}
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-44 animate-pulse" />
+        <div className="skeleton h-3 w-28 rounded" />
+        {/* Hero accuracy */}
+        <div className="skeleton rounded-(--radius-card) h-40" />
+        {/* Topic accuracy */}
+        <div className="skeleton rounded-(--radius-card) h-44" />
         {/* Match Sim + Pass Rate */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="skeleton rounded-(--radius-card) h-32" />
+          <div className="skeleton rounded-(--radius-card) h-32" />
         </div>
       </div>
 
       {/* Progress section */}
       <div className="space-y-4">
-        <div className="h-5 w-24 bg-(--bg-surface-2) rounded animate-pulse" />
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
+        <div className="skeleton h-3 w-24 rounded" />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="skeleton rounded-(--radius-card) h-28" />
+          <div className="skeleton rounded-(--radius-card) h-28" />
+          <div className="skeleton rounded-(--radius-card) h-28" />
+          <div className="skeleton rounded-(--radius-card) h-28" />
+          <div className="skeleton rounded-(--radius-card) h-28" />
+          <div className="skeleton rounded-(--radius-card) h-28" />
         </div>
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
+        <div className="skeleton rounded-(--radius-button) h-12" />
       </div>
 
       {/* Habits section */}
       <div className="space-y-4">
-        <div className="h-5 w-20 bg-(--bg-surface-2) rounded animate-pulse" />
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-40 animate-pulse" />
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
+        <div className="skeleton h-3 w-20 rounded" />
+        <div className="skeleton rounded-(--radius-card) h-48" />
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="skeleton rounded-(--radius-card) h-24" />
+          <div className="skeleton rounded-(--radius-card) h-24" />
+          <div className="skeleton rounded-(--radius-card) h-24" />
         </div>
       </div>
     </div>

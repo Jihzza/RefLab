@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, Sparkles } from 'lucide-react'
+import Button from '@/components/ui/Button'
 import { useBilling } from '@/features/billing/components/useBilling'
 import { createCheckoutSession } from '@/features/billing/api/billingApi'
 import type { PlanId } from '@/features/billing/types'
@@ -52,6 +53,8 @@ const PLANS: PlanConfig[] = [
   },
 ]
 
+type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger'
+
 interface PlansSectionProps {
   onChangePlan: (targetPlan: 'pro' | 'plus') => void
 }
@@ -81,7 +84,15 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
   }
 
   /** Get the button config for each plan card */
-  const getButtonConfig = (plan: PlanConfig) => {
+  const getButtonConfig = (
+    plan: PlanConfig,
+  ): {
+    label: string
+    disabled: boolean
+    onClick: () => void
+    variant: Variant
+    loading?: boolean
+  } => {
     const isCurrentPlan = currentPlan === plan.id
 
     // Free plan card
@@ -90,7 +101,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
         label: isCurrentPlan ? t('Current Plan') : t('Free Forever'),
         disabled: true,
         onClick: () => {},
-        className: 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed',
+        variant: 'secondary',
       }
     }
 
@@ -100,7 +111,7 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
         label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
         disabled: true,
         onClick: () => {},
-        className: 'bg-(--brand-yellow)/20 text-(--brand-yellow) cursor-not-allowed',
+        variant: 'outline',
       }
     }
 
@@ -109,10 +120,9 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
       return {
         label: loadingPlan === plan.id ? t('Redirecting...') : t('Subscribe'),
         disabled: billingLoading || loadingPlan !== null,
+        loading: loadingPlan === plan.id,
         onClick: () => handleSubscribe(plan.id as Exclude<PlanId, 'free'>),
-        className: plan.isHighlighted
-          ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-          : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
+        variant: plan.isHighlighted ? 'primary' : 'secondary',
       }
     }
 
@@ -121,76 +131,112 @@ export default function PlansSection({ onChangePlan }: PlansSectionProps) {
       label: isCancelPending ? t('Resubscribe Required') : t('Switch to {{plan}}', { plan: plan.name }),
       disabled: isCancelPending || billingLoading,
       onClick: () => onChangePlan(plan.id as 'pro' | 'plus'),
-      className: plan.isHighlighted
-        ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-        : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
+      variant: plan.isHighlighted ? 'primary' : 'secondary',
     }
   }
 
   return (
-    <section className="mb-6" aria-label={t('Choose Your Plan')}>
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t('Choose Your Plan')}</h2>
-      <p className="text-sm text-(--text-muted) mb-4">
-        {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
-      </p>
+    <section className="mb-8" aria-label={t('Choose Your Plan')}>
+      <div className="mb-5">
+        <span className="eyebrow">{t('Membership')}</span>
+        <h2 className="text-lg font-bold text-(--text-primary) mt-1">{t('Choose Your Plan')}</h2>
+        <p className="text-sm text-(--text-muted) mt-1">
+          {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
+        </p>
+      </div>
 
       {error && (
         <div
-          className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-4 py-3 rounded-lg mb-4 text-center"
+          className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-4 py-3 rounded-(--radius-button) mb-4 text-center"
           role="alert"
         >
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:items-stretch">
         {PLANS.map((plan) => {
           const btn = getButtonConfig(plan)
+          const isPro = plan.isHighlighted
 
           return (
             <div
               key={plan.id}
-              className={`relative rounded-(--radius-card) p-5 flex flex-col ${
-                plan.isHighlighted
-                  ? 'border-2 border-(--brand-yellow) bg-(--bg-surface)'
-                  : 'border border-(--border-subtle) bg-(--bg-surface)'
+              className={`relative flex flex-col rounded-(--radius-card) p-5 transition-transform duration-200 ${
+                isPro
+                  ? 'card-console glow-brand border border-(--brand-yellow)/40 md:-translate-y-2'
+                  : 'card-console'
               }`}
             >
+              {/* Diagonal referee-flag accent strip for the recommended plan */}
+              {isPro && (
+                <span
+                  className="flag-accent absolute inset-x-0 top-0 h-1 rounded-t-(--radius-card)"
+                  aria-hidden="true"
+                />
+              )}
+
               {/* Recommended badge */}
-              {plan.isHighlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-(--brand-yellow) text-(--bg-primary) text-xs font-bold px-3 py-1 rounded-full">
+              {isPro && (
+                <div
+                  className="numeral absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 text-(--bg-primary) text-[11px] font-bold px-3 py-1 rounded-(--radius-pill) shadow-[0_6px_16px_-6px_rgba(246,194,28,0.7)]"
+                  style={{ backgroundImage: 'var(--grad-brand)' }}
+                >
+                  <Sparkles className="w-3 h-3" aria-hidden="true" />
                   {t('Recommended')}
                 </div>
               )}
 
-              <h3 className="text-lg font-bold text-(--text-primary) mb-1">{t(plan.name)}</h3>
+              <h3
+                className={`text-base font-bold mb-2 ${
+                  isPro ? 'text-gradient-brand' : 'text-(--text-primary)'
+                }`}
+              >
+                {t(plan.name)}
+              </h3>
 
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-(--text-primary)">{plan.price}</span>
+              {/* Price */}
+              <div className="mb-5 flex items-baseline gap-1">
+                <span className="numeral text-3xl font-extrabold text-(--text-primary)">
+                  {plan.price}
+                </span>
                 {plan.period && (
-                  <span className="text-sm text-(--text-muted) ml-1">{plan.period}</span>
+                  <span className="text-sm text-(--text-muted)">{plan.period}</span>
                 )}
               </div>
 
               {/* Benefits list */}
-              <ul className="space-y-2 mb-5 grow" aria-label={`${plan.name} plan benefits`}>
+              <ul className="space-y-2.5 mb-6 grow" aria-label={`${plan.name} plan benefits`}>
                 {plan.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-sm text-(--text-secondary)">
-                    <Check className="w-4 h-4 text-(--success) shrink-0 mt-0.5" aria-hidden="true" />
+                  <li key={benefit} className="flex items-start gap-2.5 text-sm text-(--text-secondary)">
+                    <span
+                      className={`mt-0.5 flex-shrink-0 flex items-center justify-center w-4 h-4 rounded-full ${
+                        isPro ? 'bg-(--brand-yellow)/20' : 'bg-(--success)/15'
+                      }`}
+                      aria-hidden="true"
+                    >
+                      <Check
+                        className={`w-3 h-3 ${isPro ? 'text-(--brand-yellow)' : 'text-(--success)'}`}
+                        strokeWidth={3}
+                      />
+                    </span>
                     {t(benefit)}
                   </li>
                 ))}
               </ul>
 
               {/* Action button */}
-              <button
-                onClick={btn.onClick}
+              <Button
+                variant={btn.variant}
+                size="md"
+                fullWidth
+                loading={btn.loading}
                 disabled={btn.disabled}
+                onClick={btn.onClick}
                 aria-label={`${btn.label} - ${plan.name} plan`}
-                className={`w-full py-2.5 rounded-(--radius-button) text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${btn.className}`}
               >
                 {btn.label}
-              </button>
+              </Button>
             </div>
           )
         })}

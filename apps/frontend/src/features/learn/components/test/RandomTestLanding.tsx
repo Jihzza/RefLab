@@ -41,10 +41,12 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
   }, [fetchKPIs])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Header */}
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-(--text-primary) mb-2">
+      <div className="card-console field-lines relative overflow-hidden p-6 text-center">
+        <span className="flag-accent absolute inset-x-0 top-0 h-1" aria-hidden="true" />
+        <p className="eyebrow mb-2">{t('Assessment')}</p>
+        <h2 className="text-display-sm text-(--text-primary) mb-2">
           {t('Referee Knowledge Test')}
         </h2>
         <p className="text-sm text-(--text-secondary)">
@@ -54,11 +56,12 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
 
       {/* Error banner */}
       {error && !loading && (
-        <div className="text-center p-4 bg-(--error)/10 border border-(--error)/30 rounded-xl">
+        <div className="text-center p-4 bg-(--error)/10 border border-(--error)/30 rounded-(--radius-card)">
           <p className="text-(--error) text-sm mb-3">{error}</p>
           <button
             onClick={() => void fetchKPIs()}
-            className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+            className="px-4 py-2 text-sm font-bold text-(--bg-primary) rounded-(--radius-button) transition-[filter] hover:brightness-105"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
           >
             {t('Try Again')}
           </button>
@@ -96,7 +99,8 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
       {/* Start Test Button */}
       <button
         onClick={onStartTest}
-        className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md"
+        className="glow-brand w-full py-4 text-(--bg-primary) rounded-(--radius-card) font-bold text-lg flex items-center justify-center gap-2 transition-[filter,transform] duration-(--dur-fast) hover:brightness-105 active:scale-[0.99]"
+        style={{ backgroundImage: 'var(--grad-brand)' }}
       >
         <PlayCircle size={24} />
         {t('Start Test')}
@@ -105,7 +109,7 @@ export default function RandomTestLanding({ onStartTest, onViewHistory }: Random
       {/* View History Link */}
       <button
         onClick={onViewHistory}
-        className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
+        className="w-full py-3 card-console text-(--text-primary) font-semibold flex items-center justify-center gap-2 transition-colors hover:border-(--border-strong)"
       >
         <History size={18} />
         {t('View Test History')}
@@ -131,14 +135,14 @@ function KPICard({
   const isEmpty = value === '—'
 
   return (
-    <div className="p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-      <div className="flex items-center gap-2 mb-2 text-(--text-secondary)">
+    <div className="card-console p-4 transition-colors hover:border-(--border-strong)">
+      <div className="flex items-center gap-2 mb-2 text-(--brand-yellow)">
         {icon}
-        <span className="text-xs font-medium">{label}</span>
+        <span className="eyebrow !text-(--text-muted)">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-(--text-primary)">
+      <div className="numeral text-2xl font-extrabold text-(--text-primary)">
         {isEmpty ? (
-          <span className="text-sm font-normal text-(--text-tertiary)">{emptyText}</span>
+          <span className="text-sm font-normal text-(--text-faint)">{emptyText}</span>
         ) : (
           value
         )}

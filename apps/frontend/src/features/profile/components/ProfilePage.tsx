@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MoreVertical, Pencil, ShieldCheck } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
+import Button from '@/components/ui/Button'
 import NavigationBar from '@/features/social/components/NavigationBar'
 import PostBox from '@/features/social/components/PostBox'
 import { usePostActions } from '@/features/social/hooks/usePostActions'
@@ -84,6 +86,17 @@ export default function ProfilePage() {
     'user'
   const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
   const initials = displayName.slice(0, 2).toUpperCase()
+
+  const roleLabel =
+    profile?.role === 'admin'
+      ? t('Admin')
+      : profile?.role === 'moderator'
+        ? t('Moderator')
+        : t('Referee')
+  const memberSince = profile?.created_at
+    ? new Date(profile.created_at).getFullYear().toString()
+    : '—'
+  const postCountLabel = hasMore ? `${posts.length}+` : `${posts.length}`
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -171,75 +184,119 @@ export default function ProfilePage() {
   return (
     <div className="flex flex-col h-full">
       <section className="px-4 pt-4 pb-3">
-        <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 relative">
-          <div className="flex items-center gap-3">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={displayName}
-                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                <span className="text-base font-semibold text-(--bg-primary)">
-                  {initials}
-                </span>
-              </div>
-            )}
-
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold text-(--text-primary) truncate">
-                {displayName}
-              </h1>
-              <p className="text-sm text-(--text-muted) truncate">@{username}</p>
-            </div>
+        <div className="card-console relative overflow-hidden animate-fade-up">
+          {/* Banner: field-lines motif over a soft brand gradient */}
+          <div className="relative h-24 field-lines bg-[radial-gradient(120%_140%_at_0%_0%,rgba(246,194,28,0.16),transparent_55%),radial-gradient(120%_140%_at_100%_0%,rgba(77,163,255,0.12),transparent_55%)]">
+            <span className="absolute inset-x-0 top-0 h-1 flag-accent" aria-hidden="true" />
 
             <button
               ref={menuButtonRef}
               type="button"
-              className="w-9 h-9 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors flex items-center justify-center"
+              className="absolute right-3 top-3 w-9 h-9 rounded-full border border-(--border-subtle) glass text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors flex items-center justify-center"
               aria-label={t('Profile actions')}
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen(prev => !prev)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 12.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 18.75a.75.75 0 100-1.5.75.75 0 000 1.5z" />
-              </svg>
+              <MoreVertical className="w-5 h-5" aria-hidden="true" />
             </button>
+
+            {isMenuOpen && (
+              <div
+                ref={menuRef}
+                role="menu"
+                aria-label={t('Profile menu')}
+                className="absolute right-3 top-14 z-20 min-w-44 card-console shadow-[var(--shadow-pop)] py-1"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    navigate('/app/profile/edit')
+                  }}
+                >
+                  {t('Edit Profile')}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    navigate('/app/settings')
+                  }}
+                >
+                  {t('Settings')}
+                </button>
+              </div>
+            )}
           </div>
 
-          {isMenuOpen && (
-            <div
-              ref={menuRef}
-              role="menu"
-              aria-label={t('Profile menu')}
-              className="absolute right-4 top-14 z-20 min-w-44 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl py-1"
-            >
-              <button
-                type="button"
-                role="menuitem"
-                className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  navigate('/app/profile/edit')
-                }}
+          {/* Identity: avatar overlaps the banner */}
+          <div className="px-4 pb-4">
+            <div className="flex items-end gap-3 -mt-10">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-20 h-20 rounded-full object-cover flex-shrink-0 border-4 border-(--bg-surface) shadow-[var(--shadow-soft)]"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 border-4 border-(--bg-surface) shadow-[var(--shadow-soft)]" style={{ backgroundImage: 'var(--grad-brand)' }}>
+                  <span className="text-xl font-black text-(--bg-primary)">
+                    {initials}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex-1 min-w-0 pb-1">
+                <h1 className="text-lg font-bold text-(--text-primary) truncate leading-tight">
+                  {displayName}
+                </h1>
+                <p className="text-sm text-(--text-muted) truncate">@{username}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-(--radius-pill) border border-(--brand-yellow)/30 bg-(--brand-yellow)/10 px-2.5 py-1 text-xs font-semibold text-(--brand-yellow)">
+                <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
+                {roleLabel}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<Pencil className="w-4 h-4" aria-hidden="true" />}
+                className="ml-auto"
+                onClick={() => navigate('/app/profile/edit')}
               >
                 {t('Edit Profile')}
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  navigate('/app/settings')
-                }}
-              >
-                {t('Settings')}
-              </button>
+              </Button>
             </div>
-          )}
+
+            {/* Stat strip */}
+            <div className="mt-4 grid grid-cols-3 divide-x divide-(--border-subtle) rounded-(--radius-input) border border-(--border-subtle) bg-(--bg-surface-2)/50">
+              <div className="px-3 py-2.5 text-center">
+                <p className="numeral text-xl font-black text-(--text-primary) leading-none">
+                  {postCountLabel}
+                </p>
+                <p className="eyebrow mt-1">{t('Posts')}</p>
+              </div>
+              <div className="px-3 py-2.5 text-center">
+                <p className="numeral text-xl font-black text-(--text-primary) leading-none">
+                  {memberSince}
+                </p>
+                <p className="eyebrow mt-1">{t('Since')}</p>
+              </div>
+              <div className="px-3 py-2.5 text-center">
+                <p className="text-sm font-bold text-(--text-primary) leading-none pt-1 truncate">
+                  {roleLabel}
+                </p>
+                <p className="eyebrow mt-1.5">{t('Role')}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -286,12 +343,9 @@ export default function ProfilePage() {
             <p className="text-(--text-muted) text-sm mb-3">
               {t('Something went wrong loading your posts.')}
             </p>
-            <button
-              onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            >
+            <Button variant="primary" size="sm" onClick={refresh}>
               {t('Try Again')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -325,13 +379,13 @@ export default function ProfilePage() {
         )}
 
         {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
+          <div className="card-console field-lines text-center py-14 px-6 animate-fade-in">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9A2.25 2.25 0 0118.75 7.5v9a2.25 2.25 0 01-2.25 2.25h-9A2.25 2.25 0 015.25 16.5v-9z" />
               </svg>
             </div>
-            <h2 className="text-base font-medium text-(--text-primary) mb-1">
+            <h2 className="text-base font-semibold text-(--text-primary) mb-1">
               {t('No posts yet')}
             </h2>
             <p className="text-sm text-(--text-muted)">

@@ -25,8 +25,11 @@ export default function LearnTabs({ activeTab, onTabChange }: LearnTabsProps) {
   const { t } = useTranslation()
 
   return (
-    <div className="border-b border-(--border-subtle)">
-      <nav className="flex space-x-8 px-6" aria-label={t('Learn navigation')}>
+    <div className="px-6 pt-2">
+      <nav
+        className="glass flex gap-1 overflow-x-auto no-scrollbar rounded-(--radius-pill) border border-(--border-subtle) p-1"
+        aria-label={t('Learn navigation')}
+      >
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id
 
@@ -35,13 +38,14 @@ export default function LearnTabs({ activeTab, onTabChange }: LearnTabsProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`
-                py-4 px-1 text-sm font-medium border-b-2 transition-colors
+                shrink-0 rounded-(--radius-pill) px-4 py-2 text-sm font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-(--dur-base)
                 ${
                   isActive
-                    ? 'border-(--brand-yellow) text-(--brand-yellow)'
-                    : 'border-transparent text-(--text-muted) hover:text-(--text-secondary)'
+                    ? 'text-(--bg-primary) shadow-[0_6px_18px_-8px_rgba(246,194,28,0.7)]'
+                    : 'text-(--text-muted) hover:text-(--text-primary)'
                 }
               `}
+              style={isActive ? { backgroundImage: 'var(--grad-brand)' } : undefined}
               aria-current={isActive ? 'page' : undefined}
             >
               {t(tab.label)}

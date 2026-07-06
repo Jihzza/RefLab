@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import { Link2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 interface ShareDialogProps {
@@ -95,24 +96,28 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
+        className="fixed inset-0 z-40 bg-(--bg-base)/70 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
+        aria-hidden="true"
       />
 
       {/* Dialog */}
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-sm bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-dialog-title"
+          className="card-console w-full max-w-sm shadow-[var(--shadow-pop)] pointer-events-auto animate-scale-in"
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
-            <h2 className="text-lg font-semibold text-(--text-primary)">{t('Share Post')}</h2>
+            <h2 id="share-dialog-title" className="text-lg font-bold text-(--text-primary)">{t('Share Post')}</h2>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
               aria-label={t('Close')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -123,7 +128,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
                 <button
                   key={option.name}
                   onClick={() => handleShareOption(option)}
-                  className="flex flex-col items-center gap-1.5 group"
+                  className="flex flex-col items-center gap-1.5 group rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
                 >
                   <div
                     className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-transform group-hover:scale-110"
@@ -131,7 +136,7 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
                   >
                     {option.icon}
                   </div>
-                  <span className="text-[10px] text-(--text-muted) group-hover:text-(--text-primary) transition-colors">
+                  <span className="text-[10px] font-medium text-(--text-muted) group-hover:text-(--text-primary) transition-colors">
                     {option.name}
                   </span>
                 </button>
@@ -143,15 +148,13 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
           <div className="px-5 py-4 border-t border-(--border-subtle)">
             <button
               onClick={handleCopyLink}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-(--bg-surface-2) rounded-(--radius-button) border border-(--border-subtle) hover:bg-(--bg-hover) transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 surface-2 hover:bg-(--bg-hover) hover:border-(--border-strong) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-(--text-muted) flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-              </svg>
+              <Link2 className="h-5 w-5 text-(--text-muted) flex-shrink-0" aria-hidden="true" />
               <span className="flex-1 text-sm text-(--text-secondary) text-left truncate">
                 {shareUrl}
               </span>
-              <span className="text-sm font-medium text-(--brand-yellow) flex-shrink-0">
+              <span className="text-sm font-semibold text-(--brand-yellow) flex-shrink-0">
                 {copied ? t('Copied!') : t('Copy')}
               </span>
             </button>

@@ -46,10 +46,12 @@ export default function QuestionsLanding({
   }, [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Header */}
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-(--text-primary) mb-2">
+      <div className="card-console field-lines relative overflow-hidden p-6 text-center">
+        <span className="flag-accent absolute inset-x-0 top-0 h-1" aria-hidden="true" />
+        <p className="eyebrow mb-2">{t('Practice')}</p>
+        <h2 className="text-display-sm text-(--text-primary) mb-2">
           {t('Practice Questions')}
         </h2>
         <p className="text-sm text-(--text-secondary)">
@@ -89,27 +91,30 @@ export default function QuestionsLanding({
       <div className="space-y-3">
         <button
           onClick={onStartQuick}
-          className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md"
+          className="glow-brand w-full py-4 text-(--bg-primary) rounded-(--radius-card) font-bold text-lg flex items-center justify-center gap-2 transition-[filter,transform] duration-(--dur-fast) hover:brightness-105 active:scale-[0.99]"
+          style={{ backgroundImage: 'var(--grad-brand)' }}
         >
           <Zap size={22} />
           {t('Quick Questions')}
         </button>
 
-        <button
-          onClick={onStartByLaw}
-          className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
-        >
-          <Scale size={18} />
-          {t('By Law')}
-        </button>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={onStartByLaw}
+            className="w-full py-3 card-console text-(--text-primary) font-semibold flex items-center justify-center gap-2 transition-colors hover:border-(--border-strong)"
+          >
+            <Scale size={18} className="text-(--brand-yellow)" />
+            {t('By Law')}
+          </button>
 
-        <button
-          onClick={onStartByArea}
-          className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
-        >
-          <MapPin size={18} />
-          {t('By Area')}
-        </button>
+          <button
+            onClick={onStartByArea}
+            className="w-full py-3 card-console text-(--text-primary) font-semibold flex items-center justify-center gap-2 transition-colors hover:border-(--border-strong)"
+          >
+            <MapPin size={18} className="text-(--brand-yellow)" />
+            {t('By Area')}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -132,14 +137,14 @@ function KPICard({
   const isEmpty = value === '—'
 
   return (
-    <div className="p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-      <div className="flex items-center gap-2 mb-2 text-(--text-secondary)">
+    <div className="card-console p-4 transition-colors hover:border-(--border-strong)">
+      <div className="flex items-center gap-2 mb-2 text-(--brand-yellow)">
         {icon}
-        <span className="text-xs font-medium">{label}</span>
+        <span className="eyebrow !text-(--text-muted)">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-(--text-primary)">
+      <div className="numeral text-2xl font-extrabold text-(--text-primary)">
         {isEmpty ? (
-          <span className="text-sm font-normal text-(--text-tertiary)">{emptyText}</span>
+          <span className="text-sm font-normal text-(--text-faint)">{emptyText}</span>
         ) : (
           value
         )}

@@ -63,7 +63,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({
       <button
         type="button"
         onClick={openAuthorProfile}
-        className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1"
+        className="group flex items-center gap-3 flex-1 min-w-0 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
         aria-label={`Open ${displayName} profile`}
       >
         {/* Avatar */}
@@ -71,11 +71,14 @@ const PostHeader: React.FC<PostHeaderProps> = ({
           <img
             src={author.photo_url}
             alt={displayName}
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-1 ring-(--border-subtle)"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-(--bg-primary)">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ring-1 ring-white/10"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
+          >
+            <span className="text-sm font-bold text-(--bg-primary)">
               {initials}
             </span>
           </div>
@@ -84,16 +87,16 @@ const PostHeader: React.FC<PostHeaderProps> = ({
         {/* Name + username + timestamp */}
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-medium text-(--text-primary) text-sm truncate">
+            <span className="font-semibold text-(--text-primary) text-sm truncate group-hover:text-(--brand-yellow) transition-colors">
               {displayName}
             </span>
             <span className="text-(--text-muted) text-xs truncate">
               @{author.username}
             </span>
           </div>
-          <span className="text-(--text-muted) text-xs">
-            {formatRelativeTime(createdAt)}
-          </span>
+          <div className="flex items-center gap-1.5 text-(--text-faint) text-xs">
+            <span className="numeral">{formatRelativeTime(createdAt)}</span>
+          </div>
         </div>
       </button>
 

@@ -18,26 +18,28 @@ import BlockConfirmDialog from './BlockConfirmDialog'
 import PostBox from './PostBox'
 import PublicProfileMenu from './PublicProfileMenu'
 import ReportDialog from './ReportDialog'
+import Button from '@/components/ui/Button'
+import { UserRoundX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 function PostSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <div className="card-console p-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
+        <div className="w-10 h-10 rounded-full skeleton" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+          <div className="h-3 w-24 skeleton rounded" />
+          <div className="h-2 w-16 skeleton rounded" />
         </div>
       </div>
       <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+        <div className="h-3 skeleton rounded w-full" />
+        <div className="h-3 skeleton rounded w-3/4" />
       </div>
-      <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+      <div className="mt-4 flex gap-8">
+        <div className="h-3 w-8 skeleton rounded" />
+        <div className="h-3 w-8 skeleton rounded" />
+        <div className="h-3 w-8 skeleton rounded" />
       </div>
     </div>
   )
@@ -363,37 +365,36 @@ export default function PublicProfilePage() {
         onScroll={handleScroll}
       >
         {isProfileLoading && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+          <div className="card-console p-4">
             <div className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-(--bg-surface-2)" />
+              <div className="w-16 h-16 rounded-full skeleton" />
               <div className="space-y-2 flex-1">
-                <div className="h-4 w-40 bg-(--bg-surface-2) rounded" />
-                <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
+                <div className="h-4 w-40 skeleton rounded" />
+                <div className="h-3 w-24 skeleton rounded" />
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="h-10 rounded-(--radius-button) bg-(--bg-surface-2)" />
-              <div className="h-10 rounded-(--radius-button) bg-(--bg-surface-2)" />
+              <div className="h-10 rounded-(--radius-button) skeleton" />
+              <div className="h-10 rounded-(--radius-button) skeleton" />
             </div>
           </div>
         )}
 
         {!isProfileLoading && profileError && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--error)/30 p-6">
-            <p className="text-sm text-(--error) mb-3">{profileError}</p>
-            <button
-              type="button"
-              onClick={() => void loadProfileView()}
-              className="h-9 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors"
-            >
+          <div className="card-console border-(--error)/30 p-6 text-center">
+            <p className="text-sm text-(--error) mb-4">{profileError}</p>
+            <Button onClick={() => void loadProfileView()}>
               {t('Try Again')}
-            </button>
+            </Button>
           </div>
         )}
 
         {!isProfileLoading && !profileError && !profileView && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
-            <h1 className="text-lg font-semibold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
+          <div className="card-console p-8 text-center">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-(--bg-surface-2) flex items-center justify-center">
+              <UserRoundX className="h-7 w-7 text-(--text-muted)" aria-hidden="true" />
+            </div>
+            <h1 className="text-lg font-bold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
             <p className="text-sm text-(--text-muted)">
               {t('We could not find a public profile for @{{username}}.', { username })}
             </p>
@@ -402,25 +403,28 @@ export default function PublicProfilePage() {
 
         {!isProfileLoading && !profileError && profileView && (
           <>
-            <section className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4">
+            <section className="card-console p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
                   {profileView.photo_url ? (
                     <img
                       src={profileView.photo_url}
                       alt={displayName}
-                      className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+                      className="w-16 h-16 rounded-full object-cover flex-shrink-0 ring-2 ring-(--border-subtle)"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-semibold text-(--bg-primary)">
+                    <div
+                      className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-white/10"
+                      style={{ backgroundImage: 'var(--grad-brand)' }}
+                    >
+                      <span className="text-xl font-bold text-(--bg-primary)">
                         {initials}
                       </span>
                     </div>
                   )}
 
                   <div className="min-w-0">
-                    <h1 className="text-lg font-semibold text-(--text-primary) truncate">
+                    <h1 className="text-xl font-bold text-(--text-primary) truncate">
                       {displayName}
                     </h1>
                     <p className="text-sm text-(--text-muted) truncate">@{profileView.username}</p>
@@ -453,39 +457,37 @@ export default function PublicProfilePage() {
               ) : (
                 <>
                   <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
+                    <Button
+                      variant={profileView.is_following ? 'secondary' : 'primary'}
+                      fullWidth
                       onClick={() => void handleFollowToggle()}
+                      loading={isFollowUpdating}
                       disabled={
                         isFollowUpdating ||
                         isBlockUpdating ||
                         profileView.is_blocked_by_viewer
                       }
-                      className={`h-10 rounded-(--radius-button) border border-(--border-subtle) text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                        profileView.is_following
-                          ? 'text-(--text-secondary) hover:bg-(--bg-hover)'
-                          : 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-                      }`}
                       aria-label={
                         profileView.is_following ? t('Unfollow user') : t('Follow user')
                       }
                     >
                       {profileView.is_following ? t('Unfollow') : t('Follow')}
-                    </button>
+                    </Button>
 
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      fullWidth
                       onClick={() => void handleStartConversation()}
+                      loading={isStartingConversation}
                       disabled={
                         isStartingConversation ||
                         isBlockUpdating ||
                         profileView.is_blocked_by_viewer
                       }
-                      className="h-10 rounded-(--radius-button) border border-(--border-subtle) text-sm font-semibold text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       aria-label={t('Send message')}
                     >
                       {isStartingConversation ? t('Opening...') : t('Message')}
-                    </button>
+                    </Button>
                   </div>
 
                   {profileView.is_blocked_by_viewer && (
@@ -498,7 +500,7 @@ export default function PublicProfilePage() {
             </section>
 
             {actionError && (
-              <div className="bg-(--error)/10 border border-(--error)/20 rounded-(--radius-card) p-3 text-sm text-(--error)">
+              <div className="bg-(--error)/10 border border-(--error)/25 rounded-(--radius-card) p-3 text-sm text-(--error)" role="alert">
                 {actionError}
               </div>
             )}
@@ -518,17 +520,13 @@ export default function PublicProfilePage() {
             )}
 
             {canShowFeed && error && !isLoading && (
-              <div className="text-center py-12">
-                <p className="text-(--text-muted) text-sm mb-3">
+              <div className="card-console p-8 text-center">
+                <p className="text-(--text-secondary) text-sm mb-4">
                   {t('Something went wrong loading this profile feed.')}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => void refresh()}
-                  className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-                >
-                  Try Again
-                </button>
+                <Button onClick={() => void refresh()}>
+                  {t('Try Again')}
+                </Button>
               </div>
             )}
 
@@ -565,13 +563,13 @@ export default function PublicProfilePage() {
             )}
 
             {canShowFeed && !isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="card-console px-6 py-14 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-(--bg-surface-2) flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
                   </svg>
                 </div>
-                <h3 className="text-base font-medium text-(--text-primary) mb-1">
+                <h3 className="text-base font-semibold text-(--text-primary) mb-1">
                   {t('No posts yet')}
                 </h3>
                 <p className="text-sm text-(--text-muted)">
@@ -605,7 +603,7 @@ export default function PublicProfilePage() {
       )}
 
       {toastMessage && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 glass border border-(--border-strong) rounded-(--radius-pill) shadow-[var(--shadow-pop)] text-sm font-medium text-(--text-primary) animate-fade-up">
           {toastMessage}
         </div>
       )}

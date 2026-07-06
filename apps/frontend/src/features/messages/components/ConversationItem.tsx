@@ -1,6 +1,8 @@
 import type { Conversation } from '../types'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useTranslation } from 'react-i18next'
+import { ImageIcon, Video, Mic } from 'lucide-react'
+import type { ReactNode } from 'react'
 
 interface ConversationItemProps {
   conversation: Conversation
@@ -50,6 +52,16 @@ function getLastMessagePreview(
   return preview
 }
 
+function mediaGlyph(conversation: Conversation): ReactNode {
+  const last = conversation.last_message
+  if (!last || last.content?.trim()) return null
+  const cls = 'h-3.5 w-3.5 flex-shrink-0'
+  if (last.media_type === 'image') return <ImageIcon className={cls} aria-hidden="true" />
+  if (last.media_type === 'video') return <Video className={cls} aria-hidden="true" />
+  if (last.media_type === 'audio') return <Mic className={cls} aria-hidden="true" />
+  return null
+}
+
 export default function ConversationItem({ conversation, onClick }: ConversationItemProps) {
   const { t } = useTranslation()
   const { user: authUser } = useAuth()
@@ -58,6 +70,8 @@ export default function ConversationItem({ conversation, onClick }: Conversation
   const initials = displayName.slice(0, 2).toUpperCase()
 
   const preview = getLastMessagePreview(conversation, authUser?.id, t)
+  const glyph = mediaGlyph(conversation)
+  const hasUnread = conversation.unread_count > 0
   const timestamp = formatRelativeTime(
     conversation.last_message?.created_at ?? conversation.updated_at,
     t('now'),
@@ -67,40 +81,56 @@ export default function ConversationItem({ conversation, onClick }: Conversation
     <button
       type="button"
       onClick={onClick}
-      className="w-full bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 flex items-center gap-3 hover:bg-(--bg-hover) transition-colors"
+      className="group card-console w-full p-3.5 flex items-center gap-3.5 text-left transition-[background-color,border-color,transform] duration-200 hover:bg-(--bg-hover) hover:border-(--border-strong) hover:-translate-y-0.5"
     >
       {/* Avatar */}
-      {otherUser.photo_url ? (
-        <img
-          src={otherUser.photo_url}
-          alt={displayName}
-          className="w-11 h-11 rounded-full object-cover flex-shrink-0"
-        />
-      ) : (
-        <div className="w-11 h-11 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-(--bg-primary)">
-            {initials}
-          </span>
-        </div>
-      )}
+      <div className="relative flex-shrink-0">
+        {otherUser.photo_url ? (
+          <img
+            src={otherUser.photo_url}
+            alt={displayName}
+            className="w-12 h-12 rounded-full object-cover ring-1 ring-(--border-subtle)"
+          />
+        ) : (
+          <div
+            className="w-12 h-12 rounded-full flex items-center justify-center ring-1 ring-(--border-strong)"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
+          >
+            <span className="text-sm font-bold text-(--bg-primary)">{initials}</span>
+          </div>
+        )}
+      </div>
 
       {/* Middle */}
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-(--text-primary) truncate">
+        <div
+          className={[
+            'text-sm truncate',
+            hasUnread ? 'font-bold text-(--text-primary)' : 'font-semibold text-(--text-primary)',
+          ].join(' ')}
+        >
           {displayName}
         </div>
-        <div className="text-xs text-(--text-muted) truncate">
-          {preview}
+        <div
+          className={[
+            'mt-0.5 flex items-center gap-1.5 text-xs truncate',
+            hasUnread ? 'text-(--text-secondary)' : 'text-(--text-muted)',
+          ].join(' ')}
+        >
+          {glyph}
+          <span className="truncate">{preview}</span>
         </div>
       </div>
 
       {/* Right */}
-      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className="text-[10px] text-(--text-muted)">{timestamp}</span>
-        {conversation.unread_count > 0 && (
-          <span className="min-w-5 h-5 px-1 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center">
+      <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+        <span className="numeral text-[11px] text-(--text-faint)">{timestamp}</span>
+        {hasUnread ? (
+          <span className="numeral min-w-5 h-5 px-1.5 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center shadow-[0_2px_10px_-2px_rgba(246,194,28,0.6)]">
             {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
           </span>
+        ) : (
+          <span className="h-5 w-5" aria-hidden="true" />
         )}
       </div>
     </button>

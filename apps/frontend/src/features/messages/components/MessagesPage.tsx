@@ -9,18 +9,20 @@ import ConversationItem from './ConversationItem'
 import UserSearchBar from './UserSearchBar'
 import UserSearchDropdown from './UserSearchDropdown'
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
+import { MessagesSquare, AlertTriangle } from 'lucide-react'
 
 function ConversationSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse flex items-center gap-3">
-      <div className="w-11 h-11 rounded-full bg-(--bg-surface-2)" />
+    <div className="card-console p-3.5 flex items-center gap-3.5">
+      <div className="w-12 h-12 rounded-full skeleton flex-shrink-0" />
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="h-3 w-28 bg-(--bg-surface-2) rounded" />
-        <div className="h-2 w-48 bg-(--bg-surface-2) rounded" />
+        <div className="h-3 w-28 rounded skeleton" />
+        <div className="h-2.5 w-48 rounded skeleton" />
       </div>
       <div className="space-y-2 flex flex-col items-end">
-        <div className="h-2 w-10 bg-(--bg-surface-2) rounded" />
-        <div className="h-5 w-5 bg-(--bg-surface-2) rounded-full" />
+        <div className="h-2.5 w-10 rounded skeleton" />
+        <div className="h-5 w-5 rounded-full skeleton" />
       </div>
     </div>
   )
@@ -72,7 +74,11 @@ export default function MessagesPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 pb-2">
+      <div className="glass sticky top-0 z-30 p-4 pb-3 border-b border-(--border-subtle)">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-5 w-1.5 rounded-full flag-accent" aria-hidden="true" />
+          <h1 className="text-lg font-bold text-(--text-primary)">{t('Messages')}</h1>
+        </div>
         <div className="relative">
           <UserSearchBar
             query={query}
@@ -92,15 +98,15 @@ export default function MessagesPage() {
         </div>
 
         {actionError && (
-          <div className="mt-3 p-3 bg-(--error)/10 border border-(--error)/20 rounded-lg text-sm text-(--error)">
+          <div className="mt-3 p-3 bg-(--error)/10 border border-(--error)/20 rounded-(--radius-input) text-sm text-(--error)">
             {actionError}
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 space-y-3 py-3 pb-20">
+      <div className="flex-1 overflow-y-auto px-4 space-y-2.5 py-3 pb-20">
         {isLoading && (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <ConversationSkeleton />
             <ConversationSkeleton />
             <ConversationSkeleton />
@@ -108,16 +114,16 @@ export default function MessagesPage() {
         )}
 
         {error && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">
+          <div className="card-console mt-4 flex flex-col items-center text-center px-6 py-12 animate-fade-up">
+            <div className="w-14 h-14 mb-4 rounded-full bg-(--error)/10 border border-(--error)/20 flex items-center justify-center">
+              <AlertTriangle className="h-7 w-7 text-(--error)" aria-hidden="true" />
+            </div>
+            <p className="text-(--text-secondary) text-sm mb-4">
               {t('Something went wrong loading your conversations.')}
             </p>
-            <button
-              onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            >
+            <Button variant="primary" size="sm" onClick={refresh}>
               {t('Try Again')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -132,27 +138,14 @@ export default function MessagesPage() {
           ))}
 
         {!isLoading && !error && conversations.length === 0 && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-8 w-8 text-(--text-muted)"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7.5 8.25h9m-9 3H12m-9 6l3.36-1.68c.32-.16.53-.49.53-.85V6.75A2.25 2.25 0 019.64 4.5h8.11A2.25 2.25 0 0120 6.75v6A2.25 2.25 0 0117.75 15H9.54c-.35 0-.69.08-1 .23L3 18.75z"
-                />
-              </svg>
+          <div className="flex flex-col items-center text-center py-16 animate-fade-up">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl surface-2 flex items-center justify-center">
+              <MessagesSquare className="h-8 w-8 text-(--brand-yellow)" aria-hidden="true" />
             </div>
-            <h3 className="text-base font-medium text-(--text-primary) mb-1">
+            <h3 className="text-base font-semibold text-(--text-primary) mb-1">
               {t('No conversations yet')}
             </h3>
-            <p className="text-sm text-(--text-muted)">
+            <p className="text-sm text-(--text-muted) max-w-xs">
               {t('Search for someone above to start a conversation.')}
             </p>
           </div>

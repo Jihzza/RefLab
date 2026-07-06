@@ -26,21 +26,36 @@ const BottomNavItem: React.FC<BottomNavItemProps> = ({ title, icon, to, badge })
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
+        `group relative flex h-full min-h-[44px] w-full flex-col items-center justify-center gap-1 transition-colors duration-200 ${
           isActive ? 'text-(--brand-yellow)' : 'text-(--text-muted) hover:text-(--text-secondary)'
         }`
       }
       aria-label={title}
     >
-      <div className="relative">
-        {icon}
-        {(badge ?? 0) > 0 && (
-          <span className="absolute -top-1 -right-3 min-w-5 h-5 px-1 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center">
-            {displayBadge}
-          </span>
-        )}
-      </div>
-      <span className="text-[10px] font-medium mt-1">{title}</span>
+      {({ isActive }) => (
+        <>
+          {/* Active flag-accent indicator pip along the top edge */}
+          <span
+            aria-hidden="true"
+            className={`flag-accent absolute top-0 h-0.5 w-8 rounded-b-full transition-opacity duration-200 ${
+              isActive ? 'opacity-100' : 'opacity-0'
+            }`}
+          />
+          <div className="relative">
+            <span
+              className={`block transition-transform duration-200 ${isActive ? 'scale-105' : 'group-active:scale-95'}`}
+            >
+              {icon}
+            </span>
+            {(badge ?? 0) > 0 && (
+              <span className="absolute -top-1 -right-3 flex h-5 min-w-5 items-center justify-center rounded-full bg-(--brand-yellow) px-1 text-[10px] font-bold text-(--bg-primary)">
+                {displayBadge}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold tracking-tight">{title}</span>
+        </>
+      )}
     </NavLink>
   );
 };
@@ -117,8 +132,8 @@ export const BottomNav: React.FC = () => {
   }, [user?.id, location.pathname]);
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full h-16 bg-(--bg-surface) border-t border-(--border-subtle) flex justify-between items-center z-50 pb-safe">
-      <div className="w-full h-full grid grid-cols-5">
+    <nav className="glass fixed bottom-0 left-0 z-50 flex h-16 w-full items-center justify-between border-t border-(--border-subtle) pb-safe">
+      <div className="grid h-full w-full grid-cols-5">
         <BottomNavItem
           title={t('Dashboard')}
           icon={<DashboardIcon />}

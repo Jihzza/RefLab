@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { FileText, ChevronRight } from 'lucide-react'
 import { getTests } from '../api/testsApi'
 import type { Test } from '../types'
 
@@ -41,10 +42,10 @@ export default function TestsTab() {
   if (loading) {
     return (
       <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-24 bg-(--bg-surface-2) rounded-(--radius-card)"></div>
-          <div className="h-24 bg-(--bg-surface-2) rounded-(--radius-card)"></div>
-          <div className="h-24 bg-(--bg-surface-2) rounded-(--radius-card)"></div>
+        <div className="space-y-3">
+          <div className="skeleton h-[88px] rounded-(--radius-card)"></div>
+          <div className="skeleton h-[88px] rounded-(--radius-card)"></div>
+          <div className="skeleton h-[88px] rounded-(--radius-card)"></div>
         </div>
       </div>
     )
@@ -54,8 +55,8 @@ export default function TestsTab() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-(--error)">{t('Error loading tests: {{error}}', { error })}</p>
+        <div className="card-console border-l-2 border-l-(--error) p-4">
+          <p className="text-(--error) font-medium">{t('Error loading tests: {{error}}', { error })}</p>
         </div>
       </div>
     )
@@ -65,7 +66,10 @@ export default function TestsTab() {
   if (tests.length === 0) {
     return (
       <div className="p-6">
-        <div className="text-center py-12">
+        <div className="card-console flex flex-col items-center py-14 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2)">
+            <FileText className="h-5 w-5 text-(--text-muted)" aria-hidden="true" />
+          </div>
           <p className="text-(--text-muted)">{t('No tests available yet.')}</p>
         </div>
       </div>
@@ -75,17 +79,23 @@ export default function TestsTab() {
   // Tests list
   return (
     <div className="p-6">
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {tests.map((test) => (
           <button
             key={test.id}
             onClick={() => navigate(`/app/learn/test/${test.slug}`)}
-            className="w-full text-left bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6 hover:border-(--info) hover:shadow-sm transition-all"
+            className="group card-console flex items-center gap-4 w-full text-left p-5 transition-colors hover:border-(--border-strong)"
           >
-            <h3 className="text-lg font-semibold text-(--text-primary)">{test.title}</h3>
-            <p className="mt-1 text-sm text-(--text-muted)">
-              {t('Click to start test')}
-            </p>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) text-(--brand-yellow) transition-colors group-hover:border-(--brand-yellow)/40">
+              <FileText className="h-5 w-5" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold text-(--text-primary)">{test.title}</h3>
+              <p className="mt-0.5 text-sm text-(--text-muted)">
+                {t('Click to start test')}
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-(--text-faint) transition-colors group-hover:text-(--brand-yellow)" aria-hidden="true" />
           </button>
         ))}
       </div>

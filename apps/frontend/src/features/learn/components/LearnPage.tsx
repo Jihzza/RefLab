@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FileText, GraduationCap, Loader2, Lock } from 'lucide-react'
+import { FileText, GraduationCap, Loader2, Lock, Download, ArrowLeft, Play, Pause, Volume2, VolumeX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useBilling } from '@/features/billing/components/useBilling'
@@ -18,6 +18,7 @@ import QuestionsLanding from './questions/QuestionsLanding'
 import QuestionsSetup from './questions/QuestionsSetup'
 import QuestionsSession from './questions/QuestionsSession'
 import QuestionsReview from './questions/QuestionsReview'
+import { CompletionVictory, xpForTest, xpForPracticeSession } from '@/features/gamification'
 
 /* ─── Helpers ─── */
 
@@ -52,35 +53,44 @@ function LearnNav({
   const { t } = useTranslation()
 
   return (
-    <nav className="border-b border-(--border-subtle) mb-6 -mx-4 px-4">
-      <div className="flex overflow-x-auto no-scrollbar py-3 gap-4 md:justify-center">
-        {tabLabels.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`shrink-0 px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === tab.key
-                ? 'border-(--text-primary) text-(--text-primary)'
-                : 'border-transparent text-(--text-muted) hover:text-(--text-secondary)'
-            }`}
-            aria-current={activeTab === tab.key ? 'page' : undefined}
-          >
-            {t(tab.label)}
-          </button>
-        ))}
-      </div>
-    </nav>
+    <div className="mb-6 pt-6">
+      <p className="eyebrow mb-2">{t('Training Console')}</p>
+      <nav
+        className="glass -mx-1 flex overflow-x-auto no-scrollbar gap-1 rounded-(--radius-pill) border border-(--border-subtle) p-1"
+        aria-label={t('Learn navigation')}
+      >
+        {tabLabels.map((tab) => {
+          const isActive = activeTab === tab.key
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative shrink-0 rounded-(--radius-pill) px-4 py-2 text-sm font-semibold whitespace-nowrap transition-[color,background-color,box-shadow] duration-(--dur-base) ${
+                isActive
+                  ? 'text-(--bg-primary) shadow-[0_6px_18px_-8px_rgba(246,194,28,0.7)]'
+                  : 'text-(--text-muted) hover:text-(--text-primary)'
+              }`}
+              style={isActive ? { backgroundImage: 'var(--grad-brand)' } : undefined}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              {t(tab.label)}
+            </button>
+          )
+        })}
+      </nav>
+    </div>
   )
 }
 
 /* ─── Test View (Random Test Mode) ─── */
 
-type TestViewState = 'landing' | 'test' | 'results' | 'history'
+type TestViewState = 'landing' | 'test' | 'victory' | 'results' | 'history'
 
 function TestView() {
   const { t, i18n } = useTranslation()
   const [view, setView] = useState<TestViewState>('landing')
   const [attemptId, setAttemptId] = useState<string>('')
+  const [score, setScore] = useState<{ correct: number; total: number }>({ correct: 0, total: 0 })
   const [history, setHistory] = useState<TestAttempt[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
 
@@ -112,7 +122,24 @@ function TestView() {
   if (view === 'test') {
     return (
       <RandomTestRunner
-        onComplete={(id) => { setAttemptId(id); setView('results') }}
+        onComplete={(id, correct, total) => {
+          setAttemptId(id)
+          setScore({ correct, total })
+          setView('victory')
+        }}
+      />
+    )
+  }
+
+  if (view === 'victory' && attemptId) {
+    return (
+      <CompletionVictory
+        correct={score.correct}
+        total={score.total}
+        xpEarned={xpForTest(score.correct, score.total)}
+        title={t('Test complete')}
+        onContinue={() => setView('results')}
+        continueLabel={t('View results')}
       />
     )
   }
@@ -129,15 +156,19 @@ function TestView() {
 
   if (view === 'history') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5 animate-fade-up">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setView('landing')}
-            className="text-sm text-(--text-muted) hover:text-(--text-primary)"
+            className="inline-flex items-center gap-1.5 rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-sm text-(--text-secondary) transition-colors hover:border-(--border-strong) hover:text-(--text-primary)"
           >
-            &larr; {t('Back')}
+            <ArrowLeft size={15} aria-hidden="true" />
+            {t('Back')}
           </button>
-          <h2 className="text-lg font-semibold text-(--text-primary)">{t('Test History')}</h2>
+          <div>
+            <p className="eyebrow">{t('Archive')}</p>
+            <h2 className="text-lg font-bold text-(--text-primary)">{t('Test History')}</h2>
+          </div>
         </div>
 
         {historyLoading ? (
@@ -145,11 +176,14 @@ function TestView() {
             <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="card-console flex flex-col items-center py-14 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2)">
+              <FileText className="h-5 w-5 text-(--text-muted)" aria-hidden="true" />
+            </div>
             <p className="text-(--text-muted) text-sm">{t('No completed tests yet.')}</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {history.map((entry) => {
               const pct = entry.score_percent ?? 0
               const isPassing = pct >= 80
@@ -163,16 +197,22 @@ function TestView() {
               return (
                 <div
                   key={entry.id}
-                  className="flex items-center justify-between p-4 bg-(--bg-surface) rounded-xl border border-(--border-subtle)"
+                  className="card-console flex items-center justify-between p-4 transition-colors hover:border-(--border-strong)"
                 >
-                  <div>
-                    <p className="text-sm text-(--text-primary) font-medium">{date}</p>
-                    <p className="text-xs text-(--text-muted) mt-0.5">
-                      {t('{{correct}}/{{total}} correct', { correct: entry.score_correct, total: entry.score_total })}
-                      {duration && ` · ${duration}`}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`h-9 w-1 rounded-full ${isPassing ? 'bg-(--success)' : 'bg-(--error)'}`}
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <p className="text-sm text-(--text-primary) font-semibold">{date}</p>
+                      <p className="text-xs text-(--text-muted) mt-0.5 numeral">
+                        {t('{{correct}}/{{total}} correct', { correct: entry.score_correct, total: entry.score_total })}
+                        {duration && ` · ${duration}`}
+                      </p>
+                    </div>
                   </div>
-                  <span className={`text-sm font-bold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}>
+                  <span className={`numeral text-xl font-extrabold ${isPassing ? 'text-(--success)' : 'text-(--error)'}`}>
                     {pct}%
                   </span>
                 </div>
@@ -189,7 +229,7 @@ function TestView() {
 
 /* ─── Questions View (session-based, with KPI dashboard and filtering) ─── */
 
-type QuestionsViewState = 'landing' | 'setup_by_law' | 'setup_by_area' | 'session' | 'review'
+type QuestionsViewState = 'landing' | 'setup_by_law' | 'setup_by_area' | 'session' | 'victory' | 'review'
 
 interface ActiveSession {
   sessionId: string
@@ -200,6 +240,7 @@ interface ActiveSession {
 }
 
 function QuestionsView() {
+  const { t } = useTranslation()
   const [view, setView] = useState<QuestionsViewState>('landing')
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null)
   const [lastResult, setLastResult] = useState<SessionResult | null>(null)
@@ -236,7 +277,7 @@ function QuestionsView() {
 
   const handleSessionEnd = (result: SessionResult) => {
     setLastResult(result)
-    setView('review')
+    setView('victory')
   }
 
   const handleRestart = () => {
@@ -279,6 +320,19 @@ function QuestionsView() {
         filterAreas={activeSession.filterAreas}
         startedAt={activeSession.startedAt}
         onEndSession={handleSessionEnd}
+      />
+    )
+  }
+
+  if (view === 'victory' && lastResult) {
+    return (
+      <CompletionVictory
+        correct={lastResult.totalCorrect}
+        total={lastResult.totalAnswered}
+        xpEarned={xpForPracticeSession(lastResult.totalAnswered, lastResult.totalCorrect)}
+        title={t('Session complete')}
+        onContinue={() => setView('review')}
+        continueLabel={t('View debrief')}
       />
     )
   }
@@ -389,11 +443,12 @@ function VideosView() {
 
   if (error) {
     return (
-      <div className="text-center py-16 space-y-3">
+      <div className="card-console flex flex-col items-center py-14 text-center space-y-3">
         <p className="text-(--text-muted) text-sm">{error}</p>
         <button
           onClick={() => setReloadKey((k) => k + 1)}
-          className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow)"
+          className="px-4 py-2 text-sm font-bold text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) transition-[filter] hover:brightness-105"
+          style={{ backgroundImage: 'var(--grad-brand)' }}
         >
           {t('Try Again')}
         </button>
@@ -403,7 +458,10 @@ function VideosView() {
 
   if (scenarios.length === 0) {
     return (
-      <div className="text-center py-16">
+      <div className="card-console flex flex-col items-center py-14 text-center">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2)">
+          <FileText className="h-5 w-5 text-(--text-muted)" aria-hidden="true" />
+        </div>
         <p className="text-(--text-muted) text-sm">{t('No video scenarios available yet.')}</p>
       </div>
     )
@@ -485,27 +543,27 @@ function VideosView() {
     const chosenSanction = selectedSanction !== null ? SANCTION_OPTIONS[selectedSanction] : ''
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 animate-fade-up">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-(--text-primary)">{t('Video Analysis')}</h2>
-          <span className="text-xs text-(--text-muted)">
+          <h2 className="eyebrow">{t('Video Analysis')}</h2>
+          <span className="numeral text-xs font-semibold text-(--text-muted)">
             {currentIndex + 1} / {scenarios.length}
           </span>
         </div>
 
-        <div className="bg-(--bg-surface) rounded-lg border border-(--border-subtle) p-5 space-y-4">
+        <div className="card-console p-5 space-y-4">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-(--text-primary)">{current.title}</h3>
-            <p className={`text-2xl font-bold mt-1 ${bothCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
+            <p className={`text-2xl font-extrabold mt-1 ${bothCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
               {bothCorrect ? t('Both Correct') : actionCorrect || sanctionCorrect ? t('Partially Correct') : t('Incorrect')}
             </p>
           </div>
 
           {/* Action result */}
-          <div className={`p-4 rounded-lg border-2 ${actionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">{t('Action')}</span>
-              <span className={`text-xs font-medium ${actionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
+          <div className={`p-4 rounded-(--radius-button) border-2 ${actionCorrect ? 'border-(--success)/60 bg-(--success)/10' : 'border-(--error)/60 bg-(--error)/10'}`}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="eyebrow">{t('Action')}</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${actionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
                 {actionCorrect ? t('Correct') : t('Incorrect')}
               </span>
             </div>
@@ -518,10 +576,10 @@ function VideosView() {
           </div>
 
           {/* Sanction result */}
-          <div className={`p-4 rounded-lg border-2 ${sanctionCorrect ? 'border-(--success) bg-(--success)/5' : 'border-(--error) bg-(--error)/5'}`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-(--text-muted)">{t('Sanction')}</span>
-              <span className={`text-xs font-medium ${sanctionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
+          <div className={`p-4 rounded-(--radius-button) border-2 ${sanctionCorrect ? 'border-(--success)/60 bg-(--success)/10' : 'border-(--error)/60 bg-(--error)/10'}`}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="eyebrow">{t('Sanction')}</span>
+              <span className={`text-xs font-bold uppercase tracking-wider ${sanctionCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
                 {sanctionCorrect ? t('Correct') : t('Incorrect')}
               </span>
             </div>
@@ -536,7 +594,7 @@ function VideosView() {
 
         <button
           onClick={isLastVideo ? handleRestart : goToNext}
-          className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
+          className="w-full py-3 rounded-(--radius-button) text-sm font-semibold bg-(--info) text-white transition-[filter] duration-(--dur-fast) hover:brightness-110 active:scale-[0.99]"
         >
           {isLastVideo ? t('Start Over') : t('Next Video')}
         </button>
@@ -546,26 +604,29 @@ function VideosView() {
 
   /* ── Video + Questions ── */
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-up">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium text-(--text-primary)">{t('Video Analysis')}</h2>
-        <span className="text-xs text-(--text-muted)">
+        <h2 className="eyebrow">{t('Video Analysis')}</h2>
+        <span className="numeral text-xs font-semibold text-(--text-muted)">
           {currentIndex + 1} / {scenarios.length}
         </span>
       </div>
 
       {!isPro && (
-        <div className="flex items-center gap-3 rounded-lg border border-(--brand-yellow)/30 bg-(--brand-yellow)/10 p-3">
-          <Lock className="w-4 h-4 shrink-0 text-(--brand-yellow)" aria-hidden="true" />
+        <div className="flex items-center gap-3 rounded-(--radius-card) border border-(--brand-yellow)/30 bg-(--brand-yellow)/10 p-3.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-(--radius-button) bg-(--brand-yellow)/15">
+            <Lock className="w-4 h-4 text-(--brand-yellow)" aria-hidden="true" />
+          </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-(--text-primary)">{t('Free preview')}</p>
+            <p className="text-sm font-semibold text-(--text-primary)">{t('Free preview')}</p>
             <p className="text-xs text-(--text-muted)">
               {t('Unlock the full video scenario library with Pro.')}
             </p>
           </div>
           <button
             onClick={() => navigate('/app/pricing')}
-            className="shrink-0 px-3 py-1.5 text-xs font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow)"
+            className="shrink-0 px-3 py-1.5 text-xs font-bold text-(--bg-primary) rounded-(--radius-button) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) transition-[filter] hover:brightness-105"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
           >
             {t('Upgrade')}
           </button>
@@ -573,7 +634,7 @@ function VideosView() {
       )}
 
       {/* Video Player */}
-      <div className="bg-black rounded-lg aspect-video relative overflow-hidden group">
+      <div className="bg-black rounded-(--radius-card) aspect-video relative overflow-hidden group border border-(--border-subtle)">
         <video
           key={current.id}
           ref={videoRef}
@@ -602,7 +663,8 @@ function VideosView() {
           <div className="absolute inset-0 flex items-center justify-center">
             <button
               onClick={togglePlay}
-              className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              className="w-16 h-16 bg-white/15 backdrop-blur-md rounded-full flex items-center justify-center ring-1 ring-white/25 hover:bg-white/25 hover:scale-105 transition-all"
+              aria-label={t('Play video')}
             >
               <span className="text-3xl ml-0.5 text-white">{'\u25B6'}</span>
             </button>
@@ -611,11 +673,19 @@ function VideosView() {
 
         {/* Controls */}
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={togglePlay} className="text-white text-sm hover:text-(--info)">
-            {isPlaying ? '\u23F8' : '\u25B6'}
+          <button
+            onClick={togglePlay}
+            className="text-white hover:text-(--info) transition-colors"
+            aria-label={isPlaying ? t('Pause video') : t('Play video')}
+          >
+            {isPlaying ? <Pause size={18} aria-hidden="true" /> : <Play size={18} aria-hidden="true" />}
           </button>
-          <button onClick={toggleMute} className="text-white text-sm hover:text-(--info)">
-            {isMuted ? '\uD83D\uDD07' : '\uD83D\uDD0A'}
+          <button
+            onClick={toggleMute}
+            className="text-white hover:text-(--info) transition-colors"
+            aria-label={isMuted ? t('Unmute video') : t('Mute video')}
+          >
+            {isMuted ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -627,14 +697,15 @@ function VideosView() {
 
       {/* Step indicator */}
       <div className="flex gap-2">
-        <div className={`flex-1 h-1 rounded-full ${step === 'action' ? 'bg-(--info)' : 'bg-(--success)'}`} />
-        <div className={`flex-1 h-1 rounded-full ${step === 'sanction' ? 'bg-(--info)' : 'bg-(--bg-surface-2)'}`} />
+        <div className={`flex-1 h-1.5 rounded-full transition-colors ${step === 'action' ? 'bg-(--info)' : 'bg-(--success)'}`} />
+        <div className={`flex-1 h-1.5 rounded-full transition-colors ${step === 'sanction' ? 'bg-(--info)' : 'bg-(--bg-surface-2)'}`} />
       </div>
 
       {/* Action question */}
       {step === 'action' && (
-        <div className="space-y-3">
-          <h3 className="text-base font-medium text-(--text-primary)">
+        <div className="card-console p-5 space-y-3">
+          <p className="eyebrow">{t('Step 1')}</p>
+          <h3 className="text-base font-semibold text-(--text-primary)">
             {t('What action should the referee take?')}
           </h3>
 
@@ -643,10 +714,10 @@ function VideosView() {
               <button
                 key={idx}
                 onClick={() => setSelectedAction(idx)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
+                className={`w-full text-left px-4 py-3 rounded-(--radius-button) border-2 text-sm transition-colors ${
                   selectedAction === idx
                     ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                    : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
+                    : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:bg-(--bg-surface-2)'
                 }`}
               >
                 {t(option)}
@@ -657,7 +728,7 @@ function VideosView() {
           <button
             onClick={handleConfirmAction}
             disabled={selectedAction === null}
-            className="w-full py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
+            className="w-full py-3 rounded-(--radius-button) text-sm font-semibold bg-(--info) text-white disabled:opacity-40 transition-[filter] hover:brightness-110 active:scale-[0.99]"
           >
             {t('Next — Sanction')}
           </button>
@@ -666,8 +737,9 @@ function VideosView() {
 
       {/* Sanction question */}
       {step === 'sanction' && (
-        <div className="space-y-3">
-          <h3 className="text-base font-medium text-(--text-primary)">
+        <div className="card-console p-5 space-y-3">
+          <p className="eyebrow">{t('Step 2')}</p>
+          <h3 className="text-base font-semibold text-(--text-primary)">
             {t('What sanction should be applied?')}
           </h3>
 
@@ -676,10 +748,10 @@ function VideosView() {
               <button
                 key={idx}
                 onClick={() => setSelectedSanction(idx)}
-                className={`w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors ${
+                className={`w-full text-left px-4 py-3 rounded-(--radius-button) border-2 text-sm transition-colors ${
                   selectedSanction === idx
                     ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                    : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
+                    : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:bg-(--bg-surface-2)'
                 }`}
               >
                 {t(option)}
@@ -690,14 +762,15 @@ function VideosView() {
           <div className="flex gap-3">
             <button
               onClick={() => setStep('action')}
-              className="px-4 py-2.5 rounded-lg text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary)"
+              className="inline-flex items-center gap-1.5 px-4 py-3 rounded-(--radius-button) text-sm font-medium bg-(--bg-surface-2) text-(--text-secondary) transition-colors hover:text-(--text-primary)"
             >
-              &larr; {t('Back')}
+              <ArrowLeft size={15} aria-hidden="true" />
+              {t('Back')}
             </button>
             <button
               onClick={handleConfirmSanction}
               disabled={selectedSanction === null}
-              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
+              className="flex-1 py-3 rounded-(--radius-button) text-sm font-semibold bg-(--info) text-white disabled:opacity-40 transition-[filter] hover:brightness-110 active:scale-[0.99]"
             >
               {t('Confirm')}
             </button>
@@ -714,10 +787,15 @@ function PlaceholderTab({ icon: Icon, title }: { icon: typeof FileText; title: s
   const { t } = useTranslation()
 
   return (
-    <div className="text-center py-16">
-      <Icon className="w-10 h-10 text-(--text-muted) mx-auto mb-3" />
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t(title)}</h2>
-      <p className="text-sm text-(--text-muted)">{t('Coming soon.')}</p>
+    <div className="card-console field-lines animate-fade-up flex flex-col items-center px-6 py-16 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2) shadow-[var(--shadow-soft)]">
+        <Icon className="h-6 w-6 text-(--brand-yellow)" aria-hidden="true" />
+      </div>
+      <p className="eyebrow mb-2">{t('On the training ground')}</p>
+      <h2 className="text-xl font-bold text-(--text-primary) mb-1.5">{t(title)}</h2>
+      <p className="max-w-sm text-sm text-(--text-muted)">
+        {t("We're building this module. Check back soon for new drills and content.")}
+      </p>
     </div>
   )
 }
@@ -733,21 +811,30 @@ function ResourcesView() {
   ]
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-(--text-primary)">{t('Study Resources')}</h2>
-      <div className="space-y-2">
+    <div className="space-y-4 animate-fade-up">
+      <div>
+        <p className="eyebrow">{t('Library')}</p>
+        <h2 className="text-lg font-bold text-(--text-primary)">{t('Study Resources')}</h2>
+      </div>
+      <div className="space-y-2.5">
         {resources.map((res) => (
           <div
             key={res.id}
-            className="flex items-center justify-between p-3 bg-(--bg-surface) rounded-lg border border-(--border-subtle)"
+            className="card-console flex items-center gap-3 p-3.5 transition-colors hover:border-(--border-strong)"
           >
-            <div>
-              <h3 className="text-sm font-medium text-(--text-primary)">{t(res.title)}</h3>
-              <p className="text-xs text-(--text-muted)">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2)">
+              <FileText className="h-4 w-4 text-(--text-muted)" aria-hidden="true" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-sm font-semibold text-(--text-primary)">{t(res.title)}</h3>
+              <p className="numeral text-xs text-(--text-muted)">
                 {res.type} &middot; {res.size}
               </p>
             </div>
-            <button className="text-xs text-(--info) hover:underline">{t('Download')}</button>
+            <button className="inline-flex shrink-0 items-center gap-1.5 rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-xs font-semibold text-(--text-secondary) transition-colors hover:border-(--info) hover:text-(--info)">
+              <Download size={14} aria-hidden="true" />
+              {t('Download')}
+            </button>
           </div>
         ))}
       </div>

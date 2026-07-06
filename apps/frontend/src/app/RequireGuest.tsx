@@ -21,8 +21,8 @@ export default function RequireGuest({ children }: RequireGuestProps) {
 
   if (authStatus === "checking_session") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">{t('Loading...')}</div>
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
+        <div className="text-sm text-(--text-muted)">{t('Loading...')}</div>
       </div>
     );
   }

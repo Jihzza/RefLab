@@ -69,18 +69,19 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   const mediaPending = hasMedia && !mediaSrc
 
   return (
-    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'} animate-fade-in`}>
       <div
         className={[
-          'max-w-[75%] px-4 py-3 text-sm',
+          'max-w-[78%] px-4 py-2.5 text-sm shadow-[var(--shadow-soft)]',
           isOwn
-            ? 'bg-(--brand-yellow) text-(--bg-primary) rounded-2xl rounded-br-md'
-            : 'bg-(--bg-surface-2) text-(--text-primary) rounded-2xl rounded-bl-md',
+            ? 'text-(--bg-primary) rounded-2xl rounded-br-sm'
+            : 'bg-(--bg-surface) text-(--text-primary) border border-(--border-subtle) rounded-2xl rounded-bl-sm',
         ].join(' ')}
+        style={isOwn ? { backgroundImage: 'var(--grad-brand)' } : undefined}
       >
         {mediaPending && (
           <div
-            className="mb-2 w-48 max-w-full h-40 rounded-lg bg-(--bg-surface-2) animate-pulse"
+            className="mb-2 w-48 max-w-full h-40 rounded-lg skeleton"
             aria-hidden="true"
           />
         )}
@@ -103,7 +104,7 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 src={mediaSrc}
                 controls
                 aria-label={t('Message video')}
-                className="w-full max-h-72 rounded-lg bg-black"
+                className="w-full max-h-72 rounded-lg bg-(--bg-base)"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none'
                 }}
@@ -121,12 +122,14 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
           </div>
         )}
 
-        {hasText && <div className="whitespace-pre-wrap break-words">{message.content}</div>}
+        {hasText && (
+          <div className="whitespace-pre-wrap break-words leading-relaxed">{message.content}</div>
+        )}
 
         <div
           className={[
-            'mt-1 text-[11px]',
-            isOwn ? 'text-(--bg-primary)/90' : 'text-(--text-secondary)',
+            'numeral mt-1 text-[11px] tabular-nums',
+            isOwn ? 'text-(--bg-primary)/75 text-right' : 'text-(--text-muted)',
           ].join(' ')}
         >
           {formatTimestamp(message.created_at)}

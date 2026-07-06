@@ -25,8 +25,8 @@ export default function SettingsPage() {
   if (!user) {
     return (
       <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
+        <div className="card-console p-6">
+          <h1 className="text-xl font-bold text-(--text-primary)">{t('Settings')}</h1>
           <p className="mt-2 text-sm text-(--error)">
             {t('You must be signed in to access settings.')}
           </p>
@@ -36,11 +36,16 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="p-4 pb-20">
+    <section className="p-4 pb-20 animate-fade-up">
       {/* Page header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Settings className="w-5 h-5 text-(--text-muted)" />
-        <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
+      <div className="flex items-center gap-2.5 mb-5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-(--brand-yellow)/12 text-(--brand-yellow)">
+          <Settings className="w-5 h-5" aria-hidden="true" />
+        </span>
+        <div>
+          <h1 className="text-xl font-bold text-(--text-primary) leading-tight">{t('Settings')}</h1>
+          <p className="text-xs text-(--text-muted)">{t('Manage your account and preferences')}</p>
+        </div>
       </div>
 
       {/* Error banner */}
@@ -59,7 +64,7 @@ export default function SettingsPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) h-24 animate-pulse"
+              className="card-console h-24 skeleton"
             />
           ))}
         </div>

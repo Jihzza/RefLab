@@ -13,7 +13,7 @@ export default function LegalSection() {
   const { t } = useTranslation()
 
   return (
-    <SettingsSection title={t('Legal')} icon={<Scale className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Legal')} icon={<Scale className="w-4.5 h-4.5" aria-hidden="true" />}>
       {LEGAL_LINKS.map((link) => (
         <Link
           key={link.label}
@@ -21,7 +21,7 @@ export default function LegalSection() {
           className="flex items-center justify-between px-4 py-3 hover:bg-(--bg-hover) transition-colors"
         >
           <span className="text-sm text-(--text-primary)">{t(link.label)}</span>
-          <ChevronRight className="w-4 h-4 text-(--text-muted)" />
+          <ChevronRight className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
         </Link>
       ))}
     </SettingsSection>

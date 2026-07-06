@@ -1,4 +1,5 @@
 import { Lock } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface SettingsToggleProps {
   label: string
@@ -20,6 +21,7 @@ export default function SettingsToggle({
   locked = false,
   lockTooltip,
 }: SettingsToggleProps) {
+  const { t } = useTranslation()
   const isDisabled = disabled || locked
 
   return (
@@ -42,7 +44,7 @@ export default function SettingsToggle({
         type="button"
         role="switch"
         aria-checked={checked}
-        aria-label={`Toggle ${label}`}
+        aria-label={t('Toggle {{label}}', { label })}
         disabled={isDisabled}
         onClick={onChange}
         className={`
@@ -55,7 +57,7 @@ export default function SettingsToggle({
       >
         <span
           className={`
-            pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm
+            pointer-events-none inline-block h-5 w-5 rounded-full bg-(--text-primary) shadow-sm
             transform transition-transform duration-200
             ${checked ? 'translate-x-5' : 'translate-x-0'}
           `}

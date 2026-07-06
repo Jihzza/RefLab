@@ -49,16 +49,16 @@ const PostBox: React.FC<PostBoxProps> = ({
   )
 
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4">
+    <div className="card-console p-4 transition-[transform,box-shadow,border-color] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-(--border-strong) hover:shadow-[var(--shadow-soft)]">
       {/* Repost label */}
       {isRepost && (
-        <div className="flex items-center gap-1.5 text-xs text-(--text-muted) mb-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-(--success) mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round"
               d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
             />
           </svg>
-          <span>{post.author.name || post.author.username} reposted</span>
+          <span className="truncate">{post.author.name || post.author.username} reposted</span>
         </div>
       )}
 

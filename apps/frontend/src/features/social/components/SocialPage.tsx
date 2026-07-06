@@ -1,8 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react'
+import { MessageSquarePlus, PenLine } from 'lucide-react'
 import NavigationBar from './NavigationBar'
 import PostBox from './PostBox'
 import NewPostButton from './NewPostButton'
 import CreatePostModal from './CreatePostModal'
+import Button from '@/components/ui/Button'
 import { useFeed } from '../hooks/useFeed'
 import { usePostActions } from '../hooks/usePostActions'
 import type { Post } from '../types'
@@ -11,22 +13,22 @@ import { useTranslation } from 'react-i18next'
 /** Loading skeleton for a post card. */
 function PostSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <div className="card-console p-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
+        <div className="w-10 h-10 rounded-full skeleton" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+          <div className="h-3 w-24 skeleton rounded" />
+          <div className="h-2 w-16 skeleton rounded" />
         </div>
       </div>
       <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+        <div className="h-3 skeleton rounded w-full" />
+        <div className="h-3 skeleton rounded w-3/4" />
       </div>
-      <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+      <div className="mt-4 flex gap-8">
+        <div className="h-3 w-8 skeleton rounded" />
+        <div className="h-3 w-8 skeleton rounded" />
+        <div className="h-3 w-8 skeleton rounded" />
       </div>
     </div>
   )
@@ -178,20 +180,13 @@ export default function SocialPage() {
 
         {/* Error state */}
         {error && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">
+          <div className="card-console p-8 text-center">
+            <p className="text-(--text-secondary) text-sm mb-4">
               {t('Something went wrong loading the feed.')}
             </p>
-            <button
-              onClick={refresh}
-              disabled={isRefreshing}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isRefreshing && (
-                <span className="w-4 h-4 border-2 border-(--bg-primary) border-t-transparent rounded-full animate-spin" />
-              )}
+            <Button onClick={refresh} loading={isRefreshing} disabled={isRefreshing}>
               {t('Try Again')}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -229,18 +224,25 @@ export default function SocialPage() {
 
         {/* Empty state */}
         {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-              </svg>
+          <div className="card-console field-lines px-6 py-14 text-center animate-fade-up">
+            <div
+              className="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center shadow-[var(--glow-yellow)]"
+              style={{ backgroundImage: 'var(--grad-brand)' }}
+            >
+              <MessageSquarePlus className="h-8 w-8 text-(--bg-primary)" aria-hidden="true" />
             </div>
-            <h3 className="text-base font-medium text-(--text-primary) mb-1">
-              {t('No posts yet')}
+            <h3 className="text-lg font-bold text-(--text-primary) mb-1.5">
+              {t('Start the debate')}
             </h3>
-            <p className="text-sm text-(--text-muted)">
-              {t('When people start posting, their posts will appear here.')}
+            <p className="text-sm text-(--text-muted) max-w-xs mx-auto mb-6">
+              {t('No decisions yet. Share a call, spark a discussion, and see how others would rule.')}
             </p>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              leftIcon={<PenLine className="h-4 w-4" aria-hidden="true" />}
+            >
+              {t('Create the first post')}
+            </Button>
           </div>
         )}
       </div>
@@ -258,7 +260,7 @@ export default function SocialPage() {
 
       {/* Copy toast */}
       {copiedToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 glass border border-(--border-strong) rounded-(--radius-pill) shadow-[var(--shadow-pop)] text-sm font-medium text-(--text-primary) animate-fade-up">
           {t('Link copied to clipboard')}
         </div>
       )}

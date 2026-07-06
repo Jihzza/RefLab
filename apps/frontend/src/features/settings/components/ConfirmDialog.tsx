@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -35,18 +37,8 @@ export default function ConfirmDialog({
   const phraseMatches = !confirmPhrase || typedPhrase === confirmPhrase
   const confirmDisabled = loading || !phraseMatches
 
-  const variantStyles = {
-    danger: {
-      titleColor: 'text-(--error)',
-      buttonBg: 'bg-(--error) text-white hover:opacity-90',
-    },
-    warning: {
-      titleColor: 'text-(--warning)',
-      buttonBg: 'bg-(--warning) text-(--bg-primary) hover:opacity-90',
-    },
-  }
-
-  const styles = variantStyles[variant]
+  const titleColor = variant === 'danger' ? 'text-(--error)' : 'text-(--warning)'
+  const accentBar = variant === 'danger' ? 'bg-(--error)' : 'bg-(--warning)'
 
   const handleClose = () => {
     setTypedPhrase('')
@@ -59,10 +51,10 @@ export default function ConfirmDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center animate-fade-in">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -73,67 +65,70 @@ export default function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
+        className="relative card-console overflow-hidden shadow-[var(--shadow-pop)] max-w-sm w-full mx-4 animate-scale-in"
       >
-        <h2
-          id="confirm-dialog-title"
-          className={`text-lg font-semibold mb-2 ${styles.titleColor}`}
-        >
-          {title}
-        </h2>
-        <p
-          id="confirm-dialog-description"
-          className="text-(--text-secondary) text-sm mb-4"
-        >
-          {description}
-        </p>
+        <span className={`block h-1 w-full ${accentBar}`} aria-hidden="true" />
+        <div className="p-6">
+          <h2
+            id="confirm-dialog-title"
+            className={`text-lg font-bold mb-2 ${titleColor}`}
+          >
+            {title}
+          </h2>
+          <p
+            id="confirm-dialog-description"
+            className="text-(--text-secondary) text-sm mb-4"
+          >
+            {description}
+          </p>
 
-        {confirmPhrase && (
-          <div className="mb-4">
-            <label className="block text-xs text-(--text-muted) mb-1.5">
-              {t('Type {{phrase}} to confirm', { phrase: confirmPhrase })}
-            </label>
-            <input
-              type="text"
-              value={typedPhrase}
-              onChange={(e) => setTypedPhrase(e.target.value)}
+          {confirmPhrase && (
+            <div className="mb-4">
+              <Input
+                label={t('Type {{phrase}} to confirm', { phrase: confirmPhrase })}
+                type="text"
+                value={typedPhrase}
+                onChange={(e) => setTypedPhrase(e.target.value)}
+                disabled={loading}
+                autoComplete="off"
+                placeholder={confirmPhrase}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={handleClose}
               disabled={loading}
-              autoComplete="off"
-              placeholder={confirmPhrase}
-              className="w-full px-3 py-2 text-sm outline-none transition-all
-                bg-(--bg-surface-2)
-                border border-(--border-subtle)
-                rounded-(--radius-input)
-                text-(--text-primary)
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow)
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-60 disabled:cursor-not-allowed"
-            />
+            >
+              {t('Cancel')}
+            </Button>
+            {variant === 'danger' ? (
+              <Button
+                variant="danger"
+                fullWidth
+                loading={loading}
+                disabled={confirmDisabled}
+                onClick={handleConfirm}
+              >
+                {loading ? t('Processing...') : confirmLabel}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                fullWidth
+                loading={loading}
+                disabled={confirmDisabled}
+                onClick={handleConfirm}
+                className="!text-(--bg-primary)"
+                style={{ backgroundImage: 'none', backgroundColor: 'var(--warning)' }}
+              >
+                {loading ? t('Processing...') : confirmLabel}
+              </Button>
+            )}
           </div>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle)
-              text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
-              disabled:opacity-50"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={confirmDisabled}
-            className={`flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold transition-all
-              ${styles.buttonBg}
-              disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {loading ? t('Processing...') : confirmLabel}
-          </button>
         </div>
       </div>
     </div>

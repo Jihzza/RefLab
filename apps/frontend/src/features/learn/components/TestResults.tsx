@@ -35,23 +35,24 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
 
   return (
     <div className="min-h-full flex items-center justify-center p-6">
-      <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-8 max-w-md w-full text-center">
+      <div className="card-console field-lines relative overflow-hidden animate-scale-in p-8 max-w-md w-full text-center">
+        <span className="flag-accent absolute inset-x-0 top-0 h-1" aria-hidden="true" />
         {/* Title */}
-        <h1 className="text-xl font-bold text-(--text-primary) mb-2">{testTitle}</h1>
-        <p className="text-(--text-muted) mb-6">{t('Test Completed')}</p>
+        <p className="eyebrow mb-2">{t('Test Completed')}</p>
+        <h1 className="text-xl font-bold text-(--text-primary) mb-6">{testTitle}</h1>
 
         {/* Score circle */}
         <div className="mb-6">
-          <div className={`text-6xl font-bold ${getScoreColor()}`}>
+          <div className={`numeral text-display font-extrabold ${getScoreColor()}`}>
             {scorePercent}%
           </div>
-          <p className="text-(--text-secondary) mt-2">
+          <p className="numeral text-(--text-secondary) mt-2">
             {t('{{correct}} out of {{total}} correct', { correct: scoreCorrect, total: scoreTotal })}
           </p>
         </div>
 
         {/* Message */}
-        <p className={`text-lg font-medium ${getScoreColor()} mb-8`}>
+        <p className={`text-lg font-bold ${getScoreColor()} mb-8`}>
           {getScoreMessage()}
         </p>
 
@@ -59,14 +60,15 @@ export default function TestResults({ attempt, testTitle }: TestResultsProps) {
         <div className="space-y-3">
           <button
             onClick={() => navigate('/app/dashboard')}
-            className="w-full py-3 px-4 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+            className="w-full py-3 px-4 text-(--bg-primary) rounded-(--radius-button) font-bold transition-[filter] hover:brightness-105 active:scale-[0.99]"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
             aria-label={t('View dashboard')}
           >
             {t('View Dashboard')}
           </button>
           <button
             onClick={() => navigate('/app/learn')}
-            className="w-full py-3 px-4 bg-(--bg-surface-2) text-(--text-secondary) rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors border border-(--border-subtle)"
+            className="w-full py-3 px-4 bg-(--bg-surface-2) text-(--text-secondary) rounded-(--radius-button) hover:border-(--border-strong) hover:text-(--text-primary) transition-colors border border-(--border-subtle) font-semibold"
             aria-label={t('Back to learn')}
           >
             {t('Back to Learn')}

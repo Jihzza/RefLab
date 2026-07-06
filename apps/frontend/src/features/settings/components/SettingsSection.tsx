@@ -14,15 +14,19 @@ export default function SettingsSection({
   description,
 }: SettingsSectionProps) {
   return (
-    <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) overflow-hidden">
+    <div className="card-console overflow-hidden">
       {/* Section header */}
-      <div className="px-4 py-3 border-b border-(--border-subtle)">
+      <div className="px-4 py-3.5 border-b border-(--border-subtle) bg-(--bg-surface-2)/40">
         <div className="flex items-center gap-2">
-          {icon && <span className="text-(--text-muted)">{icon}</span>}
-          <h2 className="text-base font-semibold text-(--text-primary)">{title}</h2>
+          {icon && (
+            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] bg-(--brand-yellow)/12 text-(--brand-yellow)">
+              {icon}
+            </span>
+          )}
+          <h2 className="eyebrow !text-(--text-secondary)">{title}</h2>
         </div>
         {description && (
-          <p className="text-xs text-(--text-muted) mt-1">{description}</p>
+          <p className="text-xs text-(--text-muted) mt-1.5">{description}</p>
         )}
       </div>
 

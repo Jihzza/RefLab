@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
+import Button from '@/components/ui/Button'
 import { getPostById } from '../api/socialApi'
 import { usePostActions } from '../hooks/usePostActions'
 import PostBox from './PostBox'
@@ -106,13 +107,13 @@ export default function PostDetailPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Back header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-(--border-subtle)">
+      <div className="sticky top-0 z-10 glass flex items-center gap-3 px-4 py-3 border-b border-(--border-subtle)">
         <button
           onClick={() => navigate(-1)}
-          className="p-1 text-(--text-secondary) hover:text-(--text-primary) transition-colors"
+          className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center text-(--text-secondary) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-primary)"
           aria-label={t('Go back')}
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" aria-hidden="true" />
         </button>
         <h1 className="text-lg font-bold text-(--text-primary)">{t('Post')}</h1>
       </div>
@@ -128,14 +129,11 @@ export default function PostDetailPage() {
 
         {/* Error */}
         {error && !loading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">{error}</p>
-            <button
-              onClick={() => navigate('/app/social')}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            >
+          <div className="card-console p-8 text-center">
+            <p className="text-(--text-secondary) text-sm mb-4">{error}</p>
+            <Button onClick={() => navigate('/app/social')}>
               {t('Back to Feed')}
-            </button>
+            </Button>
           </div>
         )}
 

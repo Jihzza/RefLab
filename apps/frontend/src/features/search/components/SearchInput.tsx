@@ -22,7 +22,7 @@ export default function SearchInput({ value, onChange, placeholder = 'Search use
           className="px-3 py-2 text-sm text-(--text-muted) bg-(--bg-surface-2) rounded-(--radius-button) hover:bg-(--bg-hover)"
           aria-label={t('Clear search')}
         >
-          {t('Clear all')}
+          {t('Clear search')}
         </button>
       ) : null}
     </div>

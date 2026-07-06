@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { searchUsers } from '@/features/messages/api/messagesApi'
 import type { UserSearchResult } from '@/features/messages/types'
+import { useTranslation } from 'react-i18next'
 
 const DEBOUNCE_MS = 300
 
@@ -22,6 +23,7 @@ export default function MentionDropdown({
   onSelect,
   onClose,
 }: MentionDropdownProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [results, setResults] = useState<UserSearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -67,7 +69,7 @@ export default function MentionDropdown({
 
   return (
     <div
-      className="absolute left-0 right-0 top-full mt-1 z-50 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-lg max-h-52 overflow-y-auto"
+      className="absolute left-0 right-0 top-full mt-1 z-50 card-console shadow-[var(--shadow-pop)] max-h-52 overflow-y-auto p-1 animate-scale-in"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Loading */}
@@ -80,7 +82,7 @@ export default function MentionDropdown({
       {/* No results */}
       {!isSearching && query.trim() && results.length === 0 && (
         <p className="text-xs text-(--text-muted) text-center py-3">
-          No users found
+          {t('No users found')}
         </p>
       )}
 
@@ -89,7 +91,7 @@ export default function MentionDropdown({
         <button
           key={u.id}
           type="button"
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-(--bg-hover) transition-colors text-left"
+          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors text-left"
           onMouseDown={(e) => {
             // Prevent input blur before we handle the selection
             e.preventDefault()
@@ -100,11 +102,14 @@ export default function MentionDropdown({
             <img
               src={u.photo_url}
               alt={u.username}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+              className="w-7 h-7 rounded-full object-cover flex-shrink-0 ring-1 ring-(--border-subtle)"
             />
           ) : (
-            <div className="w-7 h-7 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-semibold text-(--bg-primary)">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ring-1 ring-white/10"
+              style={{ backgroundImage: 'var(--grad-brand)' }}
+            >
+              <span className="text-[10px] font-bold text-(--bg-primary)">
                 {(u.name || u.username).slice(0, 2).toUpperCase()}
               </span>
             </div>

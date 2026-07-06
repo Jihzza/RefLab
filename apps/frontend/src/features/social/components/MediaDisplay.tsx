@@ -26,8 +26,8 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
   // Graceful fallback when a deleted/expired URL fails to load.
   if (failed) {
     return (
-      <div className="mt-3 flex items-center gap-2 rounded-lg border border-(--border-subtle) bg-(--bg-surface-2) px-4 py-6 text-sm text-(--text-muted)">
-        <ImageOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-(--radius-card) border border-dashed border-(--border-subtle) bg-(--bg-surface-2) px-4 py-8 text-sm text-(--text-muted)">
+        <ImageOff className="h-5 w-5 shrink-0" aria-hidden="true" />
         <span>{t('Media unavailable')}</span>
       </div>
     )
@@ -36,7 +36,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
   if (mediaType === 'image') {
     return (
       <div
-        className="mt-3 w-full max-h-96 overflow-hidden rounded-lg bg-(--bg-surface-2)"
+        className="mt-3 w-full max-h-96 overflow-hidden rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2)"
         style={{
           aspectRatio:
             mediaMetadata?.width && mediaMetadata?.height
@@ -62,7 +62,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
         controls
         preload="metadata"
         onError={() => setFailed(true)}
-        className="w-full max-h-96 object-contain rounded-lg mt-3 bg-black"
+        className="w-full max-h-96 object-contain rounded-(--radius-card) border border-(--border-subtle) mt-3 bg-black"
         style={
           mediaMetadata?.width && mediaMetadata?.height
             ? { aspectRatio: `${mediaMetadata.width}/${mediaMetadata.height}` }
@@ -75,7 +75,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
 
   if (mediaType === 'audio') {
     return (
-      <div className="mt-3 bg-(--bg-surface-2) p-4 rounded-lg border border-(--border-subtle)">
+      <div className="mt-3 surface-2 p-4">
         <audio
           src={publicUrl}
           controls

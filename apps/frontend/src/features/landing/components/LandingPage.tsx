@@ -1,12 +1,9 @@
 /**
- * LandingPage - Main landing page component
+ * LandingPage — public entry point.
  *
- * Composes three sections:
- * 1. HeroSection - Logo and branding message
- * 2. AuthSection - Login/Signup forms
- * 3. PricingSection - Swiper carousel with pricing plans
- *
- * Layout: Vertical stack, full-width, white background
+ * Above the fold: a two-column split on desktop (brand panel + auth card),
+ * stacked on mobile with the auth card reachable quickly. Below: pricing and
+ * the legal footer for users who scroll.
  */
 
 import HeroSection from "./HeroSection";
@@ -16,17 +13,19 @@ import FooterSection from "./FooterSection";
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen w-full bg-(--bg-primary)">
-      {/* Hero: Logo, title, and value proposition */}
-      <HeroSection />
+    <main className="min-h-screen w-full">
+      {/* Hero + auth split */}
+      <section className="mx-auto w-full max-w-6xl px-5 sm:px-8 py-10 lg:py-16 lg:min-h-screen flex items-center">
+        <div className="grid w-full grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <HeroSection />
+          <AuthSection />
+        </div>
+      </section>
 
-      {/* Authentication: Login/Signup forms */}
-      <AuthSection />
-
-      {/* Pricing: Carousel with subscription plans */}
+      {/* Pricing plans */}
       <PricingSection />
 
-      {/* Footer: Legal policy links */}
+      {/* Legal footer */}
       <FooterSection />
     </main>
   );

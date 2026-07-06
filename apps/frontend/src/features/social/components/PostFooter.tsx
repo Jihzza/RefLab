@@ -28,19 +28,23 @@ const PostFooter: React.FC<PostFooterProps> = ({
   onShare,
 }) => {
   const { t } = useTranslation()
+
+  const actionBase =
+    'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-(--radius-pill) text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)'
+
   return (
     <div className="flex items-center justify-between pt-3 mt-3 border-t border-(--border-subtle)">
       {/* Like */}
       <button
         onClick={onLike}
-        className={`flex items-center gap-1 text-xs transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface) ${
+        className={`${actionBase} ${
           post.is_liked
-            ? 'text-(--error)'
-            : 'text-(--text-muted) hover:text-(--error)'
+            ? 'text-(--error) bg-(--error)/10'
+            : 'text-(--text-muted) hover:text-(--error) hover:bg-(--error)/10'
         }`}
         aria-label={post.is_liked ? t('Unlike post') : t('Like post')}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24"
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]" viewBox="0 0 24 24"
           fill={post.is_liked ? 'currentColor' : 'none'}
           stroke="currentColor" strokeWidth={post.is_liked ? 0 : 1.5}
           aria-hidden="true"
@@ -49,52 +53,52 @@ const PostFooter: React.FC<PostFooterProps> = ({
             d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
           />
         </svg>
-        <span>{formatCount(post.like_count)}</span>
+        {post.like_count > 0 && <span className="numeral">{formatCount(post.like_count)}</span>}
       </button>
 
       {/* Comment */}
       <button
         onClick={onComment}
-        className="flex items-center gap-1 text-xs text-(--text-muted) hover:text-(--info) transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
+        className={`${actionBase} text-(--text-muted) hover:text-(--info) hover:bg-(--info)/10`}
         aria-label={t('Comments')}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"
           />
         </svg>
-        <span>{formatCount(post.comment_count)}</span>
+        {post.comment_count > 0 && <span className="numeral">{formatCount(post.comment_count)}</span>}
       </button>
 
       {/* Repost */}
       <button
         onClick={onRepost}
-        className={`flex items-center gap-1 text-xs transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface) ${
+        className={`${actionBase} ${
           post.is_reposted
-            ? 'text-(--success)'
-            : 'text-(--text-muted) hover:text-(--success)'
+            ? 'text-(--success) bg-(--success)/10'
+            : 'text-(--text-muted) hover:text-(--success) hover:bg-(--success)/10'
         }`}
         aria-label={post.is_reposted ? t('Undo repost') : t('Repost')}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
           />
         </svg>
-        <span>{formatCount(post.repost_count)}</span>
+        {post.repost_count > 0 && <span className="numeral">{formatCount(post.repost_count)}</span>}
       </button>
 
       {/* Save */}
       <button
         onClick={onSave}
-        className={`flex items-center gap-1 text-xs transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface) ${
+        className={`${actionBase} ${
           post.is_saved
-            ? 'text-(--brand-yellow)'
-            : 'text-(--text-muted) hover:text-(--brand-yellow)'
+            ? 'text-(--brand-yellow) bg-(--brand-yellow)/10'
+            : 'text-(--text-muted) hover:text-(--brand-yellow) hover:bg-(--brand-yellow)/10'
         }`}
         aria-label={post.is_saved ? t('Unsave post') : t('Save post')}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24"
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]" viewBox="0 0 24 24"
           fill={post.is_saved ? 'currentColor' : 'none'}
           stroke="currentColor" strokeWidth={post.is_saved ? 0 : 1.5}
           aria-hidden="true"
@@ -103,16 +107,16 @@ const PostFooter: React.FC<PostFooterProps> = ({
             d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
           />
         </svg>
-        <span>{formatCount(post.save_count)}</span>
+        {post.save_count > 0 && <span className="numeral">{formatCount(post.save_count)}</span>}
       </button>
 
       {/* Share */}
       <button
         onClick={onShare}
-        className="flex items-center gap-1 text-xs text-(--text-muted) hover:text-(--text-primary) transition-colors rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
+        className={`${actionBase} text-(--text-muted) hover:text-(--text-primary) hover:bg-(--bg-hover)`}
         aria-label={t('Share post')}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round"
             d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
           />

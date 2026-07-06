@@ -23,7 +23,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   return (
     <nav
-      className="sticky top-0 z-10 bg-(--bg-surface) border-b border-(--border-subtle)"
+      className="sticky top-0 z-10 glass border-b border-(--border-subtle)"
       aria-label={t('Feed filter')}
     >
       <div className="flex justify-center overflow-x-auto no-scrollbar">
@@ -33,14 +33,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
             <button
               key={value}
               onClick={() => onFilterChange(value)}
-              className={`flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+              className={`relative flex-shrink-0 px-4 py-3.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--brand-yellow) ${
                 isActive
-                  ? 'text-(--brand-yellow) border-(--brand-yellow)'
-                  : 'text-(--text-muted) border-transparent hover:text-(--text-secondary)'
+                  ? 'text-(--brand-yellow)'
+                  : 'text-(--text-muted) hover:text-(--text-secondary)'
               }`}
               aria-current={isActive ? 'page' : undefined}
             >
               {label}
+              {isActive && (
+                <span
+                  className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-(--brand-yellow)"
+                  aria-hidden="true"
+                />
+              )}
             </button>
           )
         })}

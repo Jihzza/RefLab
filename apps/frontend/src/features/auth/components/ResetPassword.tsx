@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
 import { mapAuthError } from "../api/authErrors";
 import { useTranslation } from "react-i18next";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 /**
  * ResetPassword - Page for setting a new password after clicking reset link
@@ -124,7 +126,7 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
-      <div className="w-full max-w-md p-8 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-(--shadow-soft)">
+      <div className="w-full max-w-md card-console p-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-(--text-primary)">{t("Set new password")}</h1>
@@ -142,74 +144,41 @@ export default function ResetPassword() {
           )}
 
           {/* New password field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="new-password"
-              className="block text-sm font-medium text-(--text-secondary)"
-            >
-              {t("New Password")}
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading || !user}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2) 
-                border border-(--border-subtle) 
-                rounded-(--radius-input) 
-                text-(--text-primary) 
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow) 
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="••••••••"
-            />
-            <p className="text-xs text-(--text-muted)">{t("Minimum 6 characters")}</p>
-          </div>
+          <Input
+            id="new-password"
+            type="password"
+            label={t("New Password")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={loading || !user}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            hint={t("Minimum 6 characters")}
+          />
 
           {/* Confirm password field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="confirm-new-password"
-              className="block text-sm font-medium text-(--text-secondary)"
-            >
-              {t("Confirm New Password")}
-            </label>
-            <input
-              id="confirm-new-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading || !user}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2) 
-                border border-(--border-subtle) 
-                rounded-(--radius-input) 
-                text-(--text-primary) 
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow) 
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="••••••••"
-            />
-          </div>
+          <Input
+            id="confirm-new-password"
+            type="password"
+            label={t("Confirm New Password")}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            disabled={loading || !user}
+            placeholder="••••••••"
+            autoComplete="new-password"
+          />
 
           {/* Submit button */}
-          <button
+          <Button
             type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={loading}
             disabled={loading || !user}
-            className="w-full py-3.5 px-4 font-bold transition-all transform active:scale-[0.98]
-              bg-(--brand-yellow) 
-              text-(--bg-primary) 
-              rounded-(--radius-button)
-              hover:bg-(--brand-yellow-soft) 
-              hover:shadow-[0_0_15px_rgb(var(--brand-yellow)_/_0.3)]
-              disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? t("Updating...") : t("Update password")}
-          </button>
+          </Button>
 
           {/* Back to login link */}
           <div className="text-center">

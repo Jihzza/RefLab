@@ -108,7 +108,7 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
         <p className="text-(--text-primary) font-semibold">{t('Failed to load results')}</p>
         <button
           onClick={onBackToTests}
-          className="mt-4 px-6 py-2 bg-(--info) text-white rounded-xl font-semibold hover:opacity-90"
+          className="mt-4 px-6 py-2 bg-(--info) text-white rounded-(--radius-button) font-semibold hover:opacity-90"
         >
           {t('Back to Tests')}
         </button>
@@ -120,24 +120,26 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
   const isPassing = scorePercent >= 80
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-up">
       {/* Score Card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl text-center">
+      <div className="card-console field-lines relative overflow-hidden p-6 text-center">
+        <span className="flag-accent absolute inset-x-0 top-0 h-1" aria-hidden="true" />
         <Trophy
-          size={48}
-          className={`mx-auto mb-4 ${isPassing ? 'text-(--success)' : 'text-(--warning)'}`}
+          size={40}
+          className={`mx-auto mb-3 ${isPassing ? 'text-(--success)' : 'text-(--warning)'}`}
         />
-        <h2 className="text-3xl font-bold text-(--text-primary) mb-2">
+        <p className="eyebrow mb-1">{t('Result')}</p>
+        <h2 className={`numeral text-display-sm mb-1 ${isPassing ? 'text-(--success)' : 'text-(--warning)'}`}>
           {attempt.score_correct}/{attempt.score_total}
         </h2>
-        <p className="text-lg text-(--text-secondary) mb-4">
-          {scorePercent}% {isPassing ? t('Pass') : t('Review Recommended')}
+        <p className="numeral text-lg font-semibold text-(--text-secondary) mb-4">
+          {scorePercent}% · {isPassing ? t('Pass') : t('Review Recommended')}
         </p>
 
         {attempt.time_elapsed_seconds !== null && (
-          <div className="flex items-center justify-center gap-2 text-sm text-(--text-secondary)">
+          <div className="inline-flex items-center justify-center gap-2 rounded-(--radius-pill) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-sm text-(--text-secondary)">
             <Clock size={16} />
-            <span>{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
+            <span className="numeral">{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
             {attempt.auto_submitted && <span className="text-(--warning)">({t('Auto-submitted')})</span>}
           </div>
         )}
@@ -145,18 +147,23 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
       {/* Strong Points */}
       {strong.length > 0 && (
-        <div className="p-5 bg-(--success)/10 border border-(--success)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="card-console p-5 border-l-2 border-l-(--success)">
+          <div className="flex items-center gap-2 mb-4">
             <TrendingUp size={20} className="text-(--success)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Strong Points')}</h3>
+            <h3 className="font-bold text-(--text-primary)">{t('Strong Points')}</h3>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {strong.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--success)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
+              <div key={topic.topic} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-(--text-primary)">{topic.topic}</span>
+                  <span className="numeral font-bold text-(--success)">
+                    {topic.accuracy}% ({topic.correct}/{topic.total})
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-(--radius-pill) bg-(--bg-surface-2) overflow-hidden">
+                  <div className="h-full rounded-(--radius-pill) bg-(--success)" style={{ width: `${topic.accuracy}%` }} />
+                </div>
               </div>
             ))}
           </div>
@@ -165,18 +172,23 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
       {/* Weak Points */}
       {weak.length > 0 && (
-        <div className="p-5 bg-(--error)/10 border border-(--error)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="card-console p-5 border-l-2 border-l-(--error)">
+          <div className="flex items-center gap-2 mb-4">
             <TrendingDown size={20} className="text-(--error)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Areas to Improve')}</h3>
+            <h3 className="font-bold text-(--text-primary)">{t('Areas to Improve')}</h3>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {weak.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--error)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
+              <div key={topic.topic} className="space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-(--text-primary)">{topic.topic}</span>
+                  <span className="numeral font-bold text-(--error)">
+                    {topic.accuracy}% ({topic.correct}/{topic.total})
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-(--radius-pill) bg-(--bg-surface-2) overflow-hidden">
+                  <div className="h-full rounded-(--radius-pill) bg-(--error)" style={{ width: `${topic.accuracy}%` }} />
+                </div>
               </div>
             ))}
           </div>
@@ -184,13 +196,13 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
       )}
 
       {/* Corrections Section */}
-      <div className="p-5 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
+      <div className="card-console p-5">
         <button
           onClick={() => setShowCorrections(!showCorrections)}
           className="w-full flex items-center justify-between"
         >
-          <h3 className="font-semibold text-(--text-primary)">{t('Review All Questions')}</h3>
-          {showCorrections ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <h3 className="font-bold text-(--text-primary)">{t('Review All Questions')}</h3>
+          {showCorrections ? <ChevronUp size={20} className="text-(--text-muted)" /> : <ChevronDown size={20} className="text-(--text-muted)" />}
         </button>
 
         {showCorrections && (
@@ -199,11 +211,11 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
               <div
                 key={correction.question.id}
                 className={`
-                  p-4 rounded-xl border
+                  p-4 rounded-(--radius-button) border-l-2 bg-(--bg-surface-2)
                   ${
                     correction.isCorrect
-                      ? 'bg-(--success)/5 border-(--success)/30'
-                      : 'bg-(--error)/5 border-(--error)/30'
+                      ? 'border-l-(--success)'
+                      : 'border-l-(--error)'
                   }
                 `}
               >
@@ -214,26 +226,26 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
                     <XCircle size={20} className="text-(--error) shrink-0 mt-0.5" />
                   )}
                   <div className="flex-1">
-                    <p className="font-medium text-(--text-primary) text-sm mb-1">
+                    <p className="eyebrow mb-1">
                       {t('Question {{number}}', { number: index + 1 })}
                     </p>
-                    <p className="text-sm text-(--text-primary) mb-3">
+                    <p className="text-sm text-(--text-primary) mb-3 leading-snug">
                       {correction.question.question_text}
                     </p>
 
                     <div className="space-y-1 text-xs">
                       <p>
-                        <span className="text-(--text-secondary)">{t('Your answer')}: </span>
+                        <span className="text-(--text-muted)">{t('Your answer')}: </span>
                         <span
-                          className={correction.isCorrect ? 'text-(--success)' : 'text-(--error)'}
+                          className={`numeral font-semibold ${correction.isCorrect ? 'text-(--success)' : 'text-(--error)'}`}
                         >
                           {correction.selectedOption}
                         </span>
                       </p>
                       {!correction.isCorrect && (
                         <p>
-                          <span className="text-(--text-secondary)">{t('Correct answer')}: </span>
-                          <span className="text-(--success) font-semibold">
+                          <span className="text-(--text-muted)">{t('Correct answer')}: </span>
+                          <span className="numeral text-(--success) font-bold">
                             {correction.correctOption}
                           </span>
                         </p>
@@ -251,14 +263,14 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
       <div className="flex gap-3">
         <button
           onClick={onBackToTests}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) font-semibold hover:bg-(--bg-hover) transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-(--radius-button) card-console text-(--text-primary) font-semibold hover:border-(--border-strong) transition-colors"
         >
           <Home size={18} />
           {t('Back to Tests')}
         </button>
         <button
           onClick={onRestart}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity"
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-(--radius-button) bg-(--info) text-white font-semibold transition-[filter] hover:brightness-110 active:scale-[0.99]"
         >
           <RotateCcw size={18} />
           {t('Take Another Test')}

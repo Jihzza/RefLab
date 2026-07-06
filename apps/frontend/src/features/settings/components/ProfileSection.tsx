@@ -20,7 +20,7 @@ export default function ProfileSection() {
   const initials = getInitials(profile.name, profile.username)
 
   return (
-    <SettingsSection title={t('Profile')} icon={<User className="w-4.5 h-4.5" />}>
+    <SettingsSection title={t('Profile')} icon={<User className="w-4.5 h-4.5" aria-hidden="true" />}>
       <Link
         to="/app/profile/edit"
         className="flex items-center gap-3 px-4 py-4 hover:bg-(--bg-hover) transition-colors"
@@ -50,7 +50,7 @@ export default function ProfileSection() {
         </div>
 
         {/* Arrow */}
-        <ChevronRight className="w-4.5 h-4.5 text-(--text-muted) shrink-0" />
+        <ChevronRight className="w-4.5 h-4.5 text-(--text-muted) shrink-0" aria-hidden="true" />
       </Link>
     </SettingsSection>
   )

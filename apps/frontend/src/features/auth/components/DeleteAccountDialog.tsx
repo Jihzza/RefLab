@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { mapAuthError } from '../api/authErrors'
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
 
 interface DeleteAccountDialogProps {
   isOpen: boolean
@@ -67,7 +68,7 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-(--bg-base)/70 backdrop-blur-sm"
         onClick={handleClose}
         aria-hidden="true"
       />
@@ -78,7 +79,7 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
         aria-modal="true"
         aria-labelledby="delete-account-title"
         aria-describedby="delete-account-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
+        className="relative card-console p-6 max-w-sm w-full mx-4 animate-scale-in"
       >
         <h2 id="delete-account-title" className="text-lg font-semibold text-(--error) mb-2">
           {t('Delete Account')}
@@ -94,30 +95,25 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
         )}
 
         <div className="flex gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleClose}
             disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle)
-              text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)
-              disabled:opacity-50"
+            className="flex-1"
           >
             {t('Cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="danger"
             onClick={handleDelete}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold transition-all
-              bg-(--error) text-white
-              hover:opacity-90
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)
-              disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={loading}
+            className="flex-1"
             autoFocus
           >
             {loading ? t('Processing...') : t('Confirm')}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

@@ -22,11 +22,11 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   const { t } = useTranslation();
   const { authStatus } = useAuth();
 
-  // While checking for existing session, show a loading skeleton
+  // While checking for existing session, show a loading state
   if (authStatus === "checking_session") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-500">{t('Loading...')}</div>
+      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
+        <div className="text-sm text-(--text-muted)">{t('Loading...')}</div>
       </div>
     );
   }

@@ -75,7 +75,7 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
 
         {error && (
           <div
-            className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mb-4"
+            className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-(--radius-button) mb-4"
             role="alert"
           >
             {error}

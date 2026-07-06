@@ -23,13 +23,13 @@ export default function TrainingCalendar({ calendar, currentStreak }: TrainingCa
 
   return (
     <div
-      className="bg-(--bg-surface) rounded-2xl p-4 shadow-sm border border-(--border-subtle)"
+      className="card-console p-4 sm:p-5"
       role="region"
       aria-label={t('Training calendar')}
     >
       {/* Header with title and streak */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider">
+        <h3 className="eyebrow">
           {t('Training Calendar')}
         </h3>
         <div className="flex items-center gap-1 text-xs font-medium">
@@ -92,7 +92,7 @@ export default function TrainingCalendar({ calendar, currentStreak }: TrainingCa
           <span className="text-[10px] text-(--text-muted)">{t('Rest')}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-(--bg-surface-2) ring-1.5 ring-(--brand-yellow)" aria-hidden="true" />
+          <div className="w-2.5 h-2.5 rounded-full bg-(--bg-surface-2) ring-1 ring-(--brand-yellow)" aria-hidden="true" />
           <span className="text-[10px] text-(--text-muted)">{t('Today')}</span>
         </div>
       </div>

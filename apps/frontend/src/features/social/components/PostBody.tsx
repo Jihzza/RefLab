@@ -15,7 +15,7 @@ const PostBody: React.FC<PostBodyProps> = ({ post }) => {
     <div className="mt-3">
       {/* Text content */}
       {post.content && (
-        <p className="text-(--text-primary) text-sm whitespace-pre-wrap break-words">
+        <p className="text-(--text-primary) text-[15px] leading-relaxed whitespace-pre-wrap break-words">
           {post.content}
         </p>
       )}
@@ -33,7 +33,7 @@ const PostBody: React.FC<PostBodyProps> = ({ post }) => {
       {isRepost && post.original_post ? (
         <RepostBox originalPost={post.original_post} />
       ) : isRepost && !post.original_post ? (
-        <div className="mt-3 p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle) text-(--text-muted) text-sm italic">
+        <div className="mt-3 p-3 surface-2 text-(--text-muted) text-sm italic">
           Original post was deleted
         </div>
       ) : null}

@@ -159,14 +159,14 @@ export default function TestPage() {
   // Error state
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-(--error)">{error}</p>
+      <div className="p-6 max-w-2xl mx-auto">
+        <div className="card-console border-l-2 border-l-(--error) p-5">
+          <p className="text-(--error) font-medium">{error}</p>
           <button
             onClick={() => navigate('/app/learn')}
-            className="mt-4 text-(--info) hover:underline"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-(--info) hover:underline"
           >
-            {t('Back to Learn')}
+            &larr; {t('Back to Learn')}
           </button>
         </div>
       </div>
@@ -187,18 +187,18 @@ export default function TestPage() {
   return (
     <div className="min-h-full bg-(--bg-primary)">
       {/* Header */}
-      <div className="bg-(--bg-surface) border-b border-(--border-subtle) px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="glass border-b border-(--border-subtle) px-6 py-4">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <button
               onClick={() => navigate('/app/learn')}
-              className="text-(--text-muted) hover:text-(--text-secondary) text-sm mb-1"
+              className="text-(--text-muted) hover:text-(--text-primary) text-sm mb-1 transition-colors"
             >
               &larr; {t('Back to Learn')}
             </button>
             <h1 className="text-xl font-bold text-(--text-primary)">{test?.title}</h1>
           </div>
-          <div className="text-sm text-(--text-muted)">
+          <div className="numeral shrink-0 rounded-(--radius-pill) border border-(--border-subtle) bg-(--bg-surface-2) px-3 py-1.5 text-sm font-semibold text-(--text-secondary)">
             {t('{{answered}} / {{total}} answered', { answered: answeredCount, total: questions.length })}
           </div>
         </div>
@@ -217,15 +217,15 @@ export default function TestPage() {
         )}
 
         {/* Navigation */}
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-6 flex items-center justify-between gap-4">
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
             className={`
-              px-4 py-2 rounded-lg font-medium
+              px-4 py-2.5 rounded-(--radius-button) font-semibold border transition-colors
               ${currentIndex === 0
-                ? 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed'
-                : 'bg-(--bg-surface-2) text-(--text-secondary) hover:bg-(--bg-hover)'
+                ? 'bg-(--bg-surface-2) border-(--border-subtle) text-(--text-faint) cursor-not-allowed'
+                : 'bg-(--bg-surface-2) border-(--border-subtle) text-(--text-secondary) hover:border-(--border-strong) hover:text-(--text-primary)'
               }
             `}
           >
@@ -233,7 +233,7 @@ export default function TestPage() {
           </button>
 
           {/* Question dots */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             {questions.map((q, idx) => {
               const isAnswered = answers.has(q.id)
               const isCurrent = idx === currentIndex
@@ -243,12 +243,12 @@ export default function TestPage() {
                   key={q.id}
                   onClick={() => setCurrentIndex(idx)}
                   className={`
-                    w-3 h-3 rounded-full transition-all
+                    h-2.5 rounded-(--radius-pill) transition-all
                     ${isCurrent
-                      ? 'bg-(--info) scale-125'
+                      ? 'w-6 bg-(--brand-yellow)'
                       : isAnswered
-                        ? 'bg-(--info)/50'
-                        : 'bg-(--bg-surface-2)'
+                        ? 'w-2.5 bg-(--info)'
+                        : 'w-2.5 bg-(--bg-elevated)'
                     }
                   `}
                   aria-label={t('Go to question {{number}}', { number: idx + 1 })}
@@ -262,10 +262,10 @@ export default function TestPage() {
               onClick={handleSubmit}
               disabled={!allAnswered || submitting}
               className={`
-                px-4 py-2 rounded-lg font-medium
+                px-4 py-2.5 rounded-(--radius-button) font-bold transition-[filter]
                 ${allAnswered && !submitting
-                  ? 'bg-(--success) text-(--bg-primary) hover:bg-(--success)/80'
-                  : 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed'
+                  ? 'bg-(--success) text-(--bg-primary) hover:brightness-105 active:scale-[0.99]'
+                  : 'bg-(--bg-surface-2) text-(--text-faint) cursor-not-allowed'
                 }
               `}
             >
@@ -274,7 +274,8 @@ export default function TestPage() {
           ) : (
             <button
               onClick={handleNext}
-              className="px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) font-medium hover:bg-(--brand-yellow-soft)"
+              className="px-4 py-2.5 text-(--bg-primary) rounded-(--radius-button) font-bold transition-[filter] hover:brightness-105 active:scale-[0.99]"
+              style={{ backgroundImage: 'var(--grad-brand)' }}
             >
               {t('Next')}
             </button>

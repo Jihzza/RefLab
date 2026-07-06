@@ -23,14 +23,14 @@ export default function SearchHistory({
   if (history.length === 0) return null
 
   return (
-    <div>
+    <div className="px-3 py-2">
       {/* Header: "Recent" label + "Clear all" action */}
-      <div className="flex items-center justify-between px-4 py-2">
-        <h2 className="text-sm font-semibold text-(--text-secondary)">{t('Recent')}</h2>
+      <div className="flex items-center justify-between px-1 pt-1 pb-2">
+        <h2 className="eyebrow">{t('Recent')}</h2>
         <button
           type="button"
           onClick={onClearAll}
-          className="text-xs font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) transition-colors cursor-pointer"
+          className="text-xs font-semibold text-(--brand-yellow) hover:text-(--brand-yellow-soft) transition-colors cursor-pointer"
           aria-label={t('Clear all search history')}
         >
           {t('Clear all')}
@@ -38,14 +38,16 @@ export default function SearchHistory({
       </div>
 
       {/* History entries */}
-      {history.map(entry => (
-        <SearchResultItem
-          key={entry.id}
-          user={entry}
-          onClick={() => onSelect(entry)}
-          onRemove={() => onRemove(entry.id)}
-        />
-      ))}
+      <div className="space-y-1">
+        {history.map(entry => (
+          <SearchResultItem
+            key={entry.id}
+            user={entry}
+            onClick={() => onSelect(entry)}
+            onRemove={() => onRemove(entry.id)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

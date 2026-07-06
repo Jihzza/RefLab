@@ -37,28 +37,31 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
   }
 
   return (
-    <div className="mt-3 p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle)">
+    <div className="mt-3 p-3 rounded-(--radius-card) border border-(--border-subtle) bg-(--bg-surface-2)/60">
       {/* Original author */}
       <button
         type="button"
         onClick={openAuthorProfile}
-        className="flex items-center gap-2 mb-2 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1"
+        className="group flex items-center gap-2 mb-2 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--brand-yellow) focus-visible:ring-offset-2 focus-visible:ring-offset-(--bg-surface)"
         aria-label={`Open ${displayName} profile`}
       >
         {originalPost.author.photo_url ? (
           <img
             src={originalPost.author.photo_url}
             alt={displayName}
-            className="w-6 h-6 rounded-full object-cover"
+            className="w-6 h-6 rounded-full object-cover ring-1 ring-(--border-subtle)"
           />
         ) : (
-          <div className="w-6 h-6 rounded-full bg-(--brand-yellow) flex items-center justify-center">
-            <span className="text-[10px] font-semibold text-(--bg-primary)">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center ring-1 ring-white/10"
+            style={{ backgroundImage: 'var(--grad-brand)' }}
+          >
+            <span className="text-[10px] font-bold text-(--bg-primary)">
               {initials}
             </span>
           </div>
         )}
-        <span className="text-xs font-medium text-(--text-primary)">
+        <span className="text-xs font-semibold text-(--text-primary) group-hover:text-(--brand-yellow) transition-colors">
           {displayName}
         </span>
         <span className="text-xs text-(--text-muted)">
@@ -68,7 +71,7 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
 
       {/* Original content */}
       {originalPost.content && (
-        <p className="text-(--text-primary) text-sm whitespace-pre-wrap break-words">
+        <p className="text-(--text-secondary) text-sm leading-relaxed whitespace-pre-wrap break-words">
           {originalPost.content}
         </p>
       )}
