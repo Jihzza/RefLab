@@ -875,6 +875,12 @@ const ptPT = {
   'Searching...': 'A pesquisar...',
   '{{count}} unread': '{{count}} por ler',
   RefLab: 'RefLab',
+
+  // Gamification — achievements showcase + video XP
+  XP: 'XP',
+  Achievements: 'Conquistas',
+  'Badge Collection': 'Coleção de Emblemas',
+  '{{n}}/{{total}} unlocked': '{{n}}/{{total}} desbloqueadas',
 }
 
 export default ptPT

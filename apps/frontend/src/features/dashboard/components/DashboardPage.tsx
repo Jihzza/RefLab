@@ -5,7 +5,7 @@ import PerformanceSection from './PerformanceSection'
 import ProgressSection from './ProgressSection'
 import HabitsSection from './HabitsSection'
 import Button from '@/components/ui/Button'
-import { PlayerProgressCard, deriveLifetimeXp } from '@/features/gamification'
+import { PlayerProgressCard, AchievementsSection, deriveLifetimeXp } from '@/features/gamification'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -67,6 +67,27 @@ export default function DashboardPage() {
             <PerformanceSection performance={stats.performance} />
             <ProgressSection progress={stats.progress} />
             <HabitsSection habits={stats.habits} />
+            {(() => {
+              // Best topic among those with a meaningful sample (10+ questions).
+              const bestTopic = stats.performance.accuracy_by_topic
+                .filter((tp) => tp.total_questions >= 10)
+                .reduce<(typeof stats.performance.accuracy_by_topic)[number] | null>(
+                  (best, tp) => (best === null || tp.accuracy > best.accuracy ? tp : best),
+                  null,
+                )
+              return (
+                <AchievementsSection
+                  stats={{
+                    questionsAnswered: stats.progress.total_questions_answered,
+                    streakDays: stats.habits.longest_streak,
+                    hadPerfectTest: false,
+                    bestTopicAccuracy: bestTopic ? bestTopic.accuracy : 0,
+                    bestTopicVolume: bestTopic ? bestTopic.total_questions : 0,
+                    dailyGoalDaysInARow: 0,
+                  }}
+                />
+              )
+            })()}
           </div>
         )}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { FileText, GraduationCap, Loader2, Lock, Download, ArrowLeft, Play, Pause, Volume2, VolumeX } from 'lucide-react'
+import { FileText, GraduationCap, Loader2, Lock, Download, ArrowLeft, Play, Pause, Volume2, VolumeX, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useBilling } from '@/features/billing/components/useBilling'
@@ -18,7 +18,7 @@ import QuestionsLanding from './questions/QuestionsLanding'
 import QuestionsSetup from './questions/QuestionsSetup'
 import QuestionsSession from './questions/QuestionsSession'
 import QuestionsReview from './questions/QuestionsReview'
-import { CompletionVictory, xpForTest, xpForPracticeSession } from '@/features/gamification'
+import { CompletionVictory, xpForTest, xpForPracticeSession, xpForVideo } from '@/features/gamification'
 
 /* ─── Helpers ─── */
 
@@ -541,6 +541,7 @@ function VideosView() {
     const bothCorrect = actionCorrect && sanctionCorrect
     const chosenAction = selectedAction !== null ? currentActionOptions[selectedAction] : ''
     const chosenSanction = selectedSanction !== null ? SANCTION_OPTIONS[selectedSanction] : ''
+    const xpEarned = xpForVideo(actionCorrect, sanctionCorrect)
 
     return (
       <div className="space-y-4 animate-fade-up">
@@ -557,6 +558,15 @@ function VideosView() {
             <p className={`text-2xl font-extrabold mt-1 ${bothCorrect ? 'text-(--success)' : 'text-(--error)'}`}>
               {bothCorrect ? t('Both Correct') : actionCorrect || sanctionCorrect ? t('Partially Correct') : t('Incorrect')}
             </p>
+
+            {/* XP reward chip */}
+            <div className="mt-3 inline-flex items-center gap-2 rounded-(--radius-pill) border border-(--brand-yellow)/25 bg-(--brand-yellow)/8 px-3 py-1.5">
+              <span className="inline-flex items-center gap-1.5 text-(--brand-yellow)">
+                <Zap size={15} aria-hidden="true" />
+                <span className="numeral text-sm font-extrabold">+{xpEarned} {t('XP')}</span>
+              </span>
+              <span className="text-xs font-medium text-(--text-muted)">{t('XP earned')}</span>
+            </div>
           </div>
 
           {/* Action result */}

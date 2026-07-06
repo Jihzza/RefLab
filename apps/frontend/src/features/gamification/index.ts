@@ -8,6 +8,7 @@ export { default as TransitionCard } from "./components/TransitionCard";
 export type { TransitionKind } from "./components/TransitionCard";
 export { default as PlayerProgressCard } from "./components/PlayerProgressCard";
 export { default as AchievementBadge } from "./components/AchievementBadge";
+export { default as AchievementsSection } from "./components/AchievementsSection";
 export { default as Confetti } from "./components/Confetti";
 export { useCountUp } from "./hooks/useCountUp";
 
