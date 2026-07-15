@@ -121,12 +121,17 @@ export async function dismissPermanently(notificationId: string) {
 }
 
 /**
- * Delete the profile completion notification (after profile is complete).
+ * Dismiss the profile completion notification after the profile is complete.
+ * Client-side deletes are intentionally blocked by notifications RLS; owners
+ * can update their own rows.
  */
-export async function deleteProfileReminder(userId: string) {
+export async function dismissProfileReminder(userId: string) {
   const { error } = await supabase
     .from('notifications')
-    .delete()
+    .update({
+      read: true,
+      dismissed_permanently: true,
+    })
     .eq('user_id', userId)
     .eq('type', 'profile_incomplete')
 

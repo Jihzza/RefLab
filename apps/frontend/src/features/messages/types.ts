@@ -1,6 +1,8 @@
 // Media type enum matching the database post_media_type
 export type MessageMediaType = 'text' | 'image' | 'video' | 'audio'
 
+export const MESSAGES_UNREAD_CHANGED_EVENT = 'reflab:messages-unread-changed'
+
 // User info subset returned by RPC functions
 export interface MessageUser {
   id: string

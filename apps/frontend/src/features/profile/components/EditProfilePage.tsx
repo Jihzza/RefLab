@@ -22,6 +22,58 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/webp',
   'image/gif',
 ])
+const AVATAR_CLEANUP_STORAGE_PREFIX = 'reflab-avatar-cleanup:'
+const MAX_QUEUED_AVATAR_CLEANUPS = 20
+
+function getAvatarCleanupStorageKey(userId: string): string {
+  return `${AVATAR_CLEANUP_STORAGE_PREFIX}${userId}`
+}
+
+function readPendingAvatarCleanupUrls(userId: string): string[] {
+  if (typeof window === 'undefined') return []
+
+  try {
+    const raw = window.localStorage.getItem(getAvatarCleanupStorageKey(userId))
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((value): value is string => typeof value === 'string' && value.length > 0)
+      .slice(-MAX_QUEUED_AVATAR_CLEANUPS)
+  } catch {
+    return []
+  }
+}
+
+function writePendingAvatarCleanupUrls(userId: string, urls: Iterable<string>): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    const queuedUrls = [...new Set(urls)].slice(-MAX_QUEUED_AVATAR_CLEANUPS)
+    const storageKey = getAvatarCleanupStorageKey(userId)
+    if (queuedUrls.length === 0) {
+      window.localStorage.removeItem(storageKey)
+      return
+    }
+    window.localStorage.setItem(storageKey, JSON.stringify(queuedUrls))
+  } catch {
+    // The in-memory retry path remains available when local storage is blocked.
+  }
+}
+
+function rememberAvatarCleanup(userId: string, photoUrl: string): void {
+  writePendingAvatarCleanupUrls(userId, [
+    ...readPendingAvatarCleanupUrls(userId),
+    photoUrl,
+  ])
+}
+
+function forgetAvatarCleanup(userId: string, photoUrl: string): void {
+  writePendingAvatarCleanupUrls(
+    userId,
+    readPendingAvatarCleanupUrls(userId).filter((queuedUrl) => queuedUrl !== photoUrl),
+  )
+}
 
 type UsernameAvailability = 'idle' | 'checking' | 'available' | 'taken' | 'error'
 type InitialSnapshot = {
@@ -94,7 +146,9 @@ function EditProfileForm({
   const usernameRequestIdRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingUploadedAvatarUrlRef = useRef<string | null>(null)
-  const supersededAvatarUrlsRef = useRef(new Set<string>())
+  const supersededAvatarUrlsRef = useRef(
+    new Set(readPendingAvatarCleanupUrls(user.id)),
+  )
 
   const normalizedUsername = useMemo(() => normalizeUsername(username), [username])
   const normalizedName = useMemo(() => name.trim(), [name])
@@ -140,6 +194,31 @@ function EditProfileForm({
       }
     }
   }, [avatarPreviewUrl])
+
+  useEffect(() => {
+    let cancelled = false
+
+    void (async () => {
+      for (const queuedUrl of readPendingAvatarCleanupUrls(user.id)) {
+        try {
+          const { error: cleanupError } = await deleteProfileAvatarByUrl(queuedUrl)
+          if (cleanupError) {
+            console.error('Failed to retry queued avatar cleanup:', cleanupError)
+            continue
+          }
+
+          forgetAvatarCleanup(user.id, queuedUrl)
+          if (!cancelled) supersededAvatarUrlsRef.current.delete(queuedUrl)
+        } catch (cleanupError) {
+          console.error('Failed to retry queued avatar cleanup:', cleanupError)
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [user.id])
 
   useEffect(() => {
     const requestId = ++usernameRequestIdRef.current
@@ -300,11 +379,14 @@ function EditProfileForm({
             const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
             if (!deleteError) {
               pendingUploadedAvatarUrlRef.current = null
+              forgetAvatarCleanup(user.id, uploadedAvatarUrl)
             } else {
               console.error('Failed to clean up uploaded avatar:', deleteError)
+              rememberAvatarCleanup(user.id, uploadedAvatarUrl)
             }
           } catch (deleteError) {
             console.error('Failed to clean up uploaded avatar:', deleteError)
+            rememberAvatarCleanup(user.id, uploadedAvatarUrl)
             // The profile error remains the primary actionable failure.
           }
         }
@@ -353,13 +435,16 @@ function EditProfileForm({
             if (deleteError) {
               console.error('Failed to delete previous avatar file:', deleteError)
               supersededAvatarUrlsRef.current.add(obsoleteAvatarUrl)
+              rememberAvatarCleanup(user.id, obsoleteAvatarUrl)
               avatarCleanupFailed = true
             } else {
               supersededAvatarUrlsRef.current.delete(obsoleteAvatarUrl)
+              forgetAvatarCleanup(user.id, obsoleteAvatarUrl)
             }
           } catch (deleteError) {
             console.error('Failed to delete previous avatar file:', deleteError)
             supersededAvatarUrlsRef.current.add(obsoleteAvatarUrl)
+            rememberAvatarCleanup(user.id, obsoleteAvatarUrl)
             avatarCleanupFailed = true
           }
         }
@@ -383,11 +468,14 @@ function EditProfileForm({
           const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
           if (!deleteError) {
             pendingUploadedAvatarUrlRef.current = null
+            forgetAvatarCleanup(user.id, uploadedAvatarUrl)
           } else {
             console.error('Failed to clean up uploaded avatar:', deleteError)
+            rememberAvatarCleanup(user.id, uploadedAvatarUrl)
           }
         } catch (deleteError) {
           console.error('Failed to clean up uploaded avatar:', deleteError)
+          rememberAvatarCleanup(user.id, uploadedAvatarUrl)
           // Keep the original save error as the actionable message.
         }
       }

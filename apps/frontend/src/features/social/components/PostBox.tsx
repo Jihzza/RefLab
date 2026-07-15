@@ -17,7 +17,7 @@ interface PostBoxProps {
   onSave: (post: Post) => void
   onRepost: (post: Post) => void
   onShare: (post: Post) => void
-  onDelete: (postId: string) => void
+  onDelete: (post: Post) => void
   onReport: (type: 'post' | 'user', targetId: string, reason: string) => void
   onBlock: (userId: string) => void
   onCommentCountChange: (postId: string, delta: number) => void
@@ -87,7 +87,7 @@ const PostBox: React.FC<PostBoxProps> = ({
           onReportPost={() => setReportDialog({ type: 'post', targetId: post.id })}
           onReportUser={() => setReportDialog({ type: 'user', targetId: post.author.id })}
           onBlockUser={() => setBlockDialog({ userId: post.author.id, username: post.author.username })}
-          onDelete={() => onDelete(post.id)}
+          onDelete={() => onDelete(post)}
         />
 
         <PostBody post={post} resolveMediaUrl={resolveMediaUrl} />

@@ -7,7 +7,12 @@ import {
   markConversationRead,
   sendMessage as sendMessageApi,
 } from '../api/messagesApi'
-import type { Message, MessageMediaType, MessageUser } from '../types'
+import {
+  MESSAGES_UNREAD_CHANGED_EVENT,
+  type Message,
+  type MessageMediaType,
+  type MessageUser,
+} from '../types'
 
 const PAGE_SIZE = 30
 
@@ -63,7 +68,10 @@ export function useMessages(
     userId: string,
   ) => {
     const { error } = await markConversationRead(targetConversationId, userId)
-    if (!error) await onReadRef.current?.()
+    if (!error) {
+      window.dispatchEvent(new Event(MESSAGES_UNREAD_CHANGED_EVENT))
+      await onReadRef.current?.()
+    }
   }, [])
 
   const revokeOptimisticUrls = useCallback(() => {

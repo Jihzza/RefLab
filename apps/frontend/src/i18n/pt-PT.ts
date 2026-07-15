@@ -622,6 +622,7 @@ const ptPT = {
   'Share post': 'Partilhar publicação',
   'Post options': 'Opções da publicação',
   'Delete Post': 'Eliminar publicação',
+  'Deleting post': 'A eliminar publicação',
   'Report Post': 'Denunciar publicação',
   'Report User': 'Denunciar utilizador',
   'Open actions for @{{username}}': 'Abrir ações de @{{username}}',

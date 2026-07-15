@@ -140,7 +140,10 @@ export function useFeed() {
 
   // Optimistic mutations exposed to usePostActions
   const addPost = useCallback((post: Post) => {
-    setPosts(prev => [post, ...prev])
+    setPosts((currentPosts) => [
+      post,
+      ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
+    ].sort((left, right) => right.created_at.localeCompare(left.created_at)))
   }, [])
 
   const removePost = useCallback((postId: string) => {

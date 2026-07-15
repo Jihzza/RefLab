@@ -16,6 +16,7 @@ export function usePublicProfileFeed(
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [loadedTargetUserId, setLoadedTargetUserId] = useState<string | null>(null)
 
   const cursorRef = useRef<string | null>(null)
   const activeRequestRef = useRef<number | null>(null)
@@ -84,6 +85,7 @@ export function usePublicProfileFeed(
       setIsLoadingMore(false)
       setHasMore(false)
       setError(null)
+      setLoadedTargetUserId(null)
       cursorRef.current = null
       return
     }
@@ -97,6 +99,7 @@ export function usePublicProfileFeed(
 
     void fetchFeed(null, true, generation).then((completedCurrentRequest) => {
       if (!completedCurrentRequest || generation !== generationRef.current) return
+      setLoadedTargetUserId(targetUserId)
       setIsLoading(false)
       setHasInitiallyLoaded(true)
     })
@@ -143,7 +146,10 @@ export function usePublicProfileFeed(
   }, [enabled, fetchFeed, hasMore, targetUserId, viewerId])
 
   const addPost = useCallback((post: Post) => {
-    setPosts((currentPosts) => [post, ...currentPosts])
+    setPosts((currentPosts) => [
+      post,
+      ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
+    ].sort((left, right) => right.created_at.localeCompare(left.created_at)))
   }, [])
 
   const removePost = useCallback((postId: string) => {
@@ -160,14 +166,17 @@ export function usePublicProfileFeed(
     )))
   }, [])
 
+  const hasCurrentTarget = Boolean(targetUserId)
+    && loadedTargetUserId === targetUserId
+
   return {
-    posts,
-    isLoading,
-    hasInitiallyLoaded,
-    isRefreshing,
-    isLoadingMore,
-    hasMore,
-    error,
+    posts: hasCurrentTarget ? posts : [],
+    isLoading: Boolean(enabled && targetUserId) && !hasCurrentTarget ? true : isLoading,
+    hasInitiallyLoaded: hasCurrentTarget ? hasInitiallyLoaded : false,
+    isRefreshing: hasCurrentTarget ? isRefreshing : false,
+    isLoadingMore: hasCurrentTarget ? isLoadingMore : false,
+    hasMore: hasCurrentTarget ? hasMore : false,
+    error: hasCurrentTarget ? error : null,
     refresh,
     loadMore,
     addPost,

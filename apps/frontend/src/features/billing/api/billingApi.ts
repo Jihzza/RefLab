@@ -86,22 +86,38 @@ export async function getSubscription(): Promise<{
   subscription: Subscription | null
   error: Error | null
 }> {
-  const { data, error } = await supabase
+  const { data: entitledSubscription, error: entitledError } = await supabase
+    .from('stripe_subscriptions')
+    .select('*')
+    .in('status', ['active', 'trialing', 'past_due'])
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (entitledError) {
+    return { subscription: null, error: new Error(entitledError.message) }
+  }
+
+  if (entitledSubscription) {
+    return {
+      subscription: entitledSubscription as Subscription,
+      error: null,
+    }
+  }
+
+  const { data: latestSubscription, error: latestError } = await supabase
     .from('stripe_subscriptions')
     .select('*')
     .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
 
-  if (error) {
-    return { subscription: null, error: new Error(error.message) }
+  if (latestError) {
+    return { subscription: null, error: new Error(latestError.message) }
   }
 
-  const subscriptions = (data ?? []) as Subscription[]
-  const entitledSubscription = subscriptions.find((subscription) =>
-    ['active', 'trialing', 'past_due'].includes(subscription.status)
-  )
-
   return {
-    subscription: entitledSubscription ?? subscriptions[0] ?? null,
+    subscription: latestSubscription as Subscription | null,
     error: null,
   }
 }

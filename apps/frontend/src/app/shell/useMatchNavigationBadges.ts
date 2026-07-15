@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getTotalUnreadCount } from '@/features/messages/api/messagesApi'
+import { MESSAGES_UNREAD_CHANGED_EVENT } from '@/features/messages/types'
 import { supabase } from '@/lib/supabaseClient'
 import type { MatchNavigationBadges } from './navigation'
 
@@ -19,6 +20,7 @@ export function useMatchNavigationBadges(): MatchNavigationBadges {
     ownerId: string | null
     count: number
   }>({ ownerId: null, count: 0 })
+  const requestSerialRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -31,8 +33,9 @@ export function useMatchNavigationBadges(): MatchNavigationBadges {
     }
 
     const refreshBadge = async () => {
+      const requestSerial = ++requestSerialRef.current
       const { data, error } = await getTotalUnreadCount(userId)
-      if (cancelled) return
+      if (cancelled || requestSerial !== requestSerialRef.current) return
 
       if (error) {
         console.error(
@@ -65,21 +68,15 @@ export function useMatchNavigationBadges(): MatchNavigationBadges {
         { event: 'INSERT', schema: 'public', table: 'messages' },
         scheduleRefresh,
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'conversation_participants',
-          filter: `user_id=eq.${userId}`,
-        },
-        scheduleRefresh,
-      )
       .subscribe()
+
+    window.addEventListener(MESSAGES_UNREAD_CHANGED_EVENT, scheduleRefresh)
 
     return () => {
       cancelled = true
+      requestSerialRef.current += 1
       if (refreshTimer !== null) window.clearTimeout(refreshTimer)
+      window.removeEventListener(MESSAGES_UNREAD_CHANGED_EVENT, scheduleRefresh)
       void supabase.removeChannel(channel)
     }
   }, [location.pathname, userId])

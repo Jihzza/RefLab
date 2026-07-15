@@ -104,9 +104,10 @@ export default function PublicProfilePage() {
     return profile.username.toLowerCase() === username.toLowerCase()
   }, [profile, username])
 
-  const [profileView, setProfileView] = useState<PublicProfileView | null>(null)
-  const [isProfileLoading, setIsProfileLoading] = useState(true)
-  const [profileError, setProfileError] = useState<string | null>(null)
+  const [loadedProfileView, setProfileView] = useState<PublicProfileView | null>(null)
+  const [loadedProfileUsername, setLoadedProfileUsername] = useState<string | null>(null)
+  const [profileLoadPending, setProfileLoadPending] = useState(true)
+  const [loadedProfileError, setProfileError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isFollowUpdating, setIsFollowUpdating] = useState(false)
   const [isBlockUpdating, setIsBlockUpdating] = useState(false)
@@ -120,6 +121,11 @@ export default function PublicProfilePage() {
   const profileRequestIdRef = useRef(0)
   const activeProfileIdRef = useRef<string | null>(null)
   const relationshipActionRef = useRef<string | null>(null)
+
+  const hasCurrentProfile = loadedProfileUsername === username
+  const profileView = hasCurrentProfile ? loadedProfileView : null
+  const profileError = hasCurrentProfile ? loadedProfileError : null
+  const isProfileLoading = profileLoadPending || !hasCurrentProfile
 
   activeProfileIdRef.current = profileView?.id ?? null
 
@@ -155,16 +161,18 @@ export default function PublicProfilePage() {
     if (!username) {
       setProfileError(t('Missing username.'))
       setProfileView(null)
-      setIsProfileLoading(false)
+      setLoadedProfileUsername(username)
+      setProfileLoadPending(false)
       return
     }
 
     if (!userId) {
-      setIsProfileLoading(false)
+      setLoadedProfileUsername(username)
+      setProfileLoadPending(false)
       return
     }
 
-    setIsProfileLoading(true)
+    setProfileLoadPending(true)
     setProfileView(null)
     setProfileError(null)
     setActionError(null)
@@ -185,10 +193,12 @@ export default function PublicProfilePage() {
       if (error) {
         setProfileError(error.message)
         setProfileView(null)
+        setLoadedProfileUsername(username)
         return
       }
 
       setProfileView(publicProfile)
+      setLoadedProfileUsername(username)
     } catch (loadError) {
       if (requestId !== profileRequestIdRef.current) return
       setProfileError(
@@ -197,9 +207,10 @@ export default function PublicProfilePage() {
           : t('Something went wrong loading this profile.'),
       )
       setProfileView(null)
+      setLoadedProfileUsername(username)
     } finally {
       if (requestId === profileRequestIdRef.current) {
-        setIsProfileLoading(false)
+        setProfileLoadPending(false)
       }
     }
   }, [username, userId, t])

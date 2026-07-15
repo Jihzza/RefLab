@@ -17,6 +17,8 @@ interface UsePostActionsParams {
   removePost: (postId: string) => void
   removePostsByUser: (userId: string) => void
   addPost: (post: Post) => void
+  restorePost?: (post: Post) => void
+  onDeleteSuccess?: (post: Post) => void
 }
 
 export function usePostActions({
@@ -24,10 +26,13 @@ export function usePostActions({
   removePost,
   removePostsByUser,
   addPost,
+  restorePost,
+  onDeleteSuccess,
 }: UsePostActionsParams) {
   const { user, profile } = useAuth()
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const inFlightActionsRef = useRef(new Set<string>())
+  const restoreDeletedPost = restorePost ?? addPost
 
   const handleLike = useCallback(
     async (post: Post) => {
@@ -195,27 +200,30 @@ export function usePostActions({
   }, [])
 
   const handleDelete = useCallback(
-    async (postId: string) => {
-      const actionKey = `delete:${postId}`
+    async (post: Post) => {
+      const actionKey = `delete:${post.id}`
       if (inFlightActionsRef.current.has(actionKey)) return
       inFlightActionsRef.current.add(actionKey)
-      setPendingAction(postId)
+      setPendingAction(post.id)
+      removePost(post.id)
 
       try {
-        const { error } = await deletePost(postId)
+        const { error } = await deletePost(post.id)
         if (error) {
           console.error('Failed to delete post:', error)
+          restoreDeletedPost(post)
           return
         }
-        removePost(postId)
+        onDeleteSuccess?.(post)
       } catch (error) {
         console.error('Failed to delete post:', error)
+        restoreDeletedPost(post)
       } finally {
         inFlightActionsRef.current.delete(actionKey)
-        setPendingAction((current) => (current === postId ? null : current))
+        setPendingAction((current) => (current === post.id ? null : current))
       }
     },
-    [removePost]
+    [onDeleteSuccess, removePost, restoreDeletedPost]
   )
 
   const handleReport = useCallback(

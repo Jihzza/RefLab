@@ -36,8 +36,8 @@ export default function PostDetailPage() {
   }, [])
 
   const removePost = useCallback(() => {
-    navigate('/app/social', { replace: true })
-  }, [navigate])
+    setPost(null)
+  }, [])
 
   const removePostsByUser = useCallback(
     (userId: string) => {
@@ -52,6 +52,14 @@ export default function PostDetailPage() {
     // No-op on detail page (reposts go to feed)
   }, [])
 
+  const restorePost = useCallback((deletedPost: Post) => {
+    setPost(deletedPost)
+  }, [])
+
+  const handleDeleteSuccess = useCallback(() => {
+    navigate('/app/social', { replace: true })
+  }, [navigate])
+
   const {
     handleLike,
     handleSave,
@@ -60,7 +68,15 @@ export default function PostDetailPage() {
     handleDelete,
     handleReport,
     handleBlock,
-  } = usePostActions({ updatePost, removePost, removePostsByUser, addPost })
+    pendingAction,
+  } = usePostActions({
+    updatePost,
+    removePost,
+    removePostsByUser,
+    addPost,
+    restorePost,
+    onDeleteSuccess: handleDeleteSuccess,
+  })
 
   // Fetch post on mount
   useEffect(() => {
@@ -147,6 +163,20 @@ export default function PostDetailPage() {
                 <div className="h-3 rounded bg-(--mc-color-surface-raised)" />
                 <div className="h-3 w-4/5 rounded bg-(--mc-color-surface-raised)" />
               </div>
+            </Surface>
+          )}
+
+          {!loading && !error && !post && pendingAction === postId && (
+            <Surface
+              role="status"
+              aria-label={t('Deleting post')}
+              className="flex min-h-40 items-center justify-center"
+            >
+              <LoaderCircle
+                className="size-6 animate-spin text-(--mc-color-accent) motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              <span className="sr-only">{t('Deleting post')}</span>
             </Surface>
           )}
 
