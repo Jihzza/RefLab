@@ -206,6 +206,8 @@ const ptPT = {
   'Attach media': 'Anexar multimédia',
   'Remove attachment': 'Remover anexo',
   'Open {{name}} profile': 'Abrir perfil de {{name}}',
+  'Failed to send message.': 'Não foi possível enviar a mensagem.',
+  'Unsupported attachment type.': 'Tipo de anexo não suportado.',
 
   // Search
   'Search users...': 'Pesquisar utilizadores...',
@@ -511,6 +513,33 @@ const ptPT = {
   'Advanced analytics insights': 'Análises avançadas',
   'Priority support + faster response': 'Suporte prioritário + resposta mais rápida',
   'Early access to new premium features': 'Acesso antecipado a novas funcionalidades premium',
+  'Your subscription is taking longer than expected to update.':
+    'A atualização da tua subscrição está a demorar mais do que o esperado.',
+  'Check again': 'Verificar novamente',
+  'Failed to load billing information.': 'Não foi possível carregar os dados de faturação.',
+  Plan: 'Plano',
+  '{{plan}} plan benefits': 'Benefícios do plano {{plan}}',
+  '{{action}} — {{plan}} plan': '{{action}} — plano {{plan}}',
+  'Included with your plan': 'Incluído no teu plano',
+  'Failed to start checkout': 'Não foi possível iniciar o pagamento',
+  'Failed to open billing portal. Please try again.':
+    'Não foi possível abrir o portal de faturação. Tenta novamente.',
+  'Failed to load invoices.': 'Não foi possível carregar as faturas.',
+  'View invoice from {{date}}': 'Ver fatura de {{date}}',
+  'Download invoice from {{date}}': 'Transferir fatura de {{date}}',
+  'Load more': 'Carregar mais',
+  'the end of the billing period': 'o final do período de faturação',
+  'Failed to cancel subscription. Please try again.':
+    'Não foi possível cancelar a subscrição. Tenta novamente.',
+  'Failed to change plan. Please try again.':
+    'Não foi possível alterar o plano. Tenta novamente.',
+  active: 'ativo',
+  trialing: 'em período experimental',
+  'past due': 'pagamento em atraso',
+  paid: 'paga',
+  open: 'em aberto',
+  void: 'anulada',
+  uncollectible: 'incobrável',
 
   // Policies
   'Policy sections': 'Secções legais',
@@ -603,6 +632,9 @@ const ptPT = {
   'Inappropriate content': 'Conteúdo inadequado',
   'Describe the issue...': 'Descreve o problema...',
   'Create new post': 'Criar nova publicação',
+  'Refresh feed': 'Atualizar feed',
+  'Unsupported media type. Please choose an image, video, or audio file.':
+    'Tipo de multimédia não suportado. Escolhe um ficheiro de imagem, vídeo ou áudio.',
   'New Post': 'Nova publicação',
   "What's on your mind?": 'O que estás a pensar?',
   'Remove media': 'Remover multimédia',
@@ -614,6 +646,14 @@ const ptPT = {
   'Add a comment...': 'Adicionar comentário...',
   Post: 'Publicar',
   'No comments yet. Be the first!': 'Ainda não há comentários. Sê o primeiro!',
+  'Post by {{name}}': 'Publicação de {{name}}',
+  '{{name}} reposted': '{{name}} republicou',
+  'Loading post': 'A carregar publicação',
+  'Original post was deleted': 'A publicação original foi eliminada',
+  'Media unavailable': 'Multimédia indisponível',
+  'Loading comments': 'A carregar comentários',
+  'Mention a user': 'Mencionar um utilizador',
+  'Searching users': 'A pesquisar utilizadores',
   'Profile actions': 'Ações do perfil',
   'Profile menu': 'Menu de perfil',
   'Edit Profile': 'Editar perfil',
