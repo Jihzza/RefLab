@@ -168,6 +168,18 @@ const ptPT = {
   Rest: 'Descanso',
   Today: 'Hoje',
   'Loading dashboard': 'A carregar painel',
+  'Good morning': 'Bom dia',
+  'Good afternoon': 'Boa tarde',
+  'Good evening': 'Boa noite',
+  'Recommended training': 'Treino recomendado',
+  'of accuracy': 'de precisão',
+  'Complete a test to receive a personalised recommendation.':
+    'Conclui um teste para receberes uma recomendação personalizada.',
+  'this week': 'esta semana',
+  Current: 'Atual',
+  Best: 'Recorde',
+  'Training metrics': 'Métricas de treino',
+  'Updating dashboard': 'A atualizar painel',
 
   // Notifications
   'No notifications yet': 'Ainda não há notificações',
@@ -204,6 +216,9 @@ const ptPT = {
   'No users found': 'Não foram encontrados utilizadores',
   'Type to search': 'Escreve para pesquisar',
   Searching: 'A pesquisar',
+  'Search results': 'Resultados da pesquisa',
+  '{{count}} search result': '{{count}} resultado de pesquisa',
+  '{{count}} search results': '{{count}} resultados de pesquisa',
   'View profile of {{name}}': 'Ver perfil de {{name}}',
   'Remove {{name}} from search history': 'Remover {{name}} do histórico de pesquisa',
   'Clear search': 'Limpar pesquisa',
