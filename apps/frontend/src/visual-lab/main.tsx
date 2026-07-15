@@ -16,6 +16,11 @@ const fixtures = {
   pricing: { path: '/app/pricing', load: () => import('./PricingFixture') },
   profile: { path: '/app/profile', load: () => import('./ProfileFixture') },
   settings: { path: '/app/settings', load: () => import('./SettingsFixture') },
+  learn: { path: '/app/learn', load: () => import('./LearnFixture') },
+  test: { path: '/app/learn', load: () => import('./TestFixture') },
+  results: { path: '/app/learn', load: () => import('./ResultsFixture') },
+  video: { path: '/app/learn', load: () => import('./VideoFixture') },
+  notifications: { path: '/app/notifications', load: () => import('./NotificationsFixture') },
 } as const
 const fixtureKey = screen in fixtures ? screen as keyof typeof fixtures : 'dashboard'
 const fixture = fixtures[fixtureKey]

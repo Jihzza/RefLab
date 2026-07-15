@@ -10,17 +10,19 @@ interface FixtureShellProps {
   title: string
   children: ReactNode
   messageBadge?: number
+  notificationActive?: boolean
 }
 
 export default function FixtureShell({
   title,
   children,
   messageBadge = 0,
+  notificationActive = false,
 }: FixtureShellProps) {
   return (
     <div className="min-h-dvh bg-(--mc-color-canvas)">
       <FixtureRail />
-      <FixtureHeader title={title} />
+      <FixtureHeader title={title} notificationActive={notificationActive} />
       <main className="pt-16 pb-18 md:pl-20 md:pb-0 xl:pl-64">
         {children}
       </main>
@@ -29,7 +31,13 @@ export default function FixtureShell({
   )
 }
 
-function FixtureHeader({ title }: { title: string }) {
+function FixtureHeader({
+  title,
+  notificationActive,
+}: {
+  title: string
+  notificationActive: boolean
+}) {
   const { t } = useTranslation()
 
   return (
@@ -44,12 +52,19 @@ function FixtureHeader({ title }: { title: string }) {
           <h1 className="text-base font-semibold text-(--mc-color-text)">{title}</h1>
         </div>
         <div className="ml-auto flex items-center gap-1 text-(--mc-color-text-secondary)">
-          <button type="button" className="mc-focus-ring grid size-10 place-items-center rounded-(--mc-radius-button)" aria-label={t('Search')}>
+          <button type="button" className="mc-focus-ring hidden size-10 place-items-center rounded-(--mc-radius-button) md:grid" aria-label={t('Search')}>
             <Search className="size-5" />
           </button>
-          <button type="button" className="mc-focus-ring relative grid size-10 place-items-center rounded-(--mc-radius-button)" aria-label={t('Notifications')}>
+          <button
+            type="button"
+            className={`mc-focus-ring relative grid size-10 place-items-center rounded-(--mc-radius-button) ${notificationActive ? 'text-(--mc-color-accent)' : ''}`}
+            aria-label={t('Notifications')}
+            aria-current={notificationActive ? 'page' : undefined}
+          >
             <Bell className="size-5" />
-            <span className="absolute top-2 right-2 size-2 rounded-full border border-(--mc-color-surface) bg-(--mc-color-danger)" />
+            {!notificationActive && (
+              <span className="absolute top-2 right-2 size-2 rounded-full border border-(--mc-color-surface) bg-(--mc-color-danger)" />
+            )}
           </button>
           <span className="ml-1 hidden size-9 items-center justify-center rounded-full bg-(--mc-color-accent) text-xs font-extrabold text-(--mc-color-canvas) md:flex">RM</span>
         </div>

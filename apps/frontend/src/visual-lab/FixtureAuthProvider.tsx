@@ -34,6 +34,7 @@ const fixtureAuth: AuthContextType = {
   loading: false,
   sessionExpired: false,
   recoveryMode: false,
+  clearRecoveryMode: () => undefined,
   dismissSessionExpired: () => undefined,
   refreshProfile: async () => undefined,
   signIn: successfulAction,
