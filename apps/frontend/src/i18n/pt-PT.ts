@@ -26,6 +26,7 @@ const ptPT = {
   Guest: 'Visitante',
   'Log In': 'Iniciar sessão',
   Sidebar: 'Menu lateral',
+  'Primary navigation': 'Navegação principal',
   'Open menu': 'Abrir menu',
 
   // Cookie banner

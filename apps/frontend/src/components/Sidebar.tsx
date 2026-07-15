@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/components/useAuth';
 import {
   LayoutDashboard,
@@ -38,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -60,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     <>
       {/* Backdrop Overlay */}
       <div
-        className={`fixed inset-0 bg-(--bg-primary)/50 z-30 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-60 bg-black/65 backdrop-blur-sm transition-opacity duration-300 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={onClose}
@@ -69,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Sidebar Panel */}
       <aside
-        className={`fixed top-16 left-0 ${user ? 'bottom-16' : 'bottom-0'} w-64 bg-(--bg-surface) border-r border-(--border-subtle) shadow-xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed left-0 top-[calc(var(--mc-header-height)+var(--mc-safe-top))] ${user ? 'bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))]' : 'bottom-0'} z-70 flex w-64 transform flex-col border-r border-(--border-subtle) bg-(--bg-surface) shadow-xl transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         aria-label={t('Sidebar')}
@@ -79,11 +80,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           <nav className="space-y-1">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
+              const isActive =
+                location.pathname === item.path ||
+                location.pathname.startsWith(`${item.path}/`) ||
+                (item.path === '/app/social' &&
+                  location.pathname.startsWith('/app/post/'));
+
               return (
                 <button
                   key={item.path}
                   onClick={() => handleNavigation(item.path)}
-                  className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium"
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`flex w-full items-center gap-3 rounded-(--radius-button) border px-4 py-3 text-left font-medium transition-colors ${
+                    isActive
+                      ? 'border-(--brand-yellow)/25 bg-(--brand-yellow)/10 text-(--brand-yellow)'
+                      : 'border-transparent text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary)'
+                  }`}
                 >
                   <Icon className="w-4.5 h-4.5 shrink-0" />
                   <span>{t(item.key)}</span>

@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
-import { BottomNav } from "@/components/BottomNav";
+import {
+  MatchHeader,
+  MobileTabBar,
+  ResponsiveRail,
+  useMatchNavigationBadges,
+} from "./shell";
 
 /**
  * AppShell - Authenticated layout wrapper.
@@ -16,25 +20,26 @@ import { BottomNav } from "@/components/BottomNav";
  */
 export default function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const badges = useMatchNavigationBadges();
 
   return (
-    <div className="min-h-screen bg-(--bg-primary) flex flex-col">
-      {/* Fixed header */}
-      <Header
+    <div className="mc-min-screen bg-(--bg-primary)">
+      <ResponsiveRail badges={badges} />
+
+      <MatchHeader
         onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
-        onMenuClose={() => setIsSidebarOpen(false)}
       />
 
-      {/* Sidebar overlay */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      {/* Main content area: offset for fixed header (pt-16) and bottom nav (pb-16) */}
-      <main className="flex-1 pt-16 pb-16">
+      <main
+        id="app-content"
+        className="min-h-screen pt-[calc(var(--mc-header-height)+var(--mc-safe-top))] pb-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] md:pl-20 md:pb-0 xl:pl-64"
+      >
         <Outlet />
       </main>
 
-      {/* Fixed bottom navigation */}
-      <BottomNav />
+      <MobileTabBar badges={badges} />
     </div>
   );
 }

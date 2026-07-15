@@ -1,0 +1,101 @@
+import { Menu, Search } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import logo from '@/assets/logos/RefLab-Logo-No-BG.svg'
+import { IconButton } from '@/components/ui'
+import NotificationBell from '@/features/notifications/components/NotificationBell'
+import { useAuth } from '@/features/auth/components/useAuth'
+import { getMatchRouteTitleKey } from './navigation'
+
+interface MatchHeaderProps {
+  onMenuToggle?: () => void
+}
+
+export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
+  const { t } = useTranslation()
+  const location = useLocation()
+  const { profile, user } = useAuth()
+
+  const title = t(getMatchRouteTitleKey(location.pathname))
+  const displayName =
+    profile?.name ||
+    profile?.username ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    t('Profile')
+  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
+  const initials = displayName.slice(0, 2).toUpperCase()
+
+  return (
+    <header className="fixed top-0 right-0 left-0 z-40 h-[calc(var(--mc-header-height)+var(--mc-safe-top))] border-b border-(--border-subtle) bg-(--bg-surface)/95 pt-[var(--mc-safe-top)] shadow-(--shadow-soft) backdrop-blur-md md:left-20 xl:left-64">
+      <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-6">
+        {onMenuToggle && (
+          <IconButton
+            label={t('Open menu')}
+            size="md"
+            variant="ghost"
+            className="md:hidden"
+            onClick={onMenuToggle}
+          >
+            <Menu className="h-5 w-5" />
+          </IconButton>
+        )}
+
+        <Link
+          to="/app/dashboard"
+          className="flex shrink-0 items-center gap-2 rounded-(--radius-button) md:hidden"
+          aria-label={t('RefLab Home')}
+        >
+          <img src={logo} alt="" className="h-7 w-auto" aria-hidden="true" />
+          <span className="text-lg font-bold tracking-tight text-(--text-primary)">
+            RefLab
+          </span>
+        </Link>
+
+        <div className="hidden h-7 w-px bg-(--border-subtle) md:block" />
+
+        <div className="hidden min-w-0 flex-1 md:block md:pl-1">
+          <p className="hidden text-[10px] font-semibold tracking-[0.18em] text-(--brand-yellow) uppercase md:block">
+            Match Control
+          </p>
+          <h1 className="truncate text-sm font-semibold text-(--text-primary) md:text-base">
+            {title}
+          </h1>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <Link
+            to="/app/search"
+            className="flex h-10 w-10 items-center justify-center rounded-(--radius-button) text-(--text-secondary) transition-colors hover:bg-(--bg-hover) hover:text-(--brand-yellow)"
+            aria-label={t('Search')}
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </Link>
+
+          <NotificationBell />
+
+          <Link
+            to="/app/profile"
+            className="ml-1 hidden h-10 min-w-10 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-primary) transition-colors hover:border-(--brand-yellow) md:flex"
+            aria-label={t('Profile')}
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={displayName}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-yellow) text-xs font-bold text-(--bg-primary)">
+                {initials}
+              </span>
+            )}
+          </Link>
+        </div>
+      </div>
+
+      <div className="absolute bottom-0 left-4 h-0.5 w-10 bg-(--brand-yellow) md:left-6" />
+      <div className="absolute bottom-0 left-14 h-0.5 w-3 bg-(--brand-red) md:left-16" />
+    </header>
+  )
+}
