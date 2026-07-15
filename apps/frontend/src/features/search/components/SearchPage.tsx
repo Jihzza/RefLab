@@ -48,12 +48,12 @@ export default function SearchPage() {
     <div className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)">
       <div className="mx-auto w-full max-w-4xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7 xl:px-8">
         <header className="mb-4 sm:mb-5">
-          <h1
+          <h2
             id="search-page-title"
             className="text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) sm:text-3xl"
           >
             {t('Search')}
-          </h1>
+          </h2>
         </header>
 
         <div

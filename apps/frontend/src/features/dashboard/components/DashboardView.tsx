@@ -40,9 +40,9 @@ export default function DashboardView({
     <div className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)">
       <div className="mx-auto w-full max-w-7xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7 xl:px-8">
         <header className="mb-4 sm:mb-5">
-          <h1 className="break-words text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) [overflow-wrap:anywhere] sm:text-3xl">
+          <h2 className="break-words text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) [overflow-wrap:anywhere] sm:text-3xl">
             {firstName ? `${greeting}, ${firstName}` : t('Dashboard')}
-          </h1>
+          </h2>
         </header>
 
         {error && (

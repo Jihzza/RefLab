@@ -28,9 +28,9 @@ export default function NotificationsPage() {
     >
       <div className="mx-auto w-full max-w-3xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7">
         <header className="mb-4 sm:mb-5">
-          <h1 className="text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) sm:text-3xl">
+          <h2 className="text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) sm:text-3xl">
             {t('Notifications')}
-          </h1>
+          </h2>
         </header>
 
         {loading && (
