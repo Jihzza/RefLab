@@ -1,10 +1,15 @@
-import { useState } from 'react'
-import { GraduationCap } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { BookOpen, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { clearLearningHistory } from '../api/settingsApi'
-import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
-import { useTranslation } from 'react-i18next'
+import SettingsSection from './SettingsSection'
+
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error('Unexpected learning-history error')
+}
 
 export default function LearningSection() {
   const { t } = useTranslation()
@@ -13,14 +18,25 @@ export default function LearningSection() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current)
+  }, [])
 
   const handleClear = async () => {
-    if (!user?.id) return
+    if (!user?.id || loading) return
 
     setLoading(true)
     setError(null)
 
-    const { error: clearError } = await clearLearningHistory(user.id)
+    let clearError: Error | null = null
+    try {
+      const result = await clearLearningHistory(user.id)
+      clearError = result.error
+    } catch (caughtError) {
+      clearError = toError(caughtError)
+    }
 
     if (clearError) {
       setError(clearError.message)
@@ -32,37 +48,47 @@ export default function LearningSection() {
     setDialogOpen(false)
     setSuccess(true)
 
-    // Auto-dismiss success message after 3 seconds
-    setTimeout(() => setSuccess(false), 3000)
+    if (successTimerRef.current) clearTimeout(successTimerRef.current)
+    successTimerRef.current = setTimeout(() => {
+      setSuccess(false)
+      successTimerRef.current = null
+    }, 3000)
   }
 
   return (
     <>
-      <SettingsSection title={t('Learning')} icon={<GraduationCap className="w-4.5 h-4.5" />}>
-        <div className="px-4 py-3">
-          <p className="text-sm text-(--text-secondary) mb-3">
-            {t('Clear your test history, question attempts, video watch history, streak data, and all learning progress. This cannot be undone.')}
+      <SettingsSection
+        title={t('Learning')}
+        description={t('Clear Learning History')}
+        icon={<BookOpen className="size-7" />}
+        grouped
+      >
+        <div className="px-4 py-4 sm:px-5">
+          <p className="text-sm leading-6 text-(--mc-color-text-muted)">
+            {t('Clear your test attempts and answers, plus streak-related notifications. This cannot be undone.')}
           </p>
 
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className="text-sm font-medium px-4 py-2 rounded-(--radius-button)
-              border border-(--error)/20 text-(--error)
-              hover:bg-(--error)/10 transition-colors"
-            aria-label={t('Clear Learning History')}
+          <Button
+            variant="danger"
+            size="md"
+            leadingIcon={<Trash2 className="size-4" />}
+            onClick={() => {
+              setError(null)
+              setDialogOpen(true)
+            }}
+            className="mt-4"
           >
             {t('Clear Learning History')}
-          </button>
+          </Button>
 
           {success && (
-            <p className="text-xs text-(--success) mt-2" role="status">
+            <p className="mt-3 text-sm text-(--mc-color-success)" role="status">
               {t('Learning history cleared successfully.')}
             </p>
           )}
 
-          {error && (
-            <p className="text-xs text-(--error) mt-2" role="alert">
+          {error && !dialogOpen && (
+            <p className="mt-3 break-words text-sm text-(--mc-color-danger)" role="alert">
               {error}
             </p>
           )}
@@ -71,13 +97,17 @@ export default function LearningSection() {
 
       <ConfirmDialog
         isOpen={dialogOpen}
-        onClose={() => setDialogOpen(false)}
+        onClose={() => {
+          setDialogOpen(false)
+          setError(null)
+        }}
         onConfirm={handleClear}
         title={t('Clear Learning History')}
-        description={t('This will permanently delete all your test attempts, question progress, video history, and streak data. This action cannot be undone.')}
+        description={t('This will permanently delete all your test attempts and answers, and remove streak-related notifications. This action cannot be undone.')}
         confirmLabel={t('Clear History')}
         variant="warning"
         loading={loading}
+        error={error}
       />
     </>
   )

@@ -1,13 +1,30 @@
-import { Settings } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Settings, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import DocumentPage from '@/app/layouts/DocumentPage'
+import { Badge, Button, EmptyState, IconButton, Skeleton, Surface } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useSettings } from '../hooks/useSettings'
-import ProfileSection from './ProfileSection'
-import AccountSection from './AccountSection'
-import NotificationsSection from './NotificationsSection'
-import PrivacySection from './PrivacySection'
+import AccountSection, { AccountActions } from './AccountSection'
 import LearningSection from './LearningSection'
 import LegalSection from './LegalSection'
-import { useTranslation } from 'react-i18next'
+import NotificationsSection from './NotificationsSection'
+import PrivacySection from './PrivacySection'
+import ProfileSection from './ProfileSection'
+
+function SettingsLoadingState() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="space-y-4" role="status" aria-label={t('Loading...')}>
+      <Skeleton variant="rectangular" height="7.25rem" />
+      <Skeleton variant="rectangular" height="13rem" />
+      <Skeleton variant="rectangular" height="4.75rem" />
+      <Skeleton variant="rectangular" height="4.75rem" />
+      <Skeleton variant="rectangular" height="4.75rem" />
+      <span className="sr-only">{t('Loading...')}</span>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const { t } = useTranslation()
@@ -16,79 +33,113 @@ export default function SettingsPage() {
     settings,
     notificationPreferences,
     loading,
-    error,
+    hasLoaded,
+    loadError,
+    saveError,
+    saveErrorScope,
+    saving,
+    notificationSaving,
+    privacySaving,
     toggleNotification,
     setMessagingPrivacy,
+    retry,
+    clearSaveError,
   } = useSettings()
 
-  // Auth guard
-  if (!user) {
-    return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
-          <p className="mt-2 text-sm text-(--error)">
-            {t('You must be signed in to access settings.')}
-          </p>
-        </div>
-      </section>
-    )
-  }
-
   return (
-    <section className="p-4 pb-20">
-      {/* Page header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Settings className="w-5 h-5 text-(--text-muted)" />
-        <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
-      </div>
+    <DocumentPage ariaLabel={t('Settings')} width="narrow" spacing="compact">
+      <header className="mb-5 flex min-h-16 items-center gap-3 px-1 pt-1 sm:mb-6">
+        <Settings className="size-9 shrink-0 text-(--mc-color-accent)" aria-hidden="true" />
+        <h2 className="min-w-0 flex-1 text-[2rem] font-extrabold leading-tight tracking-[-0.035em] text-(--mc-color-text)">
+          {t('Settings')}
+        </h2>
+        {saving && (
+          <Badge variant="accent" dot role="status" className="shrink-0">
+            {t('Saving...')}
+          </Badge>
+        )}
+      </header>
 
-      {/* Error banner */}
-      {error && (
-        <div
-          className="mb-4 p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm"
-          role="alert"
-        >
-          {t('Failed to load settings: {{error}}', { error })}
-        </div>
+      {!user && (
+        <Surface padding="none" className="overflow-hidden border-(--mc-color-danger)/35 shadow-none">
+          <EmptyState
+            icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
+            title={t('Settings')}
+            description={t('You must be signed in to access settings.')}
+          />
+        </Surface>
       )}
 
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+      {user && loading && <SettingsLoadingState />}
+
+      {user && !loading && loadError && !hasLoaded && (
+        <Surface padding="none" className="overflow-hidden border-(--mc-color-danger)/35 shadow-none">
+          <EmptyState
+            icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
+            title={t('Something went wrong. Please try again.')}
+            description={t('Failed to load settings: {{error}}', { error: loadError })}
+            action={(
+              <Button
+                variant="secondary"
+                leadingIcon={<RefreshCw className="size-4" />}
+                onClick={retry}
+              >
+                {t('Try Again')}
+              </Button>
+            )}
+          />
+        </Surface>
+      )}
+
+      {user && !loading && hasLoaded && (
+        <div className="space-y-4 pb-4">
+          {saveError && (
             <div
-              key={i}
-              className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) h-24 animate-pulse"
-            />
-          ))}
-        </div>
-      )}
+              className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/35 bg-(--mc-color-danger)/8 px-3.5 py-3 text-sm text-(--mc-color-danger)"
+              role="alert"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 flex-1 break-words">
+                {t('Failed to save settings: {{error}}', { error: saveError })}
+              </span>
+              <IconButton
+                label={t('Close')}
+                size="sm"
+                variant="ghost"
+                onClick={clearSaveError}
+                className="-m-1.5 text-(--mc-color-danger) hover:text-(--mc-color-danger)"
+              >
+                <X className="size-4" />
+              </IconButton>
+            </div>
+          )}
 
-      {/* Settings sections */}
-      {!loading && (
-        <div className="space-y-4">
           <ProfileSection />
-
           <AccountSection />
-
-          <NotificationsSection
-            preferences={notificationPreferences}
-            onToggle={toggleNotification}
-            loading={loading}
-          />
-
-          <PrivacySection
-            settings={settings}
-            onMessagingPrivacyChange={setMessagingPrivacy}
-            loading={loading}
-          />
-
-          <LearningSection />
-
-          <LegalSection />
+          <Surface
+            padding="none"
+            className="divide-y divide-(--mc-color-border) overflow-hidden border-(--mc-color-border-strong) shadow-none"
+          >
+            <NotificationsSection
+              preferences={notificationPreferences}
+              onToggle={toggleNotification}
+              loading={loading}
+              saving={notificationSaving}
+              hasError={saveErrorScope === 'notifications'}
+            />
+            <PrivacySection
+              settings={settings}
+              onMessagingPrivacyChange={(value) => void setMessagingPrivacy(value)}
+              loading={loading}
+              saving={privacySaving}
+              hasSaveError={saveErrorScope === 'privacy'}
+            />
+            <LearningSection />
+            <LegalSection />
+          </Surface>
+          <AccountActions />
         </div>
       )}
-    </section>
+    </DocumentPage>
   )
 }

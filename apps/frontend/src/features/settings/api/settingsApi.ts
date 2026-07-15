@@ -1,5 +1,10 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { SettingsData, BlockedUser, MessagingPrivacy } from '../types'
+import type {
+  BlockedUser,
+  InAppNotificationType,
+  MessagingPrivacy,
+  SettingsData,
+} from '../types'
 
 // ============================================
 // Default settings (used when no DB row exists)
@@ -41,7 +46,16 @@ export async function fetchAllSettings(
   // RPC returns JSON — merge with defaults for safety
   const result = data as SettingsData | null
   return {
-    data: result ?? DEFAULT_SETTINGS,
+    data: {
+      settings: {
+        ...DEFAULT_SETTINGS.settings,
+        ...result?.settings,
+      },
+      notification_preferences: {
+        ...DEFAULT_SETTINGS.notification_preferences,
+        ...result?.notification_preferences,
+      },
+    },
     error: null,
   }
 }
@@ -51,7 +65,7 @@ export async function fetchAllSettings(
  */
 export async function updateNotificationPreference(
   userId: string,
-  notificationType: string,
+  notificationType: InAppNotificationType,
   enabled: boolean
 ): Promise<{ error: Error | null }> {
   const { error } = await supabase

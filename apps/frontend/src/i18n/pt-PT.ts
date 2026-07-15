@@ -229,6 +229,7 @@ const ptPT = {
   'You must be signed in to access settings.':
     'Tens de iniciar sessão para aceder às definições.',
   'Failed to load settings: {{error}}': 'Falha ao carregar definições: {{error}}',
+  'Failed to save settings: {{error}}': 'Falha ao guardar definições: {{error}}',
   'Edit profile': 'Editar perfil',
   'Account & Security': 'Conta e segurança',
   'Managed by Google': 'Gerido pela Google',
@@ -246,10 +247,14 @@ const ptPT = {
   Learning: 'Aprendizagem',
   'Clear your test history, question attempts, video watch history, streak data, and all learning progress. This cannot be undone.':
     'Limpa o histórico de testes, tentativas de perguntas, histórico de vídeos, dados de sequência e todo o progresso de aprendizagem. Esta ação não pode ser desfeita.',
+  'Clear your test attempts and answers, plus streak-related notifications. This cannot be undone.':
+    'Apaga as tuas tentativas e respostas de testes, bem como as notificações relacionadas com sequências. Esta ação não pode ser anulada.',
   'Clear Learning History': 'Limpar histórico de aprendizagem',
   'Learning history cleared successfully.': 'Histórico de aprendizagem limpo com sucesso.',
   'This will permanently delete all your test attempts, question progress, video history, and streak data. This action cannot be undone.':
     'Isto vai eliminar permanentemente todas as tentativas de teste, progresso de perguntas, histórico de vídeos e dados de sequência. Esta ação não pode ser desfeita.',
+  'This will permanently delete all your test attempts and answers, and remove streak-related notifications. This action cannot be undone.':
+    'Esta ação elimina permanentemente todas as tuas tentativas e respostas de testes e remove as notificações relacionadas com sequências. Não pode ser anulada.',
   'Clear History': 'Limpar histórico',
   'Privacy & Safety': 'Privacidade e segurança',
   'Who can message me': 'Quem pode enviar-me mensagens',

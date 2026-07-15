@@ -1,4 +1,5 @@
-import { Bell } from 'lucide-react'
+import { AlertTriangle, Bell } from 'lucide-react'
+import Badge from '@/components/ui/Badge'
 import SettingsSection from './SettingsSection'
 import SettingsToggle from './SettingsToggle'
 import type { InAppNotificationType, NotificationPreferences } from '../types'
@@ -8,6 +9,8 @@ interface NotificationsSectionProps {
   preferences: NotificationPreferences
   onToggle: (type: InAppNotificationType) => void
   loading: boolean
+  saving?: boolean
+  hasError?: boolean
 }
 
 // Notification toggle groups for organized UI
@@ -36,8 +39,8 @@ const CONTENT_TOGGLES: { key: InAppNotificationType; label: string }[] = [
 
 function GroupLabel({ children }: { children: string }) {
   return (
-    <div className="px-4 pt-3 pb-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-(--text-muted)">
+    <div className="bg-(--mc-color-canvas)/55 px-4 py-2.5 sm:px-5">
+      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-(--mc-color-text-muted)">
         {children}
       </span>
     </div>
@@ -48,13 +51,33 @@ export default function NotificationsSection({
   preferences,
   onToggle,
   loading,
+  saving = false,
+  hasError = false,
 }: NotificationsSectionProps) {
   const { t } = useTranslation()
 
   return (
-    <SettingsSection title={t('Notifications')} icon={<Bell className="w-4.5 h-4.5" />}>
+    <SettingsSection
+      title={t('Notifications')}
+      description={`${t('Engagement')} · ${t('Social')} · ${t('Streaks')} · ${t('Content')}`}
+      icon={<Bell className="size-7" />}
+      grouped
+      status={hasError ? (
+        <Badge
+          variant="danger"
+          size="sm"
+          aria-label={t('Something went wrong. Please try again.')}
+        >
+          <AlertTriangle className="size-3.5" aria-hidden="true" />
+        </Badge>
+      ) : saving ? (
+        <Badge variant="accent" size="sm" dot role="status">
+          {t('Saving...')}
+        </Badge>
+      ) : undefined}
+    >
       {/* In-app notifications */}
-      <div>
+      <div className="divide-y divide-(--mc-color-border)">
         <GroupLabel>{t('Engagement')}</GroupLabel>
         {ENGAGEMENT_TOGGLES.map((item) => (
           <SettingsToggle
@@ -67,7 +90,7 @@ export default function NotificationsSection({
         ))}
       </div>
 
-      <div>
+      <div className="divide-y divide-(--mc-color-border)">
         <GroupLabel>{t('Social')}</GroupLabel>
         {SOCIAL_TOGGLES.map((item) => (
           <SettingsToggle
@@ -80,7 +103,7 @@ export default function NotificationsSection({
         ))}
       </div>
 
-      <div>
+      <div className="divide-y divide-(--mc-color-border)">
         <GroupLabel>{t('Streaks')}</GroupLabel>
         {STREAK_TOGGLES.map((item) => (
           <SettingsToggle
@@ -93,7 +116,7 @@ export default function NotificationsSection({
         ))}
       </div>
 
-      <div>
+      <div className="divide-y divide-(--mc-color-border)">
         <GroupLabel>{t('Content')}</GroupLabel>
         {CONTENT_TOGGLES.map((item) => (
           <SettingsToggle

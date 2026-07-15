@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Dialog, Input } from '@/components/ui'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -7,13 +9,11 @@ interface ConfirmDialogProps {
   onConfirm: () => void | Promise<void>
   title: string
   description: string
-  /** Button label for the confirm action */
   confirmLabel?: string
-  /** If set, user must type this exact phrase to enable the confirm button */
   confirmPhrase?: string
-  /** Controls color scheme: 'danger' = red, 'warning' = yellow */
   variant?: 'danger' | 'warning'
   loading?: boolean
+  error?: string | null
 }
 
 export default function ConfirmDialog({
@@ -22,120 +22,119 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   confirmPhrase,
   variant = 'danger',
   loading = false,
+  error,
 }: ConfirmDialogProps) {
   const { t } = useTranslation()
   const [typedPhrase, setTypedPhrase] = useState('')
+  const [isConfirming, setIsConfirming] = useState(false)
+  const phraseInputRef = useRef<HTMLInputElement>(null)
+  const cancelButtonRef = useRef<HTMLButtonElement>(null)
+  const confirmingRef = useRef(false)
 
-  if (!isOpen) return null
-
+  const busy = loading || isConfirming
   const phraseMatches = !confirmPhrase || typedPhrase === confirmPhrase
-  const confirmDisabled = loading || !phraseMatches
+  const resolvedConfirmLabel = confirmLabel ?? t('Confirm')
+  const toneClassName = variant === 'danger'
+    ? 'text-(--mc-color-danger)'
+    : 'text-(--mc-color-warning)'
 
-  const variantStyles = {
-    danger: {
-      titleColor: 'text-(--error)',
-      buttonBg: 'bg-(--error) text-white hover:opacity-90',
-    },
-    warning: {
-      titleColor: 'text-(--warning)',
-      buttonBg: 'bg-(--warning) text-(--bg-primary) hover:opacity-90',
-    },
-  }
-
-  const styles = variantStyles[variant]
+  useEffect(() => {
+    if (!isOpen) {
+      confirmingRef.current = false
+      setTypedPhrase('')
+      setIsConfirming(false)
+    }
+  }, [isOpen])
 
   const handleClose = () => {
+    if (loading || confirmingRef.current) return
     setTypedPhrase('')
     onClose()
   }
 
   const handleConfirm = async () => {
-    await onConfirm()
-    setTypedPhrase('')
+    if (loading || confirmingRef.current || !phraseMatches) return
+    confirmingRef.current = true
+    setIsConfirming(true)
+    try {
+      await onConfirm()
+      setTypedPhrase('')
+    } finally {
+      confirmingRef.current = false
+      setIsConfirming(false)
+    }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={handleClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
-      >
-        <h2
-          id="confirm-dialog-title"
-          className={`text-lg font-semibold mb-2 ${styles.titleColor}`}
-        >
-          {title}
-        </h2>
-        <p
-          id="confirm-dialog-description"
-          className="text-(--text-secondary) text-sm mb-4"
-        >
-          {description}
-        </p>
-
-        {confirmPhrase && (
-          <div className="mb-4">
-            <label className="block text-xs text-(--text-muted) mb-1.5">
-              {t('Type {{phrase}} to confirm', { phrase: confirmPhrase })}
-            </label>
-            <input
-              type="text"
-              value={typedPhrase}
-              onChange={(e) => setTypedPhrase(e.target.value)}
-              disabled={loading}
-              autoComplete="off"
-              placeholder={confirmPhrase}
-              className="w-full px-3 py-2 text-sm outline-none transition-all
-                bg-(--bg-surface-2)
-                border border-(--border-subtle)
-                rounded-(--radius-input)
-                text-(--text-primary)
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow)
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-60 disabled:cursor-not-allowed"
-            />
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
+      }}
+      title={<span className={toneClassName}>{title}</span>}
+      description={description}
+      dialogRole="alertdialog"
+      size="sm"
+      closeLabel={t('Close')}
+      showCloseButton={!busy}
+      closeOnEscape={!busy}
+      closeOnOverlayClick={!busy}
+      initialFocusRef={confirmPhrase ? phraseInputRef : cancelButtonRef}
+      bodyClassName={confirmPhrase || error ? 'p-5' : 'p-0'}
+      footer={(
+        <div className="flex w-full flex-col-reverse gap-3 sm:flex-row">
+          <Button
+            ref={cancelButtonRef}
+            variant="secondary"
+            onClick={handleClose}
+            disabled={busy}
+            fullWidth
+          >
+            {t('Cancel')}
+          </Button>
+          <Button
+            variant={variant === 'danger' ? 'danger' : 'primary'}
+            onClick={() => void handleConfirm()}
+            disabled={!phraseMatches || busy}
+            loading={busy}
+            loadingText={t('Processing...')}
+            fullWidth
+          >
+            {resolvedConfirmLabel}
+          </Button>
+        </div>
+      )}
+    >
+      <div className="space-y-4">
+        {error && (
+          <div
+            className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/35 bg-(--mc-color-danger)/8 px-3.5 py-3 text-sm text-(--mc-color-danger)"
+            role="alert"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 break-words">{error}</span>
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle)
-              text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
-              disabled:opacity-50"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={confirmDisabled}
-            className={`flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold transition-all
-              ${styles.buttonBg}
-              disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {loading ? t('Processing...') : confirmLabel}
-          </button>
-        </div>
+        {confirmPhrase && (
+          <Input
+            ref={phraseInputRef}
+            type="text"
+            value={typedPhrase}
+            onChange={(event) => setTypedPhrase(event.target.value)}
+            disabled={busy}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            label={t('Type {{phrase}} to confirm', { phrase: confirmPhrase })}
+            placeholder={confirmPhrase}
+          />
+        )}
       </div>
-    </div>
+    </Dialog>
   )
 }

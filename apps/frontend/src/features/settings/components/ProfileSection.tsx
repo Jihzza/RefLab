@@ -1,57 +1,57 @@
+import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { User, ChevronRight } from 'lucide-react'
-import { useAuth } from '@/features/auth/components/useAuth'
-import SettingsSection from './SettingsSection'
 import { useTranslation } from 'react-i18next'
-
-function getInitials(name: string | null, username: string): string {
-  const source = (name?.trim() || username.trim() || 'U')
-  return source.slice(0, 2).toUpperCase()
-}
+import { Avatar, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
 
 export default function ProfileSection() {
   const { t } = useTranslation()
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
 
-  if (!profile) return null
+  if (!user) return null
 
-  const displayAvatar = profile.photo_url
-  const displayName = profile.name || profile.username
-  const initials = getInitials(profile.name, profile.username)
+  const fallbackIdentity = user.user_metadata?.full_name || user.email?.split('@')[0] || t('Profile')
+  const displayName = profile?.name || profile?.username || fallbackIdentity
+  const username = profile?.username || null
+  const avatarUrl = profile?.photo_url || user.user_metadata?.avatar_url || null
 
   return (
-    <SettingsSection title={t('Profile')} icon={<User className="w-4.5 h-4.5" />}>
+    <Surface
+      padding="none"
+      className="overflow-hidden border-(--mc-color-border-strong) shadow-none"
+    >
       <Link
         to="/app/profile/edit"
-        className="flex items-center gap-3 px-4 py-4 hover:bg-(--bg-hover) transition-colors"
+        className="group flex min-h-[7.25rem] items-center gap-4 px-4 py-4 transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none sm:px-5"
         aria-label={t('Edit profile')}
       >
-        {/* Avatar */}
-        <div className="w-14 h-14 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden shrink-0">
-          {displayAvatar ? (
-            <img
-              src={displayAvatar}
-              alt={t('Profile avatar')}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-lg font-semibold text-(--text-primary)">
-              {initials}
+        <Avatar
+          src={avatarUrl}
+          alt={t('Profile avatar')}
+          name={displayName}
+          size="xl"
+          className="size-[4.5rem] border-(--mc-color-accent) bg-(--mc-color-canvas) text-lg text-(--mc-color-text)"
+        />
+
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-lg font-semibold text-(--mc-color-text)">
+            {displayName}
+          </span>
+          {username && (
+            <span className="mt-0.5 block truncate text-sm text-(--mc-color-text-muted)">
+              @{username}
             </span>
           )}
-        </div>
+        </span>
 
-        {/* Name & username */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-(--text-primary) truncate">
-            {displayName}
-          </p>
-          <p className="text-xs text-(--text-muted) truncate">@{profile.username}</p>
-        </div>
-
-        {/* Arrow */}
-        <ChevronRight className="w-4.5 h-4.5 text-(--text-muted) shrink-0" />
+        <span className="hidden shrink-0 text-sm font-semibold text-(--mc-color-accent) min-[360px]:inline">
+          {t('Edit profile')}
+        </span>
+        <ChevronRight
+          className="size-5 shrink-0 text-(--mc-color-text-muted) transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+          aria-hidden="true"
+        />
       </Link>
-    </SettingsSection>
+    </Surface>
   )
 }

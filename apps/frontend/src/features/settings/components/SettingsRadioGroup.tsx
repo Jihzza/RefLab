@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 interface RadioOption<T extends string> {
   value: T
   label: string
@@ -19,56 +21,56 @@ export default function SettingsRadioGroup<T extends string>({
   onChange,
   disabled = false,
 }: SettingsRadioGroupProps<T>) {
+  const generatedId = useId()
+  const groupName = `settings-radio-${generatedId}`
+
   return (
-    <fieldset className="px-4 py-3" disabled={disabled}>
-      <legend className="text-sm font-medium text-(--text-secondary) mb-2">
+    <fieldset className="px-4 py-4 sm:px-5" disabled={disabled}>
+      <legend className="mb-3 text-sm font-semibold text-(--mc-color-text-secondary)">
         {label}
       </legend>
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {options.map((option) => {
           const isSelected = value === option.value
           return (
             <label
               key={option.value}
-              className={`
-                flex items-start gap-3 p-3 rounded-(--radius-input) cursor-pointer
-                transition-colors
-                ${isSelected
-                  ? 'bg-(--brand-yellow)/10 border border-(--brand-yellow)/30'
-                  : 'bg-(--bg-surface-2) border border-(--border-subtle) hover:bg-(--bg-hover)'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-              `}
+              className={`flex min-h-16 cursor-pointer items-start gap-3 rounded-(--mc-radius-input) border p-3.5 transition-[background-color,border-color,box-shadow] focus-within:ring-2 focus-within:ring-(--mc-color-focus) focus-within:ring-offset-1 focus-within:ring-offset-(--mc-color-canvas) motion-reduce:transition-none ${
+                isSelected
+                  ? 'border-(--mc-color-accent)/55 bg-(--mc-color-accent)/8'
+                  : 'border-(--mc-color-border) bg-(--mc-color-canvas) hover:border-(--mc-color-border-strong) hover:bg-(--mc-color-surface-hover)'
+              } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
             >
-              {/* Custom radio circle */}
-              <span
-                className={`
-                  mt-0.5 flex-shrink-0 w-4.5 h-4.5 rounded-full border-2
-                  flex items-center justify-center transition-colors
-                  ${isSelected ? 'border-(--brand-yellow)' : 'border-(--border-strong)'}
-                `}
-              >
-                {isSelected && (
-                  <span className="w-2 h-2 rounded-full bg-(--brand-yellow)" />
-                )}
-              </span>
-
-              <div className="flex-1 min-w-0">
-                <span className="text-sm text-(--text-primary)">{option.label}</span>
-                {option.description && (
-                  <p className="text-xs text-(--text-muted) mt-0.5">{option.description}</p>
-                )}
-              </div>
-
               <input
                 type="radio"
-                name={label}
+                name={groupName}
                 value={option.value}
                 checked={isSelected}
                 onChange={() => onChange(option.value)}
                 disabled={disabled}
-                className="sr-only"
+                className="peer sr-only"
               />
+              <span
+                className={`mt-0.5 flex size-[1.125rem] shrink-0 items-center justify-center rounded-full border-2 transition-colors motion-reduce:transition-none ${
+                  isSelected
+                    ? 'border-(--mc-color-accent)'
+                    : 'border-(--mc-color-border-strong)'
+                }`}
+                aria-hidden="true"
+              >
+                {isSelected && <span className="size-2 rounded-full bg-(--mc-color-accent)" />}
+              </span>
+
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-(--mc-color-text)">
+                  {option.label}
+                </span>
+                {option.description && (
+                  <span className="mt-0.5 block text-xs leading-5 text-(--mc-color-text-muted)">
+                    {option.description}
+                  </span>
+                )}
+              </span>
             </label>
           )
         })}
