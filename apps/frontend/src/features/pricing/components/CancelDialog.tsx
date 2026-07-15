@@ -1,106 +1,104 @@
 import { useState } from 'react'
-import { cancelSubscription } from '../api/pricingApi'
-import type { Subscription } from '@/features/billing/types'
+import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Dialog } from '@/components/ui'
+import type { Subscription } from '@/features/billing/types'
+import { cancelSubscription } from '../api/pricingApi'
 
 interface CancelDialogProps {
   isOpen: boolean
   onClose: () => void
   subscription: Subscription
-  onSuccess: () => void
+  onSuccess: () => void | Promise<void>
 }
 
-export default function CancelDialog({ isOpen, onClose, subscription, onSuccess }: CancelDialogProps) {
-  const { t } = useTranslation()
+export default function CancelDialog({
+  isOpen,
+  onClose,
+  subscription,
+  onSuccess,
+}: CancelDialogProps) {
+  const { t, i18n } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  if (!isOpen) return null
-
   const endDate = subscription.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString('pt-PT', {
+    ? new Date(subscription.current_period_end).toLocaleDateString(i18n.language || 'pt-PT', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       })
-    : 'fim do período de faturação'
+    : t('the end of the billing period')
 
-  const handleConfirm = async () => {
-    setLoading(true)
+  const closeDialog = () => {
+    if (loading) return
     setError(null)
-
-    const { error: cancelError } = await cancelSubscription(subscription.stripe_subscription_id)
-
-    if (cancelError) {
-      setError(cancelError.message)
-      setLoading(false)
-      return
-    }
-
-    setLoading(false)
-    onSuccess()
     onClose()
   }
 
+  const handleConfirm = async () => {
+    if (loading) return
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error: cancelError } = await cancelSubscription(
+        subscription.stripe_subscription_id,
+      )
+      if (cancelError) throw cancelError
+      await onSuccess()
+      setLoading(false)
+      onClose()
+    } catch (cancelError) {
+      console.error('Failed to cancel subscription:', cancelError)
+      setError(
+        cancelError instanceof Error
+          ? cancelError.message
+          : t('Failed to cancel subscription. Please try again.'),
+      )
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
-      >
-        <h2
-          id="cancel-dialog-title"
-          className="text-lg font-semibold mb-2 text-(--warning)"
-        >
-          {t('Cancel Subscription')}
-        </h2>
-
-        <p
-          id="cancel-dialog-description"
-          className="text-(--text-secondary) text-sm mb-4"
-        >
-          {t("Your subscription will remain active until {{date}}. After that, you'll be downgraded to the Free plan and lose access to premium features.", { date: endDate })}
-        </p>
-
-        {error && (
-          <div
-            className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mb-4"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50"
-          >
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) closeDialog()
+      }}
+      title={t('Cancel Subscription')}
+      description={t("Your subscription will remain active until {{date}}. After that, you'll be downgraded to the Free plan and lose access to premium features.", { date: endDate })}
+      size="sm"
+      dialogRole="alertdialog"
+      showCloseButton={false}
+      closeOnEscape={!loading}
+      closeOnOverlayClick={!loading}
+      footer={
+        <>
+          <Button variant="secondary" onClick={closeDialog} disabled={loading} className="flex-1">
             {t('Keep Subscription')}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold bg-(--warning) text-(--bg-primary) hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => void handleConfirm()}
+            loading={loading}
+            loadingText={t('Canceling...')}
+            className="flex-1"
           >
-            {loading ? t('Canceling...') : t('Cancel Plan')}
-          </button>
+            {t('Cancel Plan')}
+          </Button>
+        </>
+      }
+    >
+      {error && (
+        <div
+          className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/8 px-4 py-3 text-sm text-(--mc-color-danger)"
+          role="alert"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0">{error}</span>
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   )
 }

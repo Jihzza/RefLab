@@ -1,152 +1,191 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, ExternalLink, Receipt } from 'lucide-react'
-import { useInvoices } from '../hooks/useInvoices'
+import {
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Download,
+  ExternalLink,
+  Receipt,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, EmptyState, Skeleton, Surface } from '@/components/ui'
+import { useInvoices } from '../hooks/useInvoices'
 
-/** Format cents to EUR display string */
-function formatAmount(amountInCents: number, currency: string): string {
-  return new Intl.NumberFormat('pt-PT', {
+function formatAmount(amountInCents: number, currency: string, locale: string): string {
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: currency.toUpperCase(),
   }).format(amountInCents / 100)
 }
 
-/** Format unix timestamp to readable date */
-function formatDate(timestamp: number): string {
-  return new Date(timestamp * 1000).toLocaleDateString('pt-PT', {
+function formatDate(timestamp: number, locale: string): string {
+  return new Date(timestamp * 1000).toLocaleDateString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   })
 }
 
-/** Status badge color mapping */
-function getStatusStyle(status: string): string {
-  switch (status) {
-    case 'paid':
-      return 'bg-(--success)/20 text-(--success)'
-    case 'open':
-      return 'bg-(--warning)/20 text-(--warning)'
-    case 'void':
-    case 'uncollectible':
-      return 'bg-(--error)/20 text-(--error)'
-    default:
-      return 'bg-(--bg-surface-2) text-(--text-muted)'
-  }
+function getStatusVariant(status: string): 'success' | 'warning' | 'danger' | 'neutral' {
+  if (status === 'paid') return 'success'
+  if (status === 'open') return 'warning'
+  if (status === 'void' || status === 'uncollectible') return 'danger'
+  return 'neutral'
 }
 
 export default function InvoiceHistory() {
-  const { t } = useTranslation()
-  const { invoices, loading, error, fetchInvoices } = useInvoices()
+  const { t, i18n } = useTranslation()
+  const { invoices, loading, error, hasMore, fetchInvoices } = useInvoices()
   const [expanded, setExpanded] = useState(false)
   const [hasFetched, setHasFetched] = useState(false)
+  const locale = i18n.language || 'pt-PT'
 
-  /** Toggle the section open/closed. Fetch on first expand. */
   const handleToggle = () => {
     const willExpand = !expanded
     setExpanded(willExpand)
 
     if (willExpand && !hasFetched) {
       setHasFetched(true)
-      fetchInvoices()
+      void fetchInvoices()
     }
   }
 
   return (
-    <section aria-label={t('Purchase history')}>
-      {/* Collapsible header */}
+    <section aria-labelledby="invoice-history-title">
       <button
+        type="button"
         onClick={handleToggle}
         aria-expanded={expanded}
-        className="w-full flex items-center justify-between py-3 px-4 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) text-(--text-primary) hover:bg-(--bg-hover) transition-colors"
+        aria-controls="invoice-history-content"
+        className="mc-interactive mc-focus-ring flex min-h-14 w-full items-center justify-between gap-4 rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface) px-4 py-3 text-left text-(--mc-color-text) hover:border-(--mc-color-accent)/50 hover:bg-(--mc-color-surface-hover) sm:px-5"
       >
-        <div className="flex items-center gap-2">
-          <Receipt className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
-          <span className="text-sm font-semibold">{t('Purchase History')}</span>
-        </div>
-        {expanded
-          ? <ChevronUp className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
-          : <ChevronDown className="w-4 h-4 text-(--text-muted)" aria-hidden="true" />
-        }
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-(--mc-radius-compact) border border-(--mc-color-accent)/40 bg-(--mc-color-accent)/10 text-(--mc-color-accent)" aria-hidden="true">
+            <Receipt className="size-5" />
+          </span>
+          <span id="invoice-history-title" className="font-semibold">
+            {t('Purchase History')}
+          </span>
+        </span>
+        {expanded ? (
+          <ChevronUp className="size-5 shrink-0 text-(--mc-color-accent)" aria-hidden="true" />
+        ) : (
+          <ChevronRight className="size-5 shrink-0 text-(--mc-color-text-muted)" aria-hidden="true" />
+        )}
       </button>
 
-      {/* Content (visible when expanded) */}
       {expanded && (
-        <div className="mt-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) overflow-hidden">
-          {/* Loading skeleton */}
-          {loading && (
-            <div className="p-4 space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse flex items-center justify-between">
-                  <div className="flex gap-3">
-                    <div className="h-4 w-20 bg-(--bg-surface-2) rounded" />
-                    <div className="h-4 w-14 bg-(--bg-surface-2) rounded" />
+        <Surface
+          id="invoice-history-content"
+          padding="none"
+          className="mt-3 overflow-hidden border-(--mc-color-border-strong) shadow-none"
+        >
+          {loading && invoices.length === 0 && (
+            <div className="space-y-3 p-4" role="status" aria-label={t('Loading...')}>
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton variant="text" width="55%" />
+                    <Skeleton variant="text" width="35%" height="0.7rem" />
                   </div>
-                  <div className="h-4 w-12 bg-(--bg-surface-2) rounded" />
+                  <Skeleton variant="text" width="4rem" />
                 </div>
               ))}
             </div>
           )}
 
-          {/* Error state */}
           {!loading && error && (
-            <div className="p-4">
-              <p className="text-(--error) text-sm">{error}</p>
-              <button
-                onClick={() => fetchInvoices()}
-                className="mt-2 text-sm text-(--brand-yellow) hover:underline"
-              >
-                {t('Retry')}
-              </button>
-            </div>
+            <EmptyState
+              icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
+              title={t('Failed to load invoices.')}
+              description={error}
+              action={
+                <Button variant="secondary" onClick={() => void fetchInvoices()}>
+                  {t('Try Again')}
+                </Button>
+              }
+            />
           )}
 
-          {/* Empty state */}
           {!loading && !error && invoices.length === 0 && (
-            <div className="p-4 text-center">
-              <p className="text-sm text-(--text-muted)">{t('No transactions yet.')}</p>
-            </div>
+            <EmptyState
+              icon={<Receipt className="size-5" />}
+              title={t('No transactions yet.')}
+            />
           )}
 
-          {/* Invoice list */}
-          {!loading && !error && invoices.length > 0 && (
-            <ul>
-              {invoices.map((invoice) => (
-                <li
-                  key={invoice.id}
-                  className="flex items-center justify-between px-4 py-3 border-b border-(--border-subtle) last:border-b-0"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-sm text-(--text-secondary) shrink-0">
-                      {formatDate(invoice.created)}
-                    </span>
-                    <span className="text-sm font-medium text-(--text-primary) shrink-0">
-                      {formatAmount(invoice.amount_paid, invoice.currency)}
-                    </span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-0.5 rounded-full capitalize ${getStatusStyle(invoice.status ?? '')}`}
-                    >
-                      {invoice.status}
-                    </span>
-                  </div>
+          {!error && invoices.length > 0 && (
+            <>
+              <ul className="divide-y divide-(--mc-color-border)">
+                {invoices.map((invoice) => {
+                  const date = formatDate(invoice.created, locale)
 
-                  {invoice.hosted_invoice_url && (
-                    <a
-                      href={invoice.hosted_invoice_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`View invoice from ${formatDate(invoice.created)}`}
-                      className="flex items-center gap-1 text-xs text-(--brand-yellow) hover:underline shrink-0 ml-2"
-                    >
-                      {t('View')}
-                      <ExternalLink className="w-3 h-3" aria-hidden="true" />
-                    </a>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  return (
+                    <li key={invoice.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-semibold tabular-nums text-(--mc-color-text)">
+                            {formatAmount(invoice.amount_paid, invoice.currency, locale)}
+                          </p>
+                          {invoice.status && (
+                            <Badge variant={getStatusVariant(invoice.status)} size="sm">
+                              {t(invoice.status)}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-(--mc-color-text-muted)">
+                          <time dateTime={new Date(invoice.created * 1000).toISOString()}>{date}</time>
+                          {invoice.number && ` · ${invoice.number}`}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {invoice.hosted_invoice_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(invoice.hosted_invoice_url!, '_blank', 'noopener,noreferrer')}
+                            trailingIcon={<ExternalLink className="size-3.5" />}
+                            aria-label={t('View invoice from {{date}}', { date })}
+                          >
+                            {t('View')}
+                          </Button>
+                        )}
+                        {invoice.invoice_pdf && (
+                          <a
+                            href={invoice.invoice_pdf}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mc-focus-ring inline-flex min-h-9 items-center justify-center gap-2 rounded-(--mc-radius-button) px-3 py-1.5 text-xs font-semibold text-(--mc-color-accent) hover:bg-(--mc-color-surface-hover)"
+                            aria-label={t('Download invoice from {{date}}', { date })}
+                          >
+                            <Download className="size-3.5" aria-hidden="true" />
+                            {t('Download')}
+                          </a>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+
+              {hasMore && (
+                <div className="border-t border-(--mc-color-border) p-3 text-center">
+                  <Button
+                    variant="ghost"
+                    onClick={() => void fetchInvoices(invoices.length + 10)}
+                    loading={loading}
+                    loadingText={t('Loading...')}
+                    trailingIcon={<ChevronDown className="size-4" />}
+                  >
+                    {t('Load more')}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </div>
+        </Surface>
       )}
     </section>
   )

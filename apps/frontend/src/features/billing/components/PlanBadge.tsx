@@ -1,4 +1,5 @@
 import type { PlanId } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface PlanBadgeProps {
   planId: PlanId
@@ -6,9 +7,9 @@ interface PlanBadgeProps {
 }
 
 const PLAN_STYLES: Record<PlanId, string> = {
-  free: 'bg-gray-500/20 text-gray-400',
-  pro: 'bg-(--brand-yellow)/20 text-(--brand-yellow)',
-  plus: 'bg-green-500/20 text-green-400',
+  free: 'border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text-secondary)',
+  pro: 'border-(--mc-color-accent)/35 bg-(--mc-color-accent)/15 text-(--mc-color-accent)',
+  plus: 'border-(--mc-color-success)/35 bg-(--mc-color-success)/15 text-(--mc-color-success)',
 }
 
 const PLAN_LABELS: Record<PlanId, string> = {
@@ -18,11 +19,13 @@ const PLAN_LABELS: Record<PlanId, string> = {
 }
 
 export default function PlanBadge({ planId, className = '' }: PlanBadgeProps) {
+  const { t } = useTranslation()
+
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${PLAN_STYLES[planId]} ${className}`}
+      className={`inline-flex min-h-6 items-center rounded-(--mc-radius-pill) border px-2 py-1 text-xs font-semibold leading-none ${PLAN_STYLES[planId]} ${className}`}
     >
-      {PLAN_LABELS[planId]}
+      {t(PLAN_LABELS[planId])}
     </span>
   )
 }

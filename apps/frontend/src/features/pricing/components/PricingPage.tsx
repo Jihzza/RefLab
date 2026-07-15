@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { CreditCard } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, CreditCard } from 'lucide-react'
+import { Button, Skeleton, Surface } from '@/components/ui'
 import { useBilling } from '@/features/billing/components/useBilling'
 import PlansSection from './PlansSection'
 import SubscriptionCard from './SubscriptionCard'
@@ -12,7 +13,13 @@ import { useTranslation } from 'react-i18next'
 export default function PricingPage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { subscription, planId, isLoading, refreshBilling } = useBilling()
+  const {
+    subscription,
+    planId,
+    isLoading,
+    error: billingError,
+    refreshBilling,
+  } = useBilling()
 
   // Dialog state
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
@@ -20,34 +27,46 @@ export default function PricingPage() {
   const [targetPlan, setTargetPlan] = useState<'pro' | 'plus'>('pro')
 
   // Checkout success banner
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false)
-  const pollCountRef = useRef(0)
+  const [checkoutSuccess, setCheckoutSuccess] = useState(
+    () => searchParams.get('checkout') === 'success',
+  )
+  const [checkoutTimedOut, setCheckoutTimedOut] = useState(false)
+  const shouldHandleCheckoutRef = useRef(checkoutSuccess)
 
   // Handle ?checkout=success after returning from Stripe
   useEffect(() => {
-    if (searchParams.get('checkout') !== 'success') return
-
-    setCheckoutSuccess(true)
+    if (!shouldHandleCheckoutRef.current) return
+    shouldHandleCheckoutRef.current = false
 
     // Remove the query param from URL
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('checkout')
-    setSearchParams(newParams, { replace: true })
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams)
+      nextParams.delete('checkout')
+      return nextParams
+    }, { replace: true })
 
-    // Poll for subscription data if not yet available
-    if (!subscription) {
-      pollCountRef.current = 0
-      const interval = window.setInterval(async () => {
-        pollCountRef.current++
-        await refreshBilling()
-        if (pollCountRef.current >= 5) {
-          clearInterval(interval)
-        }
-      }, 2000)
+    let cancelled = false
+    let timeoutId: number | undefined
+    let pollCount = 0
 
-      return () => clearInterval(interval)
+    const poll = async () => {
+      pollCount += 1
+      await refreshBilling()
+      if (cancelled) return
+
+      if (pollCount < 5) {
+        timeoutId = window.setTimeout(() => void poll(), 2000)
+      } else {
+        setCheckoutTimedOut(true)
+      }
     }
-  }, [searchParams, setSearchParams, subscription, refreshBilling])
+
+    void poll()
+    return () => {
+      cancelled = true
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+    }
+  }, [refreshBilling, setSearchParams])
 
   // Hide success banner after subscription data arrives
   useEffect(() => {
@@ -69,70 +88,138 @@ export default function PricingPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-(--text-muted)">{t('Loading...')}</div>
-      </div>
-    )
+    return <PricingSkeleton />
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-20">
-      {/* Page header */}
-      <div className="flex items-center gap-2 mb-6">
-        <CreditCard className="w-5 h-5 text-(--text-muted)" aria-hidden="true" />
-        <h1 className="text-xl font-bold text-(--text-primary)">{t('Pricing & Billing')}</h1>
+    <div className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)">
+      <div className="mx-auto w-full max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-7 xl:px-8">
+        <header className="flex items-start gap-3">
+          <span
+            className="flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-compact) border border-(--mc-color-accent)/40 bg-(--mc-color-accent)/10 text-(--mc-color-accent)"
+            aria-hidden="true"
+          >
+            <CreditCard className="size-6" />
+          </span>
+          <div className="min-w-0 pt-0.5">
+            <p className="mc-eyebrow mb-1">Match Control</p>
+            <h2 className="text-[26px] font-extrabold leading-tight tracking-[-0.035em] text-(--mc-color-text) sm:text-3xl">
+              {t('Pricing & Billing')}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
+              {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
+            </p>
+          </div>
+        </header>
+
+        {checkoutSuccess && (
+          <div
+            className={`flex items-start gap-3 rounded-(--mc-radius-button) border px-4 py-3.5 text-sm ${checkoutTimedOut && !subscription ? 'border-(--mc-color-warning)/40 bg-(--mc-color-warning)/8 text-(--mc-color-warning)' : 'border-(--mc-color-success)/40 bg-(--mc-color-success)/8 text-(--mc-color-success)'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {checkoutTimedOut && !subscription ? (
+              <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            ) : (
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">
+                {subscription
+                  ? t('Welcome to {{plan}}!', {
+                      plan: subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1),
+                    })
+                  : checkoutTimedOut
+                    ? t('Your subscription is taking longer than expected to update.')
+                    : t('Processing your subscription...')}
+              </p>
+              {checkoutTimedOut && !subscription && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCheckoutTimedOut(false)
+                    void refreshBilling().finally(() => setCheckoutTimedOut(true))
+                  }}
+                  className="mt-1 -ml-3 text-(--mc-color-warning) hover:text-(--mc-color-warning)"
+                >
+                  {t('Check again')}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {billingError && (
+          <Surface
+            padding="md"
+            className="flex flex-wrap items-center gap-3 border-(--mc-color-danger)/40 shadow-none"
+            role="alert"
+          >
+            <AlertTriangle className="size-5 shrink-0 text-(--mc-color-danger)" aria-hidden="true" />
+            <p className="min-w-0 flex-1 text-sm text-(--mc-color-danger)">
+              {t('Failed to load billing information.')}
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => void refreshBilling()}>
+              {t('Try Again')}
+            </Button>
+          </Surface>
+        )}
+
+        {subscription && ['active', 'trialing', 'past_due'].includes(subscription.status) && (
+          <SubscriptionCard
+            subscription={subscription}
+            planId={planId}
+            onCancel={() => setCancelDialogOpen(true)}
+          />
+        )}
+
+        <PlansSection onChangePlan={handleChangePlan} />
+
+        {subscription && <InvoiceHistory />}
+
+        {subscription && (
+          <CancelDialog
+            isOpen={cancelDialogOpen}
+            onClose={() => setCancelDialogOpen(false)}
+            subscription={subscription}
+            onSuccess={handleActionSuccess}
+          />
+        )}
+
+        {subscription && (
+          <ChangePlanDialog
+            isOpen={changePlanDialogOpen}
+            onClose={() => setChangePlanDialogOpen(false)}
+            subscription={subscription}
+            targetPlan={targetPlan}
+            onSuccess={handleActionSuccess}
+          />
+        )}
       </div>
+    </div>
+  )
+}
 
-      {/* Checkout success banner */}
-      {checkoutSuccess && (
-        <div
-          className="bg-(--success)/10 border border-(--success)/20 text-(--success) px-4 py-3 rounded-lg mb-6 text-center text-sm font-medium"
-          role="status"
-        >
-          {subscription
-            ? t('Welcome to {{plan}}!', {
-                plan: subscription.plan.charAt(0).toUpperCase() + subscription.plan.slice(1),
-              })
-            : t('Processing your subscription...')}
+function PricingSkeleton() {
+  const { t } = useTranslation()
+
+  return (
+    <div
+      className="mx-auto w-full max-w-5xl space-y-5 px-4 py-5 sm:px-6 sm:py-7 xl:px-8"
+      role="status"
+      aria-label={t('Loading...')}
+    >
+      <div className="flex items-start gap-3">
+        <Skeleton variant="circular" width="2.75rem" height="2.75rem" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton variant="text" width="12rem" height="2rem" />
+          <Skeleton variant="text" width="min(100%, 30rem)" />
         </div>
-      )}
-
-      {/* Current subscription card (only shown for paid users) */}
-      {subscription && ['active', 'trialing', 'past_due'].includes(subscription.status) && (
-        <SubscriptionCard
-          subscription={subscription}
-          planId={planId}
-          onCancel={() => setCancelDialogOpen(true)}
-        />
-      )}
-
-      {/* Plans comparison */}
-      <PlansSection onChangePlan={handleChangePlan} />
-
-      {/* Purchase history (only for users who have/had a subscription) */}
-      {subscription && <InvoiceHistory />}
-
-      {/* Cancel dialog */}
-      {subscription && (
-        <CancelDialog
-          isOpen={cancelDialogOpen}
-          onClose={() => setCancelDialogOpen(false)}
-          subscription={subscription}
-          onSuccess={handleActionSuccess}
-        />
-      )}
-
-      {/* Change plan dialog */}
-      {subscription && (
-        <ChangePlanDialog
-          isOpen={changePlanDialogOpen}
-          onClose={() => setChangePlanDialogOpen(false)}
-          subscription={subscription}
-          targetPlan={targetPlan}
-          onSuccess={handleActionSuccess}
-        />
-      )}
+      </div>
+      <Skeleton variant="rectangular" height="3.5rem" />
+      <Skeleton variant="rectangular" height="30rem" />
+      <span className="mc-visually-hidden">{t('Loading...')}</span>
     </div>
   )
 }

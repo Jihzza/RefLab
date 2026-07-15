@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Check } from 'lucide-react'
-import { useBilling } from '@/features/billing/components/useBilling'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button, SegmentedControl, Surface } from '@/components/ui'
 import { createCheckoutSession } from '@/features/billing/api/billingApi'
+import { useBilling } from '@/features/billing/components/useBilling'
 import type { PlanId } from '@/features/billing/types'
 import type { PlanConfig } from '../types'
-import { useTranslation } from 'react-i18next'
 
-/** Plan definitions with correct prices */
 const PLANS: PlanConfig[] = [
   {
     id: 'free',
@@ -57,144 +57,235 @@ interface PlansSectionProps {
 }
 
 export default function PlansSection({ onChangePlan }: PlansSectionProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { planId: currentPlan, subscription, isLoading: billingLoading } = useBilling()
+  const [selectedPlan, setSelectedPlan] = useState<PlanId>(() => (
+    currentPlan === 'free' ? 'pro' : currentPlan
+  ))
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const isCancelPending = subscription?.cancel_at_period_end === true
+  const plan = PLANS.find((candidate) => candidate.id === selectedPlan) ?? PLANS[1]
 
-  /** Subscribe to a paid plan (for free users) */
-  const handleSubscribe = async (plan: Exclude<PlanId, 'free'>) => {
-    setLoadingPlan(plan)
+  const handleSubscribe = async (target: Exclude<PlanId, 'free'>) => {
+    if (loadingPlan) return
+    setLoadingPlan(target)
     setError(null)
 
-    const { url, error: checkoutError } = await createCheckoutSession(plan)
-
-    if (checkoutError || !url) {
-      setError(checkoutError?.message || 'Failed to start checkout')
+    try {
+      const { url, error: checkoutError } = await createCheckoutSession(target)
+      if (checkoutError || !url) throw checkoutError || new Error('Missing checkout URL')
+      window.location.assign(url)
+    } catch (checkoutError) {
+      console.error('Failed to start checkout:', checkoutError)
+      setError(
+        checkoutError instanceof Error
+          ? checkoutError.message
+          : t('Failed to start checkout'),
+      )
       setLoadingPlan(null)
-      return
-    }
-
-    window.location.assign(url)
-  }
-
-  /** Get the button config for each plan card */
-  const getButtonConfig = (plan: PlanConfig) => {
-    const isCurrentPlan = currentPlan === plan.id
-
-    // Free plan card
-    if (plan.id === 'free') {
-      return {
-        label: isCurrentPlan ? t('Current Plan') : t('Free Forever'),
-        disabled: true,
-        onClick: () => {},
-        className: 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed',
-      }
-    }
-
-    // Current paid plan
-    if (isCurrentPlan) {
-      return {
-        label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
-        disabled: true,
-        onClick: () => {},
-        className: 'bg-(--brand-yellow)/20 text-(--brand-yellow) cursor-not-allowed',
-      }
-    }
-
-    // Free user looking at a paid plan
-    if (currentPlan === 'free') {
-      return {
-        label: loadingPlan === plan.id ? t('Redirecting...') : t('Subscribe'),
-        disabled: billingLoading || loadingPlan !== null,
-        onClick: () => handleSubscribe(plan.id as Exclude<PlanId, 'free'>),
-        className: plan.isHighlighted
-          ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-          : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
-      }
-    }
-
-    // Paid user looking at a different paid plan
-    return {
-      label: isCancelPending ? t('Resubscribe Required') : t('Switch to {{plan}}', { plan: plan.name }),
-      disabled: isCancelPending || billingLoading,
-      onClick: () => onChangePlan(plan.id as 'pro' | 'plus'),
-      className: plan.isHighlighted
-        ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-        : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
     }
   }
+
+  const action = getPlanAction({
+    plan,
+    currentPlan,
+    isCancelPending,
+    billingLoading,
+    loadingPlan,
+    t,
+    onSubscribe: handleSubscribe,
+    onChangePlan,
+  })
 
   return (
-    <section className="mb-6" aria-label={t('Choose Your Plan')}>
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t('Choose Your Plan')}</h2>
-      <p className="text-sm text-(--text-muted) mb-4">
-        {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
-      </p>
+    <section aria-labelledby="plans-title" className="space-y-4">
+      <div className="mc-visually-hidden">
+        <h2 id="plans-title">{t('Choose Your Plan')}</h2>
+      </div>
+
+      <SegmentedControl
+        ariaLabel={t('Choose Your Plan')}
+        options={PLANS.map((candidate) => ({
+          value: candidate.id,
+          label: t(candidate.name),
+        }))}
+        value={selectedPlan}
+        onValueChange={(value) => {
+          setSelectedPlan(value as PlanId)
+          setError(null)
+        }}
+        fullWidth
+        optionClassName="min-h-12 text-base aria-checked:bg-(--mc-color-accent) aria-checked:text-(--mc-color-canvas)"
+      />
 
       {error && (
         <div
-          className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-4 py-3 rounded-lg mb-4 text-center"
+          className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/8 px-4 py-3 text-sm text-(--mc-color-danger)"
           role="alert"
         >
-          {error}
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0">{error}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {PLANS.map((plan) => {
-          const btn = getButtonConfig(plan)
-
-          return (
-            <div
-              key={plan.id}
-              className={`relative rounded-(--radius-card) p-5 flex flex-col ${
-                plan.isHighlighted
-                  ? 'border-2 border-(--brand-yellow) bg-(--bg-surface)'
-                  : 'border border-(--border-subtle) bg-(--bg-surface)'
-              }`}
-            >
-              {/* Recommended badge */}
-              {plan.isHighlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-(--brand-yellow) text-(--bg-primary) text-xs font-bold px-3 py-1 rounded-full">
-                  {t('Recommended')}
-                </div>
-              )}
-
-              <h3 className="text-lg font-bold text-(--text-primary) mb-1">{t(plan.name)}</h3>
-
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-(--text-primary)">{plan.price}</span>
-                {plan.period && (
-                  <span className="text-sm text-(--text-muted) ml-1">{plan.period}</span>
-                )}
-              </div>
-
-              {/* Benefits list */}
-              <ul className="space-y-2 mb-5 grow" aria-label={`${plan.name} plan benefits`}>
-                {plan.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-sm text-(--text-secondary)">
-                    <Check className="w-4 h-4 text-(--success) shrink-0 mt-0.5" aria-hidden="true" />
-                    {t(benefit)}
-                  </li>
-                ))}
-              </ul>
-
-              {/* Action button */}
-              <button
-                onClick={btn.onClick}
-                disabled={btn.disabled}
-                aria-label={`${btn.label} - ${plan.name} plan`}
-                className={`w-full py-2.5 rounded-(--radius-button) text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${btn.className}`}
+      <Surface
+        padding="none"
+        className={`relative mx-auto w-full max-w-3xl overflow-hidden shadow-none ${
+          plan.isHighlighted
+            ? 'border-(--mc-color-accent) ring-1 ring-(--mc-color-accent)/25'
+            : 'border-(--mc-color-border-strong)'
+        }`}
+        aria-labelledby={`plan-${plan.id}-title`}
+      >
+        <PitchDiagram />
+        <div className="relative z-10 p-5 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="mc-eyebrow mb-1">{t('Plan')}</p>
+              <h3
+                id={`plan-${plan.id}-title`}
+                className="text-[32px] font-extrabold leading-none tracking-[-0.04em] text-(--mc-color-text) sm:text-4xl"
               >
-                {btn.label}
-              </button>
+                {t(plan.name)}
+              </h3>
             </div>
-          )
-        })}
-      </div>
+            {plan.isHighlighted && (
+              <span className="rounded-(--mc-radius-compact) bg-(--mc-color-accent) px-3 py-2 text-xs font-extrabold text-(--mc-color-canvas) sm:text-sm">
+                {t('Recommended')}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-6 flex items-end gap-2">
+            <span className="text-[48px] font-extrabold leading-none tracking-[-0.055em] tabular-nums text-(--mc-color-accent) sm:text-6xl">
+              {plan.pricePerMonth > 0
+                ? new Intl.NumberFormat(i18n.language || 'pt-PT', {
+                    style: 'currency',
+                    currency: 'EUR',
+                    minimumFractionDigits: 2,
+                  }).format(plan.pricePerMonth)
+                : t(plan.price)}
+            </span>
+            {plan.period && (
+              <span className="pb-1 text-base text-(--mc-color-text-secondary) sm:text-lg">
+                {t(plan.period)}
+              </span>
+            )}
+          </div>
+
+          <div className="my-6 h-px bg-(--mc-color-border)" />
+
+          <ul className="space-y-3" aria-label={t('{{plan}} plan benefits', { plan: t(plan.name) })}>
+            {plan.benefits.map((benefit) => (
+              <li key={benefit} className="flex items-start gap-3 text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-(--mc-color-success)" aria-hidden="true" />
+                <span>{t(benefit)}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="relative mt-7 overflow-hidden rounded-(--mc-radius-button)">
+            <Button
+              fullWidth
+              size="lg"
+              variant={plan.isHighlighted ? 'primary' : 'secondary'}
+              onClick={action.onClick}
+              disabled={action.disabled}
+              loading={action.loading}
+              loadingText={action.label}
+              className="rounded-none pr-14"
+              aria-label={t('{{action}} — {{plan}} plan', {
+                action: action.label,
+                plan: t(plan.name),
+              })}
+            >
+              {action.label}
+            </Button>
+            <span
+              className="pointer-events-none absolute -bottom-3 -right-3 h-16 w-9 -skew-x-[24deg] bg-(--mc-color-danger)"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+      </Surface>
     </section>
+  )
+}
+
+interface PlanActionOptions {
+  plan: PlanConfig
+  currentPlan: PlanId
+  isCancelPending: boolean
+  billingLoading: boolean
+  loadingPlan: PlanId | null
+  t: (key: string, options?: Record<string, unknown>) => string
+  onSubscribe: (plan: Exclude<PlanId, 'free'>) => Promise<void>
+  onChangePlan: (plan: 'pro' | 'plus') => void
+}
+
+function getPlanAction({
+  plan,
+  currentPlan,
+  isCancelPending,
+  billingLoading,
+  loadingPlan,
+  t,
+  onSubscribe,
+  onChangePlan,
+}: PlanActionOptions) {
+  if (plan.id === 'free') {
+    return {
+      label: currentPlan === 'free' ? t('Current Plan') : t('Included with your plan'),
+      disabled: true,
+      loading: false,
+      onClick: () => undefined,
+    }
+  }
+
+  if (currentPlan === plan.id) {
+    return {
+      label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
+      disabled: true,
+      loading: false,
+      onClick: () => undefined,
+    }
+  }
+
+  if (currentPlan === 'free') {
+    return {
+      label: loadingPlan === plan.id ? t('Redirecting...') : t('Subscribe'),
+      disabled: billingLoading || loadingPlan !== null,
+      loading: loadingPlan === plan.id,
+      onClick: () => void onSubscribe(plan.id as Exclude<PlanId, 'free'>),
+    }
+  }
+
+  return {
+    label: isCancelPending
+      ? t('Resubscribe Required')
+      : t('Switch to {{plan}}', { plan: plan.name }),
+    disabled: isCancelPending || billingLoading,
+    loading: false,
+    onClick: () => onChangePlan(plan.id as 'pro' | 'plus'),
+  }
+}
+
+function PitchDiagram() {
+  return (
+    <svg
+      viewBox="0 0 280 210"
+      className="pointer-events-none absolute -right-12 top-0 h-56 w-72 text-(--mc-color-border-strong) opacity-55"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      aria-hidden="true"
+    >
+      <path d="M49 8 269 28 244 196 13 151Z" />
+      <path d="m151 18-13 157" />
+      <ellipse cx="145" cy="96" rx="31" ry="24" transform="rotate(-6 145 96)" />
+      <path d="m46 55-29-4-6 64 28 8M239 63l30 4-10 88-30-8" />
+    </svg>
   )
 }

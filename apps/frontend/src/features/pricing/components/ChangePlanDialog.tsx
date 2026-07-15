@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { changeSubscriptionPlan } from '../api/pricingApi'
-import type { Subscription } from '@/features/billing/types'
+import { AlertTriangle, ArrowRightLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Dialog } from '@/components/ui'
+import type { Subscription } from '@/features/billing/types'
+import { changeSubscriptionPlan } from '../api/pricingApi'
 
-/** Plan display info */
 const PLAN_INFO: Record<'pro' | 'plus', { name: string; price: string }> = {
   pro: { name: 'Pro', price: '€4.99/month' },
   plus: { name: 'Plus', price: '€9.99/month' },
@@ -14,7 +15,7 @@ interface ChangePlanDialogProps {
   onClose: () => void
   subscription: Subscription
   targetPlan: 'pro' | 'plus'
-  onSuccess: () => void
+  onSuccess: () => void | Promise<void>
 }
 
 export default function ChangePlanDialog({
@@ -27,93 +28,80 @@ export default function ChangePlanDialog({
   const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  if (!isOpen) return null
-
   const target = PLAN_INFO[targetPlan]
 
-  const handleConfirm = async () => {
-    setLoading(true)
+  const closeDialog = () => {
+    if (loading) return
     setError(null)
-
-    const { error: changeError } = await changeSubscriptionPlan(
-      subscription.stripe_subscription_id,
-      targetPlan,
-    )
-
-    if (changeError) {
-      setError(changeError.message)
-      setLoading(false)
-      return
-    }
-
-    setLoading(false)
-    onSuccess()
     onClose()
   }
 
+  const handleConfirm = async () => {
+    if (loading) return
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error: changeError } = await changeSubscriptionPlan(
+        subscription.stripe_subscription_id,
+        targetPlan,
+      )
+      if (changeError) throw changeError
+      await onSuccess()
+      setLoading(false)
+      onClose()
+    } catch (changeError) {
+      console.error('Failed to change subscription plan:', changeError)
+      setError(
+        changeError instanceof Error
+          ? changeError.message
+          : t('Failed to change plan. Please try again.'),
+      )
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="change-plan-dialog-title"
-        aria-describedby="change-plan-dialog-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
-      >
-        <h2
-          id="change-plan-dialog-title"
-          className="text-lg font-semibold mb-2 text-(--text-primary)"
-        >
-          {t('Switch to {{plan}}', { plan: target.name })}
-        </h2>
-
-        <p
-          id="change-plan-dialog-description"
-          className="text-(--text-secondary) text-sm mb-4"
-        >
-          {t('Your plan will be updated to {{plan}} at {{price}}. The new price will apply starting from your next billing cycle. No proration charges will be applied.', {
-            plan: target.name,
-            price: target.price,
-          })}
-        </p>
-
-        {error && (
-          <div
-            className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mb-4"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50"
-          >
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) closeDialog()
+      }}
+      title={t('Switch to {{plan}}', { plan: target.name })}
+      description={t('Your plan will be updated to {{plan}} at {{price}}. The new price will apply starting from your next billing cycle. No proration charges will be applied.', {
+        plan: target.name,
+        price: target.price,
+      })}
+      size="sm"
+      showCloseButton={false}
+      closeOnEscape={!loading}
+      closeOnOverlayClick={!loading}
+      footer={
+        <>
+          <Button variant="secondary" onClick={closeDialog} disabled={loading} className="flex-1">
             {t('Cancel')}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft) transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          </Button>
+          <Button
+            onClick={() => void handleConfirm()}
+            loading={loading}
+            loadingText={t('Switching...')}
+            leadingIcon={<ArrowRightLeft className="size-4" />}
+            className="flex-1"
           >
-            {loading ? t('Switching...') : t('Switch to {{plan}}', { plan: target.name })}
-          </button>
+            {t('Switch to {{plan}}', { plan: target.name })}
+          </Button>
+        </>
+      }
+    >
+      {error && (
+        <div
+          className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/8 px-4 py-3 text-sm text-(--mc-color-danger)"
+          role="alert"
+        >
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0">{error}</span>
         </div>
-      </div>
-    </div>
+      )}
+    </Dialog>
   )
 }

@@ -75,8 +75,9 @@ export async function createPortalSession(): Promise<{ url: string | null; error
 }
 
 /**
- * Get the user's active subscription from Supabase (RLS-protected).
- * Returns the most recent active/trialing/past_due subscription.
+ * Get the user's most recent subscription from Supabase (RLS-protected).
+ * Returning terminal states as well lets billing history remain available after cancellation;
+ * BillingProvider still derives paid access only from active/trialing/past_due states.
  */
 export async function getSubscription(): Promise<{
   subscription: Subscription | null
@@ -85,7 +86,6 @@ export async function getSubscription(): Promise<{
   const { data, error } = await supabase
     .from('stripe_subscriptions')
     .select('*')
-    .in('status', ['active', 'trialing', 'past_due'])
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
