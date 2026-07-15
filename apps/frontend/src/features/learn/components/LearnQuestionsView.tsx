@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { completeQuestionSession, createQuestionSession } from '../api/testsApi'
@@ -19,10 +19,12 @@ interface ActiveSession {
 }
 
 export interface LearnQuestionsViewProps {
+  initialArea?: string | null
   onImmersiveChange: (immersive: boolean) => void
 }
 
 export default function LearnQuestionsView({
+  initialArea = null,
   onImmersiveChange,
 }: LearnQuestionsViewProps) {
   const { t } = useTranslation()
@@ -39,10 +41,10 @@ export default function LearnQuestionsView({
     creatingRef.current = false
   }, [])
 
-  const applyView = (nextView: QuestionsViewState) => {
+  const applyView = useCallback((nextView: QuestionsViewState) => {
     setView(nextView)
     onImmersiveChange(nextView === 'session' || nextView === 'review')
-  }
+  }, [onImmersiveChange])
 
   const changeView = (nextView: QuestionsViewState) => {
     creationRequestRef.current += 1
@@ -52,7 +54,7 @@ export default function LearnQuestionsView({
     applyView(nextView)
   }
 
-  const startSession = async (
+  const startSession = useCallback(async (
     mode: QuestionSessionMode,
     filterLaws: number[] | null,
     filterAreas: string[] | null,
@@ -82,6 +84,7 @@ export default function LearnQuestionsView({
     setCreating(false)
     if (result.error || !result.data) {
       setCreationError(true)
+      onImmersiveChange(false)
       return
     }
 
@@ -93,7 +96,19 @@ export default function LearnQuestionsView({
       startedAt: result.data.started_at,
     })
     applyView('session')
-  }
+  }, [applyView, onImmersiveChange])
+
+  useEffect(() => {
+    if (!initialArea) return
+    let cancelled = false
+    queueMicrotask(() => {
+      if (!cancelled) void startSession('by_area', null, [initialArea])
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [initialArea, startSession])
 
   const handleStartQuick = () => startSession('quick', null, null)
   const handleSetupConfirm = (laws: number[], areas: string[]) => {

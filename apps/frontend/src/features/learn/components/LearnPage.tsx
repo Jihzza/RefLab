@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import {
   Download,
   FileText,
@@ -6,11 +6,12 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { Button, EmptyState, Surface } from '@/components/ui'
 import LearnQuestionsView from './LearnQuestionsView'
 import LearnTestView from './LearnTestView'
 import VideoAnalysisView from './VideoAnalysisView'
-import { shouldAutoStartTest } from './learnRouteState'
+import { getLearnRouteState } from './learnRouteState'
 
 type TabKey = 'test' | 'questions' | 'videos' | 'courses' | 'resources'
 
@@ -154,9 +155,29 @@ function ResourcesView() {
 
 export default function LearnPage() {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<TabKey>('test')
-  const [autoStartEnabled, setAutoStartEnabled] = useState(shouldAutoStartTest)
-  const [immersiveMode, setImmersiveMode] = useState(shouldAutoStartTest)
+  const [, setSearchParams] = useSearchParams()
+  const [routeState] = useState(getLearnRouteState)
+  const [activeTab, setActiveTab] = useState<TabKey>(() => (
+    routeState.recommendedArea ? 'questions' : 'test'
+  ))
+  const [autoStartEnabled, setAutoStartEnabled] = useState(routeState.autoStartTest)
+  const [immersiveMode, setImmersiveMode] = useState(
+    routeState.autoStartTest || Boolean(routeState.recommendedArea),
+  )
+
+  useEffect(() => {
+    if (!routeState.autoStartTest && !routeState.recommendedArea) return
+
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('action')
+      if (routeState.recommendedArea) {
+        next.delete('tab')
+        next.delete('area')
+      }
+      return next
+    }, { replace: true })
+  }, [routeState, setSearchParams])
 
   const handleTabChange = (nextTab: TabKey) => {
     setActiveTab(nextTab)
@@ -193,7 +214,10 @@ export default function LearnPage() {
             />
           )}
           {activeTab === 'questions' && (
-            <LearnQuestionsView onImmersiveChange={setImmersiveMode} />
+            <LearnQuestionsView
+              initialArea={routeState.recommendedArea}
+              onImmersiveChange={setImmersiveMode}
+            />
           )}
           {activeTab === 'videos' && <VideoAnalysisView />}
           {activeTab === 'courses' && (

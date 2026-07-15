@@ -49,12 +49,12 @@ export default function HabitsSection({ habits }: HabitsSectionProps) {
         padding="sm"
         className="min-h-[108px] border-(--mc-color-border-strong) shadow-none sm:p-4"
         role="region"
-        aria-label={t('Active days this week')}
+        aria-label={t('Active days in the last 7 days')}
       >
         <div className="flex items-start gap-2.5">
           <ClipboardCheck className="mt-0.5 size-5 shrink-0 text-(--mc-color-accent)" aria-hidden="true" />
           <div className="min-w-0">
-            <p className="line-clamp-2 text-xs leading-4 text-(--mc-color-text-secondary)">{t('Active days this week')}</p>
+            <p className="line-clamp-2 text-xs leading-4 text-(--mc-color-text-secondary)">{t('Active days in the last 7 days')}</p>
             <p className="mt-0.5 text-xl font-bold leading-tight text-(--mc-color-accent) sm:text-2xl">
               {Math.min(Math.max(habits.active_days_last_7, 0), 7)}<span className="text-base text-(--mc-color-text-muted)">/7</span>
             </p>

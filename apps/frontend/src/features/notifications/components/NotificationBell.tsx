@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { Badge, IconButton } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getUnreadCount } from '../api/notificationsApi'
+import { NOTIFICATIONS_READ_EVENT } from '../types'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -19,15 +20,39 @@ export default function NotificationBell() {
   const navigate = useNavigate()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
+  const requestGenerationRef = useRef(0)
 
   // Re-fetch unread count when user or route changes
   useEffect(() => {
+    const generation = requestGenerationRef.current + 1
+    requestGenerationRef.current = generation
+
     if (!user?.id) return
 
-    getUnreadCount(user.id).then(({ count }) => {
+    getUnreadCount(user.id).then(({ count, error }) => {
+      if (requestGenerationRef.current !== generation) return
+      if (error) {
+        console.error('Failed to load unread notification count:', error)
+        return
+      }
       setUnreadCount(count)
     })
+
+    return () => {
+      if (requestGenerationRef.current === generation) {
+        requestGenerationRef.current += 1
+      }
+    }
   }, [user?.id, location.pathname])
+
+  useEffect(() => {
+    const handleNotificationsRead = () => {
+      requestGenerationRef.current += 1
+      setUnreadCount(0)
+    }
+    window.addEventListener(NOTIFICATIONS_READ_EVENT, handleNotificationsRead)
+    return () => window.removeEventListener(NOTIFICATIONS_READ_EVENT, handleNotificationsRead)
+  }, [])
 
   const handleClick = () => {
     navigate('/app/notifications')

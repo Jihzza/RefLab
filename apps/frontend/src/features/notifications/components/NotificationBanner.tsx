@@ -126,7 +126,9 @@ function getNotificationRoute(notification: EnrichedNotification): string | null
   }
 
   if (type === 'new_content_available') {
-    return '/app/tests'
+    return reference_id
+      ? `/app/learn/test/${encodeURIComponent(reference_id)}`
+      : '/app/learn'
   }
 
   if (type === 'new_message') {

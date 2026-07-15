@@ -14,7 +14,7 @@ import {
   getAttemptAnswers,
   getOrCreateAttempt,
   getQuestions,
-  getTestBySlug,
+  getTestByReference,
   saveAnswer,
   submitAttempt,
 } from '../api/testsApi'
@@ -87,7 +87,7 @@ export default function TestPage() {
 
       try {
         // 1. Get the test
-        const { data: testData, error: testError } = await getTestBySlug(slug)
+        const { data: testData, error: testError } = await getTestByReference(slug)
         if (cancelled) return
         if (testError || !testData) {
           setError(testError?.message || t('Test not found'))

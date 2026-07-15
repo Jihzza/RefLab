@@ -152,6 +152,7 @@ const ptPT = {
   'Current streak': 'Sequência atual',
   'Longest streak': 'Maior sequência',
   'Active days this week': 'Dias ativos esta semana',
+  'Active days in the last 7 days': 'Dias ativos nos últimos 7 dias',
   'day streak': 'dia de sequência',
   'days streak': 'dias de sequência',
   'best streak': 'melhor sequência',

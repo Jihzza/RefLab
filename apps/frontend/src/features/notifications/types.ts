@@ -18,6 +18,8 @@ export type NotificationType =
   | 'new_content_available'
   | 'profile_incomplete'
 
+export const NOTIFICATIONS_READ_EVENT = 'reflab:notifications-read'
+
 // ============================================
 // Actor profile subset (joined from profiles table)
 // ============================================

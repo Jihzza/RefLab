@@ -32,6 +32,24 @@ export async function getTestBySlug(slug: string) {
   return { data: data as Test | null, error }
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Resolve a test route reference. Normal links use a slug, while system
+ * notifications store the test UUID in `reference_id`.
+ */
+export async function getTestByReference(reference: string) {
+  if (!UUID_PATTERN.test(reference)) return getTestBySlug(reference)
+
+  const { data, error } = await supabase
+    .from('tests')
+    .select('*')
+    .eq('id', reference)
+    .single()
+
+  return { data: data as Test | null, error }
+}
+
 /**
  * Fetch all questions for a test
  *
@@ -662,6 +680,7 @@ export async function getQuestionSessionKPIs() {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', user.id)
     .not('ended_at', 'is', null)
+    .gt('total_answered', 0)
     .gte('started_at', weekStart.toISOString())
 
   // Overall accuracy from all practice answers

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getActiveNotifications, markAllAsRead } from '../api/notificationsApi'
-import type { EnrichedNotification } from '../types'
+import { NOTIFICATIONS_READ_EVENT, type EnrichedNotification } from '../types'
 
 /**
  * useNotifications - Fetches notifications and auto-marks them as read.
@@ -16,6 +16,7 @@ import type { EnrichedNotification } from '../types'
  */
 export function useNotifications() {
   const { user } = useAuth()
+  const userId = user?.id
   const [notifications, setNotifications] = useState<EnrichedNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,8 @@ export function useNotifications() {
   const unreadSnapshotRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
+    const activeUserId = userId
 
     let cancelled = false
 
@@ -33,7 +35,7 @@ export function useNotifications() {
       setError(null)
 
       const { notifications: data, error: fetchError } =
-        await getActiveNotifications(user!.id)
+        await getActiveNotifications(activeUserId)
 
       if (cancelled) return
 
@@ -54,11 +56,18 @@ export function useNotifications() {
 
       setLoading(false)
 
-      // Mark all as read in background (fire-and-forget)
+      // Keep the entry snapshot, but notify the global badge only after the
+      // database confirms the read update.
       if (unreadIds.size > 0) {
-        markAllAsRead(user!.id).catch((err) =>
-          console.error('Failed to mark all as read:', err)
-        )
+        void markAllAsRead(activeUserId)
+          .then(({ error: markReadError }) => {
+            if (markReadError) {
+              console.error('Failed to mark all as read:', markReadError)
+              return
+            }
+            if (!cancelled) window.dispatchEvent(new Event(NOTIFICATIONS_READ_EVENT))
+          })
+          .catch((err) => console.error('Failed to mark all as read:', err))
       }
     }
 
@@ -67,7 +76,7 @@ export function useNotifications() {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [userId])
 
   // Check if a notification should display as "unread" in this session
   const isVisuallyUnread = useCallback(
