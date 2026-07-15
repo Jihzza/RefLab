@@ -1,5 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  AlertCircle,
+  FileText,
+  LoaderCircle,
+  MessageCircle,
+  RefreshCcw,
+  UserCheck,
+  UserPlus,
+} from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
+import ViewportPage from '@/app/layouts/ViewportPage'
+import {
+  Avatar,
+  Button,
+  EmptyState,
+  Skeleton,
+  Surface,
+} from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getOrCreateConversation } from '@/features/messages/api/messagesApi'
 import type { MessageUser } from '@/features/messages/types'
@@ -22,24 +39,43 @@ import { useTranslation } from 'react-i18next'
 
 function PostSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <Surface aria-hidden="true">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
+        <Skeleton variant="circular" width="3rem" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+          <Skeleton variant="text" width="9rem" />
+          <Skeleton variant="text" width="6rem" className="h-3" />
         </div>
       </div>
-      <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+      <div className="mt-5 space-y-2">
+        <Skeleton variant="text" />
+        <Skeleton variant="text" width="78%" />
       </div>
-      <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+      <div className="mt-5 grid grid-cols-5 gap-3 border-t border-(--mc-color-border) pt-3">
+        {Array.from({ length: 5 }, (_, index) => (
+          <Skeleton key={index} variant="text" className="h-5" />
+        ))}
       </div>
-    </div>
+    </Surface>
+  )
+}
+
+function PitchDiagram() {
+  return (
+    <svg
+      viewBox="0 0 280 190"
+      className="pointer-events-none absolute -right-12 top-0 h-[68%] w-[72%] text-(--mc-color-border-strong) opacity-55 sm:h-full sm:w-[58%]"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.15"
+      aria-hidden="true"
+    >
+      <path d="M56 10 267 28 245 178 14 143Z" />
+      <path d="m149 18-11 143" />
+      <ellipse cx="143" cy="91" rx="29" ry="23" transform="rotate(-5 143 91)" />
+      <path d="m48 56-30-4-6 62 29 7M242 57l29 4-9 85-29-7" />
+      <path d="M91 13 70 151M207 22l-17 144" opacity=".55" />
+    </svg>
   )
 }
 
@@ -52,10 +88,15 @@ export default function PublicProfilePage() {
   const { username: usernameParam } = useParams<{ username: string }>()
   const navigate = useNavigate()
   const { user, profile } = useAuth()
+  const userId = user?.id
 
   const username = useMemo(() => {
     if (!usernameParam) return ''
-    return decodeURIComponent(usernameParam)
+    try {
+      return decodeURIComponent(usernameParam)
+    } catch {
+      return usernameParam
+    }
   }, [usernameParam])
 
   const isOwnProfileRoute = useMemo(() => {
@@ -76,6 +117,11 @@ export default function PublicProfilePage() {
 
   const toastTimerRef = useRef<number | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const profileRequestIdRef = useRef(0)
+  const activeProfileIdRef = useRef<string | null>(null)
+  const relationshipActionRef = useRef<string | null>(null)
+
+  activeProfileIdRef.current = profileView?.id ?? null
 
   useEffect(() => {
     if (!isOwnProfileRoute) return
@@ -104,42 +150,67 @@ export default function PublicProfilePage() {
   }, [])
 
   const loadProfileView = useCallback(async () => {
+    const requestId = ++profileRequestIdRef.current
+
     if (!username) {
       setProfileError(t('Missing username.'))
-      setIsProfileLoading(false)
-      return
-    }
-
-    if (!user?.id) {
-      setIsProfileLoading(false)
-      return
-    }
-
-    setIsProfileLoading(true)
-    setProfileError(null)
-    setActionError(null)
-
-    const { profile: publicProfile, error } = await getPublicProfileView(
-      user.id,
-      username
-    )
-
-    if (error) {
-      setProfileError(error.message)
       setProfileView(null)
       setIsProfileLoading(false)
       return
     }
 
-    setProfileView(publicProfile)
-    setIsProfileLoading(false)
-  }, [username, user, t])
+    if (!userId) {
+      setIsProfileLoading(false)
+      return
+    }
+
+    setIsProfileLoading(true)
+    setProfileView(null)
+    setProfileError(null)
+    setActionError(null)
+    setIsFollowUpdating(false)
+    setIsBlockUpdating(false)
+    setIsStartingConversation(false)
+    setShowReportDialog(false)
+    setShowBlockConfirmDialog(false)
+
+    try {
+      const { profile: publicProfile, error } = await getPublicProfileView(
+        userId,
+        username,
+      )
+
+      if (requestId !== profileRequestIdRef.current) return
+
+      if (error) {
+        setProfileError(error.message)
+        setProfileView(null)
+        return
+      }
+
+      setProfileView(publicProfile)
+    } catch (loadError) {
+      if (requestId !== profileRequestIdRef.current) return
+      setProfileError(
+        loadError instanceof Error
+          ? loadError.message
+          : t('Something went wrong loading this profile.'),
+      )
+      setProfileView(null)
+    } finally {
+      if (requestId === profileRequestIdRef.current) {
+        setIsProfileLoading(false)
+      }
+    }
+  }, [username, userId, t])
 
   useEffect(() => {
-    if (isOwnProfileRoute || !user?.id) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isOwnProfileRoute || !userId) return
     void loadProfileView()
-  }, [loadProfileView, isOwnProfileRoute, user])
+    return () => {
+      profileRequestIdRef.current += 1
+    }
+  }, [loadProfileView, isOwnProfileRoute, userId])
 
   const canLoadFullProfile = !!profileView && !profileView.has_blocked_viewer
   const canShowFeed = !!profileView && !profileView.has_blocked_viewer && !profileView.is_blocked_by_viewer
@@ -158,7 +229,7 @@ export default function PublicProfilePage() {
     removePost,
     removePostsByUser,
     updatePost,
-  } = usePublicProfileFeed(user?.id ?? null, profileView?.id ?? null, canShowFeed)
+  } = usePublicProfileFeed(userId ?? null, profileView?.id ?? null, canShowFeed)
 
   const {
     handleLike,
@@ -175,7 +246,6 @@ export default function PublicProfilePage() {
   })
 
   const displayName = profileView?.name || profileView?.username || username
-  const initials = displayName.slice(0, 2).toUpperCase()
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
@@ -190,10 +260,10 @@ export default function PublicProfilePage() {
     async (post: Post) => {
       await handleShare(post)
       if (!navigator.share) {
-        showToast('Link copied to clipboard')
+        showToast(t('Link copied to clipboard'))
       }
     },
-    [handleShare, showToast]
+    [handleShare, showToast, t],
   )
 
   const handleCommentCountChange = useCallback(
@@ -210,18 +280,24 @@ export default function PublicProfilePage() {
 
   const applyBlockChange = useCallback(
     async (nextBlocked: boolean) => {
-      if (!user?.id || !profileView) return
+      if (!userId || !profileView) return
 
+      const targetProfileId = profileView.id
       const previousBlocked = profileView.is_blocked_by_viewer
       const previousFollowing = profileView.is_following
 
-      if (previousBlocked === nextBlocked) return
+      if (
+        previousBlocked === nextBlocked ||
+        relationshipActionRef.current === targetProfileId
+      ) return
+
+      relationshipActionRef.current = targetProfileId
 
       setActionError(null)
       setIsBlockUpdating(true)
 
       setProfileView(prev =>
-        prev
+        prev?.id === targetProfileId
           ? {
               ...prev,
               is_blocked_by_viewer: nextBlocked,
@@ -234,13 +310,9 @@ export default function PublicProfilePage() {
         removePostsByUser(profileView.id)
       }
 
-      const { error: blockError } = nextBlocked
-        ? await blockUser(user.id, profileView.id)
-        : await unblockUser(user.id, profileView.id)
-
-      if (blockError) {
+      const restoreRelationship = () => {
         setProfileView(prev =>
-          prev
+          prev?.id === targetProfileId
             ? {
                 ...prev,
                 is_blocked_by_viewer: previousBlocked,
@@ -248,79 +320,152 @@ export default function PublicProfilePage() {
               }
             : prev
         )
-        setActionError(blockError.message)
       }
 
-      setIsBlockUpdating(false)
+      try {
+        const { error: blockError } = nextBlocked
+          ? await blockUser(userId, profileView.id)
+          : await unblockUser(userId, profileView.id)
+
+        if (blockError) {
+          restoreRelationship()
+          if (activeProfileIdRef.current === targetProfileId) {
+            setActionError(blockError.message)
+            if (nextBlocked) await refresh()
+          }
+        }
+      } catch (blockError) {
+        restoreRelationship()
+        if (activeProfileIdRef.current === targetProfileId) {
+          setActionError(
+            blockError instanceof Error
+              ? blockError.message
+              : t('Could not update this block right now.'),
+          )
+          if (nextBlocked) await refresh()
+        }
+      } finally {
+        if (relationshipActionRef.current === targetProfileId) {
+          relationshipActionRef.current = null
+        }
+        if (activeProfileIdRef.current === targetProfileId) {
+          setIsBlockUpdating(false)
+        }
+      }
     },
-    [user, profileView, removePostsByUser]
+    [profileView, refresh, removePostsByUser, t, userId],
   )
 
   const handleFollowToggle = useCallback(async () => {
-    if (!user?.id || !profileView || profileView.is_blocked_by_viewer) return
+    if (!userId || !profileView || profileView.is_blocked_by_viewer) return
 
+    const targetProfileId = profileView.id
     const previousFollowing = profileView.is_following
+    if (relationshipActionRef.current === targetProfileId) return
+
+    relationshipActionRef.current = targetProfileId
     setActionError(null)
     setIsFollowUpdating(true)
 
     setProfileView(prev =>
-      prev ? { ...prev, is_following: !previousFollowing } : prev
+      prev?.id === targetProfileId
+        ? { ...prev, is_following: !previousFollowing }
+        : prev
     )
 
-    const { error: followError } = previousFollowing
-      ? await unfollowUser(user.id, profileView.id)
-      : await followUser(user.id, profileView.id)
-
-    if (followError) {
+    const restoreFollowState = () => {
       setProfileView(prev =>
-        prev ? { ...prev, is_following: previousFollowing } : prev
+        prev?.id === targetProfileId
+          ? { ...prev, is_following: previousFollowing }
+          : prev
       )
-      setActionError(followError.message)
     }
 
-    setIsFollowUpdating(false)
-  }, [user, profileView])
+    try {
+      const { error: followError } = previousFollowing
+        ? await unfollowUser(userId, profileView.id)
+        : await followUser(userId, profileView.id)
+
+      if (followError) {
+        restoreFollowState()
+        if (activeProfileIdRef.current === targetProfileId) {
+          setActionError(followError.message)
+        }
+      }
+    } catch (followError) {
+      restoreFollowState()
+      if (activeProfileIdRef.current === targetProfileId) {
+        setActionError(
+          followError instanceof Error
+            ? followError.message
+            : t('Could not update this follow right now.'),
+        )
+      }
+    } finally {
+      if (relationshipActionRef.current === targetProfileId) {
+        relationshipActionRef.current = null
+      }
+      if (activeProfileIdRef.current === targetProfileId) {
+        setIsFollowUpdating(false)
+      }
+    }
+  }, [profileView, t, userId])
 
   const handleStartConversation = useCallback(async () => {
-    if (!user?.id || !profileView || profileView.is_blocked_by_viewer) return
+    if (!userId || !profileView || profileView.is_blocked_by_viewer) return
 
     setActionError(null)
     setIsStartingConversation(true)
 
-    const { data: conversationId, error: conversationError } =
-      await getOrCreateConversation(user.id, profileView.id)
+    try {
+      const { data: conversationId, error: conversationError } =
+        await getOrCreateConversation(userId, profileView.id)
 
-    setIsStartingConversation(false)
+      if (conversationError || !conversationId) {
+        setActionError(conversationError?.message ?? t('Failed to open conversation.'))
+        return
+      }
 
-    if (conversationError || !conversationId) {
-      setActionError(conversationError?.message ?? t('Failed to open conversation.'))
-      return
+      const otherUser: MessageUser = {
+        id: profileView.id,
+        username: profileView.username,
+        name: profileView.name,
+        photo_url: profileView.photo_url,
+      }
+
+      navigate(`/app/messages/${conversationId}`, { state: { otherUser } })
+    } catch (conversationError) {
+      setActionError(
+        conversationError instanceof Error
+          ? conversationError.message
+          : t('Failed to open conversation.'),
+      )
+    } finally {
+      setIsStartingConversation(false)
     }
-
-    const otherUser: MessageUser = {
-      id: profileView.id,
-      username: profileView.username,
-      name: profileView.name,
-      photo_url: profileView.photo_url,
-    }
-
-    navigate(`/app/messages/${conversationId}`, { state: { otherUser } })
-  }, [user, profileView, navigate])
+  }, [navigate, profileView, t, userId])
 
   const handleSubmitReport = useCallback(
     async (reason: string) => {
-      if (!user?.id || !profileView) return
-
-      const { error: reportError } = await reportUser(user.id, profileView.id, reason)
-      if (reportError) {
-        setActionError(reportError.message)
-      } else {
-        showToast(t('Report submitted'))
-      }
-
+      if (!userId || !profileView) return
       setShowReportDialog(false)
+
+      try {
+        const { error: reportError } = await reportUser(userId, profileView.id, reason)
+        if (reportError) {
+          setActionError(reportError.message)
+        } else {
+          showToast(t('Report submitted'))
+        }
+      } catch (reportError) {
+        setActionError(
+          reportError instanceof Error
+            ? reportError.message
+            : t('Could not submit this report.'),
+        )
+      }
     },
-    [user, profileView, showToast]
+    [profileView, showToast, t, userId],
   )
 
   const handleShareProfile = useCallback(async () => {
@@ -335,20 +480,38 @@ export default function PublicProfilePage() {
           url,
         })
         return
-      } catch {
-        // User cancelled native share; no fallback needed.
+      } catch (shareError) {
+        if (shareError instanceof DOMException && shareError.name === 'AbortError') {
+          return
+        }
       }
     }
 
-    await navigator.clipboard.writeText(url)
-    showToast(t('Profile link copied'))
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast(t('Profile link copied'))
+    } catch (copyError) {
+      setActionError(
+        copyError instanceof Error
+          ? copyError.message
+          : t('Could not copy the profile link.'),
+      )
+    }
   }, [profileView, showToast, t])
 
   const handleCopyProfileLink = useCallback(async () => {
     if (!profileView) return
 
-    await navigator.clipboard.writeText(getProfileLink(profileView.username))
-    showToast(t('Profile link copied'))
+    try {
+      await navigator.clipboard.writeText(getProfileLink(profileView.username))
+      showToast(t('Profile link copied'))
+    } catch (copyError) {
+      setActionError(
+        copyError instanceof Error
+          ? copyError.message
+          : t('Could not copy the profile link.'),
+      )
+    }
   }, [profileView, showToast, t])
 
   if (isOwnProfileRoute) {
@@ -356,82 +519,83 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <ViewportPage ariaLabel={t('Profile')} scroll="managed">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4 pb-20 space-y-4"
+        className="h-full min-h-0 overflow-y-auto overscroll-contain"
         onScroll={handleScroll}
       >
+        <div className="mx-auto w-full max-w-5xl space-y-4 px-3 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8">
         {isProfileLoading && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
-            <div className="flex items-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-(--bg-surface-2)" />
-              <div className="space-y-2 flex-1">
-                <div className="h-4 w-40 bg-(--bg-surface-2) rounded" />
-                <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
+          <Surface
+            role="status"
+            aria-label={t('Loading profile...')}
+            padding="none"
+            className="mx-auto max-w-4xl overflow-hidden border-(--mc-color-border-strong) shadow-none"
+          >
+            <div className="flex min-h-[21rem] flex-col justify-end gap-5 px-5 py-6 sm:min-h-[17rem] sm:flex-row sm:items-end sm:px-8 sm:py-8">
+              <Skeleton variant="circular" width="8rem" className="shrink-0" />
+              <div className="flex-1 space-y-3">
+                <Skeleton variant="text" width="12rem" className="h-8" />
+                <Skeleton variant="text" width="8rem" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton width="8rem" height="2.75rem" />
+                <Skeleton width="2.75rem" height="2.75rem" />
               </div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="h-10 rounded-(--radius-button) bg-(--bg-surface-2)" />
-              <div className="h-10 rounded-(--radius-button) bg-(--bg-surface-2)" />
-            </div>
-          </div>
+          </Surface>
         )}
 
         {!isProfileLoading && profileError && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--error)/30 p-6">
-            <p className="text-sm text-(--error) mb-3">{profileError}</p>
-            <button
-              type="button"
-              onClick={() => void loadProfileView()}
-              className="h-9 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors"
-            >
-              {t('Try Again')}
-            </button>
-          </div>
+          <Surface className="mx-auto max-w-3xl">
+            <EmptyState
+              icon={<AlertCircle className="size-6" />}
+              title={t('Something went wrong loading this profile.')}
+              description={profileError}
+              action={(
+                <Button
+                  leadingIcon={<RefreshCcw className="size-4" />}
+                  onClick={() => void loadProfileView()}
+                >
+                  {t('Try Again')}
+                </Button>
+              )}
+            />
+          </Surface>
         )}
 
         {!isProfileLoading && !profileError && !profileView && (
-          <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
-            <h1 className="text-lg font-semibold text-(--text-primary) mb-2">{t('Profile not found')}</h1>
-            <p className="text-sm text-(--text-muted)">
-              {t('We could not find a public profile for @{{username}}.', { username })}
-            </p>
-          </div>
+          <Surface className="mx-auto max-w-3xl">
+            <EmptyState
+              icon={<AlertCircle className="size-6" />}
+              title={t('Profile not found')}
+              description={t('We could not find a public profile for @{{username}}.', { username })}
+              action={(
+                <Button variant="secondary" onClick={() => navigate('/app/social')}>
+                  {t('Back to Feed')}
+                </Button>
+              )}
+            />
+          </Surface>
         )}
 
         {!isProfileLoading && !profileError && profileView && (
           <>
-            <section className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  {profileView.photo_url ? (
-                    <img
-                      src={profileView.photo_url}
-                      alt={displayName}
-                      className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                      <span className="text-lg font-semibold text-(--bg-primary)">
-                        {initials}
-                      </span>
-                    </div>
-                  )}
+            <Surface
+              padding="none"
+              className="relative isolate mx-auto max-w-4xl overflow-hidden border-(--mc-color-border-strong) shadow-none"
+            >
+              <div className="absolute left-0 top-0 size-20 bg-(--mc-color-accent) [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
+              <div className="absolute bottom-10 right-0 h-20 w-9 bg-(--mc-color-danger) [clip-path:polygon(100%_0,100%_100%,0_100%)]" aria-hidden="true" />
+              <PitchDiagram />
 
-                  <div className="min-w-0">
-                    <h1 className="text-lg font-semibold text-(--text-primary) truncate">
-                      {displayName}
-                    </h1>
-                    <p className="text-sm text-(--text-muted) truncate">@{profileView.username}</p>
-                  </div>
-                </div>
-
-                {canLoadFullProfile && (
+              {canLoadFullProfile && (
+                <div className="absolute right-4 top-4 z-20 sm:right-6 sm:top-6">
                   <PublicProfileMenu
                     username={profileView.username}
                     isBlockedByViewer={profileView.is_blocked_by_viewer}
-                    isBusy={isBlockUpdating}
+                    isBusy={isBlockUpdating || isFollowUpdating}
                     onToggleBlock={() => {
                       if (profileView.is_blocked_by_viewer) {
                         void applyBlockChange(false)
@@ -443,74 +607,95 @@ export default function PublicProfilePage() {
                     onShare={() => void handleShareProfile()}
                     onCopyLink={() => void handleCopyProfileLink()}
                   />
+                </div>
+              )}
+
+              <div className="relative z-10 flex min-h-[22rem] flex-col justify-end px-5 py-6 sm:min-h-[18rem] sm:flex-row sm:items-end sm:gap-7 sm:px-8 sm:py-8">
+                <Avatar
+                  src={profileView.photo_url}
+                  alt={displayName}
+                  name={displayName}
+                  size="xl"
+                  className="!size-28 border-(--mc-color-border-strong) bg-(--mc-color-canvas) shadow-(--mc-shadow-raised) sm:!size-32"
+                  imageProps={{ loading: 'eager' }}
+                />
+
+                <div className="mt-5 min-w-0 flex-1 sm:mt-0">
+                  <h2 className="truncate text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
+                    {displayName}
+                  </h2>
+                  <p className="mt-1 truncate text-base text-(--mc-color-text-muted) sm:text-lg">
+                    @{profileView.username}
+                  </p>
+
+                  {profileView.has_blocked_viewer && (
+                    <p className="mt-4 max-w-md text-sm leading-6 text-(--mc-color-text-muted)">
+                      {t('This user is unavailable.')}
+                    </p>
+                  )}
+                </div>
+
+                {!profileView.has_blocked_viewer && (
+                  <div className="mt-5 flex w-full gap-2 sm:mt-0 sm:w-auto sm:shrink-0">
+                    <Button
+                      variant={profileView.is_following ? 'secondary' : 'primary'}
+                      leadingIcon={
+                        profileView.is_following
+                          ? <UserCheck className="size-4" />
+                          : <UserPlus className="size-4" />
+                      }
+                      loading={isFollowUpdating}
+                      disabled={isBlockUpdating || profileView.is_blocked_by_viewer}
+                      onClick={() => void handleFollowToggle()}
+                      aria-label={profileView.is_following ? t('Unfollow user') : t('Follow user')}
+                      className="flex-1 sm:min-w-32"
+                    >
+                      {profileView.is_following ? t('Unfollow') : t('Follow')}
+                    </Button>
+
+                    <Button
+                      variant="secondary"
+                      leadingIcon={<MessageCircle className="size-4" />}
+                      loading={isStartingConversation}
+                      loadingText={t('Opening...')}
+                      disabled={isBlockUpdating || profileView.is_blocked_by_viewer}
+                      onClick={() => void handleStartConversation()}
+                      aria-label={t('Send message')}
+                      className="flex-1 sm:min-w-32"
+                    >
+                      {t('Message')}
+                    </Button>
+                  </div>
                 )}
               </div>
 
-              {profileView.has_blocked_viewer ? (
-                <p className="mt-4 text-sm text-(--text-muted)">
-                  {t('This user is unavailable.')}
-                </p>
-              ) : (
-                <>
-                  <div className="mt-4 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleFollowToggle()}
-                      disabled={
-                        isFollowUpdating ||
-                        isBlockUpdating ||
-                        profileView.is_blocked_by_viewer
-                      }
-                      className={`h-10 rounded-(--radius-button) border border-(--border-subtle) text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                        profileView.is_following
-                          ? 'text-(--text-secondary) hover:bg-(--bg-hover)'
-                          : 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-                      }`}
-                      aria-label={
-                        profileView.is_following ? t('Unfollow user') : t('Follow user')
-                      }
-                    >
-                      {profileView.is_following ? t('Unfollow') : t('Follow')}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => void handleStartConversation()}
-                      disabled={
-                        isStartingConversation ||
-                        isBlockUpdating ||
-                        profileView.is_blocked_by_viewer
-                      }
-                      className="h-10 rounded-(--radius-button) border border-(--border-subtle) text-sm font-semibold text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label={t('Send message')}
-                    >
-                      {isStartingConversation ? t('Opening...') : t('Message')}
-                    </button>
-                  </div>
-
-                  {profileView.is_blocked_by_viewer && (
-                    <p className="mt-3 text-sm text-(--text-muted)">
-                      {t('You blocked this user. Unblock to view their posts.')}
-                    </p>
-                  )}
-                </>
+              {profileView.is_blocked_by_viewer && !profileView.has_blocked_viewer && (
+                <div className="relative z-10 border-t border-(--mc-color-border) bg-(--mc-color-canvas)/75 px-5 py-3 text-sm text-(--mc-color-text-muted) sm:px-8">
+                  {t('You blocked this user. Unblock to view their posts.')}
+                </div>
               )}
-            </section>
+            </Surface>
 
             {actionError && (
-              <div className="bg-(--error)/10 border border-(--error)/20 rounded-(--radius-card) p-3 text-sm text-(--error)">
-                {actionError}
+              <div
+                role="alert"
+                className="mx-auto flex max-w-3xl items-start gap-2 rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-3 text-sm leading-6 text-(--mc-color-text-secondary)"
+              >
+                <AlertCircle className="mt-1 size-4 shrink-0 text-(--mc-color-danger)" aria-hidden="true" />
+                <span className="break-words">{actionError}</span>
               </div>
             )}
 
+            <div className="mx-auto max-w-3xl space-y-4">
+
             {canShowFeed && isRefreshing && (
-              <div className="flex justify-center py-2">
-                <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+              <div className="flex min-h-10 items-center justify-center" role="status" aria-label={t('Refreshing posts')}>
+                <RefreshCcw className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
               </div>
             )}
 
             {canShowFeed && isLoading && (
-              <div className="space-y-4">
+              <div className="space-y-4" role="status" aria-label={t('Loading posts')}>
                 <PostSkeleton />
                 <PostSkeleton />
                 <PostSkeleton />
@@ -518,24 +703,27 @@ export default function PublicProfilePage() {
             )}
 
             {canShowFeed && error && !isLoading && (
-              <div className="text-center py-12">
-                <p className="text-(--text-muted) text-sm mb-3">
-                  {t('Something went wrong loading this profile feed.')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void refresh()}
-                  className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
+              <Surface>
+                <EmptyState
+                  icon={<RefreshCcw className="size-6" />}
+                  title={t('Something went wrong loading this profile feed.')}
+                  description={error}
+                  action={(
+                    <Button
+                      leadingIcon={<RefreshCcw className="size-4" />}
+                      onClick={() => void refresh()}
+                    >
+                      {t('Try Again')}
+                    </Button>
+                  )}
+                />
+              </Surface>
             )}
 
             {canShowFeed &&
               !isLoading &&
               !error &&
-              posts.map(post => (
+              posts.map((post) => (
                 <PostBox
                   key={post.id}
                   post={post}
@@ -553,34 +741,30 @@ export default function PublicProfilePage() {
               ))}
 
             {canShowFeed && isLoadingMore && (
-              <div className="flex justify-center py-4">
-                <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+              <div className="flex min-h-16 items-center justify-center" role="status" aria-label={t('Loading more posts')}>
+                <LoaderCircle className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
               </div>
             )}
 
             {canShowFeed && !isLoading && !hasMore && posts.length > 0 && (
-              <p className="text-center text-(--text-muted) text-xs py-4">
+              <p className="py-4 text-center text-xs text-(--mc-color-text-muted)">
                 {t("You're all caught up!")}
               </p>
             )}
 
             {canShowFeed && !isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-                  </svg>
-                </div>
-                <h3 className="text-base font-medium text-(--text-primary) mb-1">
-                  {t('No posts yet')}
-                </h3>
-                <p className="text-sm text-(--text-muted)">
-                  {t('This user has not posted yet.')}
-                </p>
-              </div>
+              <Surface>
+                <EmptyState
+                  icon={<FileText className="size-6" />}
+                  title={t('No posts yet')}
+                  description={t('This user has not posted yet.')}
+                />
+              </Surface>
             )}
+            </div>
           </>
         )}
+        </div>
       </div>
 
       {showReportDialog && (
@@ -605,10 +789,14 @@ export default function PublicProfilePage() {
       )}
 
       {toastMessage && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div
+          className="mc-layer-toast fixed bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom)+1rem)] left-1/2 max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) px-4 py-3 text-center text-sm font-medium text-(--mc-color-text) shadow-(--mc-shadow-raised) md:bottom-6"
+          role="status"
+          aria-live="polite"
+        >
           {toastMessage}
         </div>
       )}
-    </div>
+    </ViewportPage>
   )
 }

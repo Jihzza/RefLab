@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
+import { AlertCircle, ArrowLeft, Camera, CheckCircle2, LoaderCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import ViewportPage from '@/app/layouts/ViewportPage'
+import { Avatar, Button, EmptyState, Input, Surface } from '@/components/ui'
 import {
   checkUsernameAvailable,
   deleteProfileAvatarByUrl,
@@ -90,6 +93,8 @@ function EditProfileForm({
 
   const usernameRequestIdRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const pendingUploadedAvatarUrlRef = useRef<string | null>(null)
+  const supersededAvatarUrlsRef = useRef(new Set<string>())
 
   const normalizedUsername = useMemo(() => normalizeUsername(username), [username])
   const normalizedName = useMemo(() => name.trim(), [name])
@@ -155,10 +160,14 @@ function EditProfileForm({
 
     return () => {
       window.clearTimeout(timeoutId)
+      if (usernameRequestIdRef.current === requestId) {
+        usernameRequestIdRef.current += 1
+      }
     }
   }, [hasUsernameChanged, normalizedUsername, user.id, usernameFormatError])
 
   const handleAvatarClick = () => {
+    if (isSaving) return
     fileInputRef.current?.click()
   }
 
@@ -170,23 +179,21 @@ function EditProfileForm({
 
     if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
       setAvatarError(t('Avatar must be JPG, PNG, WEBP, or GIF.'))
-      setAvatarFile(null)
       event.target.value = ''
       return
     }
 
     if (file.size > MAX_AVATAR_SIZE_BYTES) {
       setAvatarError(t('Avatar must be 5MB or smaller.'))
-      setAvatarFile(null)
       event.target.value = ''
       return
     }
 
-    if (avatarPreviewUrl?.startsWith('blob:')) {
-      URL.revokeObjectURL(avatarPreviewUrl)
-    }
-
     setAvatarError(null)
+    if (pendingUploadedAvatarUrlRef.current) {
+      supersededAvatarUrlsRef.current.add(pendingUploadedAvatarUrlRef.current)
+      pendingUploadedAvatarUrlRef.current = null
+    }
     setAvatarFile(file)
     setAvatarPreviewUrl(URL.createObjectURL(file))
   }
@@ -210,44 +217,60 @@ function EditProfileForm({
       return
     }
 
-    if (hasUsernameChanged) {
-      setUsernameAvailability('checking')
-      const { available, error } = await checkUsernameAvailable(
-        normalizedUsername,
-        user.id
-      )
-
-      if (error) {
-        setUsernameAvailability('error')
-        setFormError(t('Could not verify username availability. Please try again.'))
-        return
-      }
-
-      if (!available) {
-        setUsernameAvailability('taken')
-        setFormError(t('That username is already taken.'))
-        return
-      }
-
-      setUsernameAvailability('available')
-    }
-
     setIsSaving(true)
 
-    let uploadedAvatarUrl: string | null = null
-    let profileUpdated = false
+    if (hasUsernameChanged) {
+      setUsernameAvailability('checking')
+      try {
+        const { available, error } = await checkUsernameAvailable(
+          normalizedUsername,
+          user.id,
+        )
 
-    try {
-      if (avatarFile) {
-        const { publicUrl, error } = await uploadProfileAvatar(user.id, avatarFile)
-
-        if (error || !publicUrl) {
-          setAvatarError(error?.message ?? t('Failed to upload avatar.'))
+        if (error) {
+          setUsernameAvailability('error')
+          setFormError(t('Could not verify username availability. Please try again.'))
           setIsSaving(false)
           return
         }
 
-        uploadedAvatarUrl = publicUrl
+        if (!available) {
+          setUsernameAvailability('taken')
+          setFormError(t('That username is already taken.'))
+          setIsSaving(false)
+          return
+        }
+
+        setUsernameAvailability('available')
+      } catch {
+        setUsernameAvailability('error')
+        setFormError(t('Could not verify username availability. Please try again.'))
+        setIsSaving(false)
+        return
+      }
+    }
+
+    let uploadedAvatarUrl: string | null = null
+    let uploadedAvatarThisAttempt = false
+    let profileUpdated = false
+
+    try {
+      if (avatarFile) {
+        if (pendingUploadedAvatarUrlRef.current) {
+          uploadedAvatarUrl = pendingUploadedAvatarUrlRef.current
+        } else {
+          const { publicUrl, error } = await uploadProfileAvatar(user.id, avatarFile)
+
+          if (error || !publicUrl) {
+            setAvatarError(error?.message ?? t('Failed to upload avatar.'))
+            setIsSaving(false)
+            return
+          }
+
+          uploadedAvatarUrl = publicUrl
+          uploadedAvatarThisAttempt = true
+          pendingUploadedAvatarUrlRef.current = publicUrl
+        }
       }
 
       const profileUpdates: Partial<Pick<Profile, 'name' | 'username' | 'photo_url'>>
@@ -268,8 +291,13 @@ function EditProfileForm({
       const { error: profileError } = await updateUser(profileUpdates)
 
       if (profileError) {
-        if (uploadedAvatarUrl) {
-          await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+        if (uploadedAvatarThisAttempt && uploadedAvatarUrl) {
+          try {
+            await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+          } catch {
+            // The profile error remains the primary actionable failure.
+          }
+          pendingUploadedAvatarUrlRef.current = null
         }
         setFormError(profileError.message)
         setIsSaving(false)
@@ -305,19 +333,34 @@ function EditProfileForm({
       }
 
       if (hasAvatarChanged && uploadedAvatarUrl) {
-        const previousPhotoUrl = initialSnapshot.photoUrl
-        if (previousPhotoUrl && previousPhotoUrl !== uploadedAvatarUrl) {
-          const { error: deleteError } = await deleteProfileAvatarByUrl(previousPhotoUrl)
-          if (deleteError) {
+        pendingUploadedAvatarUrlRef.current = null
+        const avatarUrlsToDelete = new Set(supersededAvatarUrlsRef.current)
+        if (initialSnapshot.photoUrl) avatarUrlsToDelete.add(initialSnapshot.photoUrl)
+        avatarUrlsToDelete.delete(uploadedAvatarUrl)
+
+        for (const obsoleteAvatarUrl of avatarUrlsToDelete) {
+          try {
+            const { error: deleteError } = await deleteProfileAvatarByUrl(obsoleteAvatarUrl)
+            if (deleteError) {
+              console.error('Failed to delete previous avatar file:', deleteError)
+            }
+          } catch (deleteError) {
             console.error('Failed to delete previous avatar file:', deleteError)
           }
         }
+
+        supersededAvatarUrlsRef.current.clear()
       }
 
       navigateBackWithFallback()
     } catch (error) {
-      if (!profileUpdated && uploadedAvatarUrl) {
-        await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+      if (!profileUpdated && uploadedAvatarThisAttempt && uploadedAvatarUrl) {
+        try {
+          await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+          pendingUploadedAvatarUrlRef.current = null
+        } catch {
+          // Keep the original save error as the actionable message.
+        }
       }
       const message =
         error instanceof Error ? error.message : t('Something went wrong while saving.')
@@ -332,166 +375,159 @@ function EditProfileForm({
   const saveDisabled =
     isSaving ||
     !hasChanges ||
+    !!avatarError ||
     !!usernameFormatError ||
     usernameAvailability === 'taken' ||
     usernameAvailability === 'checking'
 
   return (
-    <section className="p-4 pb-20">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 sm:p-6"
-      >
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-1 text-sm text-(--text-muted)">
-            {t('Update your profile details and avatar.')}
-          </p>
-        </div>
+    <ViewportPage ariaLabel={t('Edit Profile')} scroll="managed">
+      <div className="h-full min-h-0 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-2xl px-3 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8">
+          <Surface padding="none" className="overflow-hidden border-(--mc-color-border-strong) shadow-none">
+            <form onSubmit={handleSubmit} aria-busy={isSaving || undefined} className="p-4 sm:p-6">
+              <div className="mb-7 flex items-start gap-3 border-b border-(--mc-color-border) pb-5">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  leadingIcon={<ArrowLeft className="size-4" />}
+                  onClick={handleCancel}
+                  disabled={isSaving}
+                  className="-ml-2 shrink-0"
+                >
+                  {t('Back')}
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-xl font-bold tracking-[-0.02em] text-(--mc-color-text)">
+                    {t('Edit Profile')}
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-(--mc-color-text-muted)">
+                    {t('Update your profile details and avatar.')}
+                  </p>
+                </div>
+              </div>
 
-        <div className="mb-6 flex flex-col items-center">
+        <div className="mb-7 flex flex-col items-center rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-canvas) px-4 py-6">
           <button
             type="button"
             aria-label={t('Upload profile image')}
             onClick={handleAvatarClick}
-            className="w-24 h-24 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden"
+            disabled={isSaving}
+            className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) focus-visible:ring-offset-4 focus-visible:ring-offset-(--mc-color-canvas) disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {displayAvatar ? (
-              <img
-                src={displayAvatar}
-                alt={t('Profile avatar preview')}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-lg font-semibold text-(--text-primary)">
-                {displayInitials}
-              </span>
-            )}
+            <Avatar
+              src={displayAvatar}
+              alt={t('Profile avatar preview')}
+              name={normalizedName || normalizedUsername}
+              fallback={displayInitials}
+              size="xl"
+              className="!size-28 border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-xl shadow-(--mc-shadow-raised)"
+              imageProps={{ loading: 'eager' }}
+            />
+            <span className="absolute bottom-0 right-0 flex size-10 items-center justify-center rounded-full border-2 border-(--mc-color-canvas) bg-(--mc-color-accent) text-(--mc-color-canvas) shadow-(--mc-shadow-soft) transition-transform group-hover:scale-105 motion-reduce:transition-none">
+              <Camera className="size-5" aria-hidden="true" />
+            </span>
           </button>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAvatarClick}
-            className="mt-3 text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft)"
+            disabled={isSaving}
+            className="mt-3 text-(--mc-color-accent)"
           >
             {t('Change profile image')}
-          </button>
-          <p className="mt-1 text-xs text-(--text-muted)">
+          </Button>
+          <p className="mt-1 text-center text-xs text-(--mc-color-text-muted)">
             {t('JPG, PNG, WEBP, or GIF. Max size 5MB.')}
           </p>
           {avatarError && (
-            <p className="mt-2 text-xs text-(--error)" role="alert" aria-live="polite">
+            <p className="mt-2 text-center text-xs text-(--mc-color-danger)" role="alert" aria-live="polite">
               {avatarError}
             </p>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
+          <Input
+            id="edit-name"
+            type="text"
+            label={t('Name')}
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value)
+              setFormError(null)
+            }}
+            disabled={isSaving}
+            placeholder={t('Your name')}
+            autoComplete="name"
+          />
+
           <div className="space-y-2">
-            <label htmlFor="edit-name" className="block text-sm font-medium text-(--text-secondary)">
-              {t('Name')}
-            </label>
-            <input
-              id="edit-name"
+            <Input
+              id="edit-username"
               type="text"
-              value={name}
-              onChange={event => {
-                setName(event.target.value)
-                setFormError(null)
-              }}
-              disabled={isSaving}
-              placeholder={t('Your name')}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2)
-                border border-(--border-subtle)
-                rounded-(--radius-input)
-                text-(--text-primary)
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow)
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-60 disabled:cursor-not-allowed"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="edit-username" className="block text-sm font-medium text-(--text-secondary)">
-              {t('Username')}
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) text-sm">
-                @
-              </span>
-              <input
-                id="edit-username"
-                type="text"
-                value={username}
-                onChange={event => {
-                  const nextUsername = normalizeUsername(event.target.value)
-                  const nextFormatError = nextUsername
-                    ? isValidUsernameFormat(nextUsername)
-                      ? null
-                      : 'invalid'
+              label={t('Username')}
+              value={username}
+              onChange={(event) => {
+                const nextUsername = normalizeUsername(event.target.value)
+                const nextFormatError = nextUsername
+                  ? isValidUsernameFormat(nextUsername)
+                    ? null
                     : 'invalid'
+                  : 'invalid'
 
-                  setUsername(nextUsername)
-                  setUsernameTouched(true)
-                  setFormError(null)
+                setUsername(nextUsername)
+                setUsernameTouched(true)
+                setFormError(null)
 
-                  if (
-                    !nextUsername ||
-                    nextFormatError ||
-                    nextUsername === initialSnapshot.username
-                  ) {
-                    setUsernameAvailability('idle')
-                  } else {
-                    setUsernameAvailability('checking')
-                  }
-                }}
-                onBlur={() => setUsernameTouched(true)}
-                disabled={isSaving}
-                placeholder={t('username')}
-                autoComplete="off"
-                className="w-full pl-8 pr-4 py-3 outline-none transition-all
-                  bg-(--bg-surface-2)
-                  border border-(--border-subtle)
-                  rounded-(--radius-input)
-                  text-(--text-primary)
-                  placeholder-(--text-muted)
-                  focus:border-(--brand-yellow)
-                  focus:ring-1 focus:ring-(--brand-yellow)
-                  disabled:opacity-60 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <p className="text-xs text-(--text-muted)">
-              {t('3-30 characters. Lowercase letters, numbers, dots, and underscores.')}
-            </p>
-
-            {usernameTouched && usernameFormatError && (
-              <p className="text-xs text-(--error)" role="alert" aria-live="polite">
-                {usernameFormatError}
-              </p>
-            )}
+                if (
+                  !nextUsername ||
+                  nextFormatError ||
+                  nextUsername === initialSnapshot.username
+                ) {
+                  setUsernameAvailability('idle')
+                } else {
+                  setUsernameAvailability('checking')
+                }
+              }}
+              onBlur={() => setUsernameTouched(true)}
+              disabled={isSaving}
+              placeholder={t('username')}
+              autoComplete="username"
+              startAdornment={<span className="text-sm font-semibold">@</span>}
+              endAdornment={
+                usernameAvailability === 'checking' ? (
+                  <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                ) : usernameAvailability === 'available' ? (
+                  <CheckCircle2 className="size-4 text-(--mc-color-success)" aria-hidden="true" />
+                ) : undefined
+              }
+              hint={t('3-30 characters. Lowercase letters, numbers, dots, and underscores.')}
+              error={usernameTouched ? usernameFormatError : null}
+            />
 
             {showUsernameStatus && usernameAvailability === 'checking' && (
-              <p className="text-xs text-(--text-muted)" aria-live="polite">
+              <p className="text-xs text-(--mc-color-text-muted)" aria-live="polite">
                 {t('Checking username availability...')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'available' && (
-              <p className="text-xs text-(--success)" aria-live="polite">
+              <p className="text-xs text-(--mc-color-success)" aria-live="polite">
                 {t('Username is available.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'taken' && (
-              <p className="text-xs text-(--error)" role="alert" aria-live="polite">
+              <p className="text-xs text-(--mc-color-danger)" role="alert" aria-live="polite">
                 {t('That username is already taken.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'error' && (
-              <p className="text-xs text-(--warning)" aria-live="polite">
+              <p className="text-xs text-(--mc-color-warning)" aria-live="polite">
                 {t('Could not verify username right now. We will check again on save.')}
               </p>
             )}
@@ -500,41 +536,49 @@ function EditProfileForm({
 
         {formError && (
           <div
-            className="mt-5 p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm"
+            className="mt-5 flex items-start gap-2 rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-3 text-sm leading-6 text-(--mc-color-text-secondary)"
             role="alert"
             aria-live="polite"
           >
-            {formError}
+            <AlertCircle className="mt-1 size-4 shrink-0 text-(--mc-color-danger)" aria-hidden="true" />
+            <span>{formError}</span>
           </div>
         )}
 
-        <div className="mt-6 flex items-center gap-3">
-          <button
+        <div className="mt-7 flex flex-col-reverse gap-3 border-t border-(--mc-color-border) pt-5 sm:flex-row sm:justify-end">
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleCancel}
             disabled={isSaving}
-            className="flex-1 py-3 px-4 font-medium border border-(--border-subtle) text-(--text-primary) rounded-(--radius-button) bg-(--bg-surface-2) hover:bg-(--bg-hover) transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="sm:min-w-32"
           >
             {t('Cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={saveDisabled}
-            className="flex-1 py-3 px-4 font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={isSaving}
+            loadingText={t('Saving...')}
+            className="sm:min-w-40"
           >
-            {isSaving ? t('Saving...') : t('Save changes')}
-          </button>
+            {t('Save changes')}
+          </Button>
         </div>
-      </form>
+            </form>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        onChange={handleAvatarChange}
-        className="hidden"
-      />
-    </section>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={handleAvatarChange}
+              disabled={isSaving}
+              className="hidden"
+            />
+          </Surface>
+        </div>
+      </div>
+    </ViewportPage>
   )
 }
 
@@ -544,25 +588,28 @@ export default function EditProfilePage() {
 
   if (!user) {
     return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-2 text-sm text-(--error)">
-            {t('You must be signed in to edit your profile.')}
-          </p>
-        </div>
-      </section>
+      <ViewportPage ariaLabel={t('Edit Profile')} padded width="narrow">
+        <Surface>
+          <EmptyState
+            icon={<AlertCircle className="size-6" />}
+            title={t('Edit Profile')}
+            description={t('You must be signed in to edit your profile.')}
+          />
+        </Surface>
+      </ViewportPage>
     )
   }
 
   if (!profile) {
     return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-2 text-sm text-(--text-muted)">{t('Loading profile...')}</p>
-        </div>
-      </section>
+      <ViewportPage ariaLabel={t('Edit Profile')} padded width="narrow">
+        <Surface role="status" aria-label={t('Loading profile...')}>
+          <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-(--mc-color-text-muted)">
+            <LoaderCircle className="size-6 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
+            <p className="text-sm">{t('Loading profile...')}</p>
+          </div>
+        </Surface>
+      </ViewportPage>
     )
   }
 

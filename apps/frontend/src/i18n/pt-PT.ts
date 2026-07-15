@@ -657,6 +657,20 @@ const ptPT = {
   'Profile actions': 'Ações do perfil',
   'Profile menu': 'Menu de perfil',
   'Edit Profile': 'Editar perfil',
+  'Member since {{date}}': 'Membro desde {{date}}',
+  'Pull to refresh': 'Puxa para atualizar',
+  'Refreshing posts': 'A atualizar publicações',
+  'Loading posts': 'A carregar publicações',
+  'Loading more posts': 'A carregar mais publicações',
+  'Something went wrong loading this profile.':
+    'Ocorreu um erro ao carregar este perfil.',
+  'Could not update this block right now.':
+    'Não foi possível atualizar este bloqueio neste momento.',
+  'Could not update this follow right now.':
+    'Não foi possível atualizar o estado de seguimento neste momento.',
+  'Could not submit this report.': 'Não foi possível enviar esta denúncia.',
+  'Could not copy the profile link.':
+    'Não foi possível copiar a ligação do perfil.',
   'No posts yet': 'Ainda não há publicações',
   'Link copied to clipboard': 'Ligação copiada para a área de transferência',
   "You're all caught up!": 'Estás em dia!',
