@@ -1,0 +1,1142 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>RefLab — Plano de execução do redesign Match Control</title>
+  <style>
+    :root {
+      --canvas: #080b12;
+      --canvas-soft: #0d111b;
+      --surface: #111722;
+      --surface-raised: #171e2b;
+      --surface-inset: #0c111a;
+      --border: #293244;
+      --border-strong: #3a455a;
+      --text: #f5f7fa;
+      --text-2: #b8c0d4;
+      --muted: #8a93a8;
+      --yellow: #f6c21c;
+      --yellow-soft: #ffe58a;
+      --red: #e53935;
+      --green: #3ddc97;
+      --orange: #f6a821;
+      --blue: #4da3ff;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 24px 70px rgba(0, 0, 0, .34);
+      --max: 1320px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 75% -10%, rgba(246, 194, 28, .09), transparent 32rem),
+        radial-gradient(circle at -10% 25%, rgba(229, 57, 53, .07), transparent 28rem),
+        var(--canvas);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      content: "";
+      opacity: .12;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, .025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .025) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, #000, transparent 90%);
+    }
+
+    a { color: inherit; }
+    button, input { font: inherit; }
+    code {
+      padding: .14rem .4rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface-inset);
+      color: var(--yellow-soft);
+      font-size: .9em;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 8px;
+      left: 8px;
+      z-index: 100;
+      padding: 10px 14px;
+      transform: translateY(-160%);
+      border-radius: 8px;
+      background: var(--yellow);
+      color: #090b10;
+      font-weight: 800;
+    }
+    .skip-link:focus { transform: translateY(0); }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid rgba(58, 69, 90, .8);
+      background: rgba(8, 11, 18, .86);
+      backdrop-filter: blur(18px);
+    }
+    .topbar-inner {
+      width: min(var(--max), calc(100% - 32px));
+      min-height: 62px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; }
+    .slashes { display: flex; gap: 5px; transform: skewX(-21deg); }
+    .slashes i { display: block; width: 8px; height: 26px; border-radius: 2px; background: var(--yellow); }
+    .slashes i:last-child { background: var(--red); }
+    .topbar small { color: var(--muted); }
+    .topnav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .topnav a {
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .topnav a:hover, .topnav a:focus-visible { background: var(--surface-raised); color: var(--text); }
+
+    main { width: min(var(--max), calc(100% - 32px)); margin: 0 auto; padding: 64px 0 100px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(28px, 6vw, 72px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background:
+        linear-gradient(130deg, rgba(246, 194, 28, .12), transparent 30%),
+        linear-gradient(310deg, rgba(229, 57, 53, .08), transparent 25%),
+        var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      position: absolute;
+      right: -70px;
+      bottom: -180px;
+      width: 460px;
+      height: 460px;
+      content: "";
+      transform: rotate(18deg);
+      border: 1px solid rgba(138, 147, 168, .16);
+      background:
+        linear-gradient(90deg, transparent 49.7%, rgba(138, 147, 168, .12) 50%, transparent 50.3%),
+        radial-gradient(circle, transparent 19%, rgba(138, 147, 168, .12) 19.3%, rgba(138, 147, 168, .12) 19.8%, transparent 20.1%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { width: 28px; height: 3px; content: ""; background: var(--yellow); }
+    h1, h2, h3 { margin: 0; line-height: 1.13; }
+    h1 { max-width: 940px; font-size: clamp(34px, 6vw, 72px); letter-spacing: -.045em; }
+    h2 { font-size: clamp(25px, 3vw, 38px); letter-spacing: -.025em; }
+    h3 { font-size: 18px; }
+    .hero p { max-width: 880px; margin: 24px 0 0; color: var(--text-2); font-size: clamp(16px, 2vw, 20px); }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(8, 11, 18, .48);
+      color: var(--text-2);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .pill::before { width: 7px; height: 7px; border-radius: 50%; content: ""; background: var(--green); }
+    .pill.warn::before { background: var(--orange); }
+    .pill.info::before { background: var(--blue); }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .metric {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+    }
+    .metric strong { display: block; color: var(--yellow); font-size: 28px; line-height: 1; }
+    .metric span { display: block; margin-top: 9px; color: var(--muted); font-size: 12px; }
+
+    section { scroll-margin-top: 82px; margin-top: 76px; }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(240px, 480px);
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+    .section-head p { margin: 0; color: var(--text-2); }
+    .kicker { margin-bottom: 8px; color: var(--yellow); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    .card.featured { border-color: rgba(246, 194, 28, .55); }
+    .card p { margin: 10px 0 0; color: var(--text-2); }
+    .card ul, .card ol { margin: 14px 0 0; padding-left: 20px; color: var(--text-2); }
+    .card li + li { margin-top: 7px; }
+    .card .tag { margin-bottom: 14px; }
+    .tag {
+      display: inline-block;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .tag.yellow { border-color: rgba(246, 194, 28, .35); background: rgba(246, 194, 28, .09); color: var(--yellow); }
+    .tag.red { border-color: rgba(229, 57, 53, .35); background: rgba(229, 57, 53, .09); color: #ff8a86; }
+    .tag.green { border-color: rgba(61, 220, 151, .35); background: rgba(61, 220, 151, .09); color: var(--green); }
+
+    .rule {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .rule + .rule { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); }
+    .rule-number {
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 1px solid rgba(246, 194, 28, .4);
+      border-radius: 12px;
+      background: rgba(246, 194, 28, .08);
+      color: var(--yellow);
+      font-weight: 900;
+    }
+    .rule p { margin-top: 5px; }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    th, td { padding: 14px 16px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: var(--surface-raised); color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    td { color: var(--text-2); font-size: 13px; }
+    td strong { color: var(--text); }
+    tr:last-child td { border-bottom: 0; }
+    .status { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+    .status::before { width: 8px; height: 8px; border-radius: 50%; content: ""; background: var(--muted); }
+    .status.ready::before { background: var(--green); }
+    .status.work::before { background: var(--yellow); }
+    .status.blocked::before { background: var(--red); }
+
+    .reference-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .reference {
+      display: grid;
+      grid-template-columns: 68px minmax(0, 1fr);
+      gap: 16px;
+      min-height: 126px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      text-decoration: none;
+    }
+    .reference:hover, .reference:focus-visible { border-color: var(--border-strong); transform: translateY(-1px); }
+    .reference-index {
+      display: grid;
+      width: 68px;
+      height: 90px;
+      place-items: center;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background:
+        linear-gradient(145deg, rgba(246, 194, 28, .18), transparent 34%),
+        var(--surface-inset);
+      color: var(--yellow);
+      font-size: 25px;
+      font-weight: 900;
+    }
+    .reference p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .reference code { display: inline-block; margin-top: 8px; font-size: 11px; word-break: break-word; }
+
+    .phase-list { display: grid; gap: 16px; counter-reset: phase; }
+    .phase {
+      counter-increment: phase;
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 20px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+    }
+    .phase::before {
+      display: grid;
+      width: 64px;
+      height: 64px;
+      place-items: center;
+      border-radius: 18px;
+      background: var(--yellow);
+      color: #090b10;
+      content: counter(phase, decimal-leading-zero);
+      font-size: 20px;
+      font-weight: 900;
+    }
+    .phase h3 { font-size: 21px; }
+    .phase-meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 11px 0 14px; }
+    .phase ul { columns: 2; column-gap: 40px; margin: 0; padding-left: 20px; color: var(--text-2); }
+    .phase li { break-inside: avoid; margin-bottom: 6px; }
+    .gate {
+      margin-top: 17px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--green);
+      border-radius: 0 9px 9px 0;
+      background: rgba(61, 220, 151, .07);
+      color: var(--text-2);
+      font-size: 13px;
+    }
+    .gate strong { color: var(--green); }
+
+    .swatches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; margin-top: 16px; }
+    .swatch { overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-inset); }
+    .swatch b { display: block; height: 48px; }
+    .swatch span { display: block; padding: 8px; color: var(--muted); font-size: 10px; }
+
+    .code-block {
+      overflow-x: auto;
+      margin-top: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-inset);
+      color: var(--text-2);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 12px;
+      white-space: pre;
+    }
+
+    .checklist { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+    .check {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-inset);
+      color: var(--text-2);
+      font-size: 13px;
+    }
+    .check::before {
+      display: grid;
+      flex: 0 0 21px;
+      width: 21px;
+      height: 21px;
+      place-items: center;
+      border: 1px solid var(--border-strong);
+      border-radius: 6px;
+      content: "✓";
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .risk { display: grid; grid-template-columns: 46px 120px minmax(0, 1fr); gap: 14px; align-items: start; }
+    .risk + .risk { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--border); }
+    .risk b:first-child { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 10px; background: rgba(229, 57, 53, .1); color: #ff8a86; }
+    .risk span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .risk p { margin: 0; }
+
+    .callout {
+      padding: 22px;
+      border: 1px solid rgba(246, 194, 28, .42);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(110deg, rgba(246, 194, 28, .11), rgba(246, 194, 28, .02));
+    }
+    .callout p { margin: 8px 0 0; color: var(--text-2); }
+    .callout.red { border-color: rgba(229, 57, 53, .42); background: linear-gradient(110deg, rgba(229, 57, 53, .1), rgba(229, 57, 53, .02)); }
+
+    footer { margin-top: 76px; padding-top: 28px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+    footer strong { color: var(--text-2); }
+
+    @media (max-width: 980px) {
+      .metrics, .grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-head { grid-template-columns: 1fr; }
+      .phase ul { columns: 1; }
+    }
+    @media (max-width: 720px) {
+      .topbar-inner { padding: 10px 0; align-items: flex-start; }
+      .topbar small, .topnav { display: none; }
+      main { width: min(100% - 22px, var(--max)); padding-top: 24px; }
+      .hero { padding: 27px 22px; }
+      .metrics, .grid.two, .grid.three, .grid.four, .reference-grid, .checklist { grid-template-columns: 1fr; }
+      .phase { grid-template-columns: 1fr; }
+      .phase::before { width: 52px; height: 52px; }
+      .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .risk { grid-template-columns: 42px minmax(0, 1fr); }
+      .risk span { grid-column: 2; }
+      .risk p { grid-column: 2; }
+    }
+    @media print {
+      body { background: #fff; color: #111; }
+      body::before, .topbar { display: none; }
+      main { width: 100%; padding: 0; }
+      .hero, .card, .metric, .phase, .reference, .table-wrap, .callout { break-inside: avoid; box-shadow: none; border-color: #bbb; background: #fff; }
+      .hero p, .card p, .card li, .section-head p, td, .check, .phase li, .reference p { color: #333; }
+      h1, h2, h3, td strong { color: #111; }
+      section { margin-top: 36px; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="slashes" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>RefLab</span>
+        <small>Plano Match Control · v1.0</small>
+      </div>
+      <nav class="topnav" aria-label="Índice do plano">
+        <a href="#contrato">Contrato</a>
+        <a href="#escopo">Escopo</a>
+        <a href="#visual">Visual</a>
+        <a href="#arquitetura">Arquitetura</a>
+        <a href="#fases">Fases</a>
+        <a href="#validacao">Validação</a>
+        <a href="#conclusao">Conclusão</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <article class="hero">
+      <div class="eyebrow">Plano mestre de implementação</div>
+      <h1>Redesign integral do RefLab, sem perder comportamento, dados ou contexto.</h1>
+      <p>Este documento é o contrato único de execução para transformar toda a aplicação no sistema visual “Match Control” das referências aprovadas. A implementação será incremental, verificável e reversível: a lógica existente permanece como fonte de verdade e cada alteração visual só avança depois de passar os gates funcionais e visuais definidos aqui.</p>
+      <div class="hero-meta">
+        <span class="pill">Repo e remote confirmados</span>
+        <span class="pill">Build inicial verde</span>
+        <span class="pill warn">Lint inicial: 34 erros + 12 avisos</span>
+        <span class="pill info">Validação autenticada requer ambiente Supabase</span>
+      </div>
+    </article>
+
+    <div class="metrics" aria-label="Resumo do programa">
+      <div class="metric"><strong>10</strong><span>mockups aprovados, mais o dashboard mestre</span></div>
+      <div class="metric"><strong>24</strong><span>padrões de rota, índices e redirects inventariados</span></div>
+      <div class="metric"><strong>9</strong><span>fases com gate obrigatório</span></div>
+      <div class="metric"><strong>0</strong><span>mudanças autorizadas a schema ou contratos de dados</span></div>
+    </div>
+
+    <section id="contrato">
+      <div class="section-head">
+        <div>
+          <div class="kicker">01 · Contrato</div>
+          <h2>As quatro fontes de verdade</h2>
+        </div>
+        <p>Quando houver tensão entre fidelidade visual e funcionamento, esta ordem resolve a decisão. Nenhuma imagem gerada pode justificar a remoção de um estado ou ação real.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card featured">
+          <div class="rule">
+            <span class="rule-number">1</span>
+            <div><h3>Comportamento real</h3><p>Rotas, handlers, hooks, APIs, chamadas Supabase, realtime, Stripe, estados optimistas, auth, i18n e acessibilidade atuais são o contrato funcional.</p></div>
+          </div>
+          <div class="rule">
+            <span class="rule-number">2</span>
+            <div><h3>Dados reais</h3><p>Tipos TypeScript, conteúdo pt-PT, permissões e respostas backend determinam o que pode ser mostrado. Não inventar métricas, campos, planos ou garantias.</p></div>
+          </div>
+          <div class="rule">
+            <span class="rule-number">3</span>
+            <div><h3>Referências visuais</h3><p>O dashboard selecionado e os 10 mockups gerados definem hierarquia, linguagem, densidade, cores, geometria e carácter editorial no viewport móvel canónico.</p></div>
+          </div>
+          <div class="rule">
+            <span class="rule-number">4</span>
+            <div><h3>Consistência sistémica</h3><p>Responsividade, WCAG, estados não representados e coerência entre ecrãs completam as referências sem copiar artefactos inconsistentes da geração.</p></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="tag red">Não negociável</span>
+          <h3>O redesign não pode</h3>
+          <ul>
+            <li>Alterar URLs, redirects ou guards de autenticação.</li>
+            <li>Mudar shapes de API, nomes de tabelas, RLS, migrations ou Edge Functions.</li>
+            <li>Remover loading, erro, vazio, disabled, retry ou estados optimistas.</li>
+            <li>Duplicar árvores React que façam pedidos ou subscrições mobile/desktop em paralelo.</li>
+            <li>Substituir texto real por conteúdo fictício das imagens.</li>
+            <li>Desenhar moldura de iPhone, Dynamic Island ou 09:41 dentro da web app.</li>
+            <li>Publicar, fazer push ou alterar produção sem uma autorização separada.</li>
+          </ul>
+          <div class="callout red" style="margin-top:18px">
+            <h3>Regra de paridade</h3>
+            <p>Uma ação só pode mudar de posição ou aparência depois de existir uma correspondência explícita entre o controlo antigo, o novo controlo e o mesmo callback.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="baseline">
+      <div class="section-head">
+        <div>
+          <div class="kicker">02 · Baseline</div>
+          <h2>Ponto de partida congelado</h2>
+        </div>
+        <p>Registado em 15 de julho de 2026 antes de qualquer alteração visual, no commit <code>b3230c2</code>.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Área</th><th>Estado inicial</th><th>Gate durante o redesign</th><th>Evidência</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Git</strong></td><td>Branch base <code>main</code> sincronizada com <code>origin/main</code>.</td><td>Trabalho isolado em <code>codex/reflab-match-control-redesign</code>; alterações pequenas e revisáveis.</td><td><span class="status ready">0 à frente · 0 atrás</span></td></tr>
+            <tr><td><strong>Build</strong></td><td><code>tsc -b &amp;&amp; vite build</code> passa; 1963 módulos.</td><td>Tem de passar depois de cada lote. O bundle não pode crescer sem explicação.</td><td><span class="status ready">Verde</span></td></tr>
+            <tr><td><strong>Lint</strong></td><td>34 erros e 12 avisos em 24 ficheiros, pré-existentes.</td><td>Zero problemas novos por diff; limpar o baseline até ao gate final, sem “disables” genéricos.</td><td><span class="status work">Dívida registada</span></td></tr>
+            <tr><td><strong>Testes</strong></td><td>Não existe script nem framework automatizado.</td><td>Criar testes de regressão focados em shell/primitives/rotas e smoke visual determinístico.</td><td><span class="status work">A criar</span></td></tr>
+            <tr><td><strong>Runtime local</strong></td><td>Sem ficheiro <code>.env*</code>; o cliente Supabase lança erro no arranque.</td><td>Foundations podem avançar. Fluxos autenticados só recebem aprovação visual final com ambiente válido ou harness de fixtures isolado.</td><td><span class="status blocked">Bloqueio parcial</span></td></tr>
+            <tr><td><strong>Bundle</strong></td><td>JS inicial 876,98 kB; aviso acima de 500 kB.</td><td>Introduzir lazy loading por rota/feature se puder ser feito sem alterar comportamento.</td><td><span class="status work">Oportunidade</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid two" style="margin-top:14px">
+        <div class="card">
+          <span class="tag red">Inconsistências atuais a decidir</span>
+          <h3>Não perpetuar comportamento comprovadamente quebrado</h3>
+          <ul>
+            <li><code>/app/tests</code> usa um placeholder hardcoded React/JS/CSS com IDs falsos; o catálogo Supabase real usa slugs noutro componente.</li>
+            <li><code>ShareDialog</code> gera <code>/app/social?post=&lt;id&gt;</code>, enquanto o deep link real e outra implementação usam <code>/app/post/:postId</code>.</li>
+            <li>O CTA de pricing da landing envia um guest para <code>/app/pricing</code>, mas o guard devolve-o imediatamente a <code>/</code>.</li>
+            <li>Não existe wildcard nem ecrã 404.</li>
+          </ul>
+          <p>Estas correções entram apenas depois de documentar o comportamento pretendido e adicionar um teste de regressão. Não são licença para refatorar APIs não relacionadas.</p>
+        </div>
+        <div class="card">
+          <span class="tag yellow">Decisões de produto protegidas</span>
+          <h3>Stubs continuam stubs</h3>
+          <ul>
+            <li>Cursos e Recursos não recebem conteúdo inventado.</li>
+            <li>Chatbot e feedback sem implementação não ganham fluxos fictícios.</li>
+            <li>Não inventar online status, read receipts ou chamadas em Mensagens.</li>
+            <li>Não inventar campos de perfil que os tipos atuais não suportam.</li>
+            <li>Planos, benefícios e preços vêm do catálogo real e das traduções atuais.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:48px">
+        <div>
+          <div class="kicker">Contratos de alto risco</div>
+          <h2>Comportamentos que exigem teste explícito</h2>
+        </div>
+        <p>Estes detalhes não são decoração; são a mecânica do produto. Cada um deve ter evidência antes e depois do redesign.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Domínio</th><th>Contrato funcional a preservar</th><th>Prova mínima</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Dashboard</strong></td><td>Consome <code>get_dashboard_stats</code>, aceita shapes nullable e abre teste aleatório com <code>/app/learn?action=start-test</code>.</td><td>CTA inicia o fluxo; loading/erro/nulos não rebentam layout.</td></tr>
+            <tr><td><strong>Teste aleatório</strong></td><td>20 perguntas, 40 minutos, resposta bloqueada após seleção, todas exigidas no submit manual, auto-submit a zero, aprovação ≥80% e tentativa com <code>test_id=null</code>.</td><td>Timer, seleção, submit, timeout, score e histórico equivalentes.</td></tr>
+            <tr><td><strong>Perguntas</strong></td><td>Sessão por uma pergunta, validação antes de avançar, timer e review final.</td><td>Não é possível saltar o feedback/validação.</td></tr>
+            <tr><td><strong>Vídeos</strong></td><td>Duas decisões independentes — ação e sanção — com correctness própria.</td><td>Ambas persistem e o resultado distingue-as.</td></tr>
+            <tr><td><strong>Teste por slug</strong></td><td>Retoma tentativa <code>in_progress</code>, respostas editáveis/upsert, sem timer e só submete completo.</td><td>Refresh/resume não perde respostas nem cria tentativa duplicada.</td></tr>
+            <tr><td><strong>Social</strong></td><td>Cursor pagination 20, ações optimistas like/save/repost/delete, media em <code>post-media</code>, replies aninhadas, menções, block/report.</td><td>Rollback em erro e contagens/realtime sem duplicações.</td></tr>
+            <tr><td><strong>Mensagens</strong></td><td>Paginação 30, preservação de scroll ao carregar antigas, optimistic send, realtime INSERT sem duplicar mensagens próprias, mark-read e media em <code>message-media</code>.</td><td>Scroll, envio, retry, realtime e unread passam numa conversa longa.</td></tr>
+            <tr><td><strong>Pesquisa</strong></td><td><code>search_history</code> em localStorage, máximo 10 e dedupe.</td><td>Histórico mantém ordem, limite e remoção.</td></tr>
+            <tr><td><strong>Notificações</strong></td><td>Marca tudo como lido no mount, mas preserva durante a visita a aparência do snapshot inicialmente unread; deep links dependem do tipo.</td><td>Badge/destino/estilo antes e depois de reentrar.</td></tr>
+            <tr><td><strong>Editar perfil</strong></td><td>Username <code>^[a-z0-9_.]{3,30}$</code>, disponibilidade debounced, upload com rollback/limpeza e sync de Auth metadata.</td><td>Conflito, upload falhado, cancel e sucesso sem dados órfãos.</td></tr>
+            <tr><td><strong>Definições</strong></td><td>Notificações usam batch debounce/flush; privacidade usa optimistic rollback; ações destrutivas exigem confirmação.</td><td>Refresh e falha remota preservam o valor real.</td></tr>
+            <tr><td><strong>Billing</strong></td><td>Checkout/portal externos, status completos, <code>?checkout=success</code> com polling 5×/2s e links hosted/PDF de faturas.</td><td>Free/Pro/Plus e success/error/cancel sem simular pagamento.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="escopo">
+      <div class="section-head">
+        <div>
+          <div class="kicker">03 · Escopo completo</div>
+          <h2>Todos os ecrãs e estados entram no redesign</h2>
+        </div>
+        <p>Os 10 mockups são vistas canónicas, não o limite do trabalho. Ecrãs auxiliares, modais, skeletons, formulários e estados extremos devem usar o mesmo sistema.</p>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Superfície</th><th>Rotas / componentes</th><th>Estados obrigatórios</th><th>Referência principal</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Landing e Auth</strong></td><td><code>/</code>, login, registo, forgot password, <code>/reset-password</code>, <code>/auth/callback</code></td><td>Guest, validação, sucesso, erro, loading, OAuth, sessão expirada, cookie consent.</td><td>Sistema Match Control adaptado a página pública.</td></tr>
+            <tr><td><strong>Shell</strong></td><td><code>AppShell</code>, header, bottom nav, sidebar/rails, search, bell, badges.</td><td>Mobile, tablet, desktop, safe-area, menu, rota ativa, badges 0/99+, teclado e scroll.</td><td>Todos os mockups.</td></tr>
+            <tr><td><strong>Painel</strong></td><td><code>/app</code>, <code>/app/dashboard</code></td><td>Loading, sem dados, completo, erro/retry, texto longo, calendário.</td><td>Imagem favorita original.</td></tr>
+            <tr><td><strong>Lista de testes</strong></td><td><code>/app/tests</code></td><td>Loading, vazio, catálogo, indisponível e navegação por slug.</td><td>Aprender + treino.</td></tr>
+            <tr><td><strong>Aprender</strong></td><td><code>/app/learn</code>; Teste, Perguntas, Vídeos, Cursos e Recursos.</td><td>Landing, setup, execução, timeout, resultado, revisão, histórico, player, erro media e placeholders honestos.</td><td>01, 02, 03 e 04.</td></tr>
+            <tr><td><strong>Teste individual</strong></td><td><code>/app/learn/test/:slug</code></td><td>Fetch, tentativa existente, seleção A–D, timer, submissão, feedback por pergunta.</td><td>02 e 03.</td></tr>
+            <tr><td><strong>Comunidade</strong></td><td><code>/app/social</code>, composer, filtros, menus, share/report/repost dialogs.</td><td>Vazio, feed, erro, texto/imagem/vídeo/áudio, optimistic actions, upload, blocked/deleted.</td><td>05.</td></tr>
+            <tr><td><strong>Post e comentários</strong></td><td><code>/app/post/:postId</code></td><td>Post, comentários vazios/threaded, reply, mention, like, report, block, not found.</td><td>05 estendido.</td></tr>
+            <tr><td><strong>Mensagens</strong></td><td><code>/app/messages</code>, <code>/app/messages/:conversationId</code></td><td>Lista vazia, pesquisa, unread, conversa, realtime, anexos, bloqueio, erro, composer e teclado.</td><td>07.</td></tr>
+            <tr><td><strong>Pesquisa</strong></td><td><code>/app/search</code></td><td>Histórico, sem resultados, loading, resultados, erro e navegação para perfil.</td><td>05/06 estendido.</td></tr>
+            <tr><td><strong>Notificações</strong></td><td><code>/app/notifications</code></td><td>Vazio, lida, não lida, social, sistema, snapshot na entrada, destinos corretos.</td><td>08.</td></tr>
+            <tr><td><strong>Perfil próprio</strong></td><td><code>/app/profile</code></td><td>Avatar fallback, posts vazios/preenchidos, filtros, ações e conteúdo longo.</td><td>06.</td></tr>
+            <tr><td><strong>Editar perfil</strong></td><td><code>/app/profile/edit</code></td><td>Dados atuais, validação, username em conflito, upload avatar, save/cancel, loading e erro.</td><td>06 estendido.</td></tr>
+            <tr><td><strong>Perfil público</strong></td><td><code>/app/profile/:username</code></td><td>Follow/unfollow, mensagem, report, block, relação inversa, not found e posts.</td><td>06 estendido.</td></tr>
+            <tr><td><strong>Planos e billing</strong></td><td><code>/app/pricing</code>; redirects <code>/app/billing*</code></td><td>Free, Pro, Plus, checkout, portal, change, cancel, faturas, loading e falhas Stripe.</td><td>09.</td></tr>
+            <tr><td><strong>Definições</strong></td><td><code>/app/settings</code> e secções internas.</td><td>Conta, notificações, privacidade, bloqueados, aprendizagem, legal, logout e delete account.</td><td>10.</td></tr>
+            <tr><td><strong>Políticas</strong></td><td><code>/privacy</code>, <code>/terms</code>, <code>/cookies</code></td><td>Tabs, conteúdo extenso, links, mobile/desktop e leitura a 200% zoom.</td><td>Sistema documental Match Control.</td></tr>
+            <tr><td><strong>Overlays globais</strong></td><td>Dialogs, sheets, modais, toasts, report issue, menus, cookie banner.</td><td>Escape, foco preso, retorno de foco, scroll lock, confirmação destrutiva e ecrã baixo.</td><td>Primitives globais.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="referencias">
+      <div class="section-head">
+        <div>
+          <div class="kicker">04 · Referências</div>
+          <h2>Mapa das imagens aprovadas para o produto real</h2>
+        </div>
+        <p>Cada ligação abre o PNG original local. O dashboard selecionado é o master visual; os 10 mockups expandem o mesmo sistema aos restantes fluxos.</p>
+      </div>
+
+      <div class="reference-grid">
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/.codex-remote-attachments/019f6438-9f18-71b0-beef-29d3264f6fbe/f5d23d23-307f-40d5-97a0-e23bd7088da4/1-Photo-1.jpg">
+          <span class="reference-index">M</span><span><strong>Dashboard master</strong><p>Precisão global, treino recomendado, sequência, plano e desempenho por tema.</p><code>/app/dashboard</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/01-aprender-hub.png">
+          <span class="reference-index">01</span><span><strong>Aprender · hub</strong><p>Tabs, métricas, atividade recomendada e histórico.</p><code>/app/learn</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/02-teste-em-curso.png">
+          <span class="reference-index">02</span><span><strong>Teste em curso</strong><p>Progresso, timer, pergunta, seleção e CTA de avanço.</p><code>/app/learn/test/:slug</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/03-resultados-e-feedback.png">
+          <span class="reference-index">03</span><span><strong>Resultados e feedback</strong><p>Score, pontos fortes, áreas a rever e correção detalhada.</p><code>RandomTestResults · TestResults</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/04-analise-de-video.png">
+          <span class="reference-index">04</span><span><strong>Análise de vídeo</strong><p>Player, diagrama técnico, ação e sanção.</p><code>/app/learn · Vídeos</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/05-comunidade-feed.png">
+          <span class="reference-index">05</span><span><strong>Comunidade</strong><p>Filtros, post multimédia, ações e composer.</p><code>/app/social</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/06-perfil.png">
+          <span class="reference-index">06</span><span><strong>Perfil</strong><p>Identidade, ações, filtros e feed pessoal.</p><code>/app/profile</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/07-conversa.png">
+          <span class="reference-index">07</span><span><strong>Conversa</strong><p>Header de contacto, bubbles, timestamps e composer.</p><code>/app/messages/:conversationId</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/08-notificacoes.png">
+          <span class="reference-index">08</span><span><strong>Notificações</strong><p>Atividade newest-first, unread/read e destinos.</p><code>/app/notifications</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/09-planos.png">
+          <span class="reference-index">09</span><span><strong>Planos</strong><p>Comparação Free/Pro/Plus e ações de billing reais.</p><code>/app/pricing</code></span>
+        </a>
+        <a class="reference" href="file:///C:/Users/rafaa/Documents/Codex/2026-07-15/consegues-trabalhar-no-reflab-ou-seja/output/reflab-match-control-screen-set/10-definicoes.png">
+          <span class="reference-index">10</span><span><strong>Definições</strong><p>Conta, privacidade, aprendizagem, legal e ações críticas.</p><code>/app/settings</code></span>
+        </a>
+      </div>
+    </section>
+
+    <section id="visual">
+      <div class="section-head">
+        <div>
+          <div class="kicker">05 · Sistema visual</div>
+          <h2>Match Control, transformado em regras implementáveis</h2>
+        </div>
+        <p>As imagens são calibradas para um viewport web móvel de referência de 393×852. O dispositivo fotográfico é apresentação, não UI.</p>
+      </div>
+
+      <div class="grid three">
+        <div class="card">
+          <span class="tag yellow">Cor</span>
+          <h3>Disciplina cromática</h3>
+          <p>Canvas quase preto, superfícies navy, bordas metálicas subtis. Amarelo apenas para ação/seleção; vermelho para marca e destruição; verde para sucesso.</p>
+          <div class="swatches">
+            <div class="swatch"><b style="background:#080b12"></b><span>Canvas</span></div>
+            <div class="swatch"><b style="background:#111722"></b><span>Surface</span></div>
+            <div class="swatch"><b style="background:#f6c21c"></b><span>Action</span></div>
+            <div class="swatch"><b style="background:#e53935"></b><span>Danger</span></div>
+            <div class="swatch"><b style="background:#3ddc97"></b><span>Success</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="tag yellow">Tipografia</span>
+          <h3>Inter, com escala semântica</h3>
+          <ul>
+            <li>Métrica: 44–64 / 0.95 / 700–800.</li>
+            <li>H1: 24–32 / 1.15 / 700.</li>
+            <li>H2: 18–22 / 1.2 / 650.</li>
+            <li>Body: 14–16 / 1.5 / 400–500.</li>
+            <li>Label/nav: 10–13 / 1.2 / 600.</li>
+            <li>Carregar peso 800 se for utilizado.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag yellow">Geometria</span>
+          <h3>Futebol técnico, sem ruído</h3>
+          <ul>
+            <li>Cards 14–18 px; botões 12–14 px.</li>
+            <li>Grid base 4; gutters mobile 16 px.</li>
+            <li>Bordas 1 px; sombras internas discretas.</li>
+            <li>Diagonais amarelas/vermelhas pontuais.</li>
+            <li>Diagramas de campo a 4–8% de opacidade.</li>
+            <li>Lucide 1.75–2 px; sem emoji.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid two" style="margin-top:14px">
+        <div class="card">
+          <span class="tag">Responsive</span>
+          <h3>Três regimes, uma árvore React</h3>
+          <ul>
+            <li><strong>Mobile &lt;768:</strong> header 64 px, bottom nav 72 px + safe area, uma coluna e gutter 16 px.</li>
+            <li><strong>Tablet 768–1199:</strong> rail compacto 80 px, conteúdo adaptativo e sem bottom nav.</li>
+            <li><strong>Desktop ≥1200:</strong> rail 248 px, grid de 12 colunas e largura máxima 1280–1440 px.</li>
+            <li>Mensagens usa split pane; feed usa coluna de leitura; dashboard/pricing usam grid largo.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <span class="tag">Interação</span>
+          <h3>Estados tão cuidados como o “happy path”</h3>
+          <ul>
+            <li>Alvos tácteis mínimos de 44×44 px.</li>
+            <li>Focus-visible inequívoco e contraste WCAG AA.</li>
+            <li>Motion 120/180/260 ms com reduced-motion.</li>
+            <li>Skeletons preservam a geometria final.</li>
+            <li>Disabled/loading nunca deslocam a UI.</li>
+            <li>Safe areas, zoom 200% e teclado virtual incluídos.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="arquitetura">
+      <div class="section-head">
+        <div>
+          <div class="kicker">06 · Arquitetura</div>
+          <h2>Uma camada visual nova sobre contratos existentes</h2>
+        </div>
+        <p>O trabalho separa container e apresentação. Os componentes de feature continuam donos do comportamento; primitives partilhadas tornam a aparência consistente.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <span class="tag green">Criar</span>
+          <h3>Foundations e primitives</h3>
+          <div class="code-block">src/
+  styles/
+    globals.css
+    tokens.css
+    match-control.css
+  app/
+    shell/
+      navigation.ts
+      AppFrame.tsx
+      MatchHeader.tsx
+      MobileTabBar.tsx
+      ResponsiveRail.tsx
+    layouts/
+      DocumentPage.tsx
+      ViewportPage.tsx
+      SplitPanePage.tsx
+  components/
+    ui/
+      Button · IconButton · Surface · Avatar
+      Badge · Tabs · SegmentedControl · Progress
+      TextField · Switch · Dialog · Sheet
+      Alert · Skeleton · EmptyState · Toast
+    patterns/
+      PageHeader · MetricCard · ListRow
+      SettingsGroup · MatchStripe · PitchDiagram</div>
+        </div>
+        <div class="card">
+          <span class="tag">Preservar</span>
+          <h3>Limites de domínio</h3>
+          <ul>
+            <li>Hooks e APIs permanecem nas features atuais.</li>
+            <li>AuthProvider e BillingProvider conservam responsabilidades.</li>
+            <li>Handlers existentes são passados para novos componentes visuais por props.</li>
+            <li>Tipos de dados e translation keys não mudam por conveniência estética.</li>
+            <li>Posts, planos, perguntas e mensagens continuam componentes de domínio.</li>
+            <li>Rotas só recebem lazy loading; paths e semântica ficam intactos.</li>
+          </ul>
+          <div class="callout" style="margin-top:18px">
+            <h3>Alias de tokens</h3>
+            <p>Os nomes CSS atuais ficam temporariamente mapeados para os tokens Match Control. Isto evita uma alteração global explosiva e permite migrar feature por feature.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid three" style="margin-top:14px">
+        <div class="card"><span class="tag">DocumentPage</span><h3>Scroll documental</h3><p>Dashboard, pricing, settings, políticas e páginas de formulário.</p></div>
+        <div class="card"><span class="tag">ViewportPage</span><h3>Viewport controlado</h3><p>Feed, pesquisa e notificações com header/nav e scroll bem definidos.</p></div>
+        <div class="card"><span class="tag">SplitPanePage</span><h3>Painéis independentes</h3><p>Lista/conversa em desktop e composer seguro acima do teclado em mobile.</p></div>
+      </div>
+    </section>
+
+    <section id="fases">
+      <div class="section-head">
+        <div>
+          <div class="kicker">07 · Plano de execução</div>
+          <h2>Nove fases, cada uma fechada por evidência</h2>
+        </div>
+        <p>Não avançar uma fase apenas porque “parece pronta”. O gate exige diff revisto, build, regressão relevante e comparação visual.</p>
+      </div>
+
+      <div class="phase-list">
+        <article class="phase">
+          <div>
+            <h3>Congelar contrato e preparar harness</h3>
+            <div class="phase-meta"><span class="tag yellow">Fundação</span><span class="tag">Baixo risco</span></div>
+            <ul>
+              <li>Guardar este plano e paths das 11 referências.</li>
+              <li>Registar commit, branch, build e lint baseline.</li>
+              <li>Mapear callbacks/queries por ecrã antes de editar.</li>
+              <li>Definir fixtures visuais isoladas e sem escrita remota.</li>
+              <li>Fixar locale pt-PT, relógio 09:41 e reduced motion apenas no harness de captura.</li>
+              <li>Definir convenções de screenshots e nomes.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> plano versionado; branch isolada; baseline reproduzível; nenhum ficheiro funcional alterado.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Tokens, reset e base acessível</h3>
+            <div class="phase-meta"><span class="tag yellow">Visual</span><span class="tag">Alcance global</span></div>
+            <ul>
+              <li>Criar tokens semânticos Match Control e aliases legacy.</li>
+              <li>Adicionar safe areas, 100dvh e escala tipográfica.</li>
+              <li>Normalizar focus, seleção, scrollbars e reduced motion.</li>
+              <li>Definir z-index e tempos/easing.</li>
+              <li>Carregar pesos tipográficos realmente usados.</li>
+              <li>Remover risco do scaffold App.css apenas após confirmar que não é importado.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> build verde; landing e shell antigo continuam utilizáveis; sem overflow horizontal a 320 px.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Primitives e padrões partilhados</h3>
+            <div class="phase-meta"><span class="tag yellow">Componentes</span><span class="tag">Acessibilidade</span></div>
+            <ul>
+              <li>Button, IconButton, Surface, Avatar e Badge.</li>
+              <li>Tabs, SegmentedControl, ProgressBar e TextField.</li>
+              <li>Dialog/Sheet com portal, Escape, focus trap e scroll lock.</li>
+              <li>Alert, Skeleton, EmptyState e Toast.</li>
+              <li>PageHeader, MetricCard, ListRow e SettingsGroup.</li>
+              <li>MatchStripe e PitchDiagram decorativos com aria-hidden.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> variantes, disabled/loading, teclado e contraste verificados; nenhuma feature ainda reescrita.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Shell responsiva e navegação única</h3>
+            <div class="phase-meta"><span class="tag yellow">Shell</span><span class="tag red">Risco alto</span></div>
+            <ul>
+              <li>Uma configuração para tab bar, compact rail e desktop rail.</li>
+              <li>Estado ativo para rotas primárias e secundárias.</li>
+              <li>Header com logo, menu/search/bell preservados.</li>
+              <li>Badges de mensagens/notificações sem pedidos duplicados.</li>
+              <li>Contratos DocumentPage, ViewportPage e SplitPanePage.</li>
+              <li>Cookie banner, overlays e toasts com z-index estável.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> todas as rotas alcançáveis; nav correta em 393, 768 e 1440; header/nav não cobrem conteúdo.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Piloto: dashboard com pixel matching</h3>
+            <div class="phase-meta"><span class="tag yellow">Calibração</span><span class="tag">Imagem master</span></div>
+            <ul>
+              <li>Preservar useDashboard, métricas e retry.</li>
+              <li>Recompor precisão, treino recomendado, sequência e temas.</li>
+              <li>Calibrar gutters, tipografia, cards e diagonais.</li>
+              <li>Redesenhar skeleton, vazio e erro com a mesma geometria.</li>
+              <li>Comparar screenshot 393×852 lado a lado.</li>
+              <li>Ajustar tokens apenas aqui, antes de multiplicar o padrão.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> comportamento igual; screenshot móvel aprovado por comparação visual; desktop coerente sem duplicar lógica.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Aprendizagem completa</h3>
+            <div class="phase-meta"><span class="tag yellow">Core loop</span><span class="tag red">Risco muito alto</span></div>
+            <ul>
+              <li>Hub Aprender e lista de testes.</li>
+              <li>RandomTest landing, runner, timer e resultados.</li>
+              <li>Perguntas: landing, setup, sessão e review.</li>
+              <li>Vídeos: catálogo, player, decisão e erro media.</li>
+              <li>Cursos/Recursos permanecem placeholders honestos.</li>
+              <li>Validar timeout, double submit, resume e explicações.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> fluxo Tests → Feedback → Dashboard passa sem alteração de payloads; referências 01–04 correspondidas.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Social, perfis, pesquisa e notificações</h3>
+            <div class="phase-meta"><span class="tag yellow">Community</span><span class="tag red">Realtime</span></div>
+            <ul>
+              <li>Feed, composer, media e filtros.</li>
+              <li>Post detail, comments, mentions e menus.</li>
+              <li>Like/comment/repost/save/share optimistas.</li>
+              <li>Perfil próprio, editar e perfil público.</li>
+              <li>Pesquisa e histórico.</li>
+              <li>Notificações read/unread e destinos.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> realtime e contagens preservados; blocked/deleted/report testados; referências 05, 06 e 08 correspondidas.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Mensagens, billing, definições e superfícies públicas</h3>
+            <div class="phase-meta"><span class="tag yellow">Completion</span><span class="tag red">Integrações</span></div>
+            <ul>
+              <li>Lista de conversas, pesquisa e chat split pane.</li>
+              <li>Composer, anexos, realtime, bloqueio e teclado.</li>
+              <li>Pricing Free/Pro/Plus e todos os estados Stripe.</li>
+              <li>Definições, subsecções e ações destrutivas.</li>
+              <li>Landing/auth/reset/callback/cookie consent.</li>
+              <li>Políticas e modais globais.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> referências 07, 09 e 10 correspondidas; auth/billing/delete exigem confirmação explícita e nunca são testados destrutivamente em produção.</div>
+          </div>
+        </article>
+
+        <article class="phase">
+          <div>
+            <h3>Hardening, limpeza e auditoria final</h3>
+            <div class="phase-meta"><span class="tag green">Release candidate</span><span class="tag">Todo o produto</span></div>
+            <ul>
+              <li>Build, lint limpo ou baseline formalmente resolvido.</li>
+              <li>Testes de smoke funcional e navegação por teclado.</li>
+              <li>Screenshots canónicos e comparação em todos os viewports.</li>
+              <li>Overflow, zoom 200%, reduced motion e media extrema.</li>
+              <li>Remover apenas duplicados/legacy comprovadamente desligados.</li>
+              <li>Revisão final do diff e documentação do que ficou bloqueado.</li>
+            </ul>
+            <div class="gate"><strong>Gate:</strong> Definition of Done integral cumprida; nenhum TODO crítico; working tree explicado; sem push/deploy automático.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="validacao">
+      <div class="section-head">
+        <div>
+          <div class="kicker">08 · Validação</div>
+          <h2>Provar que está bonito e continua certo</h2>
+        </div>
+        <p>A QA combina código, interações reais, snapshots determinísticos e inspeção humana. Uma screenshot isolada não comprova funcionalidade.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <span class="tag green">Gate funcional por ecrã</span>
+          <div class="checklist">
+            <div class="check">Mesmos dados, ordem e significado.</div>
+            <div class="check">Mesmos handlers e destinos.</div>
+            <div class="check">Loading, vazio, erro e retry.</div>
+            <div class="check">Disabled e loading de ações.</div>
+            <div class="check">Texto longo e contagens extremas.</div>
+            <div class="check">Media ausente, vertical e quebrada.</div>
+            <div class="check">Teclado, foco e Escape.</div>
+            <div class="check">Realtime e optimistic update.</div>
+            <div class="check">Back/forward e deep links.</div>
+            <div class="check">Sem erros novos na consola.</div>
+          </div>
+        </div>
+        <div class="card">
+          <span class="tag green">Gate visual por ecrã</span>
+          <div class="checklist">
+            <div class="check">Hierarquia igual à referência.</div>
+            <div class="check">Gutter, ritmo e densidade coerentes.</div>
+            <div class="check">Tipografia e pesos carregados.</div>
+            <div class="check">Cor e contraste consistentes.</div>
+            <div class="check">Ícones Lucide e stroke uniforme.</div>
+            <div class="check">Radii, borders e sombras canónicos.</div>
+            <div class="check">Decoração nunca tapa conteúdo.</div>
+            <div class="check">Nav ativa e safe areas corretas.</div>
+            <div class="check">Sem overflow horizontal.</div>
+            <div class="check">Desktop adaptado, não ampliado.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:14px">
+        <table>
+          <thead><tr><th>Viewport</th><th>Uso</th><th>O que deve ser observado</th></tr></thead>
+          <tbody>
+            <tr><td><strong>320×568</strong></td><td>Mobile mínimo</td><td>Truncamento, modais baixos, tabs, composer e ausência de overflow.</td></tr>
+            <tr><td><strong>360×800</strong></td><td>Android comum</td><td>Densidade, scroll, nav e touch targets.</td></tr>
+            <tr><td><strong>393×852</strong></td><td>Golden viewport</td><td>Comparação principal com os 10 mockups e dashboard master.</td></tr>
+            <tr><td><strong>430×932</strong></td><td>Mobile grande</td><td>Uso do espaço sem cards artificialmente esticados.</td></tr>
+            <tr><td><strong>844×390</strong></td><td>Landscape</td><td>Teste, chat, teclado, header/nav e modais.</td></tr>
+            <tr><td><strong>768×1024</strong></td><td>Tablet portrait</td><td>Transição para rail, grids e largura de leitura.</td></tr>
+            <tr><td><strong>1024×768</strong></td><td>Tablet landscape</td><td>Split panes, scroll independente e densidade.</td></tr>
+            <tr><td><strong>1280×720</strong></td><td>Desktop baixo</td><td>Conteúdo above-the-fold, dialogs e navegação persistente.</td></tr>
+            <tr><td><strong>1440×900</strong></td><td>Desktop canónico</td><td>Grid, rails contextuais, largura máxima e equilíbrio visual.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout" style="margin-top:14px">
+        <h3>Capturas determinísticas</h3>
+        <p>Usar locale pt-PT, dados fixture estáveis, relógio congelado apenas no harness, fontes carregadas, animações/realtime neutralizados durante captura e a mesma seed visual. Nunca colocar fixtures no caminho normal de produção.</p>
+      </div>
+    </section>
+
+    <section id="riscos">
+      <div class="section-head">
+        <div>
+          <div class="kicker">09 · Riscos</div>
+          <h2>Registo de risco e resposta obrigatória</h2>
+        </div>
+        <p>Os maiores problemas prováveis estão na integração entre shell, scroll, realtime e estados extremos — não na escolha das cores.</p>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="risk"><b>01</b><span>Alto</span><p><strong>Scroll e barras fixed.</strong> Centralizar geometria no AppFrame e usar os três contratos de página.</p></div>
+          <div class="risk"><b>02</b><span>Alto</span><p><strong>Pedidos duplicados.</strong> Uma árvore React e um provider/hook de badges; CSS adapta layout.</p></div>
+          <div class="risk"><b>03</b><span>Alto</span><p><strong>Fluxos perdidos na extração visual.</strong> Mapear cada controlo antigo para prop/callback antes da troca.</p></div>
+          <div class="risk"><b>04</b><span>Alto</span><p><strong>Ambiente autenticado ausente.</strong> Avançar foundations; usar fixture harness isolado; não aprovar integração real sem Supabase válido.</p></div>
+          <div class="risk"><b>05</b><span>Médio</span><p><strong>Tailwind v4 e classes dinâmicas.</strong> Variantes com mapas estáticos e build por lote.</p></div>
+        </div>
+        <div class="card">
+          <div class="risk"><b>06</b><span>Médio</span><p><strong>Z-index inconsistente.</strong> Escala canónica para sticky, nav, popover, backdrop, dialog e toast.</p></div>
+          <div class="risk"><b>07</b><span>Médio</span><p><strong>Texto pt-PT longo.</strong> Testar nomes, labels, erros e legal a 200% zoom.</p></div>
+          <div class="risk"><b>08</b><span>Médio</span><p><strong>Artefactos das imagens geradas.</strong> Reconciliar numa regra canónica antes de copiar detalhes divergentes.</p></div>
+          <div class="risk"><b>09</b><span>Médio</span><p><strong>Media e vídeo inconsistentes.</strong> Preservar APIs atuais e validar R2/Supabase antes de alterar apresentação.</p></div>
+          <div class="risk"><b>10</b><span>Baixo</span><p><strong>Legacy desligado.</strong> Só remover depois de prova por imports, rotas, build e pesquisa de referências.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="operacao">
+      <div class="section-head">
+        <div>
+          <div class="kicker">10 · Operação do goal</div>
+          <h2>Loop de execução com subagentes e revisão central</h2>
+        </div>
+        <p>O agente principal mantém o contrato, integra e verifica. Subagentes recebem lotes bounded e não editam os mesmos ficheiros em paralelo.</p>
+      </div>
+
+      <div class="grid four">
+        <div class="card"><span class="tag yellow">Principal</span><h3>Arquitetura e integração</h3><p>Escolhe o lote, protege contratos, integra diffs, corre gates e decide se a fase pode fechar.</p></div>
+        <div class="card"><span class="tag">Subagente A</span><h3>Feature audit</h3><p>Mapeia handlers, estados, edge cases e riscos antes de cada migração.</p></div>
+        <div class="card"><span class="tag">Subagente B</span><h3>Implementação isolada</h3><p>Trabalha num conjunto de ficheiros sem overlap, seguindo tokens e primitives aprovados.</p></div>
+        <div class="card"><span class="tag">Subagente C</span><h3>QA adversarial</h3><p>Revê diff, executa regressões, capta screenshots e procura divergências funcionais/visuais.</p></div>
+      </div>
+
+      <div class="card" style="margin-top:14px">
+        <h3>Ciclo repetido até Definition of Done</h3>
+        <div class="code-block">1. Selecionar o menor lote vertical útil.
+2. Auditar comportamento e mapear controlos → callbacks.
+3. Atribuir ficheiros sem overlap a subagentes.
+4. Implementar com primitives aprovadas.
+5. Rever o diff e procurar remoções acidentais.
+6. Executar build + lint delta + testes relevantes.
+7. Renderizar em 393×852 e viewport de risco.
+8. Comparar com referência e corrigir.
+9. Registar evidência, fechar gate e escolher o próximo lote.
+10. Se houver blocker real, documentar com path, estado e impacto; continuar trabalho independente.</div>
+      </div>
+    </section>
+
+    <section id="conclusao">
+      <div class="section-head">
+        <div>
+          <div class="kicker">11 · Definition of Done</div>
+          <h2>O goal só termina quando estas condições forem verdadeiras</h2>
+        </div>
+        <p>“Visualmente parecido” não é conclusão. A app inteira tem de partilhar o sistema aprovado e manter a integridade funcional.</p>
+      </div>
+
+      <div class="card featured">
+        <div class="checklist">
+          <div class="check">Todas as rotas e superfícies listadas foram migradas.</div>
+          <div class="check">As 11 referências têm correspondência rastreável.</div>
+          <div class="check">Build de produção passa a partir de checkout limpo.</div>
+          <div class="check">Nenhum erro/aviso de lint novo; baseline resolvido ou isolado com evidência.</div>
+          <div class="check">Contratos de auth, Supabase, realtime e Stripe permanecem.</div>
+          <div class="check">Core loop Tests → Feedback → Dashboard validado.</div>
+          <div class="check">Loading, vazio, erro, retry e estados extremos existem.</div>
+          <div class="check">Viewport matrix não tem overflow nem conteúdo tapado.</div>
+          <div class="check">Teclado, foco, Escape, reduced motion e zoom 200% passam.</div>
+          <div class="check">Screenshots 393×852 são comparados às referências e aprovados.</div>
+          <div class="check">Desktop é uma adaptação profissional, não um mobile ampliado.</div>
+          <div class="check">Legacy só foi removido quando comprovadamente desligado.</div>
+          <div class="check">O diff final foi revisto por um subagente sem contexto de implementação.</div>
+          <div class="check">Nenhuma migration, schema ou dado de produção foi alterado.</div>
+          <div class="check">Bloqueios externos restantes estão documentados com impacto exato.</div>
+          <div class="check">Não houve push/deploy sem autorização explícita.</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <strong>RefLab · Plano Match Control v1.0</strong><br>
+      Fonte de execução: <code>docs/reflab-match-control-redesign-plan.html</code> · Branch: <code>codex/reflab-match-control-redesign</code> · Baseline: <code>b3230c2</code> · Criado em 2026-07-15.
+    </footer>
+  </main>
+</body>
+</html>
