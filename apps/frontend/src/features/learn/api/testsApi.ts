@@ -173,7 +173,7 @@ export async function submitAttempt(attemptId: string) {
     .eq('attempt_id', attemptId)
 
   if (answersError || !answers) {
-    return { data: null, error: answersError }
+    return { data: null, error: answersError || new Error('Failed to load attempt answers') }
   }
 
   // Calculate score
@@ -187,10 +187,14 @@ export async function submitAttempt(attemptId: string) {
 
     if (isCorrect) correct++
 
-    await supabase
+    const { error: answerUpdateError } = await supabase
       .from('test_attempt_answers')
       .update({ is_correct: isCorrect })
       .eq('id', answer.id)
+
+    if (answerUpdateError) {
+      return { data: null, error: answerUpdateError }
+    }
   }
 
   const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
@@ -420,7 +424,8 @@ export async function generateRandomTest() {
 export async function submitRandomTest(
   attemptId: string,
   timeElapsedSeconds: number,
-  autoSubmitted: boolean
+  autoSubmitted: boolean,
+  questionCount: number,
 ) {
   // Get all answers with their questions from question_bank
   const { data: answers, error: answersError } = await supabase
@@ -434,12 +439,15 @@ export async function submitRandomTest(
     .eq('attempt_id', attemptId)
 
   if (answersError || !answers) {
-    return { data: null, error: answersError }
+    return { data: null, error: answersError || new Error('Failed to load attempt answers') }
   }
 
   // Calculate score
   let correct = 0
-  const total = answers.length
+  const normalizedQuestionCount = Number.isFinite(questionCount)
+    ? Math.max(0, Math.floor(questionCount))
+    : 0
+  const total = Math.max(answers.length, normalizedQuestionCount)
 
   // Update each answer with is_correct
   for (const answer of answers) {
@@ -448,10 +456,14 @@ export async function submitRandomTest(
 
     if (isCorrect) correct++
 
-    await supabase
+    const { error: answerUpdateError } = await supabase
       .from('test_attempt_answers')
       .update({ is_correct: isCorrect })
       .eq('id', answer.id)
+
+    if (answerUpdateError) {
+      return { data: null, error: answerUpdateError }
+    }
   }
 
   const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0

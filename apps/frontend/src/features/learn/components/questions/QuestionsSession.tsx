@@ -1,33 +1,52 @@
-import { useState, useEffect, useRef } from 'react'
-import { Loader2, Timer } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { useEffect, useId, useRef, useState } from 'react'
 import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  HelpCircle,
+  XCircle,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button, Dialog, EmptyState, Skeleton, Surface } from '@/components/ui'
+import {
+  completeQuestionSession,
   getQuestionsByFilters,
   savePracticeAnswerWithSession,
-  completeQuestionSession,
 } from '../../api/testsApi'
-import type { TestQuestion, OptionLetter, QuestionSessionMode, AnsweredQuestion, SessionResult } from '../../types'
+import type {
+  AnsweredQuestion,
+  OptionLetter,
+  QuestionSessionMode,
+  SessionResult,
+  TestQuestion,
+} from '../../types'
 
 /* ─── Helpers ─── */
 
 const LETTERS: OptionLetter[] = ['A', 'B', 'C', 'D']
-const getOptions = (q: TestQuestion) => [q.option_a, q.option_b, q.option_c, q.option_d]
-const indexToLetter = (idx: number): OptionLetter => LETTERS[idx]
+const getOptions = (question: TestQuestion) => [
+  question.option_a,
+  question.option_b,
+  question.option_c,
+  question.option_d,
+]
+const indexToLetter = (index: number): OptionLetter => LETTERS[index]
 const letterToIndex = (letter: OptionLetter): number => LETTERS.indexOf(letter)
 
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
+function shuffle<T>(items: T[]): T[] {
+  const shuffled = [...items]
+  for (let index = shuffled.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    ;[shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]]
   }
-  return a
+  return shuffled
 }
 
 function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
 /* ─── Warning Modal ─── */
@@ -36,38 +55,67 @@ function WarningModal({
   title,
   message,
   confirmLabel,
+  ending,
   onConfirm,
   onCancel,
 }: {
   title: string
   message: string
   confirmLabel: string
+  ending: boolean
   onConfirm: () => void
   onCancel: () => void
 }) {
   const { t } = useTranslation()
+  const messageId = useId()
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-(--bg-surface) p-6 rounded-lg max-w-sm w-full border border-(--border-subtle)">
-        <h3 className="font-semibold text-(--text-primary) mb-2">{title}</h3>
-        <p className="text-sm text-(--text-secondary) mb-6">{message}</p>
-        <div className="flex gap-3">
-          <button
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !ending) onCancel()
+      }}
+      title={title}
+      aria-describedby={messageId}
+      size="sm"
+      dialogRole="alertdialog"
+      showCloseButton={false}
+      closeOnEscape={!ending}
+      closeOnOverlayClick={false}
+      footer={
+        <>
+          <Button
+            variant="secondary"
             onClick={onCancel}
-            className="flex-1 py-2 rounded-lg bg-(--bg-surface-2) text-(--text-secondary) font-medium text-sm"
+            disabled={ending}
+            className="min-w-28 flex-1"
           >
             {t('Cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="danger"
             onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg bg-(--error) text-white font-medium text-sm"
+            loading={ending}
+            loadingText={confirmLabel}
+            className="min-w-28 flex-1"
           >
             {confirmLabel}
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="flex size-10 shrink-0 items-center justify-center rounded-(--mc-radius-compact) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/10 text-(--mc-color-danger)"
+          aria-hidden="true"
+        >
+          <AlertTriangle className="size-5" />
+        </span>
+        <p id={messageId} className="pt-1 text-sm leading-6 text-(--mc-color-text-secondary)">
+          {message}
+        </p>
       </div>
-    </div>
+    </Dialog>
   )
 }
 
@@ -80,6 +128,7 @@ interface QuestionsSessionProps {
   filterAreas: string[] | null
   startedAt: string
   onEndSession: (result: SessionResult) => void
+  onExitSession: () => void
 }
 
 /**
@@ -95,19 +144,25 @@ interface QuestionsSessionProps {
  */
 export default function QuestionsSession({
   sessionId,
+  mode,
   filterLaws,
   filterAreas,
   startedAt,
   onEndSession,
+  onExitSession,
 }: QuestionsSessionProps) {
   const { t } = useTranslation()
   const [pool, setPool] = useState<TestQuestion[]>([])
   const [, setQueue] = useState<TestQuestion[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const [loadVersion, setLoadVersion] = useState(0)
 
   const [currentQ, setCurrentQ] = useState<TestQuestion | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
+  const [savingAnswer, setSavingAnswer] = useState(false)
+  const [operationError, setOperationError] = useState<string | null>(null)
 
   const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestion[]>([])
   const [totalCorrect, setTotalCorrect] = useState(0)
@@ -117,6 +172,7 @@ export default function QuestionsSession({
 
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [ending, setEnding] = useState(false)
+  const endingRef = useRef(false)
 
   // Track the last question shown to avoid immediate repeats on reshuffle
   const lastQuestionIdRef = useRef<string | null>(null)
@@ -126,28 +182,37 @@ export default function QuestionsSession({
     let cancelled = false
 
     async function load() {
-      const { data } = await getQuestionsByFilters({
-        laws: filterLaws ?? undefined,
-        areas: filterAreas ?? undefined,
-      })
-      if (!cancelled && data && data.length > 0) {
-        const shuffled = shuffle(data)
-        setPool(data)
-        setQueue(shuffled)
-        setCurrentQ(shuffled[0])
-        lastQuestionIdRef.current = shuffled[0].id
+      setLoadError(false)
+      try {
+        const { data, error } = await getQuestionsByFilters({
+          laws: filterLaws ?? undefined,
+          areas: filterAreas ?? undefined,
+        })
+        if (cancelled) return
+        if (error) {
+          setLoadError(true)
+        } else if (data && data.length > 0) {
+          const shuffled = shuffle(data)
+          setPool(data)
+          setQueue(shuffled)
+          setCurrentQ(shuffled[0])
+          lastQuestionIdRef.current = shuffled[0].id
+        }
+      } catch (error) {
+        console.error('Failed to load practice questions:', error)
+        if (!cancelled) setLoadError(true)
       }
       if (!cancelled) setLoading(false)
     }
 
     load()
     return () => { cancelled = true }
-  }, [filterLaws, filterAreas])
+  }, [filterLaws, filterAreas, loadVersion])
 
   // Start count-up timer
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setElapsedSeconds(prev => prev + 1)
+      setElapsedSeconds((previous) => previous + 1)
     }, 1000)
 
     return () => {
@@ -156,15 +221,16 @@ export default function QuestionsSession({
   }, [])
 
   const advanceQuestion = () => {
+    if (savingAnswer || endingRef.current) return
     setSelectedOption(null)
     setShowAnswer(false)
 
-    setQueue(prevQueue => {
-      let remaining = prevQueue.slice(1)
+    setQueue((previousQueue) => {
+      let remaining = previousQueue.slice(1)
 
       // Re-shuffle and refill when queue is nearly empty, avoiding repeat of last question
       if (remaining.length === 0) {
-        let reshuffled = shuffle(pool)
+        const reshuffled = shuffle(pool)
         if (reshuffled[0].id === lastQuestionIdRef.current && reshuffled.length > 1) {
           // Swap first and second to avoid immediate repeat
           ;[reshuffled[0], reshuffled[1]] = [reshuffled[1], reshuffled[0]]
@@ -180,11 +246,9 @@ export default function QuestionsSession({
   }
 
   const handleCheck = async () => {
-    if (selectedOption === null || !currentQ || showAnswer) return
+    if (selectedOption === null || !currentQ || showAnswer || savingAnswer || endingRef.current) return
 
     const isCorrect = selectedOption === letterToIndex(currentQ.correct_option)
-    setShowAnswer(true)
-
     const answered: AnsweredQuestion = {
       question: currentQ,
       selectedOption: indexToLetter(selectedOption),
@@ -192,68 +256,164 @@ export default function QuestionsSession({
       isCorrect,
     }
 
-    setAnsweredQuestions(prev => [...prev, answered])
-    if (isCorrect) setTotalCorrect(prev => prev + 1)
+    setSavingAnswer(true)
+    setOperationError(null)
 
-    // Save to DB in background
-    savePracticeAnswerWithSession(currentQ.id, indexToLetter(selectedOption), isCorrect, sessionId)
+    try {
+      const { data, error } = await savePracticeAnswerWithSession(
+        currentQ.id,
+        indexToLetter(selectedOption),
+        isCorrect,
+        sessionId,
+      )
+      if (error || !data) throw error || new Error('Missing saved answer')
+
+      setShowAnswer(true)
+      setAnsweredQuestions((previous) => [...previous, answered])
+      if (isCorrect) setTotalCorrect((previous) => previous + 1)
+    } catch (error) {
+      console.error('Failed to save practice answer:', error)
+      setOperationError(t('Failed to save answer. Please try again.'))
+    } finally {
+      setSavingAnswer(false)
+    }
   }
 
   const handleEndSession = async () => {
-    if (ending) return
+    if (endingRef.current || savingAnswer) return
+    endingRef.current = true
     setEnding(true)
-
-    if (timerRef.current) clearInterval(timerRef.current)
+    setOperationError(null)
 
     const endedAt = new Date().toISOString()
     const durationSeconds = Math.round(
-      (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
+      (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000,
     )
 
-    await completeQuestionSession(
-      sessionId,
-      startedAt,
-      answeredQuestions.length,
-      totalCorrect
-    )
+    try {
+      const { data, error } = await completeQuestionSession(
+        sessionId,
+        startedAt,
+        answeredQuestions.length,
+        totalCorrect,
+      )
+      if (error || !data) throw error || new Error('Missing completed session')
 
-    onEndSession({
-      sessionId,
-      startedAt,
-      endedAt,
-      durationSeconds,
-      totalAnswered: answeredQuestions.length,
-      totalCorrect,
-      answers: answeredQuestions,
-    })
+      if (timerRef.current) clearInterval(timerRef.current)
+      onEndSession({
+        sessionId,
+        startedAt,
+        endedAt,
+        durationSeconds,
+        totalAnswered: answeredQuestions.length,
+        totalCorrect,
+        answers: answeredQuestions,
+      })
+    } catch (error) {
+      console.error('Failed to end question session:', error)
+      endingRef.current = false
+      setEnding(false)
+      setShowEndConfirm(false)
+      setOperationError(t('Failed to end session. Please try again.'))
+    }
+  }
+
+  const handleExitEmptySession = async () => {
+    if (endingRef.current || savingAnswer) return
+    endingRef.current = true
+    setEnding(true)
+    setOperationError(null)
+
+    try {
+      const { data, error } = await completeQuestionSession(sessionId, startedAt, 0, 0)
+      if (error || !data) throw error || new Error('Missing completed session')
+      if (timerRef.current) clearInterval(timerRef.current)
+      onExitSession()
+    } catch (error) {
+      console.error('Failed to close empty question session:', error)
+      onExitSession()
+    }
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        <p className="text-sm text-(--text-muted)">{t('Loading questions…')}</p>
-      </div>
+      <section
+        className="mx-auto w-full max-w-3xl py-8"
+        role="status"
+        aria-live="polite"
+        aria-label={t('Loading questions…')}
+      >
+        <Surface padding="md" className="border-(--mc-color-border-strong) shadow-none sm:p-5">
+          <div className="flex items-center justify-between gap-4">
+            <Skeleton variant="text" width="8rem" height="2.5rem" />
+            <Skeleton variant="text" width="7rem" />
+          </div>
+          <Skeleton variant="rectangular" height="10rem" className="mt-5" />
+          <div className="mt-4 space-y-3">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} variant="rectangular" height="4.5rem" />
+            ))}
+          </div>
+          <p className="mt-5 text-center text-sm text-(--mc-color-text-secondary)">
+            {t('Loading questions…')}
+          </p>
+        </Surface>
+      </section>
     )
   }
 
   if (!currentQ) {
     return (
-      <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">{t('No questions found for the selected filters.')}</p>
-        <button
-          onClick={handleEndSession}
-          className="mt-4 px-4 py-2 text-sm rounded-lg bg-(--bg-surface-2) text-(--text-secondary)"
-        >
-          {t('Go Back')}
-        </button>
-      </div>
+      <Surface
+        padding="none"
+        className="mx-auto w-full max-w-3xl border-(--mc-color-border-strong) shadow-none"
+      >
+        <EmptyState
+          icon={loadError || operationError
+            ? <AlertTriangle className="size-5 text-(--mc-color-danger)" />
+            : <HelpCircle className="size-5" />}
+          title={loadError
+            ? t('Failed to load questions')
+            : t('No questions found for the selected filters.')}
+          description={operationError ?? (loadError ? t('Please try again') : undefined)}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              {loadError && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setLoading(true)
+                    setLoadVersion((version) => version + 1)
+                  }}
+                >
+                  {t('Try Again')}
+                </Button>
+              )}
+              <Button
+                variant={loadError ? 'ghost' : 'secondary'}
+                onClick={() => void handleExitEmptySession()}
+                loading={ending}
+                loadingText={t('Go Back')}
+              >
+                {t('Go Back')}
+              </Button>
+            </div>
+          }
+        />
+      </Surface>
     )
   }
 
   const options = getOptions(currentQ)
-  const correctIdx = letterToIndex(currentQ.correct_option)
+  const correctIndex = letterToIndex(currentQ.correct_option)
   const totalAnswered = answeredQuestions.length
+  const selectedIsCorrect = selectedOption === correctIndex
+  const modeLabel = mode === 'quick'
+    ? t('Quick Questions')
+    : mode === 'by_law'
+      ? t('By Law')
+      : t('By Area')
+  const questionContext = getQuestionContext(currentQ, t)
 
   return (
     <>
@@ -265,87 +425,241 @@ export default function QuestionsSession({
             label: t(totalAnswered === 1 ? 'question' : 'questions'),
           })}
           confirmLabel={t('End Session')}
-          onConfirm={handleEndSession}
+          ending={ending}
+          onConfirm={() => void handleEndSession()}
           onCancel={() => setShowEndConfirm(false)}
         />
       )}
 
-      <div className="flex flex-col gap-4">
-        {/* Session header */}
-        <div className="flex items-center justify-between py-2 border-b border-(--border-subtle)">
-          <div className="flex items-center gap-1.5 text-(--text-muted)">
-            <Timer size={15} />
-            <span className="text-sm font-mono">{formatElapsed(elapsedSeconds)}</span>
+      <section
+        className="mx-auto w-full max-w-3xl space-y-4 sm:space-y-5"
+        aria-labelledby="practice-question-title"
+      >
+        <Surface padding="md" className="border-(--mc-color-border-strong) shadow-none sm:p-5">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium text-(--mc-color-text-secondary)">
+                {modeLabel}
+              </p>
+              <div className="mt-1 flex items-center gap-2 text-(--mc-color-accent)">
+                <Clock3 className="size-5 shrink-0" aria-hidden="true" />
+                <time
+                  className="font-mono text-[30px] font-extrabold leading-none tracking-[-0.04em] tabular-nums"
+                  dateTime={`PT${elapsedSeconds}S`}
+                >
+                  {formatElapsed(elapsedSeconds)}
+                </time>
+              </div>
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowEndConfirm(true)}
+              disabled={ending || savingAnswer}
+              className="-mr-2 text-(--mc-color-danger) hover:bg-(--mc-color-danger)/10 hover:text-(--mc-color-danger)"
+            >
+              {t('End Session')}
+            </Button>
           </div>
 
-          <span className="text-xs text-(--text-muted)">
-            {t('{{correct}}/{{total}} correct', { correct: totalCorrect, total: totalAnswered })}
-          </span>
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-(--mc-color-border) pt-3">
+            <span className="text-xs font-semibold tracking-[0.06em] text-(--mc-color-text-secondary) uppercase">
+              {t('Practice Questions')}
+            </span>
+            <span className="text-sm tabular-nums text-(--mc-color-text-secondary)">
+              {t('{{correct}}/{{total}} correct', { correct: totalCorrect, total: totalAnswered })}
+            </span>
+          </div>
+        </Surface>
 
-          <button
-            onClick={() => setShowEndConfirm(true)}
-            className="text-xs font-medium text-(--error) hover:opacity-80 transition-opacity"
+        {questionContext && (
+          <div className="rounded-(--mc-radius-compact) border border-(--mc-color-border-strong) bg-(--mc-color-surface) px-4 py-3 text-xs font-bold tracking-[0.06em] text-(--mc-color-text-secondary) uppercase sm:text-sm">
+            {questionContext}
+          </div>
+        )}
+
+        <Surface
+          padding="none"
+          className="relative overflow-hidden border-(--mc-color-border-strong) shadow-none"
+        >
+          <PitchDiagram />
+          <div className="relative z-10 px-5 py-6 sm:px-7 sm:py-8">
+            <h2
+              id="practice-question-title"
+              className="max-w-2xl text-[22px] font-bold leading-[1.35] tracking-[-0.025em] text-(--mc-color-text) sm:text-3xl"
+            >
+              {currentQ.question_text}
+            </h2>
+          </div>
+        </Surface>
+
+        <fieldset>
+          <legend className="mc-visually-hidden">{currentQ.question_text}</legend>
+          <div className="space-y-3">
+            {options.map((option, index) => {
+              const isSelected = selectedOption === index
+              const isCorrectOption = index === correctIndex
+              const isWrongSelection = showAnswer && isSelected && !isCorrectOption
+
+              let optionClasses = 'border-(--mc-color-border-strong) bg-(--mc-color-surface) text-(--mc-color-text)'
+              let markerClasses = 'border-(--mc-color-border-strong) text-(--mc-color-text)'
+
+              if (showAnswer && isCorrectOption) {
+                optionClasses = 'border-(--mc-color-success) bg-(--mc-color-success)/10 text-(--mc-color-text) shadow-[inset_0_0_0_1px_var(--mc-color-success)]'
+                markerClasses = 'border-(--mc-color-success) text-(--mc-color-success)'
+              } else if (isWrongSelection) {
+                optionClasses = 'border-(--mc-color-danger) bg-(--mc-color-danger)/10 text-(--mc-color-text) shadow-[inset_0_0_0_1px_var(--mc-color-danger)]'
+                markerClasses = 'border-(--mc-color-danger) text-(--mc-color-danger)'
+              } else if (!showAnswer && isSelected) {
+                optionClasses = 'border-(--mc-color-accent) bg-(--mc-color-accent)/10 text-(--mc-color-text) shadow-[inset_0_0_0_1px_var(--mc-color-accent)]'
+                markerClasses = 'border-(--mc-color-accent) text-(--mc-color-accent)'
+              } else if (showAnswer) {
+                optionClasses = 'border-(--mc-color-border) bg-(--mc-color-surface) text-(--mc-color-text-muted) opacity-65'
+                markerClasses = 'border-(--mc-color-border) text-(--mc-color-text-muted)'
+              }
+
+              return (
+                <button
+                  key={LETTERS[index]}
+                  type="button"
+                  onClick={() => {
+                    if (!showAnswer) setSelectedOption(index)
+                  }}
+                  disabled={showAnswer || savingAnswer || ending}
+                  aria-pressed={isSelected}
+                  className={`mc-interactive mc-focus-ring group flex min-h-[72px] w-full items-center gap-4 rounded-(--mc-radius-button) border px-3.5 py-3 text-left sm:px-4 ${optionClasses} ${
+                    showAnswer ? 'cursor-default' : 'hover:border-(--mc-color-accent)/55 hover:bg-(--mc-color-surface-hover)'
+                  }`}
+                >
+                  <span
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-compact) border text-lg font-bold ${markerClasses}`}
+                    aria-hidden="true"
+                  >
+                    {LETTERS[index]}
+                  </span>
+                  <span className="min-w-0 flex-1 text-sm font-medium leading-6 sm:text-base">
+                    {option}
+                  </span>
+                  {showAnswer && isCorrectOption && (
+                    <CheckCircle2 className="size-5 shrink-0 text-(--mc-color-success)" aria-hidden="true" />
+                  )}
+                  {isWrongSelection && (
+                    <XCircle className="size-5 shrink-0 text-(--mc-color-danger)" aria-hidden="true" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </fieldset>
+
+        {showAnswer && selectedOption !== null && (
+          <div
+            className={`flex items-start gap-3 rounded-(--mc-radius-button) border px-4 py-3.5 ${
+              selectedIsCorrect
+                ? 'border-(--mc-color-success)/45 bg-(--mc-color-success)/10 text-(--mc-color-success)'
+                : 'border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 text-(--mc-color-danger)'
+            }`}
+            role="status"
+            aria-live="polite"
           >
-            {t('End Session')}
-          </button>
-        </div>
+            {selectedIsCorrect ? (
+              <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            ) : (
+              <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-bold">
+                {selectedIsCorrect ? t('Correct') : t('Incorrect')}
+              </p>
+              {!selectedIsCorrect && (
+                <p className="mt-1 text-sm leading-5 text-(--mc-color-text-secondary)">
+                  <span className="font-semibold text-(--mc-color-success)">
+                    {t('Correct answer')}:
+                  </span>{' '}
+                  {currentQ.correct_option}. {options[correctIndex]}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
-        {/* Question */}
-        <h3 className="text-base font-medium text-(--text-primary) leading-snug">
-          {currentQ.question_text}
-        </h3>
+        {operationError && (
+          <div
+            className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/8 px-4 py-3 text-sm text-(--mc-color-danger)"
+            role="alert"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <span>{operationError}</span>
+          </div>
+        )}
 
-        {/* Options */}
-        <div className="space-y-2">
-          {options.map((opt, idx) => {
-            let styles =
-              'w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors '
-            if (showAnswer) {
-              if (idx === correctIdx)
-                styles += 'border-(--success) bg-(--success)/10 text-(--text-primary)'
-              else if (idx === selectedOption)
-                styles += 'border-(--error) bg-(--error)/10 text-(--text-primary)'
-              else styles += 'border-(--border-subtle) text-(--text-muted)'
-            } else if (idx === selectedOption) {
-              styles += 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-            } else {
-              styles += 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-            }
-
-            return (
-              <button
-                key={idx}
-                onClick={() => !showAnswer && setSelectedOption(idx)}
-                disabled={showAnswer}
-                className={`${styles} ${showAnswer ? 'cursor-default' : ''}`}
-              >
-                <span className="font-semibold mr-2">{LETTERS[idx]}.</span>
-                {opt}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-4 pt-4 border-t border-(--border-subtle)">
+        <div className="relative overflow-hidden rounded-(--mc-radius-button)">
           {!showAnswer ? (
-            <button
-              onClick={handleCheck}
-              disabled={selectedOption === null}
-              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
+            <Button
+              fullWidth
+              size="lg"
+              onClick={() => void handleCheck()}
+              disabled={selectedOption === null || savingAnswer || ending}
+              loading={savingAnswer}
+              loadingText={t('Saving...')}
+              className="rounded-none pr-14"
             >
               {t('Check Answer')}
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              fullWidth
+              size="lg"
               onClick={advanceQuestion}
-              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
+              disabled={ending}
+              trailingIcon={<ChevronRight className="size-5" />}
+              className="rounded-none pr-14"
             >
-              {t('Next Question')} &rarr;
-            </button>
+              {t('Next Question')}
+            </Button>
           )}
+          <span
+            className={`pointer-events-none absolute -bottom-3 -right-3 h-16 w-9 -skew-x-[24deg] bg-(--mc-color-danger) ${
+              !showAnswer && selectedOption === null ? 'opacity-50' : ''
+            }`}
+            aria-hidden="true"
+          />
         </div>
-      </div>
+      </section>
     </>
+  )
+}
+
+function getQuestionContext(
+  question: TestQuestion,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string | null {
+  if (question.law !== null) {
+    const translatedTopic = question.topic ? t(question.topic) : ''
+    const translated = t('Law {{law}} — {{name}}', {
+      law: question.law,
+      name: translatedTopic,
+    })
+    return translatedTopic ? translated : translated.replace(/\s*[—-]\s*$/, '')
+  }
+  return question.topic ? t(question.topic) : null
+}
+
+function PitchDiagram() {
+  return (
+    <svg
+      viewBox="0 0 240 170"
+      className="pointer-events-none absolute -right-10 top-0 h-full w-[55%] text-(--mc-color-border-strong) opacity-65"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      aria-hidden="true"
+    >
+      <path d="M49 8 229 24 209 158 13 126Z" />
+      <path d="m128 15-9 127" />
+      <ellipse cx="122" cy="78" rx="25" ry="19" transform="rotate(-5 122 78)" />
+      <path d="m46 43-26-3-5 51 25 6M204 47l23 3-8 72-25-6" />
+    </svg>
   )
 }

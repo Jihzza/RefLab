@@ -1,8 +1,21 @@
-import { useState, useEffect } from 'react'
-import { Trophy, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, RotateCcw, Home } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock3,
+  Home,
+  RotateCcw,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+  XCircle,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, EmptyState, Skeleton, Surface } from '@/components/ui'
 import { supabase } from '@/lib/supabaseClient'
-import { getAttemptTopicBreakdown, getAttemptAnswers } from '../../api/testsApi'
+import { getAttemptAnswers, getAttemptTopicBreakdown } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
 import type { TestAttempt, TestQuestion, TopicPerformance } from '../../types'
 
@@ -12,38 +25,33 @@ interface RandomTestResultsProps {
   onBackToTests: () => void
 }
 
-/**
- * RandomTestResults - Comprehensive results page after test submission
- *
- * Displays:
- * - Score (X/20, percentage)
- * - Time taken
- * - Strong points (topics >= 75% accuracy, min 2 questions)
- * - Weak points (topics < 50% accuracy)
- * - Corrections (all questions with answers)
- * - Restart and Back buttons
- */
 export default function RandomTestResults({ attemptId, onRestart, onBackToTests }: RandomTestResultsProps) {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [strong, setStrong] = useState<TopicPerformance[]>([])
   const [weak, setWeak] = useState<TopicPerformance[]>([])
+  const [detailsError, setDetailsError] = useState(false)
+  const [loadVersion, setLoadVersion] = useState(0)
   const [corrections, setCorrections] = useState<
     Array<{
       question: TestQuestion
       selectedOption: string
       correctOption: string
       isCorrect: boolean
+      explanation: string | null
     }>
   >([])
-  const [showCorrections, setShowCorrections] = useState(false)
+  const [showCorrections, setShowCorrections] = useState(true)
 
   useEffect(() => {
     let cancelled = false
 
     async function fetchResults() {
-      // Fetch attempt details
+      setDetailsError(false)
+      setStrong([])
+      setWeak([])
+      setCorrections([])
       const { data: attemptData, error: attemptError } = await supabase
         .from('test_attempts')
         .select('*')
@@ -60,221 +68,370 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
       setAttempt(attemptData as TestAttempt)
 
-      // Fetch topic breakdown
-      const { data: breakdownData } = await getAttemptTopicBreakdown(attemptId)
+      const { data: breakdownData, error: breakdownError } = await getAttemptTopicBreakdown(attemptId)
+      if (cancelled) return
+      if (breakdownError) setDetailsError(true)
       if (breakdownData) {
         setStrong(breakdownData.strong || [])
         setWeak(breakdownData.weak || [])
       }
 
-      // Fetch corrections
-      const { data: answersData } = await getAttemptAnswers(attemptId)
+      const { data: answersData, error: answersError } = await getAttemptAnswers(attemptId)
+      if (cancelled) return
+      if (answersError) setDetailsError(true)
       if (answersData) {
-        const questionIds = answersData.map((a) => a.question_id)
+        const questionIds = answersData.map((answer) => answer.question_id)
 
-        // Fetch all questions
-        const { data: questionsData } = await supabase
-          .from('question_bank')
-          .select('*')
-          .in('id', questionIds)
+        if (questionIds.length > 0) {
+          const { data: questionsData, error: questionsError } = await supabase
+            .from('question_bank')
+            .select('*')
+            .in('id', questionIds)
 
-        if (questionsData) {
-          const correctionsData = answersData.map((answer) => {
-            const question = questionsData.find((q) => q.id === answer.question_id)
-            return {
-              question: question as TestQuestion,
-              selectedOption: answer.selected_option,
-              correctOption: question?.correct_option || '',
-              isCorrect: answer.is_correct || false,
-            }
-          })
-          setCorrections(correctionsData)
+          if (cancelled) return
+          if (questionsError) setDetailsError(true)
+
+          if (questionsData) {
+            const correctionsData = answersData.flatMap((answer) => {
+              const question = questionsData.find((candidate) => candidate.id === answer.question_id)
+              if (!question) return []
+              return [{
+                question: question as TestQuestion,
+                selectedOption: answer.selected_option,
+                correctOption: question.correct_option,
+                isCorrect: answer.is_correct || false,
+                explanation: answer.ai_explanation,
+              }]
+            })
+            if (correctionsData.length !== answersData.length) setDetailsError(true)
+            setCorrections(correctionsData)
+          }
         }
       }
 
       setLoading(false)
     }
 
-    fetchResults()
+    void fetchResults()
 
     return () => {
       cancelled = true
     }
-  }, [attemptId])
+  }, [attemptId, loadVersion])
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--info) mx-auto mb-4" />
-          <p className="text-sm text-(--text-secondary)">{t('Loading results...')}</p>
+      <section
+        className="mx-auto w-full max-w-3xl space-y-4 py-4"
+        role="status"
+        aria-live="polite"
+        aria-label={t('Loading results...')}
+      >
+        <Skeleton variant="text" width="12rem" height="2.25rem" />
+        <Skeleton variant="rectangular" height="13rem" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton variant="rectangular" height="10rem" />
+          <Skeleton variant="rectangular" height="10rem" />
         </div>
-      </div>
+        <Skeleton variant="rectangular" height="4.5rem" />
+        <p className="text-center text-sm text-(--mc-color-text-secondary)">{t('Loading results...')}</p>
+      </section>
     )
   }
 
   if (!attempt) {
     return (
-      <div className="text-center py-20">
-        <p className="text-(--text-primary) font-semibold">{t('Failed to load results')}</p>
-        <button
-          onClick={onBackToTests}
-          className="mt-4 px-6 py-2 bg-(--info) text-white rounded-xl font-semibold hover:opacity-90"
-        >
-          {t('Back to Tests')}
-        </button>
-      </div>
+      <Surface padding="none" className="mx-auto w-full max-w-3xl border-(--mc-color-danger)/35 shadow-none">
+        <EmptyState
+          icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
+          title={t('Failed to load results')}
+          action={(
+            <Button variant="secondary" onClick={onBackToTests}>
+              {t('Back to Tests')}
+            </Button>
+          )}
+        />
+      </Surface>
     )
   }
 
   const scorePercent = attempt.score_percent || 0
+  const boundedScorePercent = Math.min(Math.max(scorePercent, 0), 100)
   const isPassing = scorePercent >= 80
+  const scoreCorrect = attempt.score_correct ?? 0
+  const scoreTotal = attempt.score_total ?? 0
 
   return (
-    <div className="space-y-6">
-      {/* Score Card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl text-center">
-        <Trophy
-          size={48}
-          className={`mx-auto mb-4 ${isPassing ? 'text-(--success)' : 'text-(--warning)'}`}
-        />
-        <h2 className="text-3xl font-bold text-(--text-primary) mb-2">
-          {attempt.score_correct}/{attempt.score_total}
-        </h2>
-        <p className="text-lg text-(--text-secondary) mb-4">
-          {scorePercent}% {isPassing ? t('Pass') : t('Review Recommended')}
-        </p>
+    <section className="mx-auto w-full max-w-3xl space-y-4 sm:space-y-5" aria-labelledby="test-results-title">
+      <h2
+        id="test-results-title"
+        className="text-[28px] font-extrabold leading-tight tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl"
+      >
+        {t('Test Completed')}
+      </h2>
 
-        {attempt.time_elapsed_seconds !== null && (
-          <div className="flex items-center justify-center gap-2 text-sm text-(--text-secondary)">
-            <Clock size={16} />
-            <span>{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
-            {attempt.auto_submitted && <span className="text-(--warning)">({t('Auto-submitted')})</span>}
-          </div>
-        )}
-      </div>
+      <Surface
+        padding="none"
+        className="relative overflow-hidden border-(--mc-color-border-strong) shadow-none"
+      >
+        <span className="pointer-events-none absolute -left-8 top-0 h-24 w-16 -skew-x-[28deg] bg-(--mc-color-accent)" aria-hidden="true" />
+        <PitchDiagram />
 
-      {/* Strong Points */}
-      {strong.length > 0 && (
-        <div className="p-5 bg-(--success)/10 border border-(--success)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={20} className="text-(--success)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Strong Points')}</h3>
+        <div className="relative z-10 grid min-h-[180px] grid-cols-[3.5rem_5.75rem_minmax(0,1fr)] items-center gap-3 px-4 py-6 sm:min-h-[205px] sm:grid-cols-[5rem_7.25rem_minmax(0,1fr)] sm:gap-6 sm:px-7">
+          <Trophy className="size-11 justify-self-center text-(--mc-color-accent) sm:size-16" aria-hidden="true" />
+
+          <div
+            className="grid size-[92px] place-items-center rounded-full p-2 sm:size-[116px] sm:p-2.5"
+            style={{
+              background: `conic-gradient(var(--mc-color-accent) ${boundedScorePercent}%, var(--mc-color-surface-raised) 0)`,
+            }}
+            role="img"
+            aria-label={`${scoreCorrect}/${scoreTotal}, ${scorePercent}%`}
+          >
+            <div className="grid size-full place-items-center rounded-full bg-(--mc-color-surface)">
+              <span className="text-xl font-extrabold tracking-[-0.04em] tabular-nums text-(--mc-color-text) sm:text-2xl">
+                {scoreCorrect}<span className="text-sm text-(--mc-color-text-secondary) sm:text-base">/{scoreTotal}</span>
+              </span>
+            </div>
           </div>
-          <div className="space-y-2">
-            {strong.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--success)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
-              </div>
-            ))}
+
+          <div className="min-w-0">
+            <p className={`text-lg font-bold leading-tight sm:text-2xl ${isPassing ? 'text-(--mc-color-success)' : 'text-(--mc-color-warning)'}`}>
+              {scorePercent}% · {isPassing ? t('Pass') : t('Review Recommended')}
+            </p>
+            {attempt.time_elapsed_seconds !== null && (
+              <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-(--mc-color-text-secondary) sm:text-sm">
+                <Clock3 className="size-4 shrink-0" aria-hidden="true" />
+                <span>{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
+              </p>
+            )}
+            {attempt.auto_submitted && (
+              <Badge variant="warning" size="sm" className="mt-2">
+                {t('Auto-submitted')}
+              </Badge>
+            )}
           </div>
         </div>
-      )}
+      </Surface>
 
-      {/* Weak Points */}
-      {weak.length > 0 && (
-        <div className="p-5 bg-(--error)/10 border border-(--error)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingDown size={20} className="text-(--error)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Areas to Improve')}</h3>
-          </div>
-          <div className="space-y-2">
-            {weak.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--error)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Corrections Section */}
-      <div className="p-5 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-        <button
-          onClick={() => setShowCorrections(!showCorrections)}
-          className="w-full flex items-center justify-between"
+      {detailsError && (
+        <div
+          className="flex flex-wrap items-center gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-warning)/40 bg-(--mc-color-warning)/8 px-4 py-3 text-sm text-(--mc-color-warning)"
+          role="alert"
         >
-          <h3 className="font-semibold text-(--text-primary)">{t('Review All Questions')}</h3>
-          {showCorrections ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-        </button>
+          <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+          <span className="min-w-0 flex-1">{t('Some result details could not be loaded.')}</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setLoading(true)
+              setLoadVersion((version) => version + 1)
+            }}
+          >
+            {t('Try Again')}
+          </Button>
+        </div>
+      )}
+
+      {(strong.length > 0 || weak.length > 0) && (
+        <div className={`grid gap-3 ${strong.length > 0 && weak.length > 0 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          {strong.length > 0 && (
+            <PerformancePanel
+              title={t('Strong Points')}
+              topics={strong}
+              tone="success"
+              icon={<TrendingUp className="size-5" />}
+            />
+          )}
+          {weak.length > 0 && (
+            <PerformancePanel
+              title={t('Areas to Improve')}
+              topics={weak}
+              tone="danger"
+              icon={<TrendingDown className="size-5" />}
+            />
+          )}
+        </div>
+      )}
+
+      <Surface padding="none" className="overflow-hidden border-(--mc-color-border-strong) shadow-none">
+        <h2>
+          <button
+            type="button"
+            onClick={() => setShowCorrections((current) => !current)}
+            className="flex min-h-14 w-full items-center justify-between gap-4 px-4 py-3 text-left transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--mc-color-focus) sm:px-5"
+            aria-expanded={showCorrections}
+            aria-controls="random-test-corrections"
+          >
+            <span className="text-base font-semibold text-(--mc-color-text) sm:text-lg">
+              {t('Review All Questions')}
+            </span>
+            {showCorrections ? (
+              <ChevronUp className="size-5 shrink-0 text-(--mc-color-text-secondary)" aria-hidden="true" />
+            ) : (
+              <ChevronDown className="size-5 shrink-0 text-(--mc-color-text-secondary)" aria-hidden="true" />
+            )}
+          </button>
+        </h2>
 
         {showCorrections && (
-          <div className="mt-4 space-y-4">
-            {corrections.map((correction, index) => (
-              <div
-                key={correction.question.id}
-                className={`
-                  p-4 rounded-xl border
-                  ${
-                    correction.isCorrect
-                      ? 'bg-(--success)/5 border-(--success)/30'
-                      : 'bg-(--error)/5 border-(--error)/30'
-                  }
-                `}
-              >
-                <div className="flex items-start gap-2 mb-2">
-                  {correction.isCorrect ? (
-                    <CheckCircle2 size={20} className="text-(--success) shrink-0 mt-0.5" />
-                  ) : (
-                    <XCircle size={20} className="text-(--error) shrink-0 mt-0.5" />
-                  )}
-                  <div className="flex-1">
-                    <p className="font-medium text-(--text-primary) text-sm mb-1">
-                      {t('Question {{number}}', { number: index + 1 })}
-                    </p>
-                    <p className="text-sm text-(--text-primary) mb-3">
-                      {correction.question.question_text}
-                    </p>
+          <div id="random-test-corrections" className="border-t border-(--mc-color-border) p-3 sm:p-4">
+            {corrections.length > 0 ? (
+              <ol className="space-y-3">
+                {corrections.map((correction, index) => {
+                  const selectedText = getOptionText(correction.question, correction.selectedOption)
+                  const correctText = getOptionText(correction.question, correction.correctOption)
 
-                    <div className="space-y-1 text-xs">
-                      <p>
-                        <span className="text-(--text-secondary)">{t('Your answer')}: </span>
-                        <span
-                          className={correction.isCorrect ? 'text-(--success)' : 'text-(--error)'}
-                        >
-                          {correction.selectedOption}
-                        </span>
+                  return (
+                    <li
+                      key={correction.question.id}
+                      className={`relative overflow-hidden rounded-(--mc-radius-button) border p-4 sm:p-5 ${
+                        correction.isCorrect
+                          ? 'border-(--mc-color-success)/35 bg-(--mc-color-success)/5'
+                          : 'border-(--mc-color-danger)/35 bg-(--mc-color-danger)/5'
+                      }`}
+                    >
+                      <p className="text-sm font-bold text-(--mc-color-accent)">
+                        {t('Question {{number}}', { number: index + 1 })}
                       </p>
-                      {!correction.isCorrect && (
-                        <p>
-                          <span className="text-(--text-secondary)">{t('Correct answer')}: </span>
-                          <span className="text-(--success) font-semibold">
-                            {correction.correctOption}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                      <p className="mt-2 text-sm font-medium leading-6 text-(--mc-color-text) sm:text-base">
+                        {correction.question.question_text}
+                      </p>
+
+                      <div className="mt-4 space-y-3 text-sm">
+                        <div className={`flex items-start gap-2.5 ${correction.isCorrect ? 'text-(--mc-color-success)' : 'text-(--mc-color-danger)'}`}>
+                          {correction.isCorrect ? (
+                            <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                          ) : (
+                            <XCircle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                          )}
+                          <p className="min-w-0 leading-5">
+                            <span className="font-semibold">{t('Your answer')}:</span>{' '}
+                            <span>{correction.selectedOption}{selectedText ? ` · ${selectedText}` : ''}</span>
+                          </p>
+                        </div>
+
+                        {!correction.isCorrect && (
+                          <div className="flex items-start gap-2.5 text-(--mc-color-success)">
+                            <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+                            <p className="min-w-0 leading-5">
+                              <span className="font-semibold">{t('Correct answer')}:</span>{' '}
+                              <span>{correction.correctOption}{correctText ? ` · ${correctText}` : ''}</span>
+                            </p>
+                          </div>
+                        )}
+
+                        {correction.explanation && (
+                          <div className="rounded-(--mc-radius-compact) border border-(--mc-color-accent)/30 bg-(--mc-color-accent)/8 px-3.5 py-3 text-(--mc-color-text-secondary)">
+                            <p className="text-xs font-bold tracking-[0.06em] text-(--mc-color-accent) uppercase">
+                              {t('Explanation')}
+                            </p>
+                            <p className="mt-1.5 leading-6">{correction.explanation}</p>
+                          </div>
+                        )}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ol>
+            ) : (
+              <p className="py-6 text-center text-sm text-(--mc-color-text-muted)">{t('No data yet')}</p>
+            )}
           </div>
         )}
-      </div>
+      </Surface>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button
+          fullWidth
+          size="lg"
+          variant="secondary"
           onClick={onBackToTests}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) font-semibold hover:bg-(--bg-hover) transition-colors"
+          leadingIcon={<Home className="size-5 text-(--mc-color-accent)" />}
         >
-          <Home size={18} />
           {t('Back to Tests')}
-        </button>
-        <button
-          onClick={onRestart}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity"
-        >
-          <RotateCcw size={18} />
-          {t('Take Another Test')}
-        </button>
+        </Button>
+
+        <div className="relative overflow-hidden rounded-(--mc-radius-button)">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={onRestart}
+            leadingIcon={<RotateCcw className="size-5" />}
+            className="rounded-none pr-14"
+          >
+            {t('Take Another Test')}
+          </Button>
+          <span
+            className="pointer-events-none absolute -bottom-3 -right-3 h-16 w-9 -skew-x-[24deg] bg-(--mc-color-danger)"
+            aria-hidden="true"
+          />
+        </div>
       </div>
-    </div>
+    </section>
+  )
+}
+
+function PerformancePanel({
+  title,
+  topics,
+  tone,
+  icon,
+}: {
+  title: string
+  topics: TopicPerformance[]
+  tone: 'success' | 'danger'
+  icon: React.ReactNode
+}) {
+  const { t } = useTranslation()
+  const toneClass = tone === 'success' ? 'text-(--mc-color-success)' : 'text-(--mc-color-danger)'
+  const borderClass = tone === 'success' ? 'border-(--mc-color-success)/35' : 'border-(--mc-color-danger)/35'
+
+  return (
+    <Surface padding="sm" className={`min-w-0 border ${borderClass} shadow-none sm:p-4`}>
+      <div className={`flex items-start gap-2 ${toneClass}`}>
+        <span className="mt-0.5 shrink-0" aria-hidden="true">{icon}</span>
+        <h2 className="text-sm font-semibold leading-5 sm:text-base">{title}</h2>
+      </div>
+      <ul className="mt-3 divide-y divide-(--mc-color-border)">
+        {topics.map((topic) => (
+          <li key={topic.topic} className="py-2 first:pt-0 last:pb-0">
+            <p className="break-words text-xs leading-5 text-(--mc-color-text-secondary) sm:text-sm">{t(topic.topic)}</p>
+            <p className={`mt-0.5 text-sm font-bold tabular-nums sm:text-base ${toneClass}`}>
+              {topic.accuracy}% <span className="font-medium text-(--mc-color-text-secondary)">({topic.correct}/{topic.total})</span>
+            </p>
+          </li>
+        ))}
+      </ul>
+    </Surface>
+  )
+}
+
+function getOptionText(question: TestQuestion, option: string): string {
+  const optionMap: Record<string, string> = {
+    A: question.option_a,
+    B: question.option_b,
+    C: question.option_c,
+    D: question.option_d,
+  }
+  return optionMap[option] ?? ''
+}
+
+function PitchDiagram() {
+  return (
+    <svg
+      viewBox="0 0 240 170"
+      className="pointer-events-none absolute -right-10 top-0 h-full w-[48%] text-(--mc-color-border-strong) opacity-55"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      aria-hidden="true"
+    >
+      <path d="M49 8 229 24 209 158 13 126Z" />
+      <path d="m128 15-9 127" />
+      <ellipse cx="122" cy="78" rx="25" ry="19" transform="rotate(-5 122 78)" />
+      <path d="m46 43-26-3-5 51 25 6M204 47l23 3-8 72-25-6" />
+    </svg>
   )
 }
