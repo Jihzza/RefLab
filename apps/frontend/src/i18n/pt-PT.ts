@@ -26,6 +26,7 @@ const ptPT = {
   Guest: 'Visitante',
   'Log In': 'Iniciar sessão',
   Sidebar: 'Menu lateral',
+  Navigation: 'Navegação',
   'Primary navigation': 'Navegação principal',
   'Main navigation': 'Navegação principal',
   'Open menu': 'Abrir menu',

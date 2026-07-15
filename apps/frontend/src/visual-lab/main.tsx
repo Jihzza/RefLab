@@ -21,6 +21,7 @@ const fixtures = {
   results: { path: '/app/learn', load: () => import('./ResultsFixture') },
   video: { path: '/app/learn', load: () => import('./VideoFixture') },
   notifications: { path: '/app/notifications', load: () => import('./NotificationsFixture') },
+  navigation: { path: '/app/dashboard', load: () => import('./NavigationFixture') },
 } as const
 const fixtureKey = screen in fixtures ? screen as keyof typeof fixtures : 'dashboard'
 const fixture = fixtures[fixtureKey]

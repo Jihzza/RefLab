@@ -65,10 +65,10 @@ export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
           </h1>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <Link
             to="/app/search"
-            className="flex h-10 w-10 items-center justify-center rounded-(--radius-button) text-(--text-secondary) transition-colors hover:bg-(--bg-hover) hover:text-(--brand-yellow)"
+            className="hidden h-10 w-10 items-center justify-center rounded-(--radius-button) text-(--text-secondary) transition-colors hover:bg-(--bg-hover) hover:text-(--brand-yellow) sm:flex"
             aria-label={t('Search')}
           >
             <Search className="h-5 w-5" aria-hidden="true" />
