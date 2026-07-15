@@ -237,6 +237,7 @@ export default function PublicProfilePage() {
     refresh,
     loadMore,
     addPost,
+    restorePost,
     removePost,
     removePostsByUser,
     updatePost,
@@ -254,6 +255,7 @@ export default function PublicProfilePage() {
     removePost,
     removePostsByUser,
     addPost,
+    restorePost,
   })
 
   const displayName = profileView?.name || profileView?.username || username

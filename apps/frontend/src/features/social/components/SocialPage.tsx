@@ -70,6 +70,7 @@ export default function SocialPage() {
     refresh,
     loadMore,
     addPost,
+    restorePost,
     removePost,
     removePostsByUser,
     updatePost,
@@ -83,7 +84,13 @@ export default function SocialPage() {
     handleDelete,
     handleReport,
     handleBlock,
-  } = usePostActions({ updatePost, removePost, removePostsByUser, addPost })
+  } = usePostActions({
+    updatePost,
+    removePost,
+    removePostsByUser,
+    addPost,
+    restorePost,
+  })
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [copiedToast, setCopiedToast] = useState(false)

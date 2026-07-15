@@ -200,6 +200,12 @@ function EditProfileForm({
 
     void (async () => {
       for (const queuedUrl of readPendingAvatarCleanupUrls(user.id)) {
+        if (queuedUrl === profile.photo_url) {
+          forgetAvatarCleanup(user.id, queuedUrl)
+          supersededAvatarUrlsRef.current.delete(queuedUrl)
+          continue
+        }
+
         try {
           const { error: cleanupError } = await deleteProfileAvatarByUrl(queuedUrl)
           if (cleanupError) {
@@ -218,7 +224,7 @@ function EditProfileForm({
     return () => {
       cancelled = true
     }
-  }, [user.id])
+  }, [profile.photo_url, user.id])
 
   useEffect(() => {
     const requestId = ++usernameRequestIdRef.current
@@ -353,6 +359,9 @@ function EditProfileForm({
           uploadedAvatarUrl = publicUrl
           uploadedAvatarThisAttempt = true
           pendingUploadedAvatarUrlRef.current = publicUrl
+          // Durable outbox: a reload between upload and profile commit must
+          // still leave enough information to remove an orphaned file.
+          rememberAvatarCleanup(user.id, publicUrl)
         }
       }
 

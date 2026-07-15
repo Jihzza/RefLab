@@ -22,6 +22,12 @@ export function usePublicProfileFeed(
   const activeRequestRef = useRef<number | null>(null)
   const requestSerialRef = useRef(0)
   const generationRef = useRef(0)
+  const removedPostIdsRef = useRef(new Set<string>())
+  const targetUserIdRef = useRef(targetUserId)
+  const enabledRef = useRef(enabled)
+
+  targetUserIdRef.current = targetUserId
+  enabledRef.current = enabled
 
   const fetchFeed = useCallback(
     async (
@@ -48,8 +54,11 @@ export function usePublicProfileFeed(
         }
 
         setError(null)
+        const visiblePosts = fetchedPosts.filter(
+          (post) => !removedPostIdsRef.current.has(post.id),
+        )
         setPosts((currentPosts) => (
-          isRefresh ? fetchedPosts : [...currentPosts, ...fetchedPosts]
+          isRefresh ? visiblePosts : [...currentPosts, ...visiblePosts]
         ))
         setHasMore(fetchedPosts.length >= PAGE_SIZE)
         cursorRef.current = fetchedPosts.length > 0
@@ -146,13 +155,21 @@ export function usePublicProfileFeed(
   }, [enabled, fetchFeed, hasMore, targetUserId, viewerId])
 
   const addPost = useCallback((post: Post) => {
-    setPosts((currentPosts) => [
-      post,
-      ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
-    ].sort((left, right) => right.created_at.localeCompare(left.created_at)))
+    removedPostIdsRef.current.delete(post.id)
+    setPosts((currentPosts) => {
+      if (!enabledRef.current || post.author.id !== targetUserIdRef.current) {
+        return currentPosts.filter((currentPost) => currentPost.id !== post.id)
+      }
+
+      return [
+        post,
+        ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
+      ].sort((left, right) => right.created_at.localeCompare(left.created_at))
+    })
   }, [])
 
   const removePost = useCallback((postId: string) => {
+    removedPostIdsRef.current.add(postId)
     setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId))
   }, [])
 
@@ -180,6 +197,7 @@ export function usePublicProfileFeed(
     refresh,
     loadMore,
     addPost,
+    restorePost: addPost,
     removePost,
     removePostsByUser,
     updatePost,

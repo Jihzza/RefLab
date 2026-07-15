@@ -21,6 +21,10 @@ export function useFeed() {
   const activeRequestRef = useRef<number | null>(null)
   const requestSerialRef = useRef(0)
   const generationRef = useRef(0)
+  const removedPostIdsRef = useRef(new Set<string>())
+  const filterRef = useRef(filter)
+
+  filterRef.current = filter
 
   const fetchFeed = useCallback(
     async (
@@ -49,10 +53,14 @@ export function useFeed() {
 
         setError(null)
 
+        const visiblePosts = newPosts.filter(
+          (post) => !removedPostIdsRef.current.has(post.id),
+        )
+
         if (isRefresh) {
-          setPosts(newPosts)
+          setPosts(visiblePosts)
         } else {
-          setPosts(prev => [...prev, ...newPosts])
+          setPosts(prev => [...prev, ...visiblePosts])
         }
 
         setHasMore(newPosts.length >= PAGE_SIZE)
@@ -140,13 +148,22 @@ export function useFeed() {
 
   // Optimistic mutations exposed to usePostActions
   const addPost = useCallback((post: Post) => {
-    setPosts((currentPosts) => [
-      post,
-      ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
-    ].sort((left, right) => right.created_at.localeCompare(left.created_at)))
+    removedPostIdsRef.current.delete(post.id)
+    setPosts((currentPosts) => {
+      const activeFilter = filterRef.current
+      if (activeFilter !== 'all' && post.media_type !== activeFilter) {
+        return currentPosts.filter((currentPost) => currentPost.id !== post.id)
+      }
+
+      return [
+        post,
+        ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
+      ].sort((left, right) => right.created_at.localeCompare(left.created_at))
+    })
   }, [])
 
   const removePost = useCallback((postId: string) => {
+    removedPostIdsRef.current.add(postId)
     setPosts(prev => prev.filter(p => p.id !== postId))
   }, [])
 
@@ -176,6 +193,7 @@ export function useFeed() {
     refresh,
     loadMore,
     addPost,
+    restorePost: addPost,
     removePost,
     removePostsByUser,
     updatePost,

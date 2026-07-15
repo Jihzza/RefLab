@@ -20,6 +20,12 @@ export function useProfileFeed() {
   const cursorRef = useRef<string | null>(null)
   const loadingRef = useRef(false)
   const requestIdRef = useRef(0)
+  const removedPostIdsRef = useRef(new Set<string>())
+  const filterRef = useRef(filter)
+  const userIdRef = useRef(userId)
+
+  filterRef.current = filter
+  userIdRef.current = userId
 
   const fetchFeed = useCallback(
     async (cursor: string | null, isRefresh: boolean): Promise<boolean> => {
@@ -46,10 +52,14 @@ export function useProfileFeed() {
 
         setError(null)
 
+        const visiblePosts = newPosts.filter(
+          (post) => !removedPostIdsRef.current.has(post.id),
+        )
+
         if (isRefresh) {
-          setPosts(newPosts)
+          setPosts(visiblePosts)
         } else {
-          setPosts((currentPosts) => [...currentPosts, ...newPosts])
+          setPosts((currentPosts) => [...currentPosts, ...visiblePosts])
         }
 
         setHasMore(newPosts.length >= PAGE_SIZE)
@@ -131,10 +141,25 @@ export function useProfileFeed() {
   }, [])
 
   const addPost = useCallback((post: Post) => {
-    setPosts((currentPosts) => [post, ...currentPosts])
+    removedPostIdsRef.current.delete(post.id)
+    setPosts((currentPosts) => {
+      const activeFilter = filterRef.current
+      const belongsToCurrentProfile = post.author.id === userIdRef.current
+      const matchesFilter = activeFilter === 'all' || post.media_type === activeFilter
+
+      if (!belongsToCurrentProfile || !matchesFilter) {
+        return currentPosts.filter((currentPost) => currentPost.id !== post.id)
+      }
+
+      return [
+        post,
+        ...currentPosts.filter((currentPost) => currentPost.id !== post.id),
+      ].sort((left, right) => right.created_at.localeCompare(left.created_at))
+    })
   }, [])
 
   const removePost = useCallback((postId: string) => {
+    removedPostIdsRef.current.add(postId)
     setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId))
   }, [])
 
@@ -168,6 +193,7 @@ export function useProfileFeed() {
     refresh,
     loadMore,
     addPost,
+    restorePost: addPost,
     removePost,
     removePostsByUser,
     updatePost,

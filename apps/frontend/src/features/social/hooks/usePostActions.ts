@@ -214,6 +214,7 @@ export function usePostActions({
           restoreDeletedPost(post)
           return
         }
+        removePost(post.id)
         onDeleteSuccess?.(post)
       } catch (error) {
         console.error('Failed to delete post:', error)

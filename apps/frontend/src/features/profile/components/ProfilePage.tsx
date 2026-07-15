@@ -100,6 +100,7 @@ export default function ProfilePage() {
     refresh,
     loadMore,
     addPost,
+    restorePost,
     removePost,
     removePostsByUser,
     updatePost,
@@ -113,7 +114,13 @@ export default function ProfilePage() {
     handleDelete,
     handleReport,
     handleBlock,
-  } = usePostActions({ updatePost, removePost, removePostsByUser, addPost })
+  } = usePostActions({
+    updatePost,
+    removePost,
+    removePostsByUser,
+    addPost,
+    restorePost,
+  })
 
   const [copiedToast, setCopiedToast] = useState(false)
   const [pullDistance, setPullDistance] = useState(0)
