@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LoaderCircle, MessageSquareWarning, RotateCcw } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
+import IconButton from '@/components/ui/IconButton'
+import Surface from '@/components/ui/Surface'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getPostById } from '../api/socialApi'
 import { usePostActions } from '../hooks/usePostActions'
@@ -18,11 +22,13 @@ export default function PostDetailPage() {
   const { t } = useTranslation()
   const { postId } = useParams<{ postId: string }>()
   const { user } = useAuth()
+  const userId = user?.id
   const navigate = useNavigate()
 
   const [post, setPost] = useState<Post | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reloadToken, setReloadToken] = useState(0)
 
   // Post state helpers for usePostActions
   const updatePost = useCallback((_postId: string, updates: Partial<Post>) => {
@@ -58,17 +64,17 @@ export default function PostDetailPage() {
 
   // Fetch post on mount
   useEffect(() => {
-    if (!user?.id || !postId) return
+    if (!userId || !postId) return
 
     let cancelled = false
 
-    async function load() {
+    async function load(authenticatedUserId: string, resolvedPostId: string) {
       setLoading(true)
       setError(null)
 
       const { post: data, error: fetchError } = await getPostById(
-        user!.id,
-        postId!,
+        authenticatedUserId,
+        resolvedPostId,
       )
 
       if (cancelled) return
@@ -83,11 +89,11 @@ export default function PostDetailPage() {
       setLoading(false)
     }
 
-    load()
+    load(userId, postId)
     return () => {
       cancelled = true
     }
-  }, [user?.id, postId, t])
+  }, [userId, postId, reloadToken, t])
 
   const handleCommentCountChange = useCallback(
     (_postId: string, delta: number) => {
@@ -104,57 +110,86 @@ export default function PostDetailPage() {
   )
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Back header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-(--border-subtle)">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-1 text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-          aria-label={t('Go back')}
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-lg font-bold text-(--text-primary)">{t('Post')}</h1>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
-        {/* Loading */}
-        {loading && (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+    <div className="flex h-full min-h-0 flex-col bg-(--mc-color-canvas)">
+      <header className="sticky top-0 z-10 shrink-0 border-b border-(--mc-color-border) bg-(--mc-color-canvas)/95 backdrop-blur-md">
+        <div className="mx-auto flex min-h-16 w-full max-w-3xl items-center gap-3 px-4 sm:px-6">
+          <IconButton label={t('Go back')} onClick={() => navigate(-1)}>
+            <ArrowLeft className="size-5" />
+          </IconButton>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-(--mc-color-accent)">
+              RefLab
+            </p>
+            <h1 className="truncate text-lg font-bold leading-tight text-(--mc-color-text)">
+              {t('Post')}
+            </h1>
           </div>
-        )}
+        </div>
+      </header>
 
-        {/* Error */}
-        {error && !loading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">{error}</p>
-            <button
-              onClick={() => navigate('/app/social')}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+      <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="mx-auto w-full max-w-3xl px-3 py-4 sm:px-6 sm:py-6">
+          {loading && (
+            <Surface
+              role="status"
+              aria-label={t('Loading post')}
+              className="overflow-hidden"
             >
-              {t('Back to Feed')}
-            </button>
-          </div>
-        )}
+              <div className="flex animate-pulse items-center gap-3 motion-reduce:animate-none">
+                <div className="size-12 rounded-full bg-(--mc-color-surface-raised)" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-36 rounded bg-(--mc-color-surface-raised)" />
+                  <div className="h-3 w-24 rounded bg-(--mc-color-surface-raised)" />
+                </div>
+                <LoaderCircle className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" />
+              </div>
+              <div className="mt-5 space-y-2 animate-pulse motion-reduce:animate-none">
+                <div className="h-3 rounded bg-(--mc-color-surface-raised)" />
+                <div className="h-3 w-4/5 rounded bg-(--mc-color-surface-raised)" />
+              </div>
+            </Surface>
+          )}
 
-        {/* Post */}
-        {!loading && !error && post && (
-          <PostBox
-            post={post}
-            onLike={handleLike}
-            onSave={handleSave}
-            onRepost={handleRepost}
-            onShare={handleShare}
-            onDelete={handleDelete}
-            onReport={handleReport}
-            onBlock={handleBlock}
-            onCommentCountChange={handleCommentCountChange}
-            defaultShowComments
-          />
-        )}
-      </div>
+          {error && !loading && (
+            <Surface>
+              <EmptyState
+                icon={<MessageSquareWarning className="size-6" />}
+                title={error}
+                description={t('Post not found or has been deleted.')}
+                action={(
+                  <>
+                    <Button
+                      variant="secondary"
+                      leadingIcon={<RotateCcw className="size-4" />}
+                      onClick={() => setReloadToken((value) => value + 1)}
+                    >
+                      {t('Try Again')}
+                    </Button>
+                    <Button onClick={() => navigate('/app/social')}>
+                      {t('Back to Feed')}
+                    </Button>
+                  </>
+                )}
+              />
+            </Surface>
+          )}
+
+          {!loading && !error && post && (
+            <PostBox
+              post={post}
+              onLike={handleLike}
+              onSave={handleSave}
+              onRepost={handleRepost}
+              onShare={handleShare}
+              onDelete={handleDelete}
+              onReport={handleReport}
+              onBlock={handleBlock}
+              onCommentCountChange={handleCommentCountChange}
+              defaultShowComments
+            />
+          )}
+        </div>
+      </main>
     </div>
   )
 }

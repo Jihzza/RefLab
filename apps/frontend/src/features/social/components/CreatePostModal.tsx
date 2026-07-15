@@ -1,19 +1,51 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
+import { AlertTriangle, FileAudio, Paperclip, Send, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Avatar, Button, Dialog, IconButton, Surface, TextArea } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { createPost } from '../api/socialApi'
 import type { Post, PostMediaType } from '../types'
-import { useTranslation } from 'react-i18next'
 
 interface CreatePostModalProps {
   onClose: () => void
   onPostCreated: (post: Post) => void
 }
 
-/** Floating dialog for composing a new post with optional media upload. */
-const CreatePostModal: React.FC<CreatePostModalProps> = ({
+const ACCEPTED_MEDIA_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/webm',
+] as const
+
+const ACCEPTED_MEDIA_ATTRIBUTE = ACCEPTED_MEDIA_TYPES.join(',')
+
+function getMediaType(mime: string): Exclude<PostMediaType, 'text'> | null {
+  if (mime.startsWith('image/')) return 'image'
+  if (mime.startsWith('video/')) return 'video'
+  if (mime.startsWith('audio/')) return 'audio'
+  return null
+}
+
+/** Accessible post composer with optional image, video, or audio upload. */
+export default function CreatePostModal({
   onClose,
   onPostCreated,
-}) => {
+}: CreatePostModalProps) {
   const { t } = useTranslation()
   const { user, profile } = useAuth()
   const [content, setContent] = useState('')
@@ -24,44 +56,65 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const previewObjectUrlRef = useRef<string | null>(null)
 
-  // Focus textarea on mount
-  useEffect(() => {
-    textareaRef.current?.focus()
+  const displayName =
+    profile?.name ||
+    profile?.username ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split('@')[0] ||
+    t('Profile')
+  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
+
+  const clearPreviewObjectUrl = useCallback(() => {
+    if (!previewObjectUrlRef.current) return
+    URL.revokeObjectURL(previewObjectUrlRef.current)
+    previewObjectUrlRef.current = null
   }, [])
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  useEffect(() => clearPreviewObjectUrl, [clearPreviewObjectUrl])
+
+  const handleFileSelect = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
 
-    const mime = file.type
-    let type: PostMediaType = 'text'
-    if (mime.startsWith('image/')) type = 'image'
-    else if (mime.startsWith('video/')) type = 'video'
-    else if (mime.startsWith('audio/')) type = 'audio'
+    const nextMediaType = getMediaType(file.type)
+    if (!nextMediaType) {
+      clearPreviewObjectUrl()
+      setMediaFile(null)
+      setMediaPreview(null)
+      setMediaType('text')
+      setError(t('Unsupported media type. Please choose an image, video, or audio file.'))
+      event.target.value = ''
+      return
+    }
 
+    clearPreviewObjectUrl()
+    setError(null)
     setMediaFile(file)
-    setMediaType(type)
+    setMediaType(nextMediaType)
 
-    if (type === 'image') {
-      const reader = new FileReader()
-      reader.onload = () => setMediaPreview(reader.result as string)
-      reader.readAsDataURL(file)
-    } else if (type === 'video') {
-      setMediaPreview(URL.createObjectURL(file))
+    if (nextMediaType === 'image' || nextMediaType === 'video') {
+      const objectUrl = URL.createObjectURL(file)
+      previewObjectUrlRef.current = objectUrl
+      setMediaPreview(objectUrl)
     } else {
       setMediaPreview(file.name)
     }
-  }, [])
+  }, [clearPreviewObjectUrl, t])
 
   const removeMedia = useCallback(() => {
+    clearPreviewObjectUrl()
     setMediaFile(null)
     setMediaPreview(null)
     setMediaType('text')
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }, [])
+  }, [clearPreviewObjectUrl])
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isSubmitting) return
+
     if (!user?.id) {
       setError(t('You must be logged in to post.'))
       return
@@ -83,7 +136,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
         user.id,
         content.trim() || null,
         mediaFile ? mediaType : 'text',
-        mediaFile || undefined
+        mediaFile || undefined,
       )
 
       if (postError) {
@@ -114,142 +167,170 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({
       }
 
       onClose()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : t('Something went wrong. Please try again.')
+    } catch (submitError) {
+      const message = submitError instanceof Error
+        ? submitError.message
+        : t('Something went wrong. Please try again.')
       setError(message)
       setIsSubmitting(false)
     }
   }
 
-  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value)
-    const el = e.target
-    el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`
+  const handleTextareaInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(event.target.value)
+    event.target.style.height = 'auto'
+    event.target.style.height = `${Math.min(event.target.scrollHeight, 208)}px`
   }
 
-  const canSubmit = (content.trim() || mediaFile) && !isSubmitting
+  const canSubmit = Boolean((content.trim() || mediaFile) && !isSubmitting)
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Floating dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-lg bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto flex flex-col max-h-[80vh]">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
-            <h2 className="text-lg font-semibold text-(--text-primary)">
-              {t('New Post')}
-            </h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-              aria-label={t('Close')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            {/* Error */}
-            {error && (
-              <div className="mb-3 p-3 bg-(--error)/10 border border-(--error)/20 rounded-lg text-sm text-(--error)">
-                {error}
-              </div>
-            )}
-
-            {/* Text input */}
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleTextareaInput}
-              placeholder={t("What's on your mind?")}
-              rows={3}
-              className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-muted) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
-            />
-
-            {/* Media preview */}
-            {mediaPreview && (
-              <div className="relative mt-3">
-                <button
-                  onClick={removeMedia}
-                  className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-(--bg-primary)/80 flex items-center justify-center text-(--text-primary) hover:bg-(--bg-primary) transition-colors"
-                  aria-label={t('Remove media')}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-
-                {mediaType === 'image' && (
-                  <img
-                    src={mediaPreview}
-                    alt={t('Upload preview')}
-                    className="w-full max-h-64 object-contain rounded-lg"
-                  />
-                )}
-                {mediaType === 'video' && (
-                  <video
-                    src={mediaPreview}
-                    controls
-                    className="w-full max-h-48 rounded-lg bg-black"
-                  />
-                )}
-                {mediaType === 'audio' && (
-                  <div className="p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle) flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-(--text-muted) flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-                    </svg>
-                    <span className="text-sm text-(--text-secondary) truncate">
-                      {mediaPreview}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Footer: media button + publish */}
-          <div className="flex items-center justify-between px-5 py-4 border-t border-(--border-subtle)">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-(--text-secondary) hover:text-(--brand-yellow) hover:bg-(--bg-hover) rounded-(--radius-button) transition-colors"
-              aria-label={t('Attach media')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
-              </svg>
-              <span>{t('Media')}</span>
-            </button>
-
-            <button
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className="px-5 py-2 text-sm font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
-            >
-              {isSubmitting ? t('Publishing...') : t('Publish')}
-            </button>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/webm"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+    <Dialog
+      id="create-post-dialog"
+      open
+      onOpenChange={(open) => {
+        if (!open && !isSubmitting) onClose()
+      }}
+      title={t('New Post')}
+      size="md"
+      initialFocusRef={textareaRef}
+      closeLabel={t('Close')}
+      showCloseButton={!isSubmitting}
+      closeOnEscape={!isSubmitting}
+      closeOnOverlayClick={!isSubmitting}
+      overlayClassName="max-sm:items-end max-sm:justify-stretch max-sm:p-0"
+      className="border-(--mc-color-border-strong) max-sm:max-h-[88dvh] max-sm:max-w-none max-sm:rounded-t-(--mc-radius-card) max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0"
+      bodyClassName="p-0"
+      footer={(
+        <div className="flex w-full flex-wrap items-center justify-end gap-3 pb-[var(--mc-safe-bottom)] sm:pb-0">
+          <Button
+            variant="ghost"
+            size="md"
+            leadingIcon={<Paperclip className="size-4" />}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSubmitting}
+            className="mr-auto"
+          >
+            {t('Media')}
+          </Button>
+          <Button
+            type="submit"
+            form="create-post-form"
+            size="md"
+            leadingIcon={<Send className="size-4" />}
+            disabled={!canSubmit}
+            loading={isSubmitting}
+            loadingText={t('Publishing...')}
+            className="min-w-28"
+          >
+            {t('Publish')}
+          </Button>
         </div>
-      </div>
-    </>
+      )}
+    >
+      <form id="create-post-form" onSubmit={(event) => void handleSubmit(event)}>
+        <div className="space-y-4 p-4 sm:p-5">
+          {error && (
+            <div
+              className="flex items-start gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/8 px-3.5 py-3 text-sm text-(--mc-color-danger)"
+              role="alert"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0">{error}</span>
+            </div>
+          )}
+
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar
+              src={avatarUrl}
+              alt={displayName}
+              name={displayName}
+              size="lg"
+              className="mt-0.5"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="mb-2 min-w-0">
+                <p className="truncate text-sm font-semibold text-(--mc-color-text)">{displayName}</p>
+                {profile?.username && (
+                  <p className="truncate text-xs text-(--mc-color-text-muted)">@{profile.username}</p>
+                )}
+              </div>
+              <TextArea
+                ref={textareaRef}
+                value={content}
+                onChange={handleTextareaInput}
+                placeholder={t("What's on your mind?")}
+                aria-label={t("What's on your mind?")}
+                rows={4}
+                resize="none"
+                disabled={isSubmitting}
+                className="min-h-32 max-h-52 bg-(--mc-color-canvas) px-4 py-3 text-base"
+              />
+            </div>
+          </div>
+
+          {mediaPreview && (
+            <Surface
+              padding="none"
+              variant="inset"
+              className="relative overflow-hidden border-(--mc-color-border-strong) shadow-none"
+            >
+              <IconButton
+                label={t('Remove media')}
+                size="sm"
+                variant="secondary"
+                onClick={removeMedia}
+                disabled={isSubmitting}
+                className="absolute top-2 right-2 z-10 border-white/15 bg-black/75 text-white hover:bg-black"
+              >
+                <X className="size-4" />
+              </IconButton>
+
+              {mediaType === 'image' && (
+                <img
+                  src={mediaPreview}
+                  alt={t('Upload preview')}
+                  className="max-h-80 w-full bg-black/25 object-contain"
+                />
+              )}
+              {mediaType === 'video' && (
+                <video
+                  src={mediaPreview}
+                  controls
+                  preload="metadata"
+                  aria-label={t('Upload preview')}
+                  className="max-h-72 w-full bg-black"
+                />
+              )}
+              {mediaType === 'audio' && (
+                <div className="flex min-h-24 items-center gap-3 px-4 py-4 pr-14">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-button) border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/10 text-(--mc-color-accent)">
+                    <FileAudio className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 truncate text-sm font-medium text-(--mc-color-text-secondary)">
+                    {mediaFile?.name ?? mediaPreview}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 border-t border-(--mc-color-border) px-3 py-2 text-xs text-(--mc-color-text-muted)">
+                <Paperclip className="size-4 text-(--mc-color-accent)" aria-hidden="true" />
+                <span className="min-w-0 truncate">{mediaFile?.name}</span>
+              </div>
+            </Surface>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ACCEPTED_MEDIA_ATTRIBUTE}
+          onChange={handleFileSelect}
+          disabled={isSubmitting}
+          className="sr-only"
+          tabIndex={-1}
+        />
+      </form>
+    </Dialog>
   )
 }
-
-export default CreatePostModal

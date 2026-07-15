@@ -1,124 +1,165 @@
 import { useEffect, useRef, useState } from 'react'
+import { LoaderCircle, SearchX } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import Avatar from '@/components/ui/Avatar'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { searchUsers } from '@/features/messages/api/messagesApi'
 import type { UserSearchResult } from '@/features/messages/types'
 
 const DEBOUNCE_MS = 300
+const EMPTY_RESULTS: UserSearchResult[] = []
 
 interface MentionDropdownProps {
+  id: string
   query: string
   onSelect: (username: string) => void
   onClose: () => void
 }
 
-/**
- * MentionDropdown - Floating autocomplete for @mentions in comments.
- *
- * Positioned absolutely below the comment input.
- * Searches users via the existing search_users RPC with debounce.
- */
+/** Debounced, race-safe listbox for selecting @mentions from the composer. */
 export default function MentionDropdown({
+  id,
   query,
   onSelect,
   onClose,
 }: MentionDropdownProps) {
+  const { t } = useTranslation()
   const { user } = useAuth()
+  const userId = user?.id
   const [results, setResults] = useState<UserSearchResult[]>([])
+  const [resolvedQuery, setResolvedQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(0)
   const lastRequestIdRef = useRef(0)
+  const trimmedQuery = query.trim()
 
-  // Debounced search whenever query changes
   useEffect(() => {
-    if (!user?.id) return
-
-    const q = query.trim()
-    if (!q) {
-      setResults([])
-      setIsSearching(false)
-      return
-    }
-
     const requestId = ++lastRequestIdRef.current
-    setIsSearching(true)
+    if (!userId || !trimmedQuery) return
 
-    const t = window.setTimeout(async () => {
-      const { data, error } = await searchUsers(q, user.id, 6)
-
-      // Ignore stale responses
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearching(true)
+      const { data, error } = await searchUsers(trimmedQuery, userId, 6)
       if (requestId !== lastRequestIdRef.current) return
 
-      if (error) {
-        setResults([])
-      } else {
-        setResults(data)
-      }
+      setResults(error ? [] : data)
+      setResolvedQuery(trimmedQuery)
+      setActiveIndex(0)
       setIsSearching(false)
     }, DEBOUNCE_MS)
 
-    return () => window.clearTimeout(t)
-  }, [query, user?.id])
+    return () => {
+      window.clearTimeout(timeoutId)
+      if (lastRequestIdRef.current === requestId) {
+        lastRequestIdRef.current += 1
+      }
+    }
+  }, [trimmedQuery, userId])
 
-  // Close on outside click
+  const resultsAreCurrent = resolvedQuery === trimmedQuery
+  const visibleResults = trimmedQuery && resultsAreCurrent ? results : EMPTY_RESULTS
+  const searchPending = Boolean(trimmedQuery) && (!resultsAreCurrent || isSearching)
+  const visibleActiveIndex = Math.min(activeIndex, Math.max(visibleResults.length - 1, 0))
+
   useEffect(() => {
-    const handleClick = () => onClose()
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [onClose])
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        onClose()
+        return
+      }
+
+      if (visibleResults.length === 0) return
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActiveIndex((index) => (index + 1) % visibleResults.length)
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActiveIndex((index) => (index - 1 + visibleResults.length) % visibleResults.length)
+      } else if (event.key === 'Home') {
+        event.preventDefault()
+        setActiveIndex(0)
+      } else if (event.key === 'End') {
+        event.preventDefault()
+        setActiveIndex(visibleResults.length - 1)
+      } else if (event.key === 'Enter') {
+        event.preventDefault()
+        const selectedUser = visibleResults[visibleActiveIndex]
+        if (selectedUser) onSelect(selectedUser.username)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown, true)
+    return () => document.removeEventListener('keydown', handleKeyDown, true)
+  }, [onClose, onSelect, visibleActiveIndex, visibleResults])
 
   return (
     <div
-      className="absolute left-0 right-0 top-full mt-1 z-50 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-lg max-h-52 overflow-y-auto"
-      onClick={(e) => e.stopPropagation()}
+      id={id}
+      role="listbox"
+      aria-label={t('Mention a user')}
+      aria-activedescendant={
+        visibleResults.length > 0 ? `${id}-option-${visibleActiveIndex}` : undefined
+      }
+      className="absolute inset-x-0 top-[calc(100%+0.375rem)] z-40 max-h-64 overflow-y-auto overscroll-contain rounded-(--mc-radius-input) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) p-1 shadow-(--mc-shadow-raised)"
     >
-      {/* Loading */}
-      {isSearching && results.length === 0 && (
-        <div className="flex justify-center py-3">
-          <div className="w-4 h-4 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+      {searchPending && (
+        <div
+          role="status"
+          aria-label={t('Searching users')}
+          className="flex min-h-16 items-center justify-center"
+        >
+          <LoaderCircle className="size-4 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" />
         </div>
       )}
 
-      {/* No results */}
-      {!isSearching && query.trim() && results.length === 0 && (
-        <p className="text-xs text-(--text-muted) text-center py-3">
-          No users found
-        </p>
+      {!searchPending && trimmedQuery && visibleResults.length === 0 && (
+        <div className="flex min-h-16 items-center justify-center gap-2 px-3 text-center text-xs text-(--mc-color-text-muted)">
+          <SearchX className="size-4" aria-hidden="true" />
+          <span>{t('No users found')}</span>
+        </div>
       )}
 
-      {/* Results */}
-      {results.map((u) => (
-        <button
-          key={u.id}
-          type="button"
-          className="w-full flex items-center gap-2 px-3 py-2 hover:bg-(--bg-hover) transition-colors text-left"
-          onMouseDown={(e) => {
-            // Prevent input blur before we handle the selection
-            e.preventDefault()
-            onSelect(u.username)
-          }}
-        >
-          {u.photo_url ? (
-            <img
-              src={u.photo_url}
-              alt={u.username}
-              className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+      {visibleResults.map((result, index) => {
+        const displayName = result.name || result.username
+        return (
+          <button
+            key={result.id}
+            id={`${id}-option-${index}`}
+            type="button"
+            role="option"
+            tabIndex={-1}
+            aria-selected={index === visibleActiveIndex}
+            className={`flex min-h-12 w-full items-center gap-3 rounded-(--mc-radius-compact) px-3 py-2 text-left transition-colors focus-visible:outline-none motion-reduce:transition-none ${
+              index === visibleActiveIndex
+                ? 'bg-(--mc-color-surface-hover) text-(--mc-color-text)'
+                : 'text-(--mc-color-text-secondary) hover:bg-(--mc-color-surface-hover)'
+            }`}
+            onMouseEnter={() => setActiveIndex(index)}
+            onMouseDown={(event) => {
+              event.preventDefault()
+              onSelect(result.username)
+            }}
+          >
+            <Avatar
+              src={result.photo_url}
+              alt={displayName}
+              name={displayName}
+              size="sm"
             />
-          ) : (
-            <div className="w-7 h-7 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-              <span className="text-[10px] font-semibold text-(--bg-primary)">
-                {(u.name || u.username).slice(0, 2).toUpperCase()}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-(--mc-color-text)">
+                {displayName}
               </span>
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-(--text-primary) truncate">
-              {u.name || u.username}
-            </p>
-            <p className="text-xs text-(--text-muted) truncate">
-              @{u.username}
-            </p>
-          </div>
-        </button>
-      ))}
+              <span className="block truncate text-xs text-(--mc-color-text-muted)">
+                @{result.username}
+              </span>
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

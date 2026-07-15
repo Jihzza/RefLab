@@ -1,7 +1,17 @@
-import React, { useState } from 'react'
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
+import { Ellipsis, Flag, Heart, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { Comment } from '../types'
 import { useTranslation } from 'react-i18next'
+import Avatar from '@/components/ui/Avatar'
+import IconButton from '@/components/ui/IconButton'
+import type { Comment } from '../types'
 
 interface CommentBoxProps {
   comment: Comment
@@ -13,11 +23,8 @@ interface CommentBoxProps {
   onReport: (commentId: string) => void
 }
 
-/** Formats a timestamp into a relative time string. */
 function formatRelativeTime(dateString: string): string {
-  const now = Date.now()
-  const date = new Date(dateString).getTime()
-  const seconds = Math.floor((now - date) / 1000)
+  const seconds = Math.max(0, Math.floor((Date.now() - new Date(dateString).getTime()) / 1000))
   if (seconds < 60) return 'now'
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m`
@@ -28,49 +35,41 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(days / 30)}mo`
 }
 
-/** Parses comment text and renders @username mentions as highlighted clickable spans. */
 function renderContentWithMentions(
   content: string,
   navigate: ReturnType<typeof useNavigate>,
-): React.ReactNode[] {
+): ReactNode[] {
   const mentionRegex = /@([a-z0-9_.]{3,30})/gi
-  const parts: React.ReactNode[] = []
+  const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
 
   while ((match = mentionRegex.exec(content)) !== null) {
-    // Text before the mention
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index))
-    }
+    if (match.index > lastIndex) parts.push(content.slice(lastIndex, match.index))
 
     const username = match[1]
     parts.push(
-      <span
+      <button
         key={match.index}
-        className="text-(--brand-yellow) font-medium cursor-pointer hover:underline"
-        role="link"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/app/profile/${username}`)
+        type="button"
+        className="rounded-sm font-semibold text-(--mc-color-accent) hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
+        onClick={(event) => {
+          event.stopPropagation()
+          navigate(`/app/profile/${encodeURIComponent(username)}`)
         }}
       >
         @{username}
-      </span>,
+      </button>,
     )
     lastIndex = mentionRegex.lastIndex
   }
 
-  // Remaining text after last mention
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex))
-  }
-
+  if (lastIndex < content.length) parts.push(content.slice(lastIndex))
   return parts
 }
 
-/** Single comment with avatar, content, like button, and optional reply button. */
-const CommentBox: React.FC<CommentBoxProps> = ({
+/** Comment row with nested-reply styling and accessible moderation menu. */
+export default function CommentBox({
   comment,
   currentUserId,
   depth,
@@ -78,121 +77,208 @@ const CommentBox: React.FC<CommentBoxProps> = ({
   onReply,
   onDelete,
   onReport,
-}) => {
+}: CommentBoxProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const menuContainerRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuId = useId()
   const displayName = comment.author.name || comment.author.username
-  const initials = displayName.slice(0, 2).toUpperCase()
   const isOwnComment = comment.user_id === currentUserId
 
+  const openAuthorProfile = () => {
+    if (isOwnComment) {
+      navigate('/app/profile')
+      return
+    }
+    navigate(`/app/profile/${encodeURIComponent(comment.author.username)}`)
+  }
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLButtonElement>('[data-menu-item]')?.focus()
+    })
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !menuContainerRef.current?.contains(event.target)
+      ) {
+        setMenuOpen(false)
+      }
+    }
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setMenuOpen(false)
+      window.requestAnimationFrame(() => triggerRef.current?.focus())
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      window.cancelAnimationFrame(focusFrame)
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [menuOpen])
+
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const item = menuRef.current?.querySelector<HTMLButtonElement>('[data-menu-item]')
+    if (item && ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault()
+      item.focus()
+    }
+  }
+
+  const handleMenuAction = (action: () => void) => {
+    setMenuOpen(false)
+    action()
+  }
+
   return (
-    <div className={`flex gap-2 ${depth === 1 ? 'ml-10' : ''}`}>
-      {/* Avatar */}
-      {comment.author.photo_url ? (
-        <img
+    <article
+      className={`flex min-w-0 gap-2.5 ${
+        depth === 1
+          ? 'ml-5 border-l border-(--mc-color-border) pl-3 sm:ml-10'
+          : ''
+      }`}
+    >
+      <button
+        type="button"
+        onClick={openAuthorProfile}
+        aria-label={t('Open {{name}} profile', { name: displayName })}
+        className="-m-1 mt-0 inline-flex size-11 shrink-0 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
+      >
+        <Avatar
           src={comment.author.photo_url}
           alt={displayName}
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
+          name={displayName}
+          size="sm"
         />
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span className="text-[10px] font-semibold text-(--bg-primary)">
-            {initials}
-          </span>
-        </div>
-      )}
+      </button>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-(--text-primary)">
+      <div className="min-w-0 flex-1">
+        <div className="flex min-h-8 items-start gap-2">
+          <button
+            type="button"
+            onClick={openAuthorProfile}
+            className="min-w-0 truncate rounded-sm text-left text-xs font-bold text-(--mc-color-text) hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
+          >
             {displayName}
-          </span>
-          <span className="text-[10px] text-(--text-muted)">
+          </button>
+          <time
+            dateTime={comment.created_at}
+            className="shrink-0 text-[11px] tabular-nums text-(--mc-color-text-muted)"
+          >
             {formatRelativeTime(comment.created_at)}
-          </span>
+          </time>
+
+          <div
+            ref={menuContainerRef}
+            className="relative ml-auto -mt-2 shrink-0"
+            onBlur={(event) => {
+              if (
+                !(event.relatedTarget instanceof Node) ||
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                setMenuOpen(false)
+              }
+            }}
+          >
+            <IconButton
+              ref={triggerRef}
+              size="md"
+              label={t('Comment options')}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-controls={menuOpen ? menuId : undefined}
+              onClick={() => setMenuOpen((value) => !value)}
+              className="size-11"
+            >
+              <Ellipsis className="size-4" />
+            </IconButton>
+
+            {menuOpen && (
+              <div
+                ref={menuRef}
+                id={menuId}
+                role="menu"
+                aria-label={t('Comment options')}
+                onKeyDown={handleMenuKeyDown}
+                className="absolute right-0 top-[calc(100%+0.125rem)] z-30 w-40 overflow-hidden rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) p-1 shadow-(--mc-shadow-raised)"
+              >
+                {isOwnComment ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-menu-item=""
+                    onClick={() => handleMenuAction(() => onDelete(comment.id))}
+                    className="flex min-h-11 w-full items-center gap-2 rounded-(--mc-radius-compact) px-3 text-left text-xs font-semibold text-(--mc-color-danger) transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:bg-(--mc-color-surface-hover) motion-reduce:transition-none"
+                  >
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {t('Delete')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    data-menu-item=""
+                    onClick={() => handleMenuAction(() => onReport(comment.id))}
+                    className="flex min-h-11 w-full items-center gap-2 rounded-(--mc-radius-compact) px-3 text-left text-xs font-semibold text-(--mc-color-text-secondary) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text) focus-visible:outline-none focus-visible:bg-(--mc-color-surface-hover) motion-reduce:transition-none"
+                  >
+                    <Flag className="size-4" aria-hidden="true" />
+                    {t('Report')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        <p className="text-sm text-(--text-primary) mt-0.5 break-words">
+        <p className="-mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-(--mc-color-text-secondary)">
           {renderContentWithMentions(comment.content, navigate)}
         </p>
 
-        {/* Actions row */}
-        <div className="flex items-center gap-4 mt-1.5">
-          {/* Like */}
+        <div className="mt-1 flex items-center gap-1">
           <button
+            type="button"
             onClick={() => onLike(comment.id, comment.is_liked)}
-            className={`flex items-center gap-1 text-[11px] transition-colors ${
-              comment.is_liked
-                ? 'text-(--error)'
-                : 'text-(--text-muted) hover:text-(--error)'
-            }`}
+            aria-pressed={comment.is_liked}
             aria-label={comment.is_liked ? t('Unlike comment') : t('Like comment')}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-(--mc-radius-compact) px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none ${
+              comment.is_liked
+                ? 'text-(--mc-color-danger)'
+                : 'text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-danger)'
+            }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24"
+            <Heart
+              className="size-4"
               fill={comment.is_liked ? 'currentColor' : 'none'}
-              stroke="currentColor" strokeWidth={comment.is_liked ? 0 : 2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-              />
-            </svg>
-            {comment.like_count > 0 && <span>{comment.like_count}</span>}
+              aria-hidden="true"
+            />
+            {comment.like_count > 0 && (
+              <span className="tabular-nums">{comment.like_count}</span>
+            )}
           </button>
 
-          {/* Reply */}
           {onReply && (
             <button
+              type="button"
               onClick={onReply}
-              className="text-[11px] text-(--text-muted) hover:text-(--info) transition-colors"
+              className="min-h-11 rounded-(--mc-radius-compact) px-2 text-xs font-semibold text-(--mc-color-text-muted) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-info) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
               aria-label={t('Reply to comment')}
             >
               {t('Reply')}
             </button>
           )}
-
-          {/* 3-dot menu */}
-          <div className="relative ml-auto">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-0.5 text-(--text-muted) hover:text-(--text-secondary) transition-colors"
-              aria-label={t('Comment options')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="5" cy="12" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="19" cy="12" r="2" />
-              </svg>
-            </button>
-
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-6 z-50 w-36 bg-(--bg-surface) border border-(--border-subtle) rounded-lg shadow-xl overflow-hidden">
-                  {isOwnComment ? (
-                    <button
-                      onClick={() => { setMenuOpen(false); onDelete(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--error) hover:bg-(--bg-hover) transition-colors"
-                    >
-                      {t('Delete')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => { setMenuOpen(false); onReport(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
-                    >
-                      {t('Report')}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
-    </div>
+    </article>
   )
 }
-
-export default CommentBox

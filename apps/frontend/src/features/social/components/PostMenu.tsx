@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { Ban, Ellipsis, Flag, Trash2, UserRoundX } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import IconButton from '@/components/ui/IconButton'
 
 interface PostMenuProps {
   isOwnPost: boolean
@@ -9,80 +11,164 @@ interface PostMenuProps {
   onDelete: () => void
 }
 
-/** 3-dot dropdown menu for post actions (report, block, delete). */
-const PostMenu: React.FC<PostMenuProps> = ({
+/** Keyboard-accessible menu for moderation and ownership actions. */
+export default function PostMenu({
   isOwnPost,
   onReportPost,
   onReportUser,
   onBlockUser,
   onDelete,
-}) => {
+}: PostMenuProps) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLButtonElement>('[data-menu-item]')?.focus()
+    })
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target)
+      ) {
+        setIsOpen(false)
+      }
+    }
+
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      setIsOpen(false)
+      window.requestAnimationFrame(() => triggerRef.current?.focus())
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame)
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen])
 
   const handleAction = (action: () => void) => {
     setIsOpen(false)
     action()
   }
 
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const items = Array.from(
+      menuRef.current?.querySelectorAll<HTMLButtonElement>('[data-menu-item]') ?? [],
+    )
+    if (items.length === 0) return
+
+    const currentIndex = Math.max(0, items.indexOf(document.activeElement as HTMLButtonElement))
+    let nextIndex: number | null = null
+
+    if (event.key === 'ArrowDown') nextIndex = (currentIndex + 1) % items.length
+    if (event.key === 'ArrowUp') nextIndex = (currentIndex - 1 + items.length) % items.length
+    if (event.key === 'Home') nextIndex = 0
+    if (event.key === 'End') nextIndex = items.length - 1
+
+    if (nextIndex !== null) {
+      event.preventDefault()
+      items[nextIndex]?.focus()
+    }
+  }
+
+  const itemClassName =
+    'flex min-h-11 w-full items-center gap-3 px-3 text-left text-sm font-medium text-(--mc-color-text-secondary) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text) focus-visible:outline-none focus-visible:bg-(--mc-color-surface-hover) focus-visible:text-(--mc-color-text) motion-reduce:transition-none'
+  const dangerItemClassName = `${itemClassName} text-(--mc-color-danger) hover:text-(--mc-color-danger) focus-visible:text-(--mc-color-danger)`
+
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-1 rounded-full hover:bg-(--bg-hover) transition-colors text-(--text-muted)"
-        aria-label={t('Post options')}
+    <div
+      ref={containerRef}
+      className="relative shrink-0"
+      onBlur={(event) => {
+        if (
+          !(event.relatedTarget instanceof Node) ||
+          !event.currentTarget.contains(event.relatedTarget)
+        ) {
+          setIsOpen(false)
+        }
+      }}
+    >
+      <IconButton
+        ref={triggerRef}
+        label={t('Post options')}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? menuId : undefined}
+        aria-haspopup="menu"
+        onClick={() => setIsOpen((value) => !value)}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-          <circle cx="12" cy="5" r="2" />
-          <circle cx="12" cy="12" r="2" />
-          <circle cx="12" cy="19" r="2" />
-        </svg>
-      </button>
+        <Ellipsis className="size-5" />
+      </IconButton>
 
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-
-          {/* Dropdown */}
-          <div className="absolute right-0 top-8 z-50 w-48 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden">
-            {isOwnPost ? (
+        <div
+          ref={menuRef}
+          id={menuId}
+          role="menu"
+          aria-label={t('Post options')}
+          onKeyDown={handleMenuKeyDown}
+          className="absolute right-0 top-[calc(100%+0.25rem)] z-30 w-56 overflow-hidden rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) p-1 shadow-(--mc-shadow-raised)"
+        >
+          {isOwnPost ? (
+            <button
+              type="button"
+              role="menuitem"
+              data-menu-item=""
+              onClick={() => handleAction(onDelete)}
+              className={dangerItemClassName}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              {t('Delete Post')}
+            </button>
+          ) : (
+            <>
               <button
-                onClick={() => handleAction(onDelete)}
-                className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors"
+                type="button"
+                role="menuitem"
+                data-menu-item=""
+                onClick={() => handleAction(onReportPost)}
+                className={itemClassName}
               >
-                {t('Delete Post')}
+                <Flag className="size-4" aria-hidden="true" />
+                {t('Report Post')}
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => handleAction(onReportPost)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
-                >
-                  {t('Report Post')}
-                </button>
-                <button
-                  onClick={() => handleAction(onReportUser)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--text-secondary) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
-                >
-                  {t('Report User')}
-                </button>
-                <button
-                  onClick={() => handleAction(onBlockUser)}
-                  className="w-full text-left px-4 py-3 text-sm text-(--error) hover:bg-(--bg-hover) transition-colors border-t border-(--border-subtle)"
-                >
-                  {t('Block User')}
-                </button>
-              </>
-            )}
-          </div>
-        </>
+              <button
+                type="button"
+                role="menuitem"
+                data-menu-item=""
+                onClick={() => handleAction(onReportUser)}
+                className={itemClassName}
+              >
+                <UserRoundX className="size-4" aria-hidden="true" />
+                {t('Report User')}
+              </button>
+              <div role="separator" className="my-1 border-t border-(--mc-color-border)" />
+              <button
+                type="button"
+                role="menuitem"
+                data-menu-item=""
+                onClick={() => handleAction(onBlockUser)}
+                className={dangerItemClassName}
+              >
+                <Ban className="size-4" aria-hidden="true" />
+                {t('Block User')}
+              </button>
+            </>
+          )}
+        </div>
       )}
     </div>
   )
 }
-
-export default PostMenu

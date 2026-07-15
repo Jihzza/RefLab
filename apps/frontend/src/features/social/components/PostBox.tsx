@@ -1,4 +1,6 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
+import { Repeat2 } from 'lucide-react'
+import Surface from '@/components/ui/Surface'
 import { useAuth } from '@/features/auth/components/useAuth'
 import PostHeader from './PostHeader'
 import PostBody from './PostBody'
@@ -7,6 +9,7 @@ import CommentSection from './CommentSection'
 import ReportDialog from './ReportDialog'
 import BlockConfirmDialog from './BlockConfirmDialog'
 import type { Post } from '../types'
+import { useTranslation } from 'react-i18next'
 
 interface PostBoxProps {
   post: Post
@@ -34,6 +37,7 @@ const PostBox: React.FC<PostBoxProps> = ({
   onCommentCountChange,
   defaultShowComments = false,
 }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [showComments, setShowComments] = useState(defaultShowComments)
   const [reportDialog, setReportDialog] = useState<{ type: 'post' | 'user'; targetId: string } | null>(null)
@@ -48,50 +52,66 @@ const PostBox: React.FC<PostBoxProps> = ({
     [post.id, onCommentCountChange]
   )
 
+  const commentsId = `post-${post.id}-comments`
+
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4">
-      {/* Repost label */}
+    <Surface
+      role="article"
+      aria-label={post.content ? undefined : t('Post by {{name}}', {
+        name: post.author.name || post.author.username,
+      })}
+      padding="none"
+      className="relative overflow-hidden"
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-(--mc-color-accent) via-(--mc-color-border-strong) to-(--mc-color-danger) opacity-80"
+        aria-hidden="true"
+      />
+
       {isRepost && (
-        <div className="flex items-center gap-1.5 text-xs text-(--text-muted) mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
-            />
-          </svg>
-          <span>{post.author.name || post.author.username} reposted</span>
+        <div className="flex min-h-10 items-center gap-2 border-b border-(--mc-color-border) px-4 text-xs font-medium text-(--mc-color-text-muted) sm:px-5">
+          <Repeat2 className="size-4 text-(--mc-color-success)" aria-hidden="true" />
+          <span className="truncate">
+            {t('{{name}} reposted', { name: post.author.name || post.author.username })}
+          </span>
         </div>
       )}
 
-      {/* Header */}
-      <PostHeader
-        author={post.author}
-        createdAt={post.created_at}
-        isOwnPost={isOwnPost}
-        onReportPost={() => setReportDialog({ type: 'post', targetId: post.id })}
-        onReportUser={() => setReportDialog({ type: 'user', targetId: post.author.id })}
-        onBlockUser={() => setBlockDialog({ userId: post.author.id, username: post.author.username })}
-        onDelete={() => onDelete(post.id)}
-      />
-
-      {/* Body */}
-      <PostBody post={post} />
-
-      {/* Footer */}
-      <PostFooter
-        post={post}
-        onLike={() => onLike(post)}
-        onComment={() => setShowComments(!showComments)}
-        onRepost={() => onRepost(post)}
-        onSave={() => onSave(post)}
-        onShare={() => onShare(post)}
-      />
-
-      {/* Comments (expandable) */}
-      {showComments && (
-        <CommentSection
-          postId={post.id}
-          onCommentCountChange={handleCommentCountChange}
+      <div className="px-4 pt-4 sm:px-5 sm:pt-5">
+        <PostHeader
+          author={post.author}
+          createdAt={post.created_at}
+          isOwnPost={isOwnPost}
+          onReportPost={() => setReportDialog({ type: 'post', targetId: post.id })}
+          onReportUser={() => setReportDialog({ type: 'user', targetId: post.author.id })}
+          onBlockUser={() => setBlockDialog({ userId: post.author.id, username: post.author.username })}
+          onDelete={() => onDelete(post.id)}
         />
+
+        <PostBody post={post} />
+      </div>
+
+      <div className="px-2 sm:px-3">
+        <PostFooter
+          post={post}
+          commentsExpanded={showComments}
+          commentsId={commentsId}
+          onLike={() => onLike(post)}
+          onComment={() => setShowComments((value) => !value)}
+          onRepost={() => onRepost(post)}
+          onSave={() => onSave(post)}
+          onShare={() => onShare(post)}
+        />
+      </div>
+
+      {showComments && (
+        <div className="px-4 pb-4 sm:px-5 sm:pb-5">
+          <CommentSection
+            id={commentsId}
+            postId={post.id}
+            onCommentCountChange={handleCommentCountChange}
+          />
+        </div>
       )}
 
       {/* Report dialog */}
@@ -117,7 +137,7 @@ const PostBox: React.FC<PostBoxProps> = ({
           onClose={() => setBlockDialog(null)}
         />
       )}
-    </div>
+    </Surface>
   )
 }
 

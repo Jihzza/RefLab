@@ -1,34 +1,56 @@
-import React, { useState, useRef, useCallback } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type TouchEvent,
+} from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  LoaderCircle,
+  MessageSquareText,
+  Plus,
+  RefreshCw,
+} from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import ViewportPage from '@/app/layouts/ViewportPage'
+import { Button, EmptyState, IconButton, Skeleton, Surface } from '@/components/ui'
 import NavigationBar from './NavigationBar'
 import PostBox from './PostBox'
 import NewPostButton from './NewPostButton'
 import CreatePostModal from './CreatePostModal'
 import { useFeed } from '../hooks/useFeed'
 import { usePostActions } from '../hooks/usePostActions'
-import type { Post } from '../types'
-import { useTranslation } from 'react-i18next'
+import type { FeedFilter, Post } from '../types'
 
-/** Loading skeleton for a post card. */
-function PostSkeleton() {
+/** Loading skeleton matching the final post-card geometry. */
+function PostSkeleton({ withMedia = false }: { withMedia?: boolean }) {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <Surface
+      padding="md"
+      className="overflow-hidden border-(--mc-color-border-strong) shadow-none"
+      aria-hidden="true"
+    >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
-        <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+        <Skeleton variant="circular" width="3rem" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton variant="text" width="9rem" />
+          <Skeleton variant="text" width="6.5rem" height="0.7rem" />
         </div>
+        <Skeleton variant="circular" width="2rem" />
       </div>
-      <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+      <div className="mt-4 space-y-2">
+        <Skeleton variant="text" />
+        <Skeleton variant="text" width="78%" />
       </div>
-      <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+      {withMedia && <Skeleton variant="rectangular" height="15rem" className="mt-4" />}
+      <div className="mt-4 flex items-center justify-between gap-4 border-t border-(--mc-color-border) pt-3">
+        {Array.from({ length: 5 }, (_, index) => (
+          <Skeleton key={index} variant="text" width="2.25rem" height="1.25rem" />
+        ))}
       </div>
-    </div>
+    </Surface>
   )
 }
 
@@ -66,185 +88,267 @@ export default function SocialPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [copiedToast, setCopiedToast] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Pull-to-refresh state
-  const touchStartY = useRef<number>(0)
+  const touchStartY = useRef<number | null>(null)
   const [pullDistance, setPullDistance] = useState(0)
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (scrollRef.current && scrollRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+  }, [])
+
+  const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
+    if (scrollRef.current && scrollRef.current.scrollTop <= 0) {
+      touchStartY.current = event.touches[0].clientY
+    } else {
+      touchStartY.current = null
+      setPullDistance(0)
     }
   }, [])
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartY.current) return
-    const distance = e.touches[0].clientY - touchStartY.current
+  const handleTouchMove = useCallback((event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartY.current === null) return
+    const distance = event.touches[0].clientY - touchStartY.current
     if (distance > 0 && scrollRef.current?.scrollTop === 0) {
       setPullDistance(Math.min(distance * 0.4, 80))
+    } else {
+      setPullDistance(0)
     }
+  }, [])
+
+  const resetPullGesture = useCallback(() => {
+    setPullDistance(0)
+    touchStartY.current = null
   }, [])
 
   const handleTouchEnd = useCallback(async () => {
-    if (pullDistance > 50) {
+    const shouldRefresh = pullDistance > 50 && !isLoading && !isLoadingMore && !isRefreshing
+    resetPullGesture()
+
+    if (shouldRefresh) {
       await refresh()
     }
-    setPullDistance(0)
-    touchStartY.current = 0
-  }, [pullDistance, refresh])
+  }, [isLoading, isLoadingMore, isRefreshing, pullDistance, refresh, resetPullGesture])
 
-  // Infinite scroll
   const handleScroll = useCallback(() => {
-    const el = scrollRef.current
-    if (!el || isLoadingMore || !hasMore) return
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
-      loadMore()
+    const element = scrollRef.current
+    if (!element || isLoadingMore || !hasMore) return
+    if (element.scrollHeight - element.scrollTop - element.clientHeight < 300) {
+      void loadMore()
     }
-  }, [isLoadingMore, hasMore, loadMore])
+  }, [hasMore, isLoadingMore, loadMore])
 
-  // Share with toast notification
-  const handleShareWithToast = useCallback(
-    async (post: Post) => {
-      await handleShare(post)
-      // Show toast if clipboard was used (non-mobile)
-      if (!navigator.share) {
-        setCopiedToast(true)
-        setTimeout(() => setCopiedToast(false), 2000)
-      }
-    },
-    [handleShare]
-  )
+  const handleShareWithToast = useCallback(async (post: Post) => {
+    await handleShare(post)
+    if (!navigator.share) {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+      setCopiedToast(true)
+      toastTimerRef.current = setTimeout(() => {
+        setCopiedToast(false)
+        toastTimerRef.current = null
+      }, 2000)
+    }
+  }, [handleShare])
 
-  // Update comment count optimistically
-  const handleCommentCountChange = useCallback(
-    (postId: string, delta: number) => {
-      updatePost(postId, {
-        comment_count:
-          Math.max(
-            0,
-            (posts.find(p => p.id === postId)?.comment_count ?? 0) + delta
-          ),
-      })
-    },
-    [posts, updatePost]
+  const handleCommentCountChange = useCallback((postId: string, delta: number) => {
+    updatePost(postId, {
+      comment_count: Math.max(
+        0,
+        (posts.find((post) => post.id === postId)?.comment_count ?? 0) + delta,
+      ),
+    })
+  }, [posts, updatePost])
+
+  const handleFilterChange = useCallback((nextFilter: FeedFilter) => {
+    if (nextFilter === filter) return
+    scrollRef.current?.scrollTo({ top: 0 })
+    setFilter(nextFilter)
+  }, [filter, setFilter])
+
+  const feedIsBusy = isLoading || isRefreshing || isLoadingMore
+  const hasStaleFeedError = Boolean(error && posts.length > 0)
+
+  const pageHeader = (
+    <div className="mx-auto w-full max-w-[var(--mc-content-narrow)]">
+      <div className="flex min-h-12 items-center justify-between gap-4 px-1 pb-2 pt-1">
+        <h2
+          id="community-page-title"
+          className="text-[28px] font-extrabold leading-tight tracking-[-0.035em] text-(--mc-color-text) sm:text-3xl"
+        >
+          {t('Social')}
+        </h2>
+        <IconButton
+          label={t('Refresh feed')}
+          size="sm"
+          variant="ghost"
+          loading={isRefreshing}
+          disabled={isLoading || isLoadingMore}
+          onClick={() => void refresh()}
+          className="hidden sm:inline-flex"
+        >
+          <RefreshCw className="size-4" />
+        </IconButton>
+      </div>
+      <NavigationBar
+        filter={filter}
+        onFilterChange={handleFilterChange}
+        disabled={feedIsBusy}
+      />
+    </div>
   )
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Filter tabs */}
-      <NavigationBar filter={filter} onFilterChange={setFilter} />
-
-      {/* Pull-to-refresh indicator */}
-      {pullDistance > 0 && (
+    <ViewportPage
+      ariaLabel={t('Social')}
+      header={pageHeader}
+      width="full"
+      scroll="managed"
+    >
+      <div className="mx-auto flex h-full min-h-0 w-full max-w-[var(--mc-content-narrow)] flex-col">
         <div
-          className="flex justify-center transition-all"
-          style={{ height: pullDistance }}
+          ref={scrollRef}
+          id="community-feed"
+          role="tabpanel"
+          aria-labelledby={`community-filter-${filter}`}
+          aria-busy={feedIsBusy || undefined}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 pb-24 [scrollbar-gutter:stable] sm:px-6 sm:py-5 md:pb-28"
+          onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={() => void handleTouchEnd()}
+          onTouchCancel={resetPullGesture}
         >
-          <div
-            className={`w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full ${
-              pullDistance > 50 ? 'animate-spin' : ''
-            }`}
-            style={{
-              transform: `rotate(${pullDistance * 3}deg)`,
-            }}
-          />
-        </div>
-      )}
-
-      {/* Refreshing indicator */}
-      {isRefreshing && (
-        <div className="flex justify-center py-2">
-          <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Feed */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 space-y-4 py-4 pb-20"
-        onScroll={handleScroll}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Loading skeleton */}
-        {isLoading && (
-          <div className="space-y-4">
-            <PostSkeleton />
-            <PostSkeleton />
-            <PostSkeleton />
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">
-              {t('Something went wrong loading the feed.')}
-            </p>
-            <button
-              onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
+          {pullDistance > 0 && (
+            <div
+              className="flex items-center justify-center overflow-hidden text-(--mc-color-accent) transition-[height] duration-150 motion-reduce:transition-none"
+              style={{ height: pullDistance }}
+              role="status"
+              aria-label={t('Updating...')}
             >
-              {t('Try Again')}
-            </button>
-          </div>
-        )}
-
-        {/* Posts */}
-        {!isLoading &&
-          !error &&
-          posts.map(post => (
-            <PostBox
-              key={post.id}
-              post={post}
-              onLike={handleLike}
-              onSave={handleSave}
-              onRepost={handleRepost}
-              onShare={handleShareWithToast}
-              onDelete={handleDelete}
-              onReport={handleReport}
-              onBlock={handleBlock}
-              onCommentCountChange={handleCommentCountChange}
-            />
-          ))}
-
-        {/* Loading more indicator */}
-        {isLoadingMore && (
-          <div className="flex justify-center py-4">
-            <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
-          </div>
-        )}
-
-        {/* End of feed */}
-        {!isLoading && !hasMore && posts.length > 0 && (
-          <p className="text-center text-(--text-muted) text-xs py-4">
-            {t("You're all caught up!")}
-          </p>
-        )}
-
-        {/* Empty state */}
-        {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-              </svg>
+              <LoaderCircle
+                className={`size-5 ${pullDistance > 50 ? 'animate-spin motion-reduce:animate-none' : ''}`}
+                style={{ transform: `rotate(${pullDistance * 3}deg)` }}
+                aria-hidden="true"
+              />
             </div>
-            <h3 className="text-base font-medium text-(--text-primary) mb-1">
-              {t('No posts yet')}
-            </h3>
-            <p className="text-sm text-(--text-muted)">
-              {t('When people start posting, their posts will appear here.')}
-            </p>
-          </div>
-        )}
+          )}
+
+          {isRefreshing && (
+            <div className="flex min-h-10 items-center justify-center gap-2 text-xs font-medium text-(--mc-color-text-muted)" role="status">
+              <LoaderCircle className="size-4 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
+              <span>{t('Updating...')}</span>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="space-y-4" role="status" aria-live="polite">
+              <span className="sr-only">{t('Loading...')}</span>
+              <PostSkeleton withMedia />
+              <PostSkeleton />
+              <PostSkeleton />
+            </div>
+          )}
+
+          {error && !isLoading && posts.length === 0 && (
+            <Surface
+              padding="none"
+              className="overflow-hidden border-(--mc-color-danger)/35 shadow-none"
+            >
+              <EmptyState
+                icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
+                title={t('Something went wrong loading the feed.')}
+                action={(
+                  <Button
+                    variant="secondary"
+                    onClick={() => void refresh()}
+                    loading={isRefreshing}
+                    loadingText={t('Updating...')}
+                  >
+                    {t('Try Again')}
+                  </Button>
+                )}
+              />
+            </Surface>
+          )}
+
+          {hasStaleFeedError && (
+            <div
+              className="mb-4 flex flex-wrap items-center gap-2.5 rounded-(--mc-radius-button) border border-(--mc-color-danger)/35 bg-(--mc-color-danger)/8 px-3.5 py-3 text-sm text-(--mc-color-danger)"
+              role="alert"
+            >
+              <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 flex-1">{t('Something went wrong loading the feed.')}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void refresh()}
+                loading={isRefreshing}
+                loadingText={t('Updating...')}
+                className="text-(--mc-color-danger) hover:text-(--mc-color-danger)"
+              >
+                {t('Try Again')}
+              </Button>
+            </div>
+          )}
+
+          {!isLoading && posts.length > 0 && (
+            <ul className="space-y-4" aria-live="polite" aria-relevant="additions removals">
+              {posts.map((post) => (
+                <li key={post.id} className="list-none">
+                  <PostBox
+                    post={post}
+                    onLike={handleLike}
+                    onSave={handleSave}
+                    onRepost={handleRepost}
+                    onShare={handleShareWithToast}
+                    onDelete={handleDelete}
+                    onReport={handleReport}
+                    onBlock={handleBlock}
+                    onCommentCountChange={handleCommentCountChange}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {isLoadingMore && (
+            <div className="flex min-h-16 items-center justify-center" role="status" aria-label={t('Loading...')}>
+              <LoaderCircle className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
+            </div>
+          )}
+
+          {!isLoading && !error && !hasMore && posts.length > 0 && (
+            <div className="flex items-center justify-center gap-2 py-6 text-xs text-(--mc-color-text-muted)" role="status">
+              <CheckCircle2 className="size-4 text-(--mc-color-success)" aria-hidden="true" />
+              <span>{t("You're all caught up!")}</span>
+            </div>
+          )}
+
+          {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
+            <Surface padding="none" className="overflow-hidden border-(--mc-color-border-strong) shadow-none">
+              <EmptyState
+                icon={<MessageSquareText className="size-5" />}
+                title={t('No posts yet')}
+                description={t('When people start posting, their posts will appear here.')}
+                action={(
+                  <Button
+                    leadingIcon={<Plus className="size-4" />}
+                    onClick={() => setShowCreateModal(true)}
+                  >
+                    {t('Create new post')}
+                  </Button>
+                )}
+              />
+            </Surface>
+          )}
+        </div>
       </div>
 
-      {/* FAB */}
-      <NewPostButton onClick={() => setShowCreateModal(true)} />
+      <NewPostButton
+        onClick={() => setShowCreateModal(true)}
+        expanded={showCreateModal}
+      />
 
-      {/* Create post modal */}
       {showCreateModal && (
         <CreatePostModal
           onClose={() => setShowCreateModal(false)}
@@ -252,12 +356,15 @@ export default function SocialPage() {
         />
       )}
 
-      {/* Copy toast */}
       {copiedToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div
+          className="fixed bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom)+1rem)] left-1/2 z-(--mc-z-toast) max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) px-4 py-2.5 text-center text-sm font-medium text-(--mc-color-text) shadow-(--mc-shadow-raised) md:bottom-6"
+          role="status"
+          aria-live="polite"
+        >
           {t('Link copied to clipboard')}
         </div>
       )}
-    </div>
+    </ViewportPage>
   )
 }

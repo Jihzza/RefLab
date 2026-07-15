@@ -1,5 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import Avatar from '@/components/ui/Avatar'
+import Surface from '@/components/ui/Surface'
 import { useAuth } from '@/features/auth/components/useAuth'
 import MediaDisplay from './MediaDisplay'
 import type { Post, PostAuthor } from '../types'
@@ -20,11 +23,11 @@ interface RepostBoxProps {
 
 /** Embedded card showing the original post within a repost. */
 const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
 
   const displayName = originalPost.author.name || originalPost.author.username
-  const initials = displayName.slice(0, 2).toUpperCase()
 
   const openAuthorProfile = () => {
     const isSelf = user?.id === originalPost.author.id
@@ -37,49 +40,39 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
   }
 
   return (
-    <div className="mt-3 p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle)">
-      {/* Original author */}
+    <Surface variant="inset" padding="sm" className="mt-4 overflow-hidden sm:p-4">
       <button
         type="button"
         onClick={openAuthorProfile}
-        className="flex items-center gap-2 mb-2 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1"
-        aria-label={`Open ${displayName} profile`}
+        className="-m-1 mb-2 flex min-h-11 max-w-full items-center gap-2 rounded-(--mc-radius-button) p-1 text-left transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
+        aria-label={t('Open {{name}} profile', { name: displayName })}
       >
-        {originalPost.author.photo_url ? (
-          <img
-            src={originalPost.author.photo_url}
-            alt={displayName}
-            className="w-6 h-6 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-(--brand-yellow) flex items-center justify-center">
-            <span className="text-[10px] font-semibold text-(--bg-primary)">
-              {initials}
-            </span>
-          </div>
-        )}
-        <span className="text-xs font-medium text-(--text-primary)">
+        <Avatar
+          src={originalPost.author.photo_url}
+          alt={displayName}
+          name={displayName}
+          size="sm"
+        />
+        <span className="truncate text-sm font-semibold text-(--mc-color-text)">
           {displayName}
         </span>
-        <span className="text-xs text-(--text-muted)">
+        <span className="truncate text-xs text-(--mc-color-text-muted)">
           @{originalPost.author.username}
         </span>
       </button>
 
-      {/* Original content */}
       {originalPost.content && (
-        <p className="text-(--text-primary) text-sm whitespace-pre-wrap break-words">
+        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-(--mc-color-text)">
           {originalPost.content}
         </p>
       )}
 
-      {/* Original media */}
       <MediaDisplay
         mediaType={originalPost.media_type}
         mediaUrl={originalPost.media_url}
         mediaMetadata={originalPost.media_metadata}
       />
-    </div>
+    </Surface>
   )
 }
 

@@ -1,5 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link2 } from 'lucide-react'
+import Dialog from '@/components/ui/Dialog'
 
 interface ShareDialogProps {
   postId: string
@@ -70,12 +72,25 @@ const SHARE_OPTIONS: Array<{
 const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
-  const shareUrl = `${window.location.origin}/app/social?post=${postId}`
+  const resetTimerRef = useRef<number | null>(null)
+  const shareUrl = `${window.location.origin}/app/post/${postId}`
+
+  useEffect(() => () => {
+    if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+  }, [])
 
   const handleCopyLink = useCallback(async () => {
-    await navigator.clipboard.writeText(shareUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setCopied(true)
+      if (resetTimerRef.current !== null) window.clearTimeout(resetTimerRef.current)
+      resetTimerRef.current = window.setTimeout(() => {
+        setCopied(false)
+        resetTimerRef.current = null
+      }, 2000)
+    } catch {
+      setCopied(false)
+    }
   }, [shareUrl])
 
   const handleShareOption = useCallback(
@@ -92,73 +107,54 @@ const ShareDialog: React.FC<ShareDialogProps> = ({ postId, onClose }) => {
   )
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-sm bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
-            <h2 className="text-lg font-semibold text-(--text-primary)">{t('Share Post')}</h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-              aria-label={t('Close')}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+      title={t('Share Post')}
+      size="sm"
+      overlayClassName="backdrop-blur-sm"
+    >
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        {SHARE_OPTIONS.map(option => (
+          <button
+            key={option.name}
+            type="button"
+            onClick={() => handleShareOption(option)}
+            aria-label={option.name}
+            className="group flex min-h-20 flex-col items-center justify-center gap-1.5 rounded-(--mc-radius-input) px-1 text-(--mc-color-text-muted) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
+          >
+            <span
+              className="flex size-12 items-center justify-center rounded-full text-white shadow-(--mc-shadow-soft) transition-transform group-hover:scale-105 motion-reduce:transition-none"
+              style={{ backgroundColor: option.color }}
+              aria-hidden="true"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Share options grid */}
-          <div className="px-5 py-4">
-            <div className="grid grid-cols-5 gap-3">
-              {SHARE_OPTIONS.map(option => (
-                <button
-                  key={option.name}
-                  onClick={() => handleShareOption(option)}
-                  className="flex flex-col items-center gap-1.5 group"
-                >
-                  <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white transition-transform group-hover:scale-110"
-                    style={{ backgroundColor: option.color }}
-                  >
-                    {option.icon}
-                  </div>
-                  <span className="text-[10px] text-(--text-muted) group-hover:text-(--text-primary) transition-colors">
-                    {option.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Copy link */}
-          <div className="px-5 py-4 border-t border-(--border-subtle)">
-            <button
-              onClick={handleCopyLink}
-              className="w-full flex items-center gap-3 px-4 py-3 bg-(--bg-surface-2) rounded-(--radius-button) border border-(--border-subtle) hover:bg-(--bg-hover) transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-(--text-muted) flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-              </svg>
-              <span className="flex-1 text-sm text-(--text-secondary) text-left truncate">
-                {shareUrl}
-              </span>
-              <span className="text-sm font-medium text-(--brand-yellow) flex-shrink-0">
-                {copied ? t('Copied!') : t('Copy')}
-              </span>
-            </button>
-          </div>
-        </div>
+              {option.icon}
+            </span>
+            <span className="max-w-full truncate text-[10px] font-medium">
+              {option.name}
+            </span>
+          </button>
+        ))}
       </div>
-    </>
+
+      <div className="mt-5 border-t border-(--mc-color-border) pt-4">
+        <button
+          type="button"
+          onClick={handleCopyLink}
+          className="flex min-h-12 w-full items-center gap-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas) px-4 py-3 transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
+        >
+          <Link2 className="size-5 shrink-0 text-(--mc-color-text-muted)" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-left text-sm text-(--mc-color-text-secondary)">
+            {shareUrl}
+          </span>
+          <span className="shrink-0 text-sm font-semibold text-(--mc-color-accent)" aria-live="polite">
+            {copied ? t('Copied!') : t('Copy')}
+          </span>
+        </button>
+      </div>
+    </Dialog>
   )
 }
 

@@ -9,105 +9,137 @@ import {
 } from '../api/socialApi'
 import type { Comment } from '../types'
 
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback
+}
+
 export function useComments(postId: string) {
   const { user } = useAuth()
+  const userId = user?.id
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchComments = useCallback(async () => {
-    if (!user?.id) return
+  const fetchComments = useCallback(async (): Promise<boolean> => {
+    if (!userId) return false
     setIsLoading(true)
     setError(null)
 
-    const { comments: data, error: fetchError } = await getComments(postId, user.id)
-    if (fetchError) {
-      setError(fetchError.message)
-    } else {
+    try {
+      const { comments: data, error: fetchError } = await getComments(postId, userId)
+      if (fetchError) {
+        setError(fetchError.message)
+        return false
+      }
+
       setComments(data)
+      return true
+    } catch (fetchError) {
+      setError(getErrorMessage(fetchError, 'Failed to load comments.'))
+      return false
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
-  }, [postId, user?.id])
+  }, [postId, userId])
 
   const addComment = useCallback(
     async (content: string, parentCommentId?: string) => {
-      if (!user?.id) return
+      if (!userId) return false
 
-      const { error: addError } = await apiAddComment(
-        postId,
-        user.id,
-        content,
-        parentCommentId
-      )
+      try {
+        const { error: addError } = await apiAddComment(
+          postId,
+          userId,
+          content,
+          parentCommentId,
+        )
 
-      if (addError) {
-        setError(addError.message)
-        return
+        if (addError) {
+          setError(addError.message)
+          return false
+        }
+
+        // Refetch comments to get proper nested structure with author data.
+        await fetchComments()
+        return true
+      } catch (addError) {
+        setError(getErrorMessage(addError, 'Failed to add comment.'))
+        return false
       }
-
-      // Refetch comments to get proper nested structure with author data
-      await fetchComments()
     },
-    [user?.id, postId, fetchComments]
+    [userId, postId, fetchComments]
   )
 
   const toggleLike = useCallback(
     async (commentId: string, isCurrentlyLiked: boolean) => {
-      if (!user?.id) return
+      if (!userId) return
 
       // Optimistic update: find comment in top-level or replies
-      setComments(prev =>
-        prev.map(c => {
-          if (c.id === commentId) {
+      setComments((currentComments) =>
+        currentComments.map((comment) => {
+          if (comment.id === commentId) {
             return {
-              ...c,
+              ...comment,
               is_liked: !isCurrentlyLiked,
-              like_count: c.like_count + (isCurrentlyLiked ? -1 : 1),
+              like_count: Math.max(0, comment.like_count + (isCurrentlyLiked ? -1 : 1)),
             }
           }
           return {
-            ...c,
-            replies: c.replies.map(r =>
-              r.id === commentId
+            ...comment,
+            replies: comment.replies.map((reply) =>
+              reply.id === commentId
                 ? {
-                    ...r,
+                    ...reply,
                     is_liked: !isCurrentlyLiked,
-                    like_count: r.like_count + (isCurrentlyLiked ? -1 : 1),
+                    like_count: Math.max(
+                      0,
+                      reply.like_count + (isCurrentlyLiked ? -1 : 1),
+                    ),
                   }
-                : r
+                : reply,
             ),
           }
-        })
+        }),
       )
 
-      const { error: likeError } = await toggleCommentLike(
-        user.id,
-        commentId,
-        isCurrentlyLiked
-      )
-      if (likeError) {
-        // Rollback by refetching
+      try {
+        const { error: likeError } = await toggleCommentLike(
+          userId,
+          commentId,
+          isCurrentlyLiked,
+        )
+        if (!likeError) return
+
+        // Roll back to the server state when the optimistic mutation fails.
+        await fetchComments()
+      } catch {
         await fetchComments()
       }
     },
-    [user?.id, fetchComments]
+    [userId, fetchComments]
   )
 
   const deleteComment = useCallback(
     async (commentId: string) => {
       // Optimistic removal
-      setComments(prev =>
-        prev
-          .filter(c => c.id !== commentId)
-          .map(c => ({
-            ...c,
-            replies: c.replies.filter(r => r.id !== commentId),
+      setComments((currentComments) =>
+        currentComments
+          .filter((comment) => comment.id !== commentId)
+          .map((comment) => ({
+            ...comment,
+            replies: comment.replies.filter((reply) => reply.id !== commentId),
           }))
       )
 
-      const { error: delError } = await apiDeleteComment(commentId)
-      if (delError) {
+      try {
+        const { error: deleteError } = await apiDeleteComment(commentId)
+        if (!deleteError) return true
+
         await fetchComments()
+        return false
+      } catch {
+        await fetchComments()
+        return false
       }
     },
     [fetchComments]
@@ -115,10 +147,15 @@ export function useComments(postId: string) {
 
   const reportComment = useCallback(
     async (commentId: string, reason?: string) => {
-      if (!user?.id) return
-      await apiReportComment(user.id, commentId, reason)
+      if (!userId) return
+      try {
+        const { error: reportError } = await apiReportComment(userId, commentId, reason)
+        if (reportError) setError(reportError.message)
+      } catch (reportError) {
+        setError(getErrorMessage(reportError, 'Failed to report comment.'))
+      }
     },
-    [user?.id]
+    [userId]
   )
 
   return {

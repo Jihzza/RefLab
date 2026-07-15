@@ -1,5 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import Avatar from '@/components/ui/Avatar'
 import { useAuth } from '@/features/auth/components/useAuth'
 import PostMenu from './PostMenu'
 import type { PostAuthor } from '../types'
@@ -42,11 +44,11 @@ const PostHeader: React.FC<PostHeaderProps> = ({
   onBlockUser,
   onDelete,
 }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
 
   const displayName = author.name || author.username
-  const initials = displayName.slice(0, 2).toUpperCase()
 
   const openAuthorProfile = () => {
     const isSelf = user?.id === author.id
@@ -59,45 +61,35 @@ const PostHeader: React.FC<PostHeaderProps> = ({
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-2">
       <button
         type="button"
         onClick={openAuthorProfile}
-        className="flex items-center gap-3 flex-1 min-w-0 text-left rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors p-1 -m-1"
-        aria-label={`Open ${displayName} profile`}
+        className="-m-1 flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-(--mc-radius-button) p-1 text-left transition-colors hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
+        aria-label={t('Open {{name}} profile', { name: displayName })}
       >
-        {/* Avatar */}
-        {author.photo_url ? (
-          <img
-            src={author.photo_url}
-            alt={displayName}
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-(--bg-primary)">
-              {initials}
-            </span>
-          </div>
-        )}
+        <Avatar
+          src={author.photo_url}
+          alt={displayName}
+          name={displayName}
+          size="lg"
+          className="ring-1 ring-black/20"
+        />
 
-        {/* Name + username + timestamp */}
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="font-medium text-(--text-primary) text-sm truncate">
-              {displayName}
-            </span>
-            <span className="text-(--text-muted) text-xs truncate">
-              @{author.username}
-            </span>
-          </div>
-          <span className="text-(--text-muted) text-xs">
-            {formatRelativeTime(createdAt)}
+        <div className="min-w-0 flex-1">
+          <span className="block truncate text-[15px] font-bold leading-5 text-(--mc-color-text)">
+            {displayName}
           </span>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-(--mc-color-text-muted)">
+            <span className="truncate">@{author.username}</span>
+            <span aria-hidden="true">·</span>
+            <time dateTime={createdAt} className="shrink-0 tabular-nums">
+              {formatRelativeTime(createdAt)}
+            </time>
+          </div>
         </div>
       </button>
 
-      {/* Options menu */}
       <PostMenu
         isOwnPost={isOwnPost}
         onReportPost={onReportPost}
