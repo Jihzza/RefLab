@@ -1,83 +1,73 @@
 /**
  * PrivacyPolicyTab — Privacy policy content section.
  *
- * Renders placeholder privacy policy text organized into semantic sections.
- * Styled with the app's design tokens for consistency.
+ * Renders the complete privacy policy in semantic editorial sections.
+ * Legal copy is translated verbatim through the existing i18n catalogue.
  */
 
+import { ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { PolicyDocument, PolicySection } from './PolicyDocument';
 
 export default function PrivacyPolicyTab() {
   const { t } = useTranslation();
 
   return (
-    <article className="space-y-4">
-      {/* Header */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h2 className="text-lg font-semibold text-(--text-primary) mb-1">
-          {t('Privacy Policy')}
-        </h2>
-        <p className="text-xs text-(--text-muted)">{t('Last updated: February 2026')}</p>
-      </section>
+    <PolicyDocument
+      title={t('Privacy Policy')}
+      lastUpdated={t('Last updated: February 2026')}
+      icon={<ShieldCheck className="size-6" />}
+    >
 
       {/* Information We Collect */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('1. Information We Collect')}
-        </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+      <PolicySection id="privacy-information-we-collect" title={t('1. Information We Collect')}>
+        <p>
           {t(
             'We collect information you provide directly, such as your name, email address, and profile details when you create an account. We also collect usage data automatically, including pages visited, features used, and interaction patterns to improve our services.'
           )}
         </p>
-      </section>
+      </PolicySection>
 
       {/* How We Use Your Information */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('2. How We Use Your Information')}
-        </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+      <PolicySection id="privacy-how-we-use-information" title={t('2. How We Use Your Information')}>
+        <p>
           {t(
             'Your information is used to provide and maintain our services, personalize your experience, communicate important updates, and ensure account security. We may also use aggregated, anonymized data for analytics and service improvements.'
           )}
         </p>
-      </section>
+      </PolicySection>
 
       {/* Data Sharing */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('3. Data Sharing')}
-        </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+      <PolicySection id="privacy-data-sharing" title={t('3. Data Sharing')}>
+        <p>
           {t(
             'We do not sell your personal information. We may share data with trusted third-party service providers who assist in operating our platform, subject to strict confidentiality agreements. We may also disclose information when required by law or to protect our rights.'
           )}
         </p>
-      </section>
+      </PolicySection>
 
       {/* Your Rights */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('4. Your Rights')}
-        </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+      <PolicySection id="privacy-your-rights" title={t('4. Your Rights')}>
+        <p>
           {t(
             'You have the right to access, update, or delete your personal information at any time through your account settings. You may also request a copy of your data or opt out of certain data processing activities by contacting our support team.'
           )}
         </p>
-      </section>
+      </PolicySection>
 
       {/* Contact */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('5. Contact Us')}
-        </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+      <PolicySection id="privacy-contact" title={t('5. Contact Us')}>
+        <p>
           {t('If you have any questions about this Privacy Policy, please contact us at')}{' '}
-          <span className="text-(--info)">privacy@reflab.com</span>.
+          <a
+            href="mailto:privacy@reflab.com"
+            className="mc-focus-ring rounded-sm font-semibold text-(--mc-color-info) underline decoration-(--mc-color-info)/45 underline-offset-4 hover:decoration-(--mc-color-info)"
+          >
+            privacy@reflab.com
+          </a>
+          .
         </p>
-      </section>
-    </article>
+      </PolicySection>
+    </PolicyDocument>
   );
 }
