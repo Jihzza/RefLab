@@ -21,10 +21,10 @@ export default function MobileTabBar({
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-50 border-t border-(--border-subtle) bg-(--bg-surface)/95 backdrop-blur-md md:hidden"
+      className="fixed right-0 bottom-0 left-0 z-50 h-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] border-t border-(--border-subtle) bg-(--bg-surface)/95 backdrop-blur-md md:hidden"
       aria-label={t('Primary navigation')}
     >
-      <div className="grid min-h-18 grid-cols-5 pb-[env(safe-area-inset-bottom)]">
+      <div className="grid h-full grid-cols-5 pb-[var(--mc-safe-bottom)]">
         {MATCH_NAVIGATION_ITEMS.map((item) => {
           const Icon = item.icon
           const label = t(item.labelKey)

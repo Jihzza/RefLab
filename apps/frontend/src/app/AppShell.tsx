@@ -34,7 +34,7 @@ export default function AppShell() {
 
       <main
         id="app-content"
-        className="min-h-screen pt-[calc(var(--mc-header-height)+var(--mc-safe-top))] pb-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] md:pl-20 md:pb-0 xl:pl-64"
+        className="min-h-dvh pt-[calc(var(--mc-header-height)+var(--mc-safe-top))] pb-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] md:pl-20 md:pb-0 xl:pl-64"
       >
         <Outlet />
       </main>

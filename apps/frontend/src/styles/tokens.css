@@ -2,28 +2,28 @@
  * Match Control foundations.
  *
  * The --mc-* tokens are the canonical design-system API. The legacy aliases at
- * the end of this file intentionally retain their existing values so current
- * screens can migrate incrementally without a visual or behavioural cut-over.
+ * the end of this file intentionally follow the canonical roles so current
+ * screens can migrate incrementally without maintaining two palettes.
  */
 
 :root {
   /* Primitive palette */
-  --mc-navy-950: #14192c;
-  --mc-navy-900: #181f32;
-  --mc-navy-850: #18223a;
-  --mc-navy-800: #1e2842;
-  --mc-navy-700: #24304a;
-  --mc-navy-600: #2f3c5c;
+  --mc-navy-950: #080b12;
+  --mc-navy-900: #101318;
+  --mc-navy-850: #151922;
+  --mc-navy-800: #1b212b;
+  --mc-navy-700: #2d343d;
+  --mc-navy-600: #414a55;
 
-  --mc-white-100: #f5f7fa;
-  --mc-slate-300: #b8c0d4;
-  --mc-slate-500: #8a93a8;
+  --mc-white-100: #f4f5f7;
+  --mc-slate-300: #c2c6cc;
+  --mc-slate-500: #818995;
 
-  --mc-yellow-500: #f6c21c;
-  --mc-yellow-200: #ffe58a;
-  --mc-red-500: #e53935;
-  --mc-green-500: #3ddc97;
-  --mc-orange-500: #f6a821;
+  --mc-yellow-500: #f6b800;
+  --mc-yellow-200: #ffe078;
+  --mc-red-500: #ef2b2d;
+  --mc-green-500: #22c55e;
+  --mc-orange-500: #f59e0b;
   --mc-blue-500: #4da3ff;
 
   /* Semantic colour roles */

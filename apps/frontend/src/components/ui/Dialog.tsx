@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cx } from './utils'
 
 export type DialogSize = 'sm' | 'md' | 'lg' | 'xl'
@@ -127,7 +128,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
     bodyClassName,
     children,
     className,
-    closeLabel = 'Fechar',
+    closeLabel,
     closeOnEscape = true,
     closeOnOverlayClick = true,
     description,
@@ -147,6 +148,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
   },
   forwardedRef,
 ) {
+  const { t } = useTranslation()
   const generatedId = useId()
   const titleId = `dialog-${generatedId}-title`
   const descriptionId = description ? `dialog-${generatedId}-description` : undefined
@@ -183,6 +185,23 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
     })
 
     const handleDocumentKeyDown = (event: KeyboardEvent) => {
+      const panel = panelRef.current
+      if (
+        event.key === 'Tab' &&
+        !event.defaultPrevented &&
+        dialogStack.at(-1) === instanceId &&
+        panel &&
+        !panel.contains(document.activeElement)
+      ) {
+        const focusableElements = getFocusableElements(panel)
+        event.preventDefault()
+        const focusTarget = event.shiftKey
+          ? focusableElements.at(-1)
+          : focusableElements[0]
+        ;(focusTarget ?? panel).focus({ preventScroll: true })
+        return
+      }
+
       if (
         event.key !== 'Escape' ||
         event.defaultPrevented ||
@@ -197,11 +216,28 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
       onOpenChangeRef.current(false)
     }
 
+    const handleDocumentFocusIn = (event: FocusEvent) => {
+      const panel = panelRef.current
+      if (
+        dialogStack.at(-1) !== instanceId ||
+        !panel ||
+        !(event.target instanceof Node) ||
+        panel.contains(event.target)
+      ) {
+        return
+      }
+
+      const focusTarget = getFocusableElements(panel)[0] ?? panel
+      focusTarget.focus({ preventScroll: true })
+    }
+
     document.addEventListener('keydown', handleDocumentKeyDown)
+    document.addEventListener('focusin', handleDocumentFocusIn)
 
     return () => {
       window.cancelAnimationFrame(focusFrame)
       document.removeEventListener('keydown', handleDocumentKeyDown)
+      document.removeEventListener('focusin', handleDocumentFocusIn)
       const stackIndex = dialogStack.lastIndexOf(instanceId)
       if (stackIndex >= 0) dialogStack.splice(stackIndex, 1)
       unlockBodyScroll()
@@ -280,7 +316,12 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
         data-placement={placement}
         {...props}
       >
-        <div className="flex shrink-0 items-start gap-4 border-b border-(--mc-color-border) px-5 py-4">
+        <div
+          className={cx(
+            'flex shrink-0 items-start gap-4 border-b border-(--mc-color-border) px-5 py-4',
+            placement !== 'center' && 'mc-sheet-safe-header',
+          )}
+        >
           <div className="min-w-0 flex-1">
             <h2 id={titleId} className="text-lg font-semibold leading-tight text-(--mc-color-text)">
               {title}
@@ -295,7 +336,7 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
             <button
               type="button"
               className="inline-flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-button) text-xl leading-none text-(--mc-color-text-muted) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) motion-reduce:transition-none"
-              aria-label={closeLabel}
+              aria-label={closeLabel ?? t('Close')}
               onClick={() => onOpenChangeRef.current(false)}
             >
               <X className="size-5" aria-hidden="true" />
@@ -303,12 +344,24 @@ export const Dialog = forwardRef<HTMLDivElement, DialogProps>(function Dialog(
           )}
         </div>
 
-        <div className={cx('min-h-0 flex-1 overflow-y-auto overscroll-contain p-5', bodyClassName)}>
+        <div
+          className={cx(
+            'min-h-0 flex-1 overflow-y-auto overscroll-contain p-5',
+            placement !== 'center' && 'mc-sheet-safe-body',
+            placement !== 'center' && !footer && 'mc-sheet-safe-body--terminal',
+            bodyClassName,
+          )}
+        >
           {children}
         </div>
 
         {footer && (
-          <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-(--mc-color-border) px-5 py-4">
+          <div
+            className={cx(
+              'flex shrink-0 flex-wrap justify-end gap-3 border-t border-(--mc-color-border) px-5 py-4',
+              placement !== 'center' && 'mc-sheet-safe-footer',
+            )}
+          >
             {footer}
           </div>
         )}

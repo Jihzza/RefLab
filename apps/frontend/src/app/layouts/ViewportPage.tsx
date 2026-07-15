@@ -21,10 +21,10 @@ const paddedWidthClasses: Record<ViewportPageWidth, string> = {
 }
 
 const unpaddedWidthClasses: Record<ViewportPageWidth, string> = {
-  narrow: 'mx-auto w-full max-w-[var(--mc-content-narrow)]',
-  standard: 'mx-auto w-full max-w-[var(--mc-content-standard)]',
-  wide: 'mx-auto w-full max-w-[var(--mc-content-wide)]',
-  full: 'w-full max-w-none',
+  narrow: 'px-safe mx-auto w-full max-w-[var(--mc-content-narrow)]',
+  standard: 'px-safe mx-auto w-full max-w-[var(--mc-content-standard)]',
+  wide: 'px-safe mx-auto w-full max-w-[var(--mc-content-wide)]',
+  full: 'px-safe w-full max-w-none',
 }
 
 /**

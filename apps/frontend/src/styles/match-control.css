@@ -40,6 +40,27 @@
   padding-bottom: var(--mc-safe-bottom);
 }
 
+.mc-sheet-safe-header {
+  padding-top: calc(var(--mc-space-4) + var(--mc-safe-top));
+  padding-left: max(var(--mc-space-5), var(--mc-safe-left));
+  padding-right: max(var(--mc-space-5), var(--mc-safe-right));
+}
+
+.mc-sheet-safe-body {
+  padding-left: max(var(--mc-space-5), var(--mc-safe-left));
+  padding-right: max(var(--mc-space-5), var(--mc-safe-right));
+}
+
+.mc-sheet-safe-body--terminal {
+  padding-bottom: calc(var(--mc-space-5) + var(--mc-safe-bottom));
+}
+
+.mc-sheet-safe-footer {
+  padding-right: max(var(--mc-space-5), var(--mc-safe-right));
+  padding-bottom: calc(var(--mc-space-4) + var(--mc-safe-bottom));
+  padding-left: max(var(--mc-space-5), var(--mc-safe-left));
+}
+
 .safe-area-x,
 .px-safe {
   padding-left: var(--mc-safe-left);
