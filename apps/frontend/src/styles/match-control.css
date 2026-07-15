@@ -1,0 +1,320 @@
+/*
+ * Reusable Match Control layout, typography and decoration helpers.
+ * These classes are opt-in so foundations can land without changing feature
+ * behaviour. Decorative helpers must be applied to aria-hidden elements.
+ */
+
+/* Viewport and safe-area helpers */
+.mc-min-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.mc-screen {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.mc-scroll-region {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mc-shell-inset {
+  padding-block-start: calc(var(--mc-header-height) + var(--mc-safe-top));
+  padding-block-end: calc(var(--mc-bottom-nav-height) + var(--mc-safe-bottom));
+}
+
+.safe-area-top,
+.pt-safe {
+  padding-top: var(--mc-safe-top);
+}
+
+.safe-area-bottom,
+.pb-safe {
+  padding-bottom: var(--mc-safe-bottom);
+}
+
+.safe-area-x,
+.px-safe {
+  padding-left: var(--mc-safe-left);
+  padding-right: var(--mc-safe-right);
+}
+
+/* Content geometry */
+.mc-page {
+  width: 100%;
+  max-width: var(--mc-content-standard);
+  margin-inline: auto;
+  padding-inline-start: max(var(--mc-space-4), var(--mc-safe-left));
+  padding-inline-end: max(var(--mc-space-4), var(--mc-safe-right));
+}
+
+.mc-page--narrow {
+  max-width: var(--mc-content-narrow);
+}
+
+.mc-page--wide {
+  max-width: var(--mc-content-wide);
+}
+
+.mc-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.mc-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mc-space-4);
+}
+
+.mc-full-bleed {
+  width: auto;
+  margin-inline-start: calc(0px - max(var(--mc-space-4), var(--mc-safe-left)));
+  margin-inline-end: calc(0px - max(var(--mc-space-4), var(--mc-safe-right)));
+}
+
+/* Shared surfaces */
+.mc-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--mc-color-surface);
+  border: var(--mc-border-width) solid var(--mc-color-border);
+  border-radius: var(--mc-radius-card);
+  box-shadow: var(--mc-shadow-soft);
+}
+
+.mc-surface--raised {
+  background: var(--mc-color-surface-raised);
+  box-shadow: var(--mc-shadow-raised);
+}
+
+.mc-surface--inset {
+  background: var(--mc-color-canvas);
+  box-shadow: none;
+}
+
+.mc-surface--featured {
+  border-color: var(--mc-color-accent);
+}
+
+.mc-divider {
+  border: 0;
+  border-top: var(--mc-border-width) solid var(--mc-color-border);
+}
+
+/* Typography roles */
+.mc-page-title {
+  margin: 0;
+  color: var(--mc-color-text);
+  font-size: var(--mc-font-size-page-title);
+  font-weight: var(--mc-font-weight-bold);
+  line-height: var(--mc-line-height-title);
+  letter-spacing: -0.02em;
+}
+
+.mc-section-title {
+  margin: 0;
+  color: var(--mc-color-text);
+  font-size: var(--mc-font-size-title-sm);
+  font-weight: var(--mc-font-weight-semibold);
+  line-height: var(--mc-line-height-title);
+}
+
+.mc-eyebrow {
+  margin: 0;
+  color: var(--mc-color-text-secondary);
+  font-size: var(--mc-font-size-caption);
+  font-weight: var(--mc-font-weight-bold);
+  line-height: var(--mc-line-height-body);
+  letter-spacing: var(--mc-letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.mc-metric {
+  color: var(--mc-color-accent);
+  font-size: var(--mc-font-size-metric);
+  font-weight: var(--mc-font-weight-extrabold);
+  line-height: var(--mc-line-height-tight);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Interaction and accessibility */
+.mc-tap-target {
+  min-width: var(--mc-touch-target);
+  min-height: var(--mc-touch-target);
+}
+
+.mc-focus-ring:focus-visible {
+  outline: 2px solid var(--mc-color-focus);
+  outline-offset: 2px;
+  box-shadow: var(--mc-shadow-focus);
+}
+
+.mc-interactive {
+  transition:
+    color var(--mc-duration-fast) var(--mc-ease-standard),
+    background-color var(--mc-duration-fast) var(--mc-ease-standard),
+    border-color var(--mc-duration-fast) var(--mc-ease-standard),
+    opacity var(--mc-duration-fast) var(--mc-ease-standard),
+    transform var(--mc-duration-fast) var(--mc-ease-standard);
+}
+
+.mc-interactive:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.mc-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Layer helpers use one documented z-index scale. */
+.mc-layer-sticky { z-index: var(--mc-z-sticky); }
+.mc-layer-header { z-index: var(--mc-z-header); }
+.mc-layer-navigation { z-index: var(--mc-z-navigation); }
+.mc-layer-popover { z-index: var(--mc-z-popover); }
+.mc-layer-backdrop { z-index: var(--mc-z-backdrop); }
+.mc-layer-dialog { z-index: var(--mc-z-dialog); }
+.mc-layer-toast { z-index: var(--mc-z-toast); }
+
+/*
+ * Decorative broadcast motifs. Keep them aria-hidden and separate from
+ * meaningful content; pointer-events are disabled as a second safety layer.
+ */
+.mc-decoration,
+.mc-brand-stripes,
+.mc-pitch-lines,
+.mc-corner-accent {
+  pointer-events: none;
+  user-select: none;
+}
+
+.mc-brand-stripes {
+  display: block;
+  width: 3.25rem;
+  height: 1.75rem;
+  background:
+    linear-gradient(112deg, transparent 0 27%, var(--mc-color-accent) 28% 66%, transparent 67%) 0 0 / 1rem 100% no-repeat,
+    linear-gradient(112deg, transparent 0 27%, var(--mc-color-accent) 28% 66%, transparent 67%) 1.05rem 0 / 1rem 100% no-repeat,
+    linear-gradient(112deg, transparent 0 27%, var(--mc-color-danger) 28% 66%, transparent 67%) 2.1rem 0 / 1rem 100% no-repeat;
+}
+
+.mc-pitch-lines::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: 0.16;
+  background:
+    linear-gradient(90deg, transparent 49.8%, var(--mc-color-border-strong) 50%, transparent 50.2%),
+    linear-gradient(var(--mc-color-border-strong), var(--mc-color-border-strong)) center / 82% 1px no-repeat,
+    radial-gradient(circle at center, transparent 0 16%, var(--mc-color-border-strong) 16.3% 16.8%, transparent 17.1%);
+  transform: perspective(24rem) rotateX(58deg) scale(1.2);
+  transform-origin: center;
+}
+
+.mc-corner-accent::before,
+.mc-corner-accent::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 3.5rem;
+  height: 1rem;
+  transform: skewX(-28deg);
+}
+
+.mc-corner-accent::before {
+  top: 0;
+  left: -1rem;
+  background: var(--mc-color-accent);
+}
+
+.mc-corner-accent::after {
+  right: -1rem;
+  bottom: 0;
+  background: var(--mc-color-danger);
+}
+
+@media (min-width: 48rem) {
+  .mc-page {
+    padding-inline-start: max(var(--mc-space-6), var(--mc-safe-left));
+    padding-inline-end: max(var(--mc-space-6), var(--mc-safe-right));
+  }
+
+  .mc-grid--responsive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 75rem) {
+  .mc-page {
+    padding-inline-start: max(var(--mc-space-8), var(--mc-safe-left));
+    padding-inline-end: max(var(--mc-space-8), var(--mc-safe-right));
+  }
+
+  .mc-grid--responsive {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (forced-colors: active) {
+  .mc-brand-stripes,
+  .mc-pitch-lines::after,
+  .mc-corner-accent::before,
+  .mc-corner-accent::after {
+    display: none;
+  }
+
+  .mc-surface {
+    border-color: CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .mc-interactive:active:not(:disabled) {
+    transform: none;
+  }
+}
