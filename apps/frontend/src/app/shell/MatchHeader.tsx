@@ -58,9 +58,9 @@ export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
           <p className="hidden text-[10px] font-semibold tracking-[0.18em] text-(--brand-yellow) uppercase md:block">
             Match Control
           </p>
-          <h1 className="truncate text-sm font-semibold text-(--text-primary) md:text-base">
+          <p className="truncate text-sm font-semibold text-(--text-primary) md:text-base">
             {title}
-          </h1>
+          </p>
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
