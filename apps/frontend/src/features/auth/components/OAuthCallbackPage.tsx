@@ -1,7 +1,31 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { useTranslation } from 'react-i18next'
+import { AlertTriangle, LoaderCircle } from 'lucide-react'
+import { Button } from '@/components/ui'
+import PublicAuthFrame from '@/features/landing/components/PublicAuthFrame'
+import {
+  buildAuthLandingUrl,
+  consumeAuthReturnTo,
+  persistAuthReturnTo,
+  resolveAuthReturnTo,
+} from '../utils/authNavigation'
+
+const AUTH_CALLBACK_TIMEOUT_MS = 10_000
+
+function readRedirectError(search: string, hash: string): Error | null {
+  const queryParams = new URLSearchParams(search)
+  const hashParams = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash)
+  const errorValue = queryParams.get('error_description')
+    ?? queryParams.get('error_code')
+    ?? queryParams.get('error')
+    ?? hashParams.get('error_description')
+    ?? hashParams.get('error_code')
+    ?? hashParams.get('error')
+
+  return errorValue ? new Error(errorValue) : null
+}
 
 /**
  * OAuthCallbackPage - Landing page for all auth redirects
@@ -18,50 +42,66 @@ import { useTranslation } from 'react-i18next'
 export default function OAuthCallbackPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { authStatus } = useAuth()
-  const [error, setError] = useState<string | null>(null)
+  const [timedOut, setTimedOut] = useState(false)
+  const redirectError = useMemo(
+    () => readRedirectError(location.search, location.hash),
+    [location.hash, location.search],
+  )
 
   useEffect(() => {
-    // If the user is authenticated (code exchange succeeded), redirect
-    if (authStatus === 'authenticated') {
-      navigate('/app/dashboard', { replace: true })
-      return
-    }
+    if (redirectError || authStatus !== 'authenticated') return
+    navigate(consumeAuthReturnTo(location.search), { replace: true })
+  }, [authStatus, location.search, navigate, redirectError])
 
-    // If unauthenticated after a timeout, something went wrong
-    const timeout = setTimeout(() => {
-      if (authStatus === 'unauthenticated') {
-        setError(t('Authentication failed. Please try signing in again.'))
-      }
-    }, 5000)
+  useEffect(() => {
+    if (redirectError || authStatus === 'authenticated' || authStatus === 'error') return
+    const timeout = window.setTimeout(() => setTimedOut(true), AUTH_CALLBACK_TIMEOUT_MS)
+    return () => window.clearTimeout(timeout)
+  }, [authStatus, redirectError])
 
-    return () => clearTimeout(timeout)
-  }, [authStatus, navigate])
+  const error = redirectError || authStatus === 'error' || timedOut
+      ? t('Authentication failed. Please try signing in again.')
+      : null
+
+  const handleBackToLogin = () => {
+    const returnTo = persistAuthReturnTo(resolveAuthReturnTo(location.search))
+    navigate(buildAuthLandingUrl('login', returnTo), { replace: true })
+  }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
-        <div className="w-full max-w-md text-center">
-          <div className="p-4 rounded-(--radius-card) bg-(--error)/10 border border-(--error)/20 text-(--error)">
-            <p className="mb-4">{error}</p>
-            <button
-              onClick={() => navigate('/', { replace: true })}
-              className="text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
-            >
-              {t('Back to login')}
-            </button>
-          </div>
+      <PublicAuthFrame compact>
+        <div className="p-6 text-center sm:p-8">
+          <span className="mx-auto flex size-14 items-center justify-center rounded-full border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/10 text-(--mc-color-danger)">
+            <AlertTriangle className="size-7" aria-hidden="true" />
+          </span>
+          <h1 role="alert" className="mt-5 text-base font-semibold leading-6 text-(--mc-color-text)">
+            {error}
+          </h1>
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={handleBackToLogin}
+            className="mt-5"
+          >
+            {t('Back to login')}
+          </Button>
         </div>
-      </div>
+      </PublicAuthFrame>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
-      <div className="text-center">
-        <div className="animate-spin w-8 h-8 border-2 border-(--brand-yellow) border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-(--text-secondary)">{t('Signing you in...')}</p>
+    <PublicAuthFrame compact>
+      <div className="p-8 text-center" role="status" aria-live="polite">
+        <LoaderCircle className="mx-auto size-9 animate-spin text-(--mc-color-accent) motion-reduce:animate-none" aria-hidden="true" />
+        <p className="mt-4 text-sm font-medium text-(--mc-color-text-secondary)">
+          {t('Signing you in...')}
+        </p>
       </div>
-    </div>
+    </PublicAuthFrame>
   )
 }

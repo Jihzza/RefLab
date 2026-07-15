@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
+import { buildAuthCallbackUrl } from '../utils/authNavigation'
 
 /**
  * Sign in with email and password
@@ -25,14 +26,14 @@ export async function signInWithPassword(email: string, password: string) {
  * 2. Send a confirmation email (if enabled in Supabase dashboard)
  * 3. Return the user object (session may be null until email is confirmed)
  */
-export async function signUpWithPassword(email: string, password: string) {
+export async function signUpWithPassword(email: string, password: string, returnTo?: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       // Where to redirect after email confirmation
       // This URL must be in your Supabase "Redirect URLs" list
-      emailRedirectTo: `${window.location.origin}/auth/callback`,
+      emailRedirectTo: buildAuthCallbackUrl(returnTo),
     },
   })
 
@@ -48,13 +49,13 @@ export async function signUpWithPassword(email: string, password: string) {
  * 3. Google redirects back to your site with tokens in the URL
  * 4. Supabase client automatically parses the tokens (detectSessionInUrl: true)
  */
-export async function signInWithGoogle() {
+export async function signInWithGoogle(returnTo?: string) {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       // Where Google should redirect after successful auth
       // This lands on the OAuth callback page which handles the code exchange
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: buildAuthCallbackUrl(returnTo),
     },
   })
 

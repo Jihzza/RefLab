@@ -17,6 +17,7 @@ import {
 import { getProfile, updateLastLogin, isProfileComplete, updateProfile } from '../api/profilesApi'
 import SessionExpiredModal from './SessionExpiredModal'
 import { AuthContext } from './AuthContext'
+import { clearAuthReturnTo } from '../utils/authNavigation'
 
 interface AuthProviderProps {
   children: ReactNode
@@ -80,6 +81,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Dismiss session expired modal
   const dismissSessionExpired = useCallback(() => {
     setSessionExpired(false)
+  }, [])
+
+  const clearRecoveryMode = useCallback(() => {
+    setRecoveryMode(false)
   }, [])
 
   // Effect 1: Bootstrap session + subscribe to auth state changes
@@ -147,16 +152,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // This avoids the Supabase deadlock by running the DB query outside onAuthStateChange.
   const prevUserIdRef = useRef<string | null>(null)
   useEffect(() => {
+    let cancelled = false
     const userId = user?.id ?? null
 
     if (userId && userId !== prevUserIdRef.current) {
       prevUserIdRef.current = userId
-      fetchProfile(userId)
-      updateLastLogin(userId)
+      queueMicrotask(() => {
+        if (cancelled) return
+        void fetchProfile(userId)
+        void updateLastLogin(userId)
+      })
     }
 
     if (!userId) {
       prevUserIdRef.current = null
+    }
+
+    return () => {
+      cancelled = true
     }
   }, [user, fetchProfile])
 
@@ -167,13 +180,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { error: error ? new Error(error.message) : null }
   }
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await signUpWithPassword(email, password)
+  const signUp = async (email: string, password: string, returnTo?: string) => {
+    const { error } = await signUpWithPassword(email, password, returnTo)
     return { error: error ? new Error(error.message) : null }
   }
 
-  const signInWithGoogle = async () => {
-    const { error } = await signInWithGoogleApi()
+  const signInWithGoogle = async (returnTo?: string) => {
+    const { error } = await signInWithGoogleApi(returnTo)
     return { error: error ? new Error(error.message) : null }
   }
 
@@ -186,7 +199,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setSession(null)
     setProfile(null)
     setAuthStatus('unauthenticated')
+    setRecoveryMode(false)
     previousUserRef.current = null
+    clearAuthReturnTo()
 
     // 3. Perform API call
     const { error } = await signOutApi()
@@ -253,6 +268,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setAuthStatus('unauthenticated')
       setRecoveryMode(false)
       previousUserRef.current = null
+      clearAuthReturnTo()
 
       // Sign out locally to clear stored session
       await signOutApi()
@@ -273,6 +289,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading: authStatus === 'checking_session',
     sessionExpired,
     recoveryMode,
+    clearRecoveryMode,
     dismissSessionExpired,
     refreshProfile,
     signIn,

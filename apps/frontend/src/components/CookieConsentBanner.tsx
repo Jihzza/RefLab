@@ -8,73 +8,93 @@
  * Mounted in App.tsx outside all providers (only needs BrowserRouter).
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Cookie } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 const STORAGE_KEY = 'cookie-consent';
 
 export default function CookieConsentBanner() {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
-
-  // Check localStorage on mount — only show if no consent recorded
-  useEffect(() => {
-    const consent = localStorage.getItem(STORAGE_KEY);
-    if (!consent) {
-      setVisible(true);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return !window.localStorage.getItem(STORAGE_KEY);
+    } catch {
+      return true;
     }
-  }, []);
+  });
+
+  const saveConsent = (value: 'accepted' | 'declined') => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      // Consent remains session-only when storage is unavailable.
+    } finally {
+      setVisible(false);
+    }
+  };
 
   /** Save consent to localStorage and hide the banner */
   const handleAccept = () => {
-    localStorage.setItem(STORAGE_KEY, 'accepted');
-    setVisible(false);
+    saveConsent('accepted');
   };
 
-  /** Dismiss without saving — banner will reappear on next visit */
+  /** Record that optional cookies were declined and hide the banner. */
   const handleDecline = () => {
-    localStorage.setItem(STORAGE_KEY, 'declined');
-    setVisible(false);
+    saveConsent('declined');
   };
 
   if (!visible) return null;
 
   return (
     <div
-      role="dialog"
+      role="region"
       aria-label={t('Cookie consent')}
-      className="fixed bottom-0 left-0 right-0 z-50 p-4"
+      aria-describedby="cookie-consent-description"
+      aria-live="polite"
+      aria-atomic="true"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-(--mc-z-popover) p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-5"
     >
-      <div className="max-w-lg mx-auto bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 shadow-lg">
-        {/* Message */}
-        <p className="text-sm text-(--text-secondary) mb-4 leading-relaxed">
-          {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
-          <Link
-            to="/cookies"
-            className="text-(--info) hover:underline"
-          >
-            {t('Cookies Policy')}
-          </Link>
-          .
-        </p>
+      <div className="pointer-events-auto mx-auto w-full max-w-3xl overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface)/97 shadow-(--mc-shadow-raised) backdrop-blur-md">
+        <div className="h-1 bg-[linear-gradient(90deg,var(--mc-color-accent)_0_78%,var(--mc-color-danger)_78%_100%)]" aria-hidden="true" />
+        <div className="grid gap-4 p-4 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center sm:p-5">
+          <span className="hidden size-11 items-center justify-center rounded-(--mc-radius-button) border border-(--mc-color-border) bg-(--mc-color-surface-raised) text-(--mc-color-accent) sm:flex">
+            <Cookie className="size-5" aria-hidden="true" />
+          </span>
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleAccept}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) transition-colors hover:opacity-90"
-            aria-label={t('Accept cookies')}
-          >
-            {t('Accept')}
-          </button>
-          <button
-            onClick={handleDecline}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-secondary) transition-colors hover:bg-(--bg-hover)"
-            aria-label={t('Decline cookies')}
-          >
-            {t('Decline')}
-          </button>
+          <p id="cookie-consent-description" className="text-sm leading-6 text-(--mc-color-text-secondary)">
+            {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
+            <Link
+              to="/cookies"
+              className="mc-focus-ring rounded-sm font-semibold text-(--mc-color-accent) hover:text-(--mc-color-accent-soft)"
+            >
+              {t('Cookies Policy')}
+            </Link>
+            .
+          </p>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:min-w-64">
+            <Button
+              type="button"
+              onClick={handleAccept}
+              className="sm:flex-1"
+              aria-label={t('Accept cookies')}
+            >
+              {t('Accept')}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleDecline}
+              className="sm:flex-1"
+              aria-label={t('Decline cookies')}
+            >
+              {t('Decline')}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -53,14 +53,15 @@ const PLANS: PlanConfig[] = [
 ]
 
 interface PlansSectionProps {
+  initialPlan?: PlanId
   onChangePlan: (targetPlan: 'pro' | 'plus') => void
 }
 
-export default function PlansSection({ onChangePlan }: PlansSectionProps) {
+export default function PlansSection({ initialPlan, onChangePlan }: PlansSectionProps) {
   const { t, i18n } = useTranslation()
   const { planId: currentPlan, subscription, isLoading: billingLoading } = useBilling()
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(() => (
-    currentPlan === 'free' ? 'pro' : currentPlan
+    initialPlan ?? (currentPlan === 'free' ? 'pro' : currentPlan)
   ))
   const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null)
   const [error, setError] = useState<string | null>(null)

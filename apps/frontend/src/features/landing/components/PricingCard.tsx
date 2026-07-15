@@ -19,92 +19,83 @@
 
 import type { PricingPlan } from "../types";
 import { useTranslation } from "react-i18next";
+import { Check } from "lucide-react";
+import { Button } from "@/components/ui";
 
 interface PricingCardProps {
   /** The pricing plan data to display */
   plan: PricingPlan;
   /** Callback when the CTA button is clicked */
   onSelect: (planId: string) => void;
+  /** Removes hidden carousel cards from the accessibility and keyboard trees. */
+  isInteractive?: boolean;
 }
 
-export default function PricingCard({ plan, onSelect }: PricingCardProps) {
-  const { t } = useTranslation();
+export default function PricingCard({ plan, onSelect, isInteractive = true }: PricingCardProps) {
+  const { t, i18n } = useTranslation();
   const { id, name, pricePerMonth, benefits, isHighlighted, buttonText } = plan;
+  const formattedPrice = new Intl.NumberFormat(i18n.language, {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+  }).format(pricePerMonth);
 
   return (
-    <div
-      className={`
-        flex flex-col min-h-[360px] p-6 rounded-(--radius-card) shadow-(--shadow-soft) bg-(--bg-surface)
-        ${
-          isHighlighted
-            ? "border-2 border-(--brand-yellow) ring-2 ring-(--brand-yellow)/20"
-            : "border border-(--border-subtle)"
-        }
-      `}
-    >
-      {/* Plan name */}
+    <article aria-hidden={!isInteractive || undefined} className={`relative flex h-full min-h-[30rem] flex-col overflow-hidden rounded-(--mc-radius-card) bg-(--mc-color-surface) p-6 shadow-(--mc-shadow-soft) sm:p-7 ${
+      isHighlighted
+        ? "border border-(--mc-color-accent) ring-1 ring-(--mc-color-accent)/25"
+        : "border border-(--mc-color-border)"
+    }`}>
+      {isHighlighted && (
+        <>
+          <span aria-hidden="true" className="absolute right-0 top-0 h-1.5 w-24 -skew-x-[28deg] bg-(--mc-color-accent)" />
+          <span aria-hidden="true" className="absolute right-1 top-0 h-1.5 w-6 -skew-x-[28deg] bg-(--mc-color-danger)" />
+        </>
+      )}
+
       <h3
-        className={`
-          text-xl font-semibold text-center mb-2
-          ${isHighlighted ? "text-(--brand-yellow)" : "text-(--text-primary)"}
-        `}
+        className={`text-xl font-extrabold tracking-[-0.02em] ${
+          isHighlighted ? "text-(--mc-color-accent)" : "text-(--mc-color-text)"
+        }`}
       >
         {t(name)}
       </h3>
 
-      {/* Price display */}
-      <div className="text-center mb-4">
-        <span className="text-3xl font-bold text-(--text-primary)">
-          {pricePerMonth === 0 ? t("Free") : `€${pricePerMonth}`}
+      <div className="mt-4 flex items-baseline gap-1">
+        <span className="mc-tabular text-4xl font-extrabold tracking-[-0.045em] text-(--mc-color-text)">
+          {pricePerMonth === 0 ? t("Free") : formattedPrice}
         </span>
         {pricePerMonth > 0 && (
-          <span className="text-(--text-muted) text-sm">{t("/ month")}</span>
+          <span className="text-sm text-(--mc-color-text-muted)">{t("/ month")}</span>
         )}
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-(--border-subtle) my-4"></div>
+      <div className="my-5 h-px bg-[linear-gradient(90deg,var(--mc-color-border-strong),transparent)]" />
 
-      {/* Benefits list */}
-      <ul className="space-y-3 mb-6 flex-grow">
+      <ul className="mb-7 flex-grow space-y-3.5">
         {benefits.map((benefit, index) => (
           <li
             key={index}
-            className="flex items-start gap-2 text-sm text-(--text-secondary)"
+            className="flex items-start gap-3 text-sm leading-5 text-(--mc-color-text-secondary)"
           >
-            {/* Checkmark icon */}
-            <svg
-              className="w-5 h-5 text-(--success) flex-shrink-0 mt-0.5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-(--mc-color-success)/40 bg-(--mc-color-success)/10 text-(--mc-color-success)">
+              <Check className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
+            </span>
             <span>{t(benefit)}</span>
           </li>
         ))}
       </ul>
 
-      {/* CTA button */}
-      <button
+      <Button
+        type="button"
+        variant={isHighlighted ? "primary" : "secondary"}
+        size="lg"
+        fullWidth
+        tabIndex={isInteractive ? undefined : -1}
         onClick={() => onSelect(id)}
-        className={`
-          w-full py-2 px-4 rounded-(--radius-button) font-medium transition-colors
-          focus:outline-none focus:ring-2 focus:ring-(--brand-yellow) focus:ring-offset-2
-          ${
-            isHighlighted
-              ? "bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)"
-              : "border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover)"
-          }
-        `}
       >
         {t(buttonText)}
-      </button>
-    </div>
+      </Button>
+    </article>
   );
 }

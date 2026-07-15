@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ClockAlert } from 'lucide-react'
+import { Button, Dialog } from '@/components/ui'
 
 interface SessionExpiredModalProps {
   isOpen: boolean
@@ -18,25 +20,27 @@ export default function SessionExpiredModal({ isOpen, onClose }: SessionExpiredM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-[var(--bg-primary)]/50" />
-
-      {/* Modal */}
-      <div className="relative bg-(--bg-surface) rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
-        <h2 className="text-lg font-semibold text-(--text-primary) mb-2">
-          {t('Session Expired')}
-        </h2>
-        <p className="text-gray-600 mb-6">
-          {t('Your session has expired. Please log in again to continue.')}
-        </p>
-        <button
-          onClick={handleLogin}
-          className="w-full bg-(--brand-yellow) text-(--bg-primary) py-2 px-4 rounded-lg hover:bg-(--brand-yellow-soft) transition-colors"
-        >
+    <Dialog
+      open={isOpen}
+      onOpenChange={() => {}}
+      title={t('Session Expired')}
+      description={t('Your session has expired. Please log in again to continue.')}
+      dialogRole="alertdialog"
+      size="sm"
+      showCloseButton={false}
+      closeOnEscape={false}
+      closeOnOverlayClick={false}
+      footer={(
+        <Button type="button" fullWidth onClick={handleLogin}>
           {t('Log In')}
-        </button>
+        </Button>
+      )}
+    >
+      <div className="flex justify-center py-2">
+        <span className="flex size-14 items-center justify-center rounded-full border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/10 text-(--mc-color-accent)">
+          <ClockAlert className="size-7" aria-hidden="true" />
+        </span>
       </div>
-    </div>
+    </Dialog>
   )
 }

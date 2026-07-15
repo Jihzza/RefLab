@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from './useAuth'
 import { mapAuthError } from '../api/authErrors'
 import { useTranslation } from 'react-i18next'
+import { AlertTriangle } from 'lucide-react'
+import { Button, Dialog } from '@/components/ui'
 
 interface DeleteAccountDialogProps {
   isOpen: boolean
@@ -50,47 +52,52 @@ export default function DeleteAccountDialog({ isOpen, onClose }: DeleteAccountDi
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-
-      {/* Modal */}
-      <div className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)">
-        <h2 className="text-lg font-semibold text-(--error) mb-2">
-          {t('Eliminar Cuenta')}
-        </h2>
-        <p className="text-(--text-secondary) text-sm mb-4">
-          {t('Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu perfil y progreso, seran eliminados permanentemente.')}
-        </p>
-
+    <Dialog
+      open={isOpen}
+      onOpenChange={open => {
+        if (!open && !loading) handleClose()
+      }}
+      title={t('Eliminar Cuenta')}
+      description={t('Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu perfil y progreso, seran eliminados permanentemente.')}
+      dialogRole="alertdialog"
+      size="sm"
+      showCloseButton={false}
+      closeOnEscape={!loading}
+      closeOnOverlayClick={!loading}
+      footer={(
+        <>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleClose}
+            disabled={loading}
+            className="flex-1"
+          >
+            {t('Cancelar')}
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            onClick={handleDelete}
+            loading={loading}
+            loadingText={t('Eliminando...')}
+            className="flex-1"
+          >
+            {t('Confirmar')}
+          </Button>
+        </>
+      )}
+    >
+      <div className="flex flex-col items-center py-1 text-center">
+        <span className="flex size-14 items-center justify-center rounded-full border border-(--mc-color-danger)/40 bg-(--mc-color-danger)/10 text-(--mc-color-danger)">
+          <AlertTriangle className="size-7" aria-hidden="true" />
+        </span>
         {error && (
-          <div className="p-3 mb-4 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm text-center">
+          <div role="alert" className="mt-5 w-full rounded-(--mc-radius-input) border border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-danger)">
             {error}
           </div>
         )}
-
-        <div className="flex gap-3">
-          <button
-            onClick={handleClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle)
-              text-(--text-secondary) hover:bg-(--bg-hover) transition-colors
-              disabled:opacity-50"
-          >
-            {t('Cancelar')}
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold transition-all
-              bg-(--error) text-white
-              hover:opacity-90
-              disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? t('Eliminando...') : t('Confirmar')}
-          </button>
-        </div>
       </div>
-    </div>
+    </Dialog>
   )
 }

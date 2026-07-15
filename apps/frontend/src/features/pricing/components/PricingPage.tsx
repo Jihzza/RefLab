@@ -9,10 +9,12 @@ import InvoiceHistory from './InvoiceHistory'
 import CancelDialog from './CancelDialog'
 import ChangePlanDialog from './ChangePlanDialog'
 import { useTranslation } from 'react-i18next'
+import { getAuthPlanFromSearch } from '@/features/auth/utils/authNavigation'
 
 export default function PricingPage() {
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
+  const requestedPlan = getAuthPlanFromSearch(`?${searchParams.toString()}`)
   const {
     subscription,
     planId,
@@ -174,7 +176,11 @@ export default function PricingPage() {
           />
         )}
 
-        <PlansSection onChangePlan={handleChangePlan} />
+        <PlansSection
+          key={requestedPlan ?? 'default'}
+          initialPlan={requestedPlan ?? undefined}
+          onChangePlan={handleChangePlan}
+        />
 
         {subscription && <InvoiceHistory />}
 

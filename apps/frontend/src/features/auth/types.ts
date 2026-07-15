@@ -36,6 +36,9 @@ export interface AuthContextType {
   // True when PASSWORD_RECOVERY event fires (user arrived via reset link)
   recoveryMode: boolean
 
+  // Clears PASSWORD_RECOVERY state after a successful password update
+  clearRecoveryMode: () => void
+
   // Dismiss the session expired modal
   dismissSessionExpired: () => void
 
@@ -44,8 +47,8 @@ export interface AuthContextType {
 
   // Auth actions
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
-  signInWithGoogle: () => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string, returnTo?: string) => Promise<{ error: Error | null }>
+  signInWithGoogle: (returnTo?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
