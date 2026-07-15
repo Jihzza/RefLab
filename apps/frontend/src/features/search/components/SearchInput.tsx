@@ -1,30 +1,48 @@
+import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { IconButton, Input } from '@/components/ui'
 
 interface SearchInputProps {
   value: string
-  onChange: (v: string) => void
+  onChange: (value: string) => void
+  onClear?: () => void
   placeholder?: string
+  isLoading?: boolean
 }
 
-export default function SearchInput({ value, onChange, placeholder = 'Search users' }: SearchInputProps) {
+export default function SearchInput({
+  value,
+  onChange,
+  onClear,
+  placeholder = 'Search users...',
+  isLoading = false,
+}: SearchInputProps) {
   const { t } = useTranslation()
+  const hasQuery = Boolean(value.trim())
+
   return (
-    <div className="w-full flex items-center gap-2">
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={t(placeholder)}
-        className="flex-1 px-4 py-2 bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-primary) rounded-(--radius-input) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow) placeholder-(--text-muted)"
-      />
-      {value ? (
-        <button
-          onClick={() => onChange('')}
-          className="px-3 py-2 text-sm text-(--text-muted) bg-(--bg-surface-2) rounded-(--radius-button) hover:bg-(--bg-hover)"
-          aria-label={t('Clear search')}
+    <Input
+      type="search"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={t(placeholder)}
+      aria-label={t('Search users...')}
+      aria-busy={isLoading || undefined}
+      autoComplete="off"
+      spellCheck={false}
+      startAdornment={<Search className="size-5" />}
+      endAdornment={hasQuery ? (
+        <IconButton
+          label={t('Clear search')}
+          size="sm"
+          variant="ghost"
+          className="size-8 rounded-full"
+          onClick={onClear ?? (() => onChange(''))}
         >
-          {t('Clear all')}
-        </button>
-      ) : null}
-    </div>
+          <X className="size-4" />
+        </IconButton>
+      ) : undefined}
+      className="min-h-12 border-(--mc-color-border-strong) bg-(--mc-color-canvas)/75 pl-11 pr-12 text-base shadow-none [&::-webkit-search-cancel-button]:appearance-none"
+    />
   )
 }

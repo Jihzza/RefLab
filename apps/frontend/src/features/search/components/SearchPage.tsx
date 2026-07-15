@@ -1,30 +1,27 @@
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import UserSearchBar from '@/features/messages/components/UserSearchBar'
-import { useUserSearch } from '@/features/messages/hooks/useUserSearch'
-import type { UserSearchResult } from '@/features/messages/types'
-import { useSearchHistory } from '../hooks/useSearchHistory'
-import type { SearchHistoryEntry } from '../types'
-import SearchResultsList from './SearchResultsList'
-import SearchHistory from './SearchHistory'
+import { Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import type { UserSearchResult } from '@/features/messages/types'
+import type { SearchHistoryEntry } from '../types'
+import { useProfileSearch } from '../hooks/useProfileSearch'
+import { useSearchHistory } from '../hooks/useSearchHistory'
+import SearchHistory from './SearchHistory'
+import SearchInput from './SearchInput'
+import SearchResultsList from './SearchResultsList'
 
-/**
- * Search page — lets users search for other users in real time
- * and keeps a history of recently visited profiles.
- */
 export default function SearchPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-
-  // Live search (debounced, with stale-request handling)
-  const { query, results, isSearching, handleSearch, clearSearch } =
-    useUserSearch()
-
-  // Search history (localStorage-backed, max 10 entries)
+  const {
+    query,
+    results,
+    isSearching,
+    error,
+    handleSearch,
+    clearSearch,
+    retrySearch,
+  } = useProfileSearch()
   const { history, addEntry, removeEntry, clearAll } = useSearchHistory()
 
-  /** Save user to history and navigate to their profile. */
   const handleSelectResult = useCallback(
     (user: UserSearchResult) => {
       const entry: SearchHistoryEntry = {
@@ -34,51 +31,84 @@ export default function SearchPage() {
         photo_url: user.photo_url,
       }
       addEntry(entry)
-      navigate(`/app/profile/${encodeURIComponent(user.username)}`)
     },
-    [addEntry, navigate],
+    [addEntry],
   )
 
-  /** Bump history entry to top and navigate to their profile. */
   const handleSelectHistory = useCallback(
     (entry: SearchHistoryEntry) => {
       addEntry(entry)
-      navigate(`/app/profile/${encodeURIComponent(entry.username)}`)
     },
-    [addEntry, navigate],
+    [addEntry],
   )
 
-  const hasQuery = !!query.trim()
+  const hasQuery = Boolean(query.trim())
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Search bar */}
-      <div className="p-4 pb-2">
-        <UserSearchBar
-          query={query}
-          onChange={handleSearch}
-          onClear={clearSearch}
-          placeholder={t('Search users...')}
-        />
-      </div>
+    <div className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)">
+      <div className="mx-auto w-full max-w-4xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7 xl:px-8">
+        <header className="mb-4 sm:mb-5">
+          <h1
+            id="search-page-title"
+            className="text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) sm:text-3xl"
+          >
+            {t('Search')}
+          </h1>
+        </header>
 
-      {/* Content: live results when typing, history when idle */}
-      <div className="flex-1 overflow-y-auto pb-20">
-        {hasQuery ? (
-          <SearchResultsList
-            results={results}
-            isSearching={isSearching}
-            query={query}
-            onSelect={handleSelectResult}
+        <div
+          className="relative overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface) p-4 shadow-(--mc-shadow-soft) sm:p-5"
+        >
+          <span className="pointer-events-none absolute -left-8 top-0 h-24 w-16 -skew-x-[24deg] bg-(--mc-color-accent)" aria-hidden="true" />
+          <span className="pointer-events-none absolute -bottom-6 -right-4 h-20 w-10 -skew-x-[24deg] bg-(--mc-color-danger)" aria-hidden="true" />
+          <span
+            className="pointer-events-none absolute inset-y-0 right-10 w-36 opacity-[0.045]"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(112deg, transparent 0 10px, var(--mc-color-text) 10px 15px)',
+            }}
+            aria-hidden="true"
           />
-        ) : (
-          <SearchHistory
-            history={history}
-            onSelect={handleSelectHistory}
-            onRemove={removeEntry}
-            onClearAll={clearAll}
-          />
-        )}
+
+          <div className="relative z-10">
+            <div className="mb-3 flex items-center gap-2 pl-3 sm:pl-4">
+              <span className="flex size-8 items-center justify-center rounded-full border border-(--mc-color-accent)/60 bg-(--mc-color-canvas)/70 text-(--mc-color-accent)">
+                <Search className="size-4" aria-hidden="true" />
+              </span>
+              <p className="text-xs font-semibold tracking-[0.08em] text-(--mc-color-accent) uppercase">
+                {t('Type to search')}
+              </p>
+            </div>
+
+            <SearchInput
+              value={query}
+              onChange={handleSearch}
+              onClear={clearSearch}
+              placeholder="Search users..."
+              isLoading={isSearching}
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 sm:mt-5">
+          {hasQuery ? (
+            <SearchResultsList
+              results={results}
+              isSearching={isSearching}
+              error={error}
+              query={query}
+              onSelect={handleSelectResult}
+              onRetry={retrySearch}
+            />
+          ) : (
+            <SearchHistory
+              history={history}
+              onSelect={handleSelectHistory}
+              onRemove={removeEntry}
+              onClearAll={clearAll}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

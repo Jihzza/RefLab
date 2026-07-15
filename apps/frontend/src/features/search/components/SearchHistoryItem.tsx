@@ -1,5 +1,6 @@
+import { Surface } from '@/components/ui'
 import type { SearchedUser } from '../types'
-import { useNavigate } from 'react-router-dom'
+import SearchResultItem from './SearchResultItem'
 
 interface Props {
   user: SearchedUser
@@ -7,33 +8,13 @@ interface Props {
 }
 
 export default function SearchHistoryItem({ user, onClick }: Props) {
-  const navigate = useNavigate()
-  const displayName = user.name || user.username
-  const initials = displayName.slice(0, 2).toUpperCase()
-
   const openProfile = () => {
-    if (onClick) onClick(user)
-    navigate(`/app/profile/${encodeURIComponent(user.username)}`)
+    onClick?.(user)
   }
 
   return (
-    <button
-      type="button"
-      onClick={openProfile}
-      className="w-full bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-3 flex items-center gap-3 hover:bg-(--bg-hover) transition-colors"
-    >
-      {user.photo_url ? (
-        <img src={user.photo_url} alt={displayName} className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-      ) : (
-        <div className="w-12 h-12 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-(--bg-primary)">{initials}</span>
-        </div>
-      )}
-
-      <div className="flex-1 min-w-0 text-left">
-        <div className="text-sm font-semibold text-(--text-primary) truncate">{displayName}</div>
-        <div className="text-xs text-(--text-muted) truncate">@{user.username}</div>
-      </div>
-    </button>
+    <Surface padding="none" className="overflow-hidden border-(--mc-color-border-strong) shadow-none">
+      <SearchResultItem user={user} onClick={openProfile} />
+    </Surface>
   )
 }

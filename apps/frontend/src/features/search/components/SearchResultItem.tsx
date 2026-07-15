@@ -1,83 +1,81 @@
-import type { SearchHistoryEntry } from '../types'
+import { ChevronRight, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
+import { Avatar, IconButton } from '@/components/ui'
+import type { SearchHistoryEntry } from '../types'
 
 interface SearchResultItemProps {
   user: SearchHistoryEntry
   onClick: () => void
-  /** When provided, renders an X button to remove the item (used in history). */
+  /** When provided, renders a remove action instead of the navigation marker. */
   onRemove?: () => void
 }
 
-/**
- * A single user row shared by both live search results and search history.
- * Shows avatar (photo or initials fallback), display name, and @username.
- */
 export default function SearchResultItem({
   user,
   onClick,
   onRemove,
 }: SearchResultItemProps) {
   const { t } = useTranslation()
-  const displayName = user.name || user.username
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const displayName = user.name?.trim() || user.username
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-(--bg-hover) transition-colors">
-      {/* Clickable area: avatar + user info */}
-      <button
-        type="button"
+    <div className="group relative flex min-h-[72px] items-center overflow-hidden px-3 transition-colors hover:bg-(--mc-color-surface-hover) focus-within:bg-(--mc-color-surface-hover) sm:px-4">
+      <span
+        className="absolute inset-y-3 left-0 w-0.5 bg-(--mc-color-accent) opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        aria-hidden="true"
+      />
+      <span
+        className="pointer-events-none absolute inset-y-0 right-11 w-24 opacity-[0.055]"
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(112deg, transparent 0 8px, var(--mc-color-text-muted) 8px 12px)',
+        }}
+        aria-hidden="true"
+      />
+
+      <Link
+        to={`/app/profile/${encodeURIComponent(user.username)}`}
         onClick={onClick}
-        className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
+        className="relative z-10 flex min-w-0 flex-1 items-center gap-3 rounded-(--mc-radius-button) py-3 pr-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
         aria-label={t('View profile of {{name}}', { name: displayName })}
       >
-        {/* Avatar */}
-        {user.photo_url ? (
-          <img
-            src={user.photo_url}
-            alt=""
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-semibold text-(--bg-primary)">
-              {initials}
-            </span>
-          </div>
-        )}
+        <Avatar
+          src={user.photo_url}
+          name={displayName}
+          alt={displayName}
+          size="lg"
+          className="border-(--mc-color-border-strong) bg-(--mc-color-canvas)"
+        />
 
-        {/* Name + username */}
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-(--text-primary) truncate">
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-(--mc-color-text)">
             {displayName}
-          </p>
-          <p className="text-xs text-(--text-muted) truncate">
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-(--mc-color-text-muted)">
             @{user.username}
-          </p>
-        </div>
-      </button>
+          </span>
+        </span>
+      </Link>
 
-      {/* Remove button (only for history items) */}
-      {onRemove && (
-        <button
-          type="button"
-          onClick={e => {
-            e.stopPropagation()
+      {onRemove ? (
+        <IconButton
+          label={t('Remove {{name}} from search history', { name: displayName })}
+          variant="ghost"
+          size="sm"
+          className="relative z-10 rounded-full"
+          onClick={(event) => {
+            event.stopPropagation()
             onRemove()
           }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-surface-2) hover:text-(--text-primary) transition-colors flex-shrink-0 cursor-pointer"
-          aria-label={t('Remove {{name}} from search history', { name: displayName })}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+          <X className="size-4" />
+        </IconButton>
+      ) : (
+        <ChevronRight
+          className="relative z-10 size-4 shrink-0 text-(--mc-color-text-muted) transition-colors group-hover:text-(--mc-color-accent)"
+          aria-hidden="true"
+        />
       )}
     </div>
   )
