@@ -381,6 +381,7 @@ export async function uploadPostMedia(
 
 /** Get the public URL for a media file stored in the post-media bucket. */
 export function getMediaPublicUrl(path: string): string {
+  if (/^(?:https?:|blob:|data:)/.test(path)) return path
   const { data } = supabase.storage.from('post-media').getPublicUrl(path)
   return data.publicUrl
 }
