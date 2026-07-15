@@ -806,6 +806,15 @@ const ptPT = {
   'Tests Disponibles': 'Testes disponíveis',
   preguntas: 'perguntas',
   'Comenzar Test': 'Iniciar teste',
+  'Choose a test from the active RefLab catalogue.':
+    'Escolhe um teste do catálogo ativo do RefLab.',
+  'Could not load tests': 'Não foi possível carregar os testes',
+  'Check your connection and try again.': 'Verifica a ligação e tenta novamente.',
+  'Try again': 'Tentar novamente',
+  'No tests available': 'Não existem testes disponíveis',
+  'There are no active tests at the moment.': 'Não existem testes ativos neste momento.',
+  'General refereeing': 'Arbitragem geral',
+  'Knowledge test': 'Teste de conhecimentos',
 }
 
 export default ptPT
