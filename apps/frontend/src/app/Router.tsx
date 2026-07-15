@@ -22,8 +22,7 @@ const PublicProfilePage = lazy(() => import('@/features/social/components/Public
 const PricingPage = lazy(() => import('@/features/pricing/components/PricingPage'))
 const SocialPage = lazy(() => import('@/features/social/components/SocialPage'))
 const PostDetailPage = lazy(() => import('@/features/social/components/PostDetailPage'))
-const MessagesPage = lazy(() => import('@/features/messages/components/MessagesPage'))
-const ConversationPage = lazy(() => import('@/features/messages/components/ConversationPage'))
+const MessagesWorkspace = lazy(() => import('@/features/messages/components/MessagesWorkspace'))
 const SearchPage = lazy(() => import('@/features/search/components/SearchPage'))
 const PoliciesPage = lazy(() => import('@/features/policies/components/PoliciesPage'))
 
@@ -95,9 +94,9 @@ export default function Router() {
           {/* /app/post/:postId shows a single post (from notifications, share links) */}
           <Route path="post/:postId" element={lazyRoute(<PostDetailPage />)} />
           {/* /app/messages shows direct messages */}
-          <Route path="messages" element={lazyRoute(<MessagesPage />)} />
+          <Route path="messages" element={lazyRoute(<MessagesWorkspace />)} />
           {/* /app/messages/:conversationId shows a conversation */}
-          <Route path="messages/:conversationId" element={lazyRoute(<ConversationPage />)} />
+          <Route path="messages/:conversationId" element={lazyRoute(<MessagesWorkspace />)} />
           {/* /app/search shows user search with history */}
           <Route path="search" element={lazyRoute(<SearchPage />)} />
           {/* /app/profile shows user profile */}

@@ -397,33 +397,12 @@ function EditProfileForm({
 
       profileUpdated = true
 
-      const metadataUpdates: Partial<User['user_metadata']> = {}
-
-      if (hasNameChanged) {
-        metadataUpdates.full_name = normalizedName || null
-      }
-
-      if (hasUsernameChanged) {
-        metadataUpdates.username = normalizedUsername
-      }
-
       if (hasAvatarChanged && uploadedAvatarUrl) {
-        metadataUpdates.avatar_url = uploadedAvatarUrl
-      }
+        // The profile now references this file. It must never remain in the
+        // durable orphan-cleanup queue, including after a failed earlier save.
+        forgetAvatarCleanup(user.id, uploadedAvatarUrl)
+        supersededAvatarUrlsRef.current.delete(uploadedAvatarUrl)
 
-      if (Object.keys(metadataUpdates).length > 0) {
-        const { error: metadataError } = await updateUserMetadata(metadataUpdates)
-
-        if (metadataError) {
-          setFormError(
-            t('Profile updated, but metadata sync failed. Tap "Save changes" again to retry.')
-          )
-          setIsSaving(false)
-          return
-        }
-      }
-
-      if (hasAvatarChanged && uploadedAvatarUrl) {
         const avatarUrlsToDelete = new Set(supersededAvatarUrlsRef.current)
         if (initialSnapshot.photoUrl) avatarUrlsToDelete.add(initialSnapshot.photoUrl)
         avatarUrlsToDelete.delete(uploadedAvatarUrl)
@@ -456,7 +435,35 @@ function EditProfileForm({
           setIsSaving(false)
           return
         }
+      }
 
+      const metadataUpdates: Partial<User['user_metadata']> = {}
+
+      if (hasNameChanged) {
+        metadataUpdates.full_name = normalizedName || null
+      }
+
+      if (hasUsernameChanged) {
+        metadataUpdates.username = normalizedUsername
+      }
+
+      if (hasAvatarChanged && uploadedAvatarUrl) {
+        metadataUpdates.avatar_url = uploadedAvatarUrl
+      }
+
+      if (Object.keys(metadataUpdates).length > 0) {
+        const { error: metadataError } = await updateUserMetadata(metadataUpdates)
+
+        if (metadataError) {
+          setFormError(
+            t('Profile updated, but metadata sync failed. Tap "Save changes" again to retry.')
+          )
+          setIsSaving(false)
+          return
+        }
+      }
+
+      if (hasAvatarChanged && uploadedAvatarUrl) {
         pendingUploadedAvatarUrlRef.current = null
         supersededAvatarUrlsRef.current.clear()
       }
