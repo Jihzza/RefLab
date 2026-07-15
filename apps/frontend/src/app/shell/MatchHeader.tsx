@@ -54,6 +54,8 @@ export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
 
         <div className="hidden h-7 w-px bg-(--border-subtle) md:block" />
 
+        <h1 className="sr-only md:hidden">{title}</h1>
+
         <div className="hidden min-w-0 flex-1 md:block md:pl-1">
           <p className="hidden text-[10px] font-semibold tracking-[0.18em] text-(--brand-yellow) uppercase md:block">
             Match Control
