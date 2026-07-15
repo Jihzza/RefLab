@@ -1,74 +1,101 @@
-import type { UserSearchResult } from '../types'
+import { AlertTriangle, LoaderCircle } from 'lucide-react'
+import { Avatar, Button } from '@/components/ui'
 import { useTranslation } from 'react-i18next'
+import type { UserSearchResult } from '../types'
 
 interface UserSearchDropdownProps {
+  id?: string
   query: string
   results: UserSearchResult[]
   isSearching: boolean
+  error?: string | null
+  onRetry?: () => void
   onSelect: (user: UserSearchResult) => void
   isOpen: boolean
+  disabled?: boolean
 }
 
 export default function UserSearchDropdown({
+  id,
   query,
   results,
   isSearching,
+  error = null,
+  onRetry,
   onSelect,
   isOpen,
+  disabled = false,
 }: UserSearchDropdownProps) {
   const { t } = useTranslation()
 
   if (!isOpen) return null
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl overflow-hidden">
+    <div
+      id={id}
+      role="listbox"
+      aria-label={t('Search results')}
+      aria-busy={isSearching}
+      className="mc-layer-popover absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface) shadow-(--mc-shadow-raised)"
+    >
       {isSearching && (
-        <div className="flex items-center justify-center py-4">
-          <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+        <div className="flex min-h-20 items-center justify-center gap-2 px-4 py-4 text-sm text-(--mc-color-text-secondary)">
+          <LoaderCircle
+            className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none"
+            aria-hidden="true"
+          />
+          <span>{t('Searching')}</span>
         </div>
       )}
 
-      {!isSearching && results.length === 0 && (
-        <div className="px-4 py-3 text-sm text-(--text-muted)">
+      {!isSearching && error && (
+        <div role="alert" className="flex flex-col items-center px-4 py-5 text-center">
+          <AlertTriangle className="mb-2 size-5 text-(--mc-color-danger)" aria-hidden="true" />
+          <p className="text-sm text-(--mc-color-text-secondary)">{t('Data unavailable')}</p>
+          {onRetry && (
+            <Button size="sm" variant="secondary" onClick={onRetry} className="mt-3">
+              {t('Try Again')}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {!isSearching && !error && results.length === 0 && (
+        <div className="px-4 py-5 text-center text-sm text-(--mc-color-text-muted)">
           {query.trim() ? t('No users found') : t('Type to search')}
         </div>
       )}
 
-      {!isSearching && results.length > 0 && (
-        <div className="max-h-72 overflow-y-auto">
+      {!isSearching && !error && results.length > 0 && (
+        <div className="max-h-[min(20rem,48dvh)] overflow-y-auto p-1.5">
           {results.map(user => {
             const displayName = user.name || user.username
-            const initials = displayName.slice(0, 2).toUpperCase()
 
             return (
               <button
                 key={user.id}
                 type="button"
+                role="option"
+                aria-selected="false"
                 onClick={() => onSelect(user)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-(--bg-hover) transition-colors"
+                disabled={disabled}
+                className="mc-focus-ring flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-(--mc-color-surface-hover) disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {user.photo_url ? (
-                  <img
-                    src={user.photo_url}
-                    alt={displayName}
-                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-semibold text-(--bg-primary)">
-                      {initials}
-                    </span>
-                  </div>
-                )}
+                <Avatar
+                  src={user.photo_url}
+                  alt={displayName}
+                  name={displayName}
+                  size="md"
+                />
 
-                <div className="min-w-0">
-                  <div className="text-sm font-medium text-(--text-primary) truncate">
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-(--mc-color-text)">
                     {displayName}
-                  </div>
-                  <div className="text-xs text-(--text-muted) truncate">
+                  </span>
+                  <span className="mt-0.5 block truncate text-xs text-(--mc-color-text-muted)">
                     @{user.username}
-                  </div>
-                </div>
+                  </span>
+                </span>
               </button>
             )
           })}

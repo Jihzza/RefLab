@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 import {
@@ -29,179 +30,254 @@ async function fetchPublicProfile(userId: string): Promise<MessageUser | null> {
   return data as MessageUser
 }
 
-export function useMessages(conversationId: string | null) {
+export function useMessages(
+  conversationId: string | null,
+  onRead?: () => void | Promise<void>,
+) {
+  const { t } = useTranslation()
   const { user, profile } = useAuth()
 
   const [messages, setMessages] = useState<Message[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(Boolean(conversationId))
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [reloadToken, setReloadToken] = useState(0)
 
   const cursorRef = useRef<string | null>(null)
   const loadingRef = useRef(false)
   const messageIdsRef = useRef<Set<string>>(new Set())
+  const optimisticUrlsRef = useRef<Set<string>>(new Set())
+  const generationRef = useRef(0)
+  const onReadRef = useRef(onRead)
 
-  // Initial fetch + conversation changes
   useEffect(() => {
-    if (!conversationId || !user?.id) return
+    onReadRef.current = onRead
+  }, [onRead])
 
-    setIsLoading(true)
-    setError(null)
-    setMessages([])
-    setHasMore(true)
+  const markReadAndNotify = useCallback(async (
+    targetConversationId: string,
+    userId: string,
+  ) => {
+    const { error } = await markConversationRead(targetConversationId, userId)
+    if (!error) await onReadRef.current?.()
+  }, [])
+
+  const revokeOptimisticUrls = useCallback(() => {
+    optimisticUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+    optimisticUrlsRef.current.clear()
+  }, [])
+
+  useEffect(() => revokeOptimisticUrls, [revokeOptimisticUrls])
+
+  // Initial fetch and conversation changes. The generation guard prevents a
+  // slow response from the previous route replacing the active conversation.
+  useEffect(() => {
+    const generation = ++generationRef.current
+    let cancelled = false
+
+    revokeOptimisticUrls()
+    loadingRef.current = false
     cursorRef.current = null
     messageIdsRef.current = new Set()
+    setMessages([])
+    setHasMore(true)
+    setIsLoadingMore(false)
+    setIsSending(false)
+    setLoadError(null)
+    setSendError(null)
 
-    ;(async () => {
+    if (!conversationId || !user?.id) {
+      setIsLoading(false)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setIsLoading(true)
+
+    void (async () => {
       const { data, error: fetchError } = await getMessagesApi(
         conversationId,
         user.id,
         null,
-        PAGE_SIZE
+        PAGE_SIZE,
       )
 
+      if (cancelled || generation !== generationRef.current) return
+
       if (fetchError) {
-        setError(fetchError.message)
+        setLoadError(fetchError.message)
         setIsLoading(false)
         return
       }
 
       const oldestFirst = [...data].reverse()
-      oldestFirst.forEach(m => messageIdsRef.current.add(m.id))
+      oldestFirst.forEach(message => messageIdsRef.current.add(message.id))
 
       setMessages(oldestFirst)
       setHasMore(data.length >= PAGE_SIZE)
-      cursorRef.current = oldestFirst.length > 0 ? oldestFirst[0].created_at : null
-
-      // Mark read after initial load
-      await markConversationRead(conversationId, user.id)
+      cursorRef.current = oldestFirst.length > 0
+        ? oldestFirst[0].created_at
+        : null
       setIsLoading(false)
-    })()
-  }, [conversationId, user?.id])
 
-  const loadMore = useCallback(async () => {
-    if (!conversationId || !user?.id || !hasMore || loadingRef.current) return
+      await markReadAndNotify(conversationId, user.id)
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [conversationId, markReadAndNotify, reloadToken, revokeOptimisticUrls, user?.id])
+
+  const loadMore = useCallback(async (): Promise<boolean> => {
+    if (!conversationId || !user?.id || !hasMore || loadingRef.current) {
+      return false
+    }
+
+    const generation = generationRef.current
     loadingRef.current = true
     setIsLoadingMore(true)
+    setLoadError(null)
 
     try {
       const { data, error: fetchError } = await getMessagesApi(
         conversationId,
         user.id,
         cursorRef.current,
-        PAGE_SIZE
+        PAGE_SIZE,
       )
 
+      if (generation !== generationRef.current) return false
+
       if (fetchError) {
-        setError(fetchError.message)
-        return
+        setLoadError(fetchError.message)
+        return false
       }
 
       const oldestFirst = [...data].reverse()
       setHasMore(data.length >= PAGE_SIZE)
 
-      setMessages(prev => {
-        const deduped = oldestFirst.filter(m => !messageIdsRef.current.has(m.id))
-        deduped.forEach(m => messageIdsRef.current.add(m.id))
-        return [...deduped, ...prev]
+      setMessages(previous => {
+        const deduped = oldestFirst.filter(
+          message => !messageIdsRef.current.has(message.id),
+        )
+        deduped.forEach(message => messageIdsRef.current.add(message.id))
+        return [...deduped, ...previous]
       })
 
       if (oldestFirst.length > 0) {
         cursorRef.current = oldestFirst[0].created_at
       }
+
+      return true
     } finally {
-      loadingRef.current = false
-      setIsLoadingMore(false)
+      if (generation === generationRef.current) {
+        loadingRef.current = false
+        setIsLoadingMore(false)
+      }
     }
-  }, [conversationId, user?.id, hasMore])
+  }, [conversationId, hasMore, user?.id])
 
-  const sendMessage = useCallback(
-    async (content: string, mediaFile?: File) => {
-      if (!conversationId || !user?.id) return
-      if (!profile) {
-        setError('Your profile is still loading. Please try again.')
-        return
+  const sendMessage = useCallback(async (
+    content: string,
+    mediaFile?: File,
+  ): Promise<boolean> => {
+    if (!conversationId || !user?.id) return false
+    if (!profile) {
+      setSendError(t('Your profile is still loading. Please try again.'))
+      return false
+    }
+
+    const trimmed = content.trim()
+    if (!trimmed && !mediaFile) return false
+
+    const generation = generationRef.current
+    const targetConversationId = conversationId
+    setIsSending(true)
+    setSendError(null)
+
+    const tempId = `temp-${crypto.randomUUID()}`
+    const nowIso = new Date().toISOString()
+    const mediaType = mediaFile ? inferMediaType(mediaFile) : 'text'
+    const optimisticMediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : null
+
+    if (optimisticMediaUrl) optimisticUrlsRef.current.add(optimisticMediaUrl)
+
+    const sender: MessageUser = {
+      id: profile.id,
+      username: profile.username,
+      name: profile.name ?? null,
+      photo_url: profile.photo_url ?? null,
+    }
+
+    const optimistic: Message = {
+      id: tempId,
+      conversation_id: targetConversationId,
+      sender_id: user.id,
+      content: trimmed || null,
+      media_type: mediaFile ? mediaType : 'text',
+      media_url: optimisticMediaUrl,
+      created_at: nowIso,
+      sender,
+    }
+
+    messageIdsRef.current.add(tempId)
+    setMessages(previous => [...previous, optimistic])
+
+    try {
+      const { data, error: sendRequestError } = await sendMessageApi(
+        targetConversationId,
+        user.id,
+        trimmed || null,
+        mediaType,
+        mediaFile,
+      )
+
+      if (sendRequestError || !data) {
+        throw sendRequestError ?? new Error(t('Failed to send message.'))
       }
 
-      const trimmed = content.trim()
-      if (!trimmed && !mediaFile) return
+      if (generation !== generationRef.current) return true
 
-      setIsSending(true)
-      setError(null)
+      const realMessage: Message = { ...data, sender }
 
-      const tempId = `temp-${crypto.randomUUID()}`
-      const nowIso = new Date().toISOString()
-      const mediaType = mediaFile ? inferMediaType(mediaFile) : 'text'
-      const optimisticMediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : null
+      setMessages(previous => previous
+        .map(message => (message.id === tempId ? realMessage : message))
+        .sort((left, right) => left.created_at.localeCompare(right.created_at)))
+      messageIdsRef.current.delete(tempId)
+      messageIdsRef.current.add(realMessage.id)
 
-      const sender: MessageUser = {
-        id: profile.id,
-        username: profile.username,
-        name: profile.name ?? null,
-        photo_url: profile.photo_url ?? null,
-      }
-
-      const optimistic: Message = {
-        id: tempId,
-        conversation_id: conversationId,
-        sender_id: user.id,
-        content: trimmed || null,
-        media_type: mediaFile ? mediaType : 'text',
-        media_url: optimisticMediaUrl,
-        created_at: nowIso,
-        sender,
-      }
-
-      messageIdsRef.current.add(tempId)
-      setMessages(prev => [...prev, optimistic])
-
-      try {
-        const { data, error: sendError } = await sendMessageApi(
-          conversationId,
-          user.id,
-          trimmed || null,
-          mediaType,
-          mediaFile
-        )
-
-        if (sendError || !data) {
-          throw sendError ?? new Error('Failed to send message.')
-        }
-
-        const realMessage: Message = {
-          ...data,
-          sender,
-        }
-
-        setMessages(prev =>
-          prev.map(m => (m.id === tempId ? realMessage : m))
-        )
-
+      await markReadAndNotify(targetConversationId, user.id)
+      return true
+    } catch (error) {
+      if (generation === generationRef.current) {
+        setMessages(previous => previous.filter(message => message.id !== tempId))
         messageIdsRef.current.delete(tempId)
-        messageIdsRef.current.add(realMessage.id)
-
-        // Mark as read after sending (keeps unread counters accurate)
-        await markConversationRead(conversationId, user.id)
-      } catch (err) {
-        setMessages(prev => prev.filter(m => m.id !== tempId))
-        messageIdsRef.current.delete(tempId)
-
-        const message = err instanceof Error ? err.message : 'Failed to send.'
-        setError(message)
-      } finally {
-        if (optimisticMediaUrl) URL.revokeObjectURL(optimisticMediaUrl)
-        setIsSending(false)
+        setSendError(
+          error instanceof Error ? error.message : t('Failed to send message.'),
+        )
       }
-    },
-    [conversationId, user?.id, profile]
-  )
+      return false
+    } finally {
+      if (optimisticMediaUrl) {
+        URL.revokeObjectURL(optimisticMediaUrl)
+        optimisticUrlsRef.current.delete(optimisticMediaUrl)
+      }
+      if (generation === generationRef.current) setIsSending(false)
+    }
+  }, [conversationId, markReadAndNotify, profile, t, user?.id])
 
-  // Realtime: incoming messages
+  // Realtime INSERTs are deduplicated against fetched and optimistic messages.
+  // Own messages are resolved through the send request, so they are not added a
+  // second time when the Realtime event arrives first.
   useEffect(() => {
     if (!conversationId || !user?.id) return
 
+    const generation = generationRef.current
+    let cancelled = false
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -213,6 +289,8 @@ export function useMessages(conversationId: string | null) {
           filter: `conversation_id=eq.${conversationId}`,
         },
         async payload => {
+          if (cancelled || generation !== generationRef.current) return
+
           const row = payload.new as {
             id: string
             conversation_id: string
@@ -223,20 +301,21 @@ export function useMessages(conversationId: string | null) {
             created_at: string
           }
 
-          if (!row?.id) return
-          if (row.sender_id === user.id) return
+          if (!row?.id || row.sender_id === user.id) return
           if (messageIdsRef.current.has(row.id)) return
 
-          messageIdsRef.current.add(row.id)
+          const sender = (await fetchPublicProfile(row.sender_id)) ?? ({
+            id: row.sender_id,
+            username: 'Unknown',
+            name: null,
+            photo_url: null,
+          } satisfies MessageUser)
 
-          const sender =
-            (await fetchPublicProfile(row.sender_id)) ??
-            ({
-              id: row.sender_id,
-              username: 'Unknown',
-              name: null,
-              photo_url: null,
-            } satisfies MessageUser)
+          if (cancelled || generation !== generationRef.current) return
+          // The initial page fetch or another Realtime callback may have
+          // inserted this row while the sender profile was resolving.
+          if (messageIdsRef.current.has(row.id)) return
+          messageIdsRef.current.add(row.id)
 
           const incoming: Message = {
             id: row.id,
@@ -249,16 +328,27 @@ export function useMessages(conversationId: string | null) {
             sender,
           }
 
-          setMessages(prev => [...prev, incoming])
-          await markConversationRead(conversationId, user.id)
-        }
+          setMessages(previous => [...previous, incoming].sort(
+            (left, right) => left.created_at.localeCompare(right.created_at),
+          ))
+          await markReadAndNotify(conversationId, user.id)
+        },
       )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      cancelled = true
+      void supabase.removeChannel(channel)
     }
-  }, [conversationId, user?.id])
+  }, [conversationId, markReadAndNotify, user?.id])
+
+  const retry = useCallback(() => {
+    setReloadToken(value => value + 1)
+  }, [])
+
+  const dismissSendError = useCallback(() => {
+    setSendError(null)
+  }, [])
 
   return {
     messages,
@@ -266,9 +356,11 @@ export function useMessages(conversationId: string | null) {
     isLoadingMore,
     hasMore,
     isSending,
-    error,
+    loadError,
+    sendError,
     loadMore,
+    retry,
     sendMessage,
+    dismissSendError,
   }
 }
-

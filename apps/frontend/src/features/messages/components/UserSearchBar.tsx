@@ -1,3 +1,4 @@
+import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 interface UserSearchBarProps {
@@ -6,6 +7,8 @@ interface UserSearchBarProps {
   onClear?: () => void
   disabled?: boolean
   placeholder?: string
+  isExpanded?: boolean
+  resultsId?: string
 }
 
 export default function UserSearchBar({
@@ -14,51 +17,40 @@ export default function UserSearchBar({
   onClear,
   disabled = false,
   placeholder = 'Search users...',
+  isExpanded = false,
+  resultsId,
 }: UserSearchBarProps) {
   const { t } = useTranslation()
 
   return (
-    <div className="flex items-center gap-2 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) px-3 py-2">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 text-(--text-muted) flex-shrink-0"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M21 21l-4.35-4.35m1.85-5.15a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
+    <div className="flex min-h-11 items-center gap-2 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-surface-raised) pl-3 transition-colors hover:border-(--mc-color-border-strong) focus-within:ring-2 focus-within:ring-(--mc-color-focus) focus-within:ring-offset-1 focus-within:ring-offset-(--mc-color-canvas)">
+      <Search
+        className="size-5 shrink-0 text-(--mc-color-text-muted)"
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
 
       <input
         value={query}
-        onChange={e => onChange(e.target.value)}
+        onChange={event => onChange(event.target.value)}
         disabled={disabled}
         placeholder={t(placeholder)}
-        className="w-full bg-transparent text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none"
+        role="combobox"
+        aria-label={t('Search')}
+        aria-autocomplete="list"
+        aria-expanded={isExpanded}
+        aria-controls={isExpanded ? resultsId : undefined}
+        className="min-h-11 min-w-0 flex-1 bg-transparent py-2 text-sm text-(--mc-color-text) placeholder:text-(--mc-color-text-muted) focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       />
 
-      {!!query.trim() && onClear && (
+      {Boolean(query.trim()) && onClear && (
         <button
           onClick={onClear}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
+          className="mc-focus-ring flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-button) text-(--mc-color-text-muted) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)"
           aria-label={t('Clear search')}
           type="button"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <X className="size-4" aria-hidden="true" />
         </button>
       )}
     </div>

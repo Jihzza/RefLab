@@ -10,30 +10,25 @@ export function useUserSearch(limit: number = 10) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserSearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
-
+  const [error, setError] = useState<string | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
   const lastRequestIdRef = useRef(0)
 
   useEffect(() => {
-    if (!user?.id) return
-
     const q = query.trim()
-    if (!q) {
-      setResults([])
-      setIsSearching(false)
-      return
-    }
+    if (!user?.id || !q) return
 
     const requestId = ++lastRequestIdRef.current
-    setIsSearching(true)
+    let cancelled = false
 
-    const t = window.setTimeout(async () => {
-      const { data, error } = await searchUsers(q, user.id, limit)
+    const timer = window.setTimeout(async () => {
+      const { data, error: searchError } = await searchUsers(q, user.id, limit)
 
-      // Ignore stale responses
-      if (requestId !== lastRequestIdRef.current) return
+      if (cancelled || requestId !== lastRequestIdRef.current) return
 
-      if (error) {
+      if (searchError) {
         setResults([])
+        setError(searchError.message)
         setIsSearching(false)
         return
       }
@@ -42,26 +37,47 @@ export function useUserSearch(limit: number = 10) {
       setIsSearching(false)
     }, DEBOUNCE_MS)
 
-    return () => window.clearTimeout(t)
-  }, [query, user?.id, limit])
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [query, user?.id, limit, retryToken])
 
   const handleSearch = useCallback((nextQuery: string) => {
     setQuery(nextQuery)
+    if (!nextQuery.trim()) {
+      setResults([])
+      setError(null)
+      setIsSearching(false)
+      lastRequestIdRef.current += 1
+      return
+    }
+
+    setIsSearching(true)
+    setError(null)
   }, [])
 
   const clearSearch = useCallback(() => {
     setQuery('')
     setResults([])
+    setError(null)
     setIsSearching(false)
     lastRequestIdRef.current += 1
+  }, [])
+
+  const retrySearch = useCallback(() => {
+    setIsSearching(true)
+    setError(null)
+    setRetryToken(value => value + 1)
   }, [])
 
   return {
     query,
     results,
     isSearching,
+    error,
     handleSearch,
     clearSearch,
+    retrySearch,
   }
 }
-

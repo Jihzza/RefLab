@@ -1,108 +1,138 @@
-import type { Conversation } from '../types'
+import { Avatar } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useTranslation } from 'react-i18next'
+import type { Conversation } from '../types'
 
 interface ConversationItemProps {
   conversation: Conversation
   onClick: () => void
+  selected?: boolean
 }
 
-function formatRelativeTime(dateString: string, nowLabel: string): string {
-  const now = Date.now()
-  const date = new Date(dateString).getTime()
-  const seconds = Math.floor((now - date) / 1000)
+function formatConversationTime(
+  dateString: string,
+  nowLabel: string,
+  locale: string,
+): string {
+  const date = new Date(dateString)
+  if (Number.isNaN(date.getTime())) return ''
 
-  if (seconds < 60) return nowLabel
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h`
-  const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d`
-  const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo`
-  return `${Math.floor(months / 12)}y`
+  const now = new Date()
+  const elapsedSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+  if (elapsedSeconds < 60) return nowLabel
+
+  const sameDay = date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate()
+
+  if (sameDay) {
+    return new Intl.DateTimeFormat(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date)
+  }
+
+  if (elapsedSeconds < 7 * 24 * 60 * 60) {
+    return new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date)
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: '2-digit',
+    month: '2-digit',
+  }).format(date)
 }
 
 function getLastMessagePreview(
   conversation: Conversation,
-  currentUserId?: string,
-  t?: (key: string) => string
+  currentUserId: string | undefined,
+  translate: (key: string) => string,
 ): string {
-  const translate = t ?? ((key: string) => key)
-  const last = conversation.last_message
-  if (!last) return translate('No messages yet.')
+  const lastMessage = conversation.last_message
+  if (!lastMessage) return translate('No messages yet.')
 
-  const text = last.content?.trim()
-  let preview = text ?? ''
-
+  let preview = lastMessage.content?.trim() ?? ''
   if (!preview) {
-    if (last.media_type === 'image') preview = '[Imagem]'
-    else if (last.media_type === 'video') preview = '[Vídeo]'
-    else if (last.media_type === 'audio') preview = '[Áudio]'
+    if (lastMessage.media_type === 'image') preview = translate('Image')
+    else if (lastMessage.media_type === 'video') preview = translate('Video')
+    else if (lastMessage.media_type === 'audio') preview = translate('Audio')
     else preview = translate('No messages yet.')
   }
 
-  if (currentUserId && last.sender_id === currentUserId) {
-    return `Tu: ${preview}`
-  }
-
-  return preview
+  return currentUserId && lastMessage.sender_id === currentUserId
+    ? `Tu: ${preview}`
+    : preview
 }
 
-export default function ConversationItem({ conversation, onClick }: ConversationItemProps) {
-  const { t } = useTranslation()
+export default function ConversationItem({
+  conversation,
+  onClick,
+  selected = false,
+}: ConversationItemProps) {
+  const { t, i18n } = useTranslation()
   const { user: authUser } = useAuth()
   const otherUser = conversation.other_user
   const displayName = otherUser.name || otherUser.username
-  const initials = displayName.slice(0, 2).toUpperCase()
-
   const preview = getLastMessagePreview(conversation, authUser?.id, t)
-  const timestamp = formatRelativeTime(
+  const timestamp = formatConversationTime(
     conversation.last_message?.created_at ?? conversation.updated_at,
     t('now'),
+    i18n.language,
   )
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 flex items-center gap-3 hover:bg-(--bg-hover) transition-colors"
+      aria-current={selected ? 'page' : undefined}
+      className={[
+        'mc-interactive mc-focus-ring relative flex min-h-20 w-full items-center gap-3 rounded-(--mc-radius-card) border px-3 py-3 text-left',
+        selected
+          ? 'border-(--mc-color-accent)/55 bg-(--mc-color-surface-raised) shadow-(--mc-shadow-soft)'
+          : 'border-transparent bg-transparent hover:border-(--mc-color-border) hover:bg-(--mc-color-surface-raised)',
+      ].join(' ')}
     >
-      {/* Avatar */}
-      {otherUser.photo_url ? (
-        <img
-          src={otherUser.photo_url}
-          alt={displayName}
-          className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+      {selected && (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-(--mc-color-accent)"
         />
-      ) : (
-        <div className="w-11 h-11 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-(--bg-primary)">
-            {initials}
-          </span>
-        </div>
       )}
 
-      {/* Middle */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-(--text-primary) truncate">
-          {displayName}
-        </div>
-        <div className="text-xs text-(--text-muted) truncate">
-          {preview}
-        </div>
-      </div>
+      <Avatar
+        src={otherUser.photo_url}
+        alt={displayName}
+        name={displayName}
+        size="lg"
+        className="border-(--mc-color-border-strong)"
+      />
 
-      {/* Right */}
-      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className="text-[10px] text-(--text-muted)">{timestamp}</span>
-        {conversation.unread_count > 0 && (
-          <span className="min-w-5 h-5 px-1 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center">
-            {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-3">
+          <span className="truncate text-sm font-semibold text-(--mc-color-text)">
+            {displayName}
           </span>
-        )}
-      </div>
+          <span className="mc-tabular shrink-0 text-[11px] text-(--mc-color-text-muted)">
+            {timestamp}
+          </span>
+        </span>
+
+        <span className="mt-1 flex items-center justify-between gap-3">
+          <span className={[
+            'truncate text-xs leading-5',
+            conversation.unread_count > 0
+              ? 'font-medium text-(--mc-color-text-secondary)'
+              : 'text-(--mc-color-text-muted)',
+          ].join(' ')}>
+            {preview}
+          </span>
+
+          {conversation.unread_count > 0 && (
+            <span className="mc-tabular flex min-h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-(--mc-color-accent) px-1.5 text-[10px] font-extrabold text-(--mc-color-canvas)">
+              {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+            </span>
+          )}
+        </span>
+      </span>
     </button>
   )
 }

@@ -1,144 +1,242 @@
-import React, { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FileAudio, FileVideo, Image as ImageIcon, Paperclip, SendHorizontal, X } from 'lucide-react'
+import { IconButton } from '@/components/ui'
 import { useTranslation } from 'react-i18next'
 
 interface MessageInputProps {
-  onSend: (content: string, mediaFile?: File) => void | Promise<void>
+  onSend: (content: string, mediaFile?: File) => Promise<boolean>
   isSending: boolean
+  disabled?: boolean
+  error?: string | null
+  onDismissError?: () => void
 }
 
-const ACCEPT_MIME =
-  'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav,audio/ogg,audio/webm'
+const ACCEPT_MIME = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'audio/mpeg',
+  'audio/wav',
+  'audio/ogg',
+  'audio/webm',
+].join(',')
 
-export default function MessageInput({ onSend, isSending }: MessageInputProps) {
+const ACCEPTED_TYPES = new Set(ACCEPT_MIME.split(','))
+
+function formatFileSize(size: number): string {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function AttachmentIcon({ type }: { type: string }) {
+  if (type.startsWith('image/')) return <ImageIcon className="size-5" />
+  if (type.startsWith('video/')) return <FileVideo className="size-5" />
+  return <FileAudio className="size-5" />
+}
+
+function ImageAttachmentPreview({ file }: { file: File }) {
+  const [objectUrl] = useState(() => URL.createObjectURL(file))
+
+  useEffect(() => () => URL.revokeObjectURL(objectUrl), [objectUrl])
+
+  return (
+    <img
+      src={objectUrl}
+      alt={file.name}
+      className="size-full object-cover"
+    />
+  )
+}
+
+export default function MessageInput({
+  onSend,
+  isSending,
+  disabled = false,
+  error = null,
+  onDismissError,
+}: MessageInputProps) {
   const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [attachmentError, setAttachmentError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const canSend = (Boolean(content.trim()) || Boolean(mediaFile))
+    && !isSending
+    && !disabled
+  const visibleError = attachmentError ?? error
 
-  const canSend = (!!content.trim() || !!mediaFile) && !isSending
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    textarea.style.height = '0px'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 112)}px`
+  }, [content])
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
+
+    if (!ACCEPTED_TYPES.has(file.type)) {
+      setAttachmentError(t('Unsupported attachment type.'))
+      event.target.value = ''
+      return
+    }
+
+    setAttachmentError(null)
+    onDismissError?.()
     setMediaFile(file)
-  }, [])
+  }, [onDismissError, t])
 
   const removeMedia = useCallback(() => {
     setMediaFile(null)
+    setAttachmentError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }, [])
 
+  const dismissVisibleError = useCallback(() => {
+    setAttachmentError(null)
+    onDismissError?.()
+  }, [onDismissError])
+
   const handleSend = useCallback(async () => {
     if (!canSend) return
-    const text = content
-    const file = mediaFile ?? undefined
 
+    const draft = content
+    const attachment = mediaFile
     setContent('')
-    removeMedia()
+    setMediaFile(null)
+    setAttachmentError(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    onDismissError?.()
 
-    await onSend(text, file)
-  }, [canSend, content, mediaFile, onSend, removeMedia])
+    const sent = await onSend(draft, attachment ?? undefined)
+    if (!sent) {
+      setContent(draft)
+      setMediaFile(attachment)
+    }
+
+    window.requestAnimationFrame(() => textareaRef.current?.focus())
+  }, [canSend, content, mediaFile, onDismissError, onSend])
 
   return (
-    <div className="bg-(--bg-surface) border-t border-(--border-subtle) px-3 py-2">
-      {mediaFile && (
-        <div className="mb-2 flex items-center gap-2">
-          <div className="flex items-center gap-2 max-w-full px-3 py-2 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-card)">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4 text-(--text-muted) flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 10-5.656-5.656L6.343 10.172a6 6 0 108.485 8.485L20.5 13"
-              />
-            </svg>
-            <span className="text-xs text-(--text-secondary) truncate">
-              {mediaFile.name}
-            </span>
-          </div>
-
+    <form
+      className="border-t border-(--mc-color-border) bg-(--mc-color-surface) px-3 py-3 sm:px-4"
+      onSubmit={event => {
+        event.preventDefault()
+        void handleSend()
+      }}
+    >
+      {visibleError && (
+        <div
+          id="message-composer-error"
+          role="alert"
+          className="mb-2 flex items-start justify-between gap-3 rounded-(--mc-radius-input) border border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 px-3 py-2 text-xs leading-5 text-(--mc-color-text-secondary)"
+        >
+          <span className="min-w-0 break-words">{visibleError}</span>
           <button
-            onClick={removeMedia}
             type="button"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-            aria-label={t('Remove attachment')}
+            onClick={dismissVisibleError}
+            className="mc-focus-ring -m-1 flex size-7 shrink-0 items-center justify-center rounded-lg text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)"
+            aria-label={t('Close')}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="size-4" aria-hidden="true" />
           </button>
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="w-10 h-10 rounded-(--radius-button) flex items-center justify-center text-(--text-secondary) hover:bg-(--bg-hover) hover:text-(--brand-yellow) transition-colors"
-          aria-label={t('Attach media')}
-          disabled={isSending}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-            />
-          </svg>
-        </button>
+      {mediaFile && (
+        <div className="mb-2 flex items-center gap-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-surface-raised) p-2">
+          <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-(--mc-color-border) bg-(--mc-color-canvas) text-(--mc-color-accent)">
+            {mediaFile.type.startsWith('image/') ? (
+              <ImageAttachmentPreview
+                key={`${mediaFile.name}-${mediaFile.lastModified}`}
+                file={mediaFile}
+              />
+            ) : (
+              <AttachmentIcon type={mediaFile.type} />
+            )}
+          </div>
 
-        <input
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-semibold text-(--mc-color-text)">
+              {mediaFile.name}
+            </p>
+            <p className="mt-0.5 text-[11px] text-(--mc-color-text-muted)">
+              {formatFileSize(mediaFile.size)}
+            </p>
+          </div>
+
+          <IconButton
+            label={t('Remove attachment')}
+            variant="ghost"
+            size="md"
+            onClick={removeMedia}
+            disabled={isSending || disabled}
+          >
+            <X className="size-5" />
+          </IconButton>
+        </div>
+      )}
+
+      <div className="flex items-end gap-2">
+        <IconButton
+          label={t('Attach media')}
+          variant="secondary"
+          size="md"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isSending || disabled}
+        >
+          <Paperclip className="size-5" />
+        </IconButton>
+
+        <textarea
+          ref={textareaRef}
           value={content}
-          onChange={e => setContent(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
+          rows={1}
+          onChange={event => {
+            setContent(event.target.value)
+            if (error) onDismissError?.()
+          }}
+          onKeyDown={event => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault()
               void handleSend()
             }
           }}
           placeholder={t('Write message..:')}
-          className="flex-1 h-10 px-4 bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-sm text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
-          disabled={isSending}
+          aria-describedby={visibleError ? 'message-composer-error' : undefined}
+          className="min-h-11 max-h-28 flex-1 resize-none overflow-y-auto rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-surface-raised) px-3 py-[11px] text-sm leading-5 text-(--mc-color-text) placeholder:text-(--mc-color-text-muted) hover:border-(--mc-color-border-strong) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) focus-visible:ring-offset-1 focus-visible:ring-offset-(--mc-color-canvas) disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isSending || disabled}
         />
 
-        <button
-          type="button"
-          onClick={() => void handleSend()}
+        <IconButton
+          label={t('Send')}
+          type="submit"
+          variant="primary"
+          size="md"
+          loading={isSending}
           disabled={!canSend}
-          className="h-10 px-4 rounded-(--radius-button) bg-(--brand-yellow) text-(--bg-primary) text-sm font-semibold hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
-          aria-label={t('Send')}
+          className="relative overflow-hidden"
         >
-          {isSending ? t('Sending...') : t('Send')}
-        </button>
+          <SendHorizontal className="size-5" />
+        </IconButton>
 
         <input
           ref={fileInputRef}
           type="file"
           accept={ACCEPT_MIME}
           onChange={handleFileSelect}
+          disabled={isSending || disabled}
           className="hidden"
+          tabIndex={-1}
         />
       </div>
-    </div>
+    </form>
   )
 }
