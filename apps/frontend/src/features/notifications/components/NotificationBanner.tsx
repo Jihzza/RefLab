@@ -1,11 +1,82 @@
-import { useNavigate } from 'react-router-dom'
-import { Bell } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import {
+  Bell,
+  BookOpen,
+  ChevronRight,
+  Clock,
+  CreditCard,
+  Flame,
+  User,
+  type LucideIcon,
+} from 'lucide-react'
+import { Avatar, Skeleton } from '@/components/ui'
 import type { EnrichedNotification, NotificationType } from '../types'
 import { useTranslation } from 'react-i18next'
 
 interface NotificationBannerProps {
   notification: EnrichedNotification
   isUnread: boolean
+}
+
+interface SystemNotificationVisual {
+  icon: LucideIcon
+  className: string
+}
+
+function getSystemNotificationVisual(type: NotificationType): SystemNotificationVisual {
+  if (type === 'streak_reminder') {
+    return {
+      icon: Clock,
+      className: 'border-(--mc-color-warning)/35 bg-(--mc-color-warning)/12 text-(--mc-color-warning)',
+    }
+  }
+
+  if (type === 'streak_track') {
+    return {
+      icon: Flame,
+      className: 'border-(--mc-color-success)/35 bg-(--mc-color-success)/12 text-(--mc-color-success)',
+    }
+  }
+
+  if (type === 'streak_loss') {
+    return {
+      icon: Flame,
+      className: 'border-(--mc-color-danger)/35 bg-(--mc-color-danger)/12 text-(--mc-color-danger)',
+    }
+  }
+
+  if (type === 'plan_expired') {
+    return {
+      icon: CreditCard,
+      className: 'border-(--mc-color-danger)/35 bg-(--mc-color-danger)/12 text-(--mc-color-danger)',
+    }
+  }
+
+  if (type === 'welcome_to_plan' || type === 'plan_expiration_reminder') {
+    return {
+      icon: CreditCard,
+      className: 'border-(--mc-color-accent)/35 bg-(--mc-color-accent)/12 text-(--mc-color-accent)',
+    }
+  }
+
+  if (type === 'new_content_available') {
+    return {
+      icon: BookOpen,
+      className: 'border-(--mc-color-info)/35 bg-(--mc-color-info)/12 text-(--mc-color-info)',
+    }
+  }
+
+  if (type === 'profile_incomplete') {
+    return {
+      icon: User,
+      className: 'border-(--mc-color-warning)/35 bg-(--mc-color-warning)/12 text-(--mc-color-warning)',
+    }
+  }
+
+  return {
+    icon: Bell,
+    className: 'border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text-muted)',
+  }
 }
 
 /** Formats a timestamp into a relative time string (e.g. "5m", "2h", "3d"). */
@@ -124,78 +195,92 @@ export default function NotificationBanner({
   isUnread,
 }: NotificationBannerProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { actor, created_at } = notification
 
   // Actor display info (fallback to "RefLab" for system notifications)
   const displayName = actor ? actor.name || actor.username : 'RefLab'
-  const initials = displayName.slice(0, 2).toUpperCase()
   const localizedMessage = getLocalizedMessage(notification, t)
-
   const route = getNotificationRoute(notification)
+  const systemVisual = getSystemNotificationVisual(notification.type)
+  const SystemIcon = systemVisual.icon
+  const accessibleLabel = `${
+    isUnread ? t('Unread notification') : t('Notification')
+  }: ${displayName} ${localizedMessage}`
 
-  const handleClick = () => {
-    if (route) navigate(route)
-  }
-
-  return (
-    <div
-      className={`flex items-start gap-3 px-4 py-3 transition-colors ${
-        route ? 'cursor-pointer active:opacity-80' : ''
-      } ${
-        isUnread
-          ? 'bg-(--bg-surface-2) border-l-2 border-l-(--brand-yellow)'
-          : 'bg-(--bg-surface)'
-      }`}
-      role="listitem"
-      aria-label={`${isUnread ? t('Unread notification') : t('Notification')}: ${displayName} ${localizedMessage}`}
-      onClick={handleClick}
-    >
-      {/* Avatar */}
+  const content = (
+    <>
       {actor ? (
-        actor.photo_url ? (
-          <img
-            src={actor.photo_url}
-            alt={displayName}
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-semibold text-(--bg-primary)">
-              {initials}
-            </span>
-          </div>
-        )
+        <Avatar
+          src={actor.photo_url}
+          alt={displayName}
+          name={displayName}
+          size="lg"
+          className="border-(--mc-color-border-strong)"
+        />
       ) : (
-        /* System notification: generic bell icon */
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2) flex items-center justify-center flex-shrink-0 border border-(--border-subtle)">
-          <Bell className="w-5 h-5 text-(--text-muted)" aria-hidden="true" />
-        </div>
-      )}
-
-      {/* Message + Timestamp */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-(--text-secondary) leading-snug">
-          {actor && (
-            <span className="font-semibold text-(--text-primary)">
-              {displayName}
-            </span>
-          )}{' '}
-          {localizedMessage}
-        </p>
-        <span className="text-xs text-(--text-muted) mt-0.5 block">
-          {formatRelativeTime(created_at, t('now'))}
-        </span>
-      </div>
-
-      {/* Unread dot indicator */}
-      {isUnread && (
-        <div
-          className="w-2 h-2 rounded-full bg-(--brand-yellow) flex-shrink-0 mt-2"
-          aria-hidden="true"
+        <Avatar
+          name={displayName}
+          fallback={<SystemIcon className="size-5" aria-hidden="true" />}
+          size="lg"
+          className={systemVisual.className}
         />
       )}
-    </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="break-words text-sm leading-5 text-(--mc-color-text-secondary) [overflow-wrap:anywhere]">
+          {actor && (
+            <span className="font-semibold text-(--mc-color-text)">
+              {displayName}
+            </span>
+          )}{actor ? ' ' : null}
+          {localizedMessage}
+        </p>
+        <time
+          dateTime={created_at}
+          className="mt-1 block text-xs font-medium tabular-nums text-(--mc-color-text-muted)"
+        >
+          {formatRelativeTime(created_at, t('now'))}
+        </time>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2 self-center" aria-hidden="true">
+        {isUnread && <span className="size-2 rounded-full bg-(--mc-color-accent) shadow-[0_0_0_3px_var(--mc-color-selection)]" />}
+        {route && (
+          <ChevronRight className="size-4 text-(--mc-color-text-muted) transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+        )}
+      </div>
+    </>
+  )
+
+  return (
+    <li
+      aria-label={route ? undefined : accessibleLabel}
+      className="list-none"
+    >
+      {route ? (
+        <Link
+          to={route}
+          className={`group relative flex min-h-[92px] w-full items-center gap-3 overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) px-4 py-4 text-left shadow-(--mc-shadow-soft) transition-[background-color,border-color,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) active:opacity-80 motion-reduce:transition-none sm:px-5 ${
+            isUnread
+              ? 'border-l-4 border-l-(--mc-color-accent) bg-(--mc-color-accent)/6 hover:border-(--mc-color-accent)/65'
+              : 'bg-(--mc-color-surface) hover:border-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover)/70'
+          }`}
+          aria-label={accessibleLabel}
+        >
+          {content}
+        </Link>
+      ) : (
+        <div
+          className={`relative flex min-h-[92px] w-full items-center gap-3 overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) px-4 py-4 shadow-(--mc-shadow-soft) sm:px-5 ${
+            isUnread
+              ? 'border-l-4 border-l-(--mc-color-accent) bg-(--mc-color-accent)/6'
+              : 'bg-(--mc-color-surface)'
+          }`}
+        >
+          {content}
+        </div>
+      )}
+    </li>
   )
 }
 
@@ -205,11 +290,14 @@ export default function NotificationBanner({
  */
 export function NotificationBannerSkeleton() {
   return (
-    <div className="flex items-start gap-3 px-4 py-3 animate-pulse">
-      <div className="w-10 h-10 rounded-full bg-(--bg-surface-2) flex-shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
-        <div className="h-2 bg-(--bg-surface-2) rounded w-1/4" />
+    <div
+      className="flex min-h-[92px] items-center gap-3 rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface) px-4 py-4 sm:px-5"
+      aria-hidden="true"
+    >
+      <Skeleton variant="circular" width="3rem" />
+      <div className="min-w-0 flex-1 space-y-2.5 py-0.5">
+        <Skeleton variant="text" width="78%" />
+        <Skeleton variant="text" width="24%" height="0.65rem" />
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Bell } from 'lucide-react'
+import { Badge, IconButton } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getUnreadCount } from '../api/notificationsApi'
 import { useTranslation } from 'react-i18next'
@@ -33,22 +34,29 @@ export default function NotificationBell() {
   }
 
   return (
-    <button
-      onClick={handleClick}
-      className="relative p-2"
-      aria-label={
+    <IconButton
+      label={
         unreadCount > 0
           ? `${t('Notifications')} (${unreadCount})`
           : t('Notifications')
       }
+      variant="ghost"
+      size="md"
+      onClick={handleClick}
+      className="relative"
     >
-      <Bell className="w-6 h-6 text-(--text-secondary) hover:text-(--text-primary) transition-colors" />
+      <Bell className="size-5" />
 
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-(--brand-red) text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+        <Badge
+          variant="danger"
+          size="sm"
+          className="pointer-events-none absolute -right-0.5 -top-0.5 min-w-5 !border-(--mc-color-canvas) !bg-(--mc-color-danger) px-1 !text-white shadow-sm"
+          aria-hidden="true"
+        >
           {unreadCount > 9 ? '9+' : unreadCount}
-        </span>
+        </Badge>
       )}
-    </button>
+    </IconButton>
   )
 }

@@ -1,4 +1,5 @@
-import { Bell } from 'lucide-react'
+import { Bell, BellOff } from 'lucide-react'
+import { EmptyState, Surface } from '@/components/ui'
 import { useNotifications } from '../hooks/useNotifications'
 import NotificationBanner, {
   NotificationBannerSkeleton,
@@ -21,61 +22,70 @@ export default function NotificationsPage() {
     useNotifications()
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Page header */}
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold text-(--text-primary)">
-          {t('Notifications')}
-        </h1>
-      </div>
+    <section
+      aria-label={t('Notifications')}
+      className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)"
+    >
+      <div className="mx-auto w-full max-w-3xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7">
+        <header className="mb-4 sm:mb-5">
+          <h1 className="text-[26px] font-extrabold leading-tight tracking-[-0.03em] text-(--mc-color-text) sm:text-3xl">
+            {t('Notifications')}
+          </h1>
+        </header>
 
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="divide-y divide-(--border-subtle)">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <NotificationBannerSkeleton key={i} />
-          ))}
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && !loading && (
-        <div className="px-4 py-8 text-center">
-          <p className="text-(--text-muted) text-sm">{t(error)}</p>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loading && !error && notifications.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-          <div className="w-16 h-16 rounded-full bg-(--bg-surface-2) flex items-center justify-center mb-4 border border-(--border-subtle)">
-            <Bell className="w-8 h-8 text-(--text-muted)" aria-hidden="true" />
+        {loading && (
+          <div
+            className="space-y-3"
+            role="status"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <span className="sr-only">{t('Loading...')}</span>
+            {Array.from({ length: 6 }).map((_, index) => (
+              <NotificationBannerSkeleton key={index} />
+            ))}
           </div>
-          <p className="text-(--text-muted) text-sm text-center">
-            {t('No notifications yet')}
-          </p>
-          <p className="text-(--text-muted) text-xs text-center mt-1">
-            {t("When someone interacts with your content, you'll see it here.")}
-          </p>
-        </div>
-      )}
+        )}
 
-      {/* Notification list */}
-      {!loading && !error && notifications.length > 0 && (
-        <div
-          className="divide-y divide-(--border-subtle) pb-4"
-          role="list"
-          aria-label={t('Notifications list')}
-        >
-          {notifications.map((notification) => (
-            <NotificationBanner
-              key={notification.id}
-              notification={notification}
-              isUnread={isVisuallyUnread(notification.id)}
+        {error && !loading && (
+          <Surface
+            variant="inset"
+            className="border-(--mc-color-danger)/35 bg-(--mc-color-danger)/8"
+            role="alert"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-(--mc-radius-button) bg-(--mc-color-danger)/12 text-(--mc-color-danger)">
+                <BellOff className="size-5" aria-hidden="true" />
+              </div>
+              <p className="pt-2 text-sm leading-5 text-(--mc-color-text-secondary)">
+                {t(error)}
+              </p>
+            </div>
+          </Surface>
+        )}
+
+        {!loading && !error && notifications.length === 0 && (
+          <Surface padding="none" className="overflow-hidden">
+            <EmptyState
+              icon={<Bell className="size-5" />}
+              title={t('No notifications yet')}
+              description={t("When someone interacts with your content, you'll see it here.")}
             />
-          ))}
-        </div>
-      )}
-    </div>
+          </Surface>
+        )}
+
+        {!loading && !error && notifications.length > 0 && (
+          <ul className="space-y-3" aria-label={t('Notifications list')}>
+            {notifications.map((notification) => (
+              <NotificationBanner
+                key={notification.id}
+                notification={notification}
+                isUnread={isVisuallyUnread(notification.id)}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
   )
 }
