@@ -75,9 +75,12 @@ export async function createPortalSession(): Promise<{ url: string | null; error
 }
 
 /**
- * Get the user's most recent subscription from Supabase (RLS-protected).
- * Returning terminal states as well lets billing history remain available after cancellation;
- * BillingProvider still derives paid access only from active/trialing/past_due states.
+ * Get the user's effective subscription from Supabase (RLS-protected).
+ *
+ * A user can have more than one Stripe subscription row. Prefer the most
+ * recently updated row that still grants entitlement, matching get_user_plan;
+ * only fall back to the latest terminal row so billing history remains
+ * available after cancellation.
  */
 export async function getSubscription(): Promise<{
   subscription: Subscription | null
@@ -87,12 +90,18 @@ export async function getSubscription(): Promise<{
     .from('stripe_subscriptions')
     .select('*')
     .order('updated_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
 
   if (error) {
     return { subscription: null, error: new Error(error.message) }
   }
 
-  return { subscription: data as Subscription | null, error: null }
+  const subscriptions = (data ?? []) as Subscription[]
+  const entitledSubscription = subscriptions.find((subscription) =>
+    ['active', 'trialing', 'past_due'].includes(subscription.status)
+  )
+
+  return {
+    subscription: entitledSubscription ?? subscriptions[0] ?? null,
+    error: null,
+  }
 }

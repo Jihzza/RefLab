@@ -1,5 +1,5 @@
 import { Bell, BellOff } from 'lucide-react'
-import { EmptyState, Surface } from '@/components/ui'
+import { Button, EmptyState, Surface } from '@/components/ui'
 import { useNotifications } from '../hooks/useNotifications'
 import NotificationBanner, {
   NotificationBannerSkeleton,
@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next'
  */
 export default function NotificationsPage() {
   const { t } = useTranslation()
-  const { notifications, loading, error, isVisuallyUnread } =
+  const { notifications, loading, error, retry, isVisuallyUnread } =
     useNotifications()
 
   return (
@@ -53,13 +53,16 @@ export default function NotificationsPage() {
             className="border-(--mc-color-danger)/35 bg-(--mc-color-danger)/8"
             role="alert"
           >
-            <div className="flex items-start gap-3">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-(--mc-radius-button) bg-(--mc-color-danger)/12 text-(--mc-color-danger)">
                 <BellOff className="size-5" aria-hidden="true" />
               </div>
-              <p className="pt-2 text-sm leading-5 text-(--mc-color-text-secondary)">
+              <p className="min-w-0 flex-1 text-sm leading-5 text-(--mc-color-text-secondary)">
                 {t(error)}
               </p>
+              <Button size="sm" variant="secondary" onClick={retry}>
+                {t('Try Again')}
+              </Button>
             </div>
           </Surface>
         )}

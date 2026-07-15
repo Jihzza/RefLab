@@ -15,6 +15,7 @@ import {
   getSession,
 } from '../api/authApi'
 import { getProfile, updateLastLogin, isProfileComplete, updateProfile } from '../api/profilesApi'
+import { deleteProfileReminder } from '@/features/notifications/api/notificationsApi'
 import SessionExpiredModal from './SessionExpiredModal'
 import { AuthContext } from './AuthContext'
 import { clearAuthReturnTo } from '../utils/authNavigation'
@@ -229,6 +230,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { profile: updatedProfile, error } = await updateProfile(user.id, updates)
     if (updatedProfile) {
       setProfile(updatedProfile)
+      const profileComplete = isProfileComplete(updatedProfile)
+      setProfileStatus(profileComplete ? 'complete' : 'incomplete')
+
+      if (profileComplete) {
+        const { error: reminderError } = await deleteProfileReminder(user.id)
+        if (reminderError) {
+          console.error('Failed to remove profile completion reminder:', reminderError)
+        }
+      }
     }
     return { error: error ? new Error(error.message) : null }
   }

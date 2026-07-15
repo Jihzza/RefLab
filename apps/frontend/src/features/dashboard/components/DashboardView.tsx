@@ -17,7 +17,7 @@ export interface DashboardViewProps {
   error?: string | null
   retrying?: boolean
   onRetry: () => void | Promise<void>
-  onStartTraining: (topic: TopicAccuracy | null) => void
+  onStartTraining: () => void
   /** Allows visual fixtures to lock the greeting without changing production behaviour. */
   greetingHour?: number
 }
@@ -88,7 +88,7 @@ export default function DashboardView({
               <PerformanceSection performance={stats.performance} progress={stats.progress} />
               <RecommendedTrainingCard
                 topic={weakestTopic}
-                onStart={() => onStartTraining(weakestTopic)}
+                onStart={onStartTraining}
               />
             </div>
 
@@ -117,7 +117,7 @@ export default function DashboardView({
               title={t('No data yet')}
               description={t('Complete your first test to see accuracy')}
               action={
-                <Button onClick={() => onStartTraining(null)}>
+                <Button onClick={onStartTraining}>
                   {t('Start New Test')}
                 </Button>
               }

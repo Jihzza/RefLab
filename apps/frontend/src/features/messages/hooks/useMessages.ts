@@ -45,6 +45,7 @@ export function useMessages(
   const [loadError, setLoadError] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
+  const [loadedConversationId, setLoadedConversationId] = useState<string | null>(null)
 
   const cursorRef = useRef<string | null>(null)
   const loadingRef = useRef(false)
@@ -88,6 +89,7 @@ export function useMessages(
     setIsSending(false)
     setLoadError(null)
     setSendError(null)
+    setLoadedConversationId(null)
 
     if (!conversationId || !user?.id) {
       setIsLoading(false)
@@ -110,6 +112,7 @@ export function useMessages(
 
       if (fetchError) {
         setLoadError(fetchError.message)
+        setLoadedConversationId(conversationId)
         setIsLoading(false)
         return
       }
@@ -118,6 +121,7 @@ export function useMessages(
       oldestFirst.forEach(message => messageIdsRef.current.add(message.id))
 
       setMessages(oldestFirst)
+      setLoadedConversationId(conversationId)
       setHasMore(data.length >= PAGE_SIZE)
       cursorRef.current = oldestFirst.length > 0
         ? oldestFirst[0].created_at
@@ -350,14 +354,17 @@ export function useMessages(
     setSendError(null)
   }, [])
 
+  const isCurrentConversation = Boolean(conversationId)
+    && loadedConversationId === conversationId
+
   return {
-    messages,
-    isLoading,
-    isLoadingMore,
+    messages: isCurrentConversation ? messages : [],
+    isLoading: Boolean(conversationId) && !isCurrentConversation ? true : isLoading,
+    isLoadingMore: isCurrentConversation ? isLoadingMore : false,
     hasMore,
-    isSending,
-    loadError,
-    sendError,
+    isSending: isCurrentConversation ? isSending : false,
+    loadError: isCurrentConversation ? loadError : null,
+    sendError: isCurrentConversation ? sendError : null,
     loadMore,
     retry,
     sendMessage,

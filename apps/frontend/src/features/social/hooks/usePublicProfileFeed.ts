@@ -18,43 +18,64 @@ export function usePublicProfileFeed(
   const [error, setError] = useState<string | null>(null)
 
   const cursorRef = useRef<string | null>(null)
-  const loadingRef = useRef(false)
+  const activeRequestRef = useRef<number | null>(null)
+  const requestSerialRef = useRef(0)
+  const generationRef = useRef(0)
 
   const fetchFeed = useCallback(
-    async (cursor: string | null, isRefresh: boolean) => {
-      if (!viewerId || !targetUserId || !enabled || loadingRef.current) return
-      loadingRef.current = true
+    async (
+      cursor: string | null,
+      isRefresh: boolean,
+      generation = generationRef.current,
+    ): Promise<boolean> => {
+      if (!viewerId || !targetUserId || !enabled || activeRequestRef.current !== null) {
+        return false
+      }
+
+      const requestSerial = ++requestSerialRef.current
+      activeRequestRef.current = requestSerial
 
       try {
         const { posts: fetchedPosts, error: fetchError } =
           await getPublicProfileFeed(viewerId, targetUserId, cursor, PAGE_SIZE)
 
+        if (generation !== generationRef.current) return false
+
         if (fetchError) {
           setError(fetchError.message)
-          return
+          return true
         }
 
         setError(null)
-
-        if (isRefresh) {
-          setPosts(fetchedPosts)
-        } else {
-          setPosts(prev => [...prev, ...fetchedPosts])
-        }
-
+        setPosts((currentPosts) => (
+          isRefresh ? fetchedPosts : [...currentPosts, ...fetchedPosts]
+        ))
         setHasMore(fetchedPosts.length >= PAGE_SIZE)
-        cursorRef.current =
-          fetchedPosts.length > 0
-            ? fetchedPosts[fetchedPosts.length - 1].created_at
-            : cursor
+        cursorRef.current = fetchedPosts.length > 0
+          ? fetchedPosts[fetchedPosts.length - 1].created_at
+          : cursor
+        return true
+      } catch (fetchError) {
+        if (generation !== generationRef.current) return false
+        setError(
+          fetchError instanceof Error
+            ? fetchError.message
+            : 'Failed to load profile posts.',
+        )
+        return true
       } finally {
-        loadingRef.current = false
+        if (activeRequestRef.current === requestSerial) {
+          activeRequestRef.current = null
+        }
       }
     },
-    [viewerId, targetUserId, enabled]
+    [enabled, targetUserId, viewerId],
   )
 
   useEffect(() => {
+    const generation = ++generationRef.current
+    activeRequestRef.current = null
+
     if (!viewerId || !targetUserId || !enabled) {
       setPosts([])
       setIsLoading(false)
@@ -68,49 +89,75 @@ export function usePublicProfileFeed(
     }
 
     setIsLoading(true)
+    setIsRefreshing(false)
+    setIsLoadingMore(false)
     cursorRef.current = null
     setPosts([])
     setHasMore(true)
 
-    fetchFeed(null, true).finally(() => {
+    void fetchFeed(null, true, generation).then((completedCurrentRequest) => {
+      if (!completedCurrentRequest || generation !== generationRef.current) return
       setIsLoading(false)
       setHasInitiallyLoaded(true)
     })
-  }, [viewerId, targetUserId, enabled, fetchFeed])
+
+    return () => {
+      if (generation === generationRef.current) {
+        generationRef.current += 1
+        activeRequestRef.current = null
+      }
+    }
+  }, [enabled, fetchFeed, targetUserId, viewerId])
 
   const refresh = useCallback(async () => {
-    if (!viewerId || !targetUserId || !enabled) return
+    if (!viewerId || !targetUserId || !enabled || activeRequestRef.current !== null) return
 
+    const generation = generationRef.current
     setIsRefreshing(true)
     cursorRef.current = null
-    await fetchFeed(null, true)
-    setIsRefreshing(false)
-  }, [viewerId, targetUserId, enabled, fetchFeed])
+    const completedCurrentRequest = await fetchFeed(null, true, generation)
+    if (completedCurrentRequest && generation === generationRef.current) {
+      setIsRefreshing(false)
+      setIsLoading(false)
+      setHasInitiallyLoaded(true)
+    }
+  }, [enabled, fetchFeed, targetUserId, viewerId])
 
   const loadMore = useCallback(async () => {
-    if (!viewerId || !targetUserId || !enabled || !hasMore || loadingRef.current) {
+    if (
+      !viewerId
+      || !targetUserId
+      || !enabled
+      || !hasMore
+      || activeRequestRef.current !== null
+    ) {
       return
     }
 
+    const generation = generationRef.current
     setIsLoadingMore(true)
-    await fetchFeed(cursorRef.current, false)
-    setIsLoadingMore(false)
-  }, [viewerId, targetUserId, enabled, hasMore, fetchFeed])
+    const completedCurrentRequest = await fetchFeed(cursorRef.current, false, generation)
+    if (completedCurrentRequest && generation === generationRef.current) {
+      setIsLoadingMore(false)
+    }
+  }, [enabled, fetchFeed, hasMore, targetUserId, viewerId])
 
   const addPost = useCallback((post: Post) => {
-    setPosts(prev => [post, ...prev])
+    setPosts((currentPosts) => [post, ...currentPosts])
   }, [])
 
   const removePost = useCallback((postId: string) => {
-    setPosts(prev => prev.filter(p => p.id !== postId))
+    setPosts((currentPosts) => currentPosts.filter((post) => post.id !== postId))
   }, [])
 
   const removePostsByUser = useCallback((userId: string) => {
-    setPosts(prev => prev.filter(p => p.author.id !== userId))
+    setPosts((currentPosts) => currentPosts.filter((post) => post.author.id !== userId))
   }, [])
 
   const updatePost = useCallback((postId: string, updates: Partial<Post>) => {
-    setPosts(prev => prev.map(p => (p.id === postId ? { ...p, ...updates } : p)))
+    setPosts((currentPosts) => currentPosts.map((post) => (
+      post.id === postId ? { ...post, ...updates } : post
+    )))
   }, [])
 
   return {

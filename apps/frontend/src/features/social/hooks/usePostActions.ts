@@ -200,13 +200,16 @@ export function usePostActions({
       if (inFlightActionsRef.current.has(actionKey)) return
       inFlightActionsRef.current.add(actionKey)
       setPendingAction(postId)
-      removePost(postId) // Optimistic
 
       try {
         const { error } = await deletePost(postId)
         if (error) {
-          // The owning feed refresh remains the source of truth for restoration.
+          console.error('Failed to delete post:', error)
+          return
         }
+        removePost(postId)
+      } catch (error) {
+        console.error('Failed to delete post:', error)
       } finally {
         inFlightActionsRef.current.delete(actionKey)
         setPendingAction((current) => (current === postId ? null : current))
@@ -242,13 +245,15 @@ export function usePostActions({
       if (inFlightActionsRef.current.has(actionKey)) return
       inFlightActionsRef.current.add(actionKey)
 
-      removePostsByUser(blockedUserId)
-
       try {
         const { error } = await blockUser(user.id, blockedUserId)
         if (error) {
-          // The owning feed refresh remains the source of truth for restoration.
+          console.error('Failed to block user:', error)
+          return
         }
+        removePostsByUser(blockedUserId)
+      } catch (error) {
+        console.error('Failed to block user:', error)
       } finally {
         inFlightActionsRef.current.delete(actionKey)
       }

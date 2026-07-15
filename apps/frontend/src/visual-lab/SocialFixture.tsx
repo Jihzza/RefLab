@@ -18,6 +18,8 @@ const pitchSituation = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
   </svg>
 `)}`
 
+const resolveFixtureMediaUrl = (path: string) => path
+
 function minutesAgo(minutes: number) {
   return new Date(Date.now() - minutes * 60_000).toISOString()
 }
@@ -88,6 +90,7 @@ export default function SocialFixture() {
                   onReport={noopId}
                   onBlock={noopId}
                   onCommentCountChange={noopId}
+                  resolveMediaUrl={resolveFixtureMediaUrl}
                 />
               </li>
             ))}

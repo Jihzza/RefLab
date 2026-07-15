@@ -9,9 +9,10 @@ import { getMatchRouteTitleKey } from './navigation'
 
 interface MatchHeaderProps {
   onMenuToggle?: () => void
+  menuOpen?: boolean
 }
 
-export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
+export default function MatchHeader({ menuOpen = false, onMenuToggle }: MatchHeaderProps) {
   const { t } = useTranslation()
   const location = useLocation()
   const { profile, user } = useAuth()
@@ -34,8 +35,9 @@ export default function MatchHeader({ onMenuToggle }: MatchHeaderProps) {
             label={t('Open menu')}
             size="md"
             variant="ghost"
-            className="md:hidden"
             onClick={onMenuToggle}
+            aria-controls="app-navigation-menu"
+            aria-expanded={menuOpen}
           >
             <Menu className="h-5 w-5" />
           </IconButton>

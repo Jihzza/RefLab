@@ -8,6 +8,7 @@ interface MediaDisplayProps {
   mediaType: PostMediaType
   mediaUrl: string | null
   mediaMetadata?: { width?: number; height?: number } | null
+  resolveMediaUrl?: (path: string) => string
 }
 
 /** Renders all supported post media without cropping portrait or wide assets. */
@@ -15,13 +16,14 @@ export default function MediaDisplay({
   mediaType,
   mediaUrl,
   mediaMetadata,
+  resolveMediaUrl = getMediaPublicUrl,
 }: MediaDisplayProps) {
   const { t } = useTranslation()
   const [failedUrl, setFailedUrl] = useState<string | null>(null)
 
   if (!mediaUrl || mediaType === 'text') return null
 
-  const publicUrl = getMediaPublicUrl(mediaUrl)
+  const publicUrl = resolveMediaUrl(mediaUrl)
   const hasFailed = failedUrl === publicUrl
   const aspectRatio =
     mediaMetadata?.width && mediaMetadata?.height

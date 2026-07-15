@@ -157,24 +157,16 @@ export default function LearnPage() {
   const { t } = useTranslation()
   const [, setSearchParams] = useSearchParams()
   const [routeState] = useState(getLearnRouteState)
-  const [activeTab, setActiveTab] = useState<TabKey>(() => (
-    routeState.recommendedArea ? 'questions' : 'test'
-  ))
+  const [activeTab, setActiveTab] = useState<TabKey>('test')
   const [autoStartEnabled, setAutoStartEnabled] = useState(routeState.autoStartTest)
-  const [immersiveMode, setImmersiveMode] = useState(
-    routeState.autoStartTest || Boolean(routeState.recommendedArea),
-  )
+  const [immersiveMode, setImmersiveMode] = useState(routeState.autoStartTest)
 
   useEffect(() => {
-    if (!routeState.autoStartTest && !routeState.recommendedArea) return
+    if (!routeState.autoStartTest) return
 
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
       next.delete('action')
-      if (routeState.recommendedArea) {
-        next.delete('tab')
-        next.delete('area')
-      }
       return next
     }, { replace: true })
   }, [routeState, setSearchParams])
@@ -214,10 +206,7 @@ export default function LearnPage() {
             />
           )}
           {activeTab === 'questions' && (
-            <LearnQuestionsView
-              initialArea={routeState.recommendedArea}
-              onImmersiveChange={setImmersiveMode}
-            />
+            <LearnQuestionsView onImmersiveChange={setImmersiveMode} />
           )}
           {activeTab === 'videos' && <VideoAnalysisView />}
           {activeTab === 'courses' && (

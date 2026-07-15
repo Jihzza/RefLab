@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react'
+import type { KeyboardEventHandler } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface UserSearchBarProps {
@@ -9,6 +10,8 @@ interface UserSearchBarProps {
   placeholder?: string
   isExpanded?: boolean
   resultsId?: string
+  activeDescendantId?: string
+  onKeyDown?: KeyboardEventHandler<HTMLInputElement>
 }
 
 export default function UserSearchBar({
@@ -19,6 +22,8 @@ export default function UserSearchBar({
   placeholder = 'Search users...',
   isExpanded = false,
   resultsId,
+  activeDescendantId,
+  onKeyDown,
 }: UserSearchBarProps) {
   const { t } = useTranslation()
 
@@ -40,6 +45,8 @@ export default function UserSearchBar({
         aria-autocomplete="list"
         aria-expanded={isExpanded}
         aria-controls={isExpanded ? resultsId : undefined}
+        aria-activedescendant={isExpanded ? activeDescendantId : undefined}
+        onKeyDown={onKeyDown}
         className="min-h-11 min-w-0 flex-1 bg-transparent py-2 text-sm text-(--mc-color-text) placeholder:text-(--mc-color-text-muted) focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       />
 

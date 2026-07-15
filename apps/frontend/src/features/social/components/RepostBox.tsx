@@ -19,10 +19,11 @@ interface OriginalPostData {
 
 interface RepostBoxProps {
   originalPost: OriginalPostData
+  resolveMediaUrl?: (path: string) => string
 }
 
 /** Embedded card showing the original post within a repost. */
-const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
+const RepostBox: React.FC<RepostBoxProps> = ({ originalPost, resolveMediaUrl }) => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -71,6 +72,7 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost }) => {
         mediaType={originalPost.media_type}
         mediaUrl={originalPost.media_url}
         mediaMetadata={originalPost.media_metadata}
+        resolveMediaUrl={resolveMediaUrl}
       />
     </Surface>
   )

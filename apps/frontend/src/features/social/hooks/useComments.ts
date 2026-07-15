@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import {
   getComments,
@@ -19,6 +19,7 @@ export function useComments(postId: string) {
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const pendingCommentLikesRef = useRef(new Set<string>())
 
   const fetchComments = useCallback(async (): Promise<boolean> => {
     if (!userId) return false
@@ -73,6 +74,8 @@ export function useComments(postId: string) {
   const toggleLike = useCallback(
     async (commentId: string, isCurrentlyLiked: boolean) => {
       if (!userId) return
+      if (pendingCommentLikesRef.current.has(commentId)) return
+      pendingCommentLikesRef.current.add(commentId)
 
       // Optimistic update: find comment in top-level or replies
       setComments((currentComments) =>
@@ -114,6 +117,8 @@ export function useComments(postId: string) {
         await fetchComments()
       } catch {
         await fetchComments()
+      } finally {
+        pendingCommentLikesRef.current.delete(commentId)
       }
     },
     [userId, fetchComments]

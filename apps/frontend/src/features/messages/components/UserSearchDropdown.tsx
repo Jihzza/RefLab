@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { AlertTriangle, LoaderCircle } from 'lucide-react'
 import { Avatar, Button } from '@/components/ui'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +14,8 @@ interface UserSearchDropdownProps {
   onSelect: (user: UserSearchResult) => void
   isOpen: boolean
   disabled?: boolean
+  activeIndex?: number
+  onActiveIndexChange?: (index: number) => void
 }
 
 export default function UserSearchDropdown({
@@ -25,8 +28,17 @@ export default function UserSearchDropdown({
   onSelect,
   isOpen,
   disabled = false,
+  activeIndex = -1,
+  onActiveIndexChange,
 }: UserSearchDropdownProps) {
   const { t } = useTranslation()
+
+  useEffect(() => {
+    if (!id || activeIndex < 0) return
+    document
+      .getElementById(`${id}-option-${activeIndex}`)
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [activeIndex, id])
 
   if (!isOpen) return null
 
@@ -68,18 +80,21 @@ export default function UserSearchDropdown({
 
       {!isSearching && !error && results.length > 0 && (
         <div className="max-h-[min(20rem,48dvh)] overflow-y-auto p-1.5">
-          {results.map(user => {
+          {results.map((user, index) => {
             const displayName = user.name || user.username
+            const isActive = index === activeIndex
 
             return (
               <button
                 key={user.id}
+                id={id ? `${id}-option-${index}` : undefined}
                 type="button"
                 role="option"
-                aria-selected="false"
+                aria-selected={isActive}
                 onClick={() => onSelect(user)}
+                onMouseEnter={() => onActiveIndexChange?.(index)}
                 disabled={disabled}
-                className="mc-focus-ring flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-(--mc-color-surface-hover) disabled:cursor-not-allowed disabled:opacity-50"
+                className={`mc-focus-ring flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-(--mc-color-surface-hover) disabled:cursor-not-allowed disabled:opacity-50 ${isActive ? 'bg-(--mc-color-surface-hover)' : ''}`}
               >
                 <Avatar
                   src={user.photo_url}

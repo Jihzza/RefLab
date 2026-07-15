@@ -20,6 +20,7 @@ export function useNotifications() {
   const [notifications, setNotifications] = useState<EnrichedNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reloadRequest, setReloadRequest] = useState(0)
 
   // Snapshot of notification IDs that were unread when the page was entered
   const unreadSnapshotRef = useRef<Set<string>>(new Set())
@@ -76,7 +77,11 @@ export function useNotifications() {
     return () => {
       cancelled = true
     }
-  }, [userId])
+  }, [reloadRequest, userId])
+
+  const retry = useCallback(() => {
+    setReloadRequest(currentRequest => currentRequest + 1)
+  }, [])
 
   // Check if a notification should display as "unread" in this session
   const isVisuallyUnread = useCallback(
@@ -90,6 +95,7 @@ export function useNotifications() {
     notifications,
     loading,
     error,
+    retry,
     isVisuallyUnread,
   }
 }

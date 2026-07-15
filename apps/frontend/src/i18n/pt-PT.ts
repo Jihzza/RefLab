@@ -739,6 +739,8 @@ const ptPT = {
   'Profile not found': 'Perfil não encontrado',
   'Profile updated, but metadata sync failed. Tap "Save changes" again to retry.':
     'Perfil atualizado, mas a sincronização dos metadados falhou. Toca em "Guardar alterações" novamente para tentar de novo.',
+  'Profile updated, but an old avatar could not be removed. Tap "Save changes" again to retry.':
+    'O perfil foi atualizado, mas não foi possível remover o avatar anterior. Toca novamente em "Guardar alterações" para tentar de novo.',
   Questions: 'Perguntas',
   'RefLab Home': 'Início RefLab',
   'RefLab Logo': 'Logótipo RefLab',

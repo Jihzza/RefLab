@@ -28,6 +28,7 @@ export default function AppShell() {
 
       <MatchHeader
         onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
+        menuOpen={isSidebarOpen}
       />
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />

@@ -60,9 +60,13 @@ export async function updateProfile(
   userId: string,
   updates: Partial<Pick<Profile, 'username' | 'name' | 'photo_url'>>
 ) {
+  const persistedUpdates = 'username' in updates
+    ? { ...updates, username_customized: true }
+    : updates
+
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(persistedUpdates)
     .eq('id', userId)
     .select()
     .single()

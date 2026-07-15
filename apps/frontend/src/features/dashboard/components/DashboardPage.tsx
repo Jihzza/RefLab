@@ -31,19 +31,7 @@ export default function DashboardPage() {
       error={error}
       retrying={loading}
       onRetry={refresh}
-      onStartTraining={(topic) => {
-        if (topic?.topic) {
-          const search = new URLSearchParams({
-            tab: 'questions',
-            action: 'start-area',
-            area: topic.topic,
-          })
-          navigate(`/app/learn?${search.toString()}`)
-          return
-        }
-
-        navigate('/app/learn?action=start-test')
-      }}
+      onStartTraining={() => navigate('/app/learn?action=start-test')}
     />
   )
 }

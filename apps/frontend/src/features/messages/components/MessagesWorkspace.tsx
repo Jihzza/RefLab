@@ -95,6 +95,80 @@ function InboxPane({
 }: InboxPaneProps) {
   const { t } = useTranslation()
   const dropdownOpen = Boolean(query.trim())
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
+  const resolvedActiveSearchIndex = !isSearching
+    && !searchError
+    && activeSearchIndex >= 0
+    && activeSearchIndex < searchResults.length
+    ? activeSearchIndex
+    : -1
+  const activeSearchResult = resolvedActiveSearchIndex >= 0
+    ? searchResults[resolvedActiveSearchIndex] ?? null
+    : null
+  const activeDescendantId = activeSearchResult
+    ? `${SEARCH_RESULTS_ID}-option-${resolvedActiveSearchIndex}`
+    : undefined
+
+  const handleSearchChange = useCallback((value: string) => {
+    setActiveSearchIndex(-1)
+    onQueryChange(value)
+  }, [onQueryChange])
+
+  const handleClearSearch = useCallback(() => {
+    setActiveSearchIndex(-1)
+    onClearSearch()
+  }, [onClearSearch])
+
+  const handleSearchKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape' && dropdownOpen) {
+      event.preventDefault()
+      handleClearSearch()
+      return
+    }
+
+    if (isSearching || searchError || searchResults.length === 0) return
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActiveSearchIndex(currentIndex => (
+        currentIndex < searchResults.length - 1 ? currentIndex + 1 : 0
+      ))
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActiveSearchIndex(currentIndex => (
+        currentIndex > 0 ? currentIndex - 1 : searchResults.length - 1
+      ))
+      return
+    }
+
+    if (event.key === 'Home') {
+      event.preventDefault()
+      setActiveSearchIndex(0)
+      return
+    }
+
+    if (event.key === 'End') {
+      event.preventDefault()
+      setActiveSearchIndex(searchResults.length - 1)
+      return
+    }
+
+    if (event.key === 'Enter' && activeSearchResult) {
+      event.preventDefault()
+      onSelectUser(activeSearchResult)
+    }
+  }, [
+    activeSearchResult,
+    dropdownOpen,
+    handleClearSearch,
+    isSearching,
+    onSelectUser,
+    searchError,
+    searchResults.length,
+  ])
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -119,12 +193,14 @@ function InboxPane({
         <div className="relative">
           <UserSearchBar
             query={query}
-            onChange={onQueryChange}
-            onClear={onClearSearch}
+            onChange={handleSearchChange}
+            onClear={handleClearSearch}
             disabled={isStarting}
             placeholder={t('Search')}
             isExpanded={dropdownOpen}
             resultsId={SEARCH_RESULTS_ID}
+            activeDescendantId={activeDescendantId}
+            onKeyDown={handleSearchKeyDown}
           />
           <UserSearchDropdown
             id={SEARCH_RESULTS_ID}
@@ -136,6 +212,8 @@ function InboxPane({
             onSelect={onSelectUser}
             isOpen={dropdownOpen}
             disabled={isStarting}
+            activeIndex={resolvedActiveSearchIndex}
+            onActiveIndexChange={setActiveSearchIndex}
           />
         </div>
 

@@ -22,6 +22,7 @@ interface PostBoxProps {
   onBlock: (userId: string) => void
   onCommentCountChange: (postId: string, delta: number) => void
   defaultShowComments?: boolean
+  resolveMediaUrl?: (path: string) => string
 }
 
 /** Single post card composing header, body, footer, and expandable comments. */
@@ -36,6 +37,7 @@ const PostBox: React.FC<PostBoxProps> = ({
   onBlock,
   onCommentCountChange,
   defaultShowComments = false,
+  resolveMediaUrl,
 }) => {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -88,7 +90,7 @@ const PostBox: React.FC<PostBoxProps> = ({
           onDelete={() => onDelete(post.id)}
         />
 
-        <PostBody post={post} />
+        <PostBody post={post} resolveMediaUrl={resolveMediaUrl} />
       </div>
 
       <div className="px-2 sm:px-3">

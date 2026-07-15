@@ -19,12 +19,10 @@ interface ActiveSession {
 }
 
 export interface LearnQuestionsViewProps {
-  initialArea?: string | null
   onImmersiveChange: (immersive: boolean) => void
 }
 
 export default function LearnQuestionsView({
-  initialArea = null,
   onImmersiveChange,
 }: LearnQuestionsViewProps) {
   const { t } = useTranslation()
@@ -97,18 +95,6 @@ export default function LearnQuestionsView({
     })
     applyView('session')
   }, [applyView, onImmersiveChange])
-
-  useEffect(() => {
-    if (!initialArea) return
-    let cancelled = false
-    queueMicrotask(() => {
-      if (!cancelled) void startSession('by_area', null, [initialArea])
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [initialArea, startSession])
 
   const handleStartQuick = () => startSession('quick', null, null)
   const handleSetupConfirm = (laws: number[], areas: string[]) => {

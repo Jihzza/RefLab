@@ -109,8 +109,12 @@ function EditProfileForm({
 
   const hasNameChanged = normalizedName !== initialSnapshot.name
   const hasUsernameChanged = normalizedUsername !== initialSnapshot.username
+  const needsUsernameConfirmation = !profile.username_customized
   const hasAvatarChanged = avatarFile !== null
-  const hasChanges = hasNameChanged || hasUsernameChanged || hasAvatarChanged
+  const hasChanges = hasNameChanged
+    || hasUsernameChanged
+    || needsUsernameConfirmation
+    || hasAvatarChanged
 
   const displayAvatar =
     avatarPreviewUrl ??
@@ -280,7 +284,7 @@ function EditProfileForm({
         profileUpdates.name = normalizedName ? normalizedName : null
       }
 
-      if (hasUsernameChanged) {
+      if (hasUsernameChanged || needsUsernameConfirmation) {
         profileUpdates.username = normalizedUsername
       }
 
@@ -293,11 +297,16 @@ function EditProfileForm({
       if (profileError) {
         if (uploadedAvatarThisAttempt && uploadedAvatarUrl) {
           try {
-            await deleteProfileAvatarByUrl(uploadedAvatarUrl)
-          } catch {
+            const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+            if (!deleteError) {
+              pendingUploadedAvatarUrlRef.current = null
+            } else {
+              console.error('Failed to clean up uploaded avatar:', deleteError)
+            }
+          } catch (deleteError) {
+            console.error('Failed to clean up uploaded avatar:', deleteError)
             // The profile error remains the primary actionable failure.
           }
-          pendingUploadedAvatarUrlRef.current = null
         }
         setFormError(profileError.message)
         setIsSaving(false)
@@ -333,22 +342,37 @@ function EditProfileForm({
       }
 
       if (hasAvatarChanged && uploadedAvatarUrl) {
-        pendingUploadedAvatarUrlRef.current = null
         const avatarUrlsToDelete = new Set(supersededAvatarUrlsRef.current)
         if (initialSnapshot.photoUrl) avatarUrlsToDelete.add(initialSnapshot.photoUrl)
         avatarUrlsToDelete.delete(uploadedAvatarUrl)
+        let avatarCleanupFailed = false
 
         for (const obsoleteAvatarUrl of avatarUrlsToDelete) {
           try {
             const { error: deleteError } = await deleteProfileAvatarByUrl(obsoleteAvatarUrl)
             if (deleteError) {
               console.error('Failed to delete previous avatar file:', deleteError)
+              supersededAvatarUrlsRef.current.add(obsoleteAvatarUrl)
+              avatarCleanupFailed = true
+            } else {
+              supersededAvatarUrlsRef.current.delete(obsoleteAvatarUrl)
             }
           } catch (deleteError) {
             console.error('Failed to delete previous avatar file:', deleteError)
+            supersededAvatarUrlsRef.current.add(obsoleteAvatarUrl)
+            avatarCleanupFailed = true
           }
         }
 
+        if (avatarCleanupFailed) {
+          setFormError(
+            t('Profile updated, but an old avatar could not be removed. Tap "Save changes" again to retry.')
+          )
+          setIsSaving(false)
+          return
+        }
+
+        pendingUploadedAvatarUrlRef.current = null
         supersededAvatarUrlsRef.current.clear()
       }
 
@@ -356,9 +380,14 @@ function EditProfileForm({
     } catch (error) {
       if (!profileUpdated && uploadedAvatarThisAttempt && uploadedAvatarUrl) {
         try {
-          await deleteProfileAvatarByUrl(uploadedAvatarUrl)
-          pendingUploadedAvatarUrlRef.current = null
-        } catch {
+          const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
+          if (!deleteError) {
+            pendingUploadedAvatarUrlRef.current = null
+          } else {
+            console.error('Failed to clean up uploaded avatar:', deleteError)
+          }
+        } catch (deleteError) {
+          console.error('Failed to clean up uploaded avatar:', deleteError)
           // Keep the original save error as the actionable message.
         }
       }

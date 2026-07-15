@@ -61,6 +61,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <Sheet
       side="left"
+      id="app-navigation-menu"
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose()
