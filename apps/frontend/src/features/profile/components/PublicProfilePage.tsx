@@ -42,7 +42,15 @@ export default function PublicProfilePage() {
   }, [username, t])
 
   useEffect(() => {
-    void loadProfile()
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (!cancelled) void loadProfile()
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [loadProfile])
 
   const displayName = profile?.name || profile?.username || username

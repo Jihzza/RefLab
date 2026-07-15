@@ -35,11 +35,21 @@ export function BillingProvider({ children }: BillingProviderProps) {
 
   // Fetch billing data when user becomes authenticated
   useEffect(() => {
-    if (authStatus === 'authenticated' && user) {
-      fetchBilling()
-    } else if (authStatus === 'unauthenticated') {
-      setSubscription(null)
-      setError(null)
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+
+      if (authStatus === 'authenticated' && user) {
+        void fetchBilling()
+      } else if (authStatus === 'unauthenticated') {
+        setSubscription(null)
+        setError(null)
+      }
+    })
+
+    return () => {
+      cancelled = true
     }
   }, [authStatus, user, fetchBilling])
 

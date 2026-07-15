@@ -95,8 +95,13 @@ export const BottomNav: React.FC = () => {
     let cancelled = false;
 
     if (!user?.id) {
-      setUnreadCount(0);
-      return;
+      queueMicrotask(() => {
+        if (!cancelled) setUnreadCount(0);
+      });
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     (async () => {

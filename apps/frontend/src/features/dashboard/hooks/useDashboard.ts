@@ -11,6 +11,7 @@ import type { DashboardStats, UseDashboardReturn } from '../types'
  */
 export function useDashboard(): UseDashboardReturn {
   const { user } = useAuth()
+  const userId = user?.id
   const location = useLocation()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -18,12 +19,12 @@ export function useDashboard(): UseDashboardReturn {
 
   // Fetch all dashboard stats
   const loadStats = useCallback(async () => {
-    if (!user?.id) return
+    if (!userId) return
 
     setLoading(true)
     setError(null)
 
-    const { data, error: fetchError } = await fetchDashboardStats(user.id)
+    const { data, error: fetchError } = await fetchDashboardStats(userId)
 
     if (fetchError) {
       setError(fetchError.message)
@@ -33,35 +34,39 @@ export function useDashboard(): UseDashboardReturn {
 
     setStats(data)
     setLoading(false)
-  }, [user?.id])
+  }, [userId])
 
   // Load on mount and whenever the user navigates to the dashboard
   useEffect(() => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
-
     let cancelled = false
 
-    setLoading(true)
-    setError(null)
-
-    fetchDashboardStats(user.id).then(({ data, error: fetchError }) => {
+    queueMicrotask(() => {
       if (cancelled) return
 
-      if (fetchError) {
-        setError(fetchError.message)
-      } else {
-        setStats(data)
+      if (!userId) {
+        setLoading(false)
+        return
       }
-      setLoading(false)
+
+      setLoading(true)
+      setError(null)
+
+      void fetchDashboardStats(userId).then(({ data, error: fetchError }) => {
+        if (cancelled) return
+
+        if (fetchError) {
+          setError(fetchError.message)
+        } else {
+          setStats(data)
+        }
+        setLoading(false)
+      })
     })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, location.pathname])
+  }, [userId, location.pathname])
 
   // Manual refresh
   const refresh = useCallback(async () => {
