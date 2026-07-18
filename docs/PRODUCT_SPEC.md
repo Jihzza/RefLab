@@ -1,4 +1,9 @@
 # RefLab — Product Spec
+
+> **Historical snapshot — [README](../README.md) +
+> [backend/supabase/LAUNCH_RUNBOOK.md](../backend/supabase/LAUNCH_RUNBOOK.md)
+> are authoritative for current launch state.**
+
 **Version:** 1.0
 **Date:** 2026-04-17
 **App:** React + Vite + Supabase
@@ -100,11 +105,11 @@ TestAttempt: id, user_id, test_id, status(in_progress|submitted),
 **So that I** can focus on specific topics
 
 **Acceptance criteria:**
-- [ ] Questions tab → QuestionsLanding
-- [ ] QuestionsSetup: select topics, number of questions, difficulty
-- [ ] QuestionsSession: configured test
-- [ ] QuestionsReview: detailed review of answers
-- [ ] Save session results to test_attempts
+- [x] Questions tab → landing KPIs and Quick/By Law/By Area entry points
+- [x] QuestionsSetup selects one or more active laws or topic areas
+- [x] QuestionsSession presents each filtered question at most once per session
+- [x] QuestionsReview shows the completed session and answer detail
+- [x] Auth-bound RPCs persist practice answers and server-derived session totals
 
 ---
 
@@ -152,10 +157,10 @@ TestAttempt: id, user_id, test_id, status(in_progress|submitted),
 **So that I** can communicate privately
 
 **Acceptance criteria:**
-- [ ] Messages page → conversation list
-- [ ] Tap conversation → ConversationPage
+- [ ] `MessagesWorkspace` displays the conversation list
+- [ ] Selecting a conversation opens it in the same workspace at `/app/messages/:conversationId`
 - [ ] Real-time messaging via Supabase Realtime
-- [ ] New message badge on MessagesPage tab
+- [ ] New-message badge on the Messages entry in `MobileTabBar` and `ResponsiveRail`
 
 **Edge cases:**
 - Blocked user → show "Mensagem não enviada"
@@ -268,7 +273,7 @@ StripeWebhookEvent: event_id(pk), type, created, processed
 ## 5. Open Questions
 
 1. What does the chatbot actually do?
-2. What are "courses" and "resources" tabs for?
+2. What remains planned for Courses?
 3. Is there any ML/AI for test explanations?
 4. How does video decision practice work exactly?
 5. What is the "pro" vs "plus" plan difference?
@@ -289,26 +294,35 @@ This is a planned future feature. No functionality implemented in MVP.
 ---
 
 ### Q2: Courses tab — what's planned?
-**A:** **NOT BUILT.** No `CoursesPage.tsx` or equivalent found in the tree. The LearnPage has a `courses` tab key but no corresponding component file. It's a placeholder for future curriculum content.
+**A:** **Placeholder, honestly labelled.** The active `LearnPage` renders the
+standard “Coming soon” empty state for Courses. No curriculum or course
+progress is claimed in the current launch scope.
 
 ---
 
 ### Q3: Resources tab — what's planned?
-**A:** **Placeholder only.** `ResourcesTab.tsx` exists and renders:
-```
-"Study resources coming soon."
-```
-Will display downloadable resources, rule books, etc. Not implemented.
+**A:** **Implemented for launch.** The active `ResourcesView` lists reviewed
+external links to official IFAB material: the 2026/27 Laws PDF, current law
+changes, the online Laws and the official document library. Links open in a new
+tab with `noopener noreferrer`. A stale unused placeholder component is not the
+route implementation.
+
+The Questions tab is also implemented end-to-end: landing KPIs, Quick/By Law/
+By Area setup, an auth-bound practice session, immediate feedback and a
+server-derived review summary.
 
 ---
 
 ### Q4: How does video decision practice work?
 **A:** From `LearnPage.tsx`:
 - `getVideoScenarios()` — fetches video scenarios from API
-- `getVideoPublicUrl()` — gets signed URL for video playback
-- `saveVideoAttempt()` — saves user's decision on a scenario
+- `getVideoPublicUrl()` — resolves the reviewed public Supabase Storage object URL
+- `saveVideoAttempt()` — calls an auth-bound RPC that grades against the active scenario
 
-Video scenarios are fetched from the backend, played, then user picks a decision. The `sync-video-scenarios` Edge Function syncs content. No actual video files or player UI found in the frontend code read — this is likely backend-side only at MVP stage.
+`VideoAnalysisView` provides the player, action/sanction decision flow, retry
+states and result feedback. The authenticated `sync-video-scenarios` Edge
+Function creates inactive catalogue rows from the `learn-videos` bucket;
+administrators must review the canonical decision and content before activation.
 
 ---
 

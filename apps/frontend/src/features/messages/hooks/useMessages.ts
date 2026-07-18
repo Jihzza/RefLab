@@ -1,17 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { supabase } from '@/lib/supabaseClient'
 import {
   getMessages as getMessagesApi,
   markConversationRead,
-  sendMessage as sendMessageApi,
 } from '../api/messagesApi'
+import {
+  discardQueuedMessage,
+  flushMessageOutbox,
+  retryQueuedMessage,
+  type OutboxDeliveryOutcome,
+} from '../offline/messageOutboxDelivery'
+import {
+  enqueueMessage,
+  listQueuedMessages,
+  subscribeToMessageOutbox,
+} from '../offline/messageOutbox'
 import {
   MESSAGES_UNREAD_CHANGED_EVENT,
   type Message,
   type MessageMediaType,
   type MessageUser,
+  type QueuedMessage,
 } from '../types'
 
 const PAGE_SIZE = 30
@@ -22,6 +33,24 @@ function inferMediaType(file: File): MessageMediaType {
   if (mime.startsWith('video/')) return 'video'
   if (mime.startsWith('audio/')) return 'audio'
   return 'text'
+}
+
+function isDocumentReadable() {
+  return document.visibilityState === 'visible' && document.hasFocus()
+}
+
+function latestTimestamp(left: string | null, right: string): string {
+  if (!left) return right
+  return left.localeCompare(right) >= 0 ? left : right
+}
+
+function compareMessages(left: Message, right: Message): number {
+  const timestampOrder = left.created_at.localeCompare(right.created_at)
+  return timestampOrder || left.id.localeCompare(right.id)
+}
+
+function messageCursor(message: Message): string {
+  return `${message.created_at}|${message.id}`
 }
 
 async function fetchPublicProfile(userId: string): Promise<MessageUser | null> {
@@ -35,14 +64,38 @@ async function fetchPublicProfile(userId: string): Promise<MessageUser | null> {
   return data as MessageUser
 }
 
+function queuedRecordToMessage(
+  record: QueuedMessage,
+  sender: MessageUser,
+  mediaUrl: string | null,
+): Message {
+  return {
+    id: `outbox-${record.clientId}`,
+    conversation_id: record.conversationId,
+    sender_id: record.senderId,
+    client_id: record.clientId,
+    content: record.content,
+    media_type: record.mediaType,
+    media_url: mediaUrl,
+    created_at: record.createdAt,
+    sender,
+    delivery_state: record.state === 'failed' ? 'failed' : 'pending',
+    delivery_error: record.lastError,
+    outbox_client_id: record.clientId,
+  }
+}
+
 export function useMessages(
   conversationId: string | null,
   onRead?: () => void | Promise<void>,
+  participantDeleted: boolean = false,
 ) {
   const { t } = useTranslation()
   const { user, profile } = useAuth()
+  const userId = user?.id ?? null
 
   const [messages, setMessages] = useState<Message[]>([])
+  const [outboxMessages, setOutboxMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(Boolean(conversationId))
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
@@ -51,101 +104,304 @@ export function useMessages(
   const [sendError, setSendError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
   const [loadedConversationId, setLoadedConversationId] = useState<string | null>(null)
+  const [loadedParticipantDeleted, setLoadedParticipantDeleted] = useState<boolean | null>(null)
+  const [loadedOwnerId, setLoadedOwnerId] = useState<string | null>(null)
 
   const cursorRef = useRef<string | null>(null)
   const loadingRef = useRef(false)
   const messageIdsRef = useRef<Set<string>>(new Set())
-  const optimisticUrlsRef = useRef<Set<string>>(new Set())
+  const outboxUrlsRef = useRef<Map<string, string>>(new Map())
+  const outboxSyncGenerationRef = useRef(0)
   const generationRef = useRef(0)
+  const firstPageCatchUpRef = useRef<{
+    generation: number
+    status: 'pending' | 'failed' | 'succeeded'
+  }>({ generation: 0, status: 'pending' })
   const onReadRef = useRef(onRead)
+  const pendingReadRef = useRef<{
+    conversationId: string
+    readThrough: string
+  } | null>(null)
+  const readRequestRef = useRef<Promise<void>>(Promise.resolve())
 
   useEffect(() => {
     onReadRef.current = onRead
   }, [onRead])
 
-  const markReadAndNotify = useCallback(async (
+  const persistRead = useCallback((
     targetConversationId: string,
-    userId: string,
-  ) => {
-    const { error } = await markConversationRead(targetConversationId, userId)
-    if (!error) {
+    readThrough: string,
+  ): Promise<void> => {
+    const request = readRequestRef.current.then(async () => {
+      if (!userId) return
+
+      if (!isDocumentReadable()) {
+        const pending = pendingReadRef.current
+        pendingReadRef.current = {
+          conversationId: targetConversationId,
+          readThrough: pending?.conversationId === targetConversationId
+            ? latestTimestamp(pending.readThrough, readThrough)
+            : readThrough,
+        }
+        return
+      }
+
+      const { error } = await markConversationRead(
+        targetConversationId,
+        userId,
+        readThrough,
+      )
+      if (error) {
+        const pending = pendingReadRef.current
+        pendingReadRef.current = {
+          conversationId: targetConversationId,
+          readThrough: pending?.conversationId === targetConversationId
+            ? latestTimestamp(pending.readThrough, readThrough)
+            : readThrough,
+        }
+        return
+      }
+
       window.dispatchEvent(new Event(MESSAGES_UNREAD_CHANGED_EVENT))
       await onReadRef.current?.()
+    })
+
+    readRequestRef.current = request.catch(() => undefined)
+    return request
+  }, [userId])
+
+  const markReadAndNotify = useCallback((
+    targetConversationId: string,
+    readThrough: string | null,
+  ): Promise<void> => {
+    if (!readThrough) return Promise.resolve()
+
+    if (!isDocumentReadable()) {
+      const pending = pendingReadRef.current
+      pendingReadRef.current = {
+        conversationId: targetConversationId,
+        readThrough: pending?.conversationId === targetConversationId
+          ? latestTimestamp(pending.readThrough, readThrough)
+          : readThrough,
+      }
+      return Promise.resolve()
     }
+
+    return persistRead(targetConversationId, readThrough)
+  }, [persistRead])
+
+  useEffect(() => {
+    const flushPendingRead = () => {
+      if (!isDocumentReadable()) return
+      const pending = pendingReadRef.current
+      if (!pending || pending.conversationId !== conversationId) return
+      pendingReadRef.current = null
+      void persistRead(pending.conversationId, pending.readThrough)
+    }
+
+    document.addEventListener('visibilitychange', flushPendingRead)
+    window.addEventListener('focus', flushPendingRead)
+    return () => {
+      document.removeEventListener('visibilitychange', flushPendingRead)
+      window.removeEventListener('focus', flushPendingRead)
+    }
+  }, [conversationId, persistRead])
+
+  const revokeOutboxUrls = useCallback(() => {
+    outboxUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
+    outboxUrlsRef.current.clear()
   }, [])
 
-  const revokeOptimisticUrls = useCallback(() => {
-    optimisticUrlsRef.current.forEach(url => URL.revokeObjectURL(url))
-    optimisticUrlsRef.current.clear()
-  }, [])
+  useEffect(() => revokeOutboxUrls, [revokeOutboxUrls])
 
-  useEffect(() => revokeOptimisticUrls, [revokeOptimisticUrls])
+  const sender = useMemo<MessageUser | null>(() => {
+    if (!userId || !profile) return null
+    return {
+      id: userId,
+      username: profile.username,
+      name: profile.name ?? null,
+      photo_url: profile.photo_url ?? null,
+    }
+  }, [profile, userId])
+
+  const syncOutbox = useCallback(async () => {
+    const syncGeneration = ++outboxSyncGenerationRef.current
+    if (!conversationId || !userId || !sender) {
+      revokeOutboxUrls()
+      setOutboxMessages([])
+      return
+    }
+
+    const records = await listQueuedMessages(userId, conversationId)
+    if (syncGeneration !== outboxSyncGenerationRef.current) return
+    const activeIds = new Set(records.map(record => record.clientId))
+    outboxUrlsRef.current.forEach((url, clientId) => {
+      if (!activeIds.has(clientId)) {
+        URL.revokeObjectURL(url)
+        outboxUrlsRef.current.delete(clientId)
+      }
+    })
+
+    const next = records.map(record => {
+      let mediaUrl: string | null = null
+      if (record.mediaBlob) {
+        mediaUrl = outboxUrlsRef.current.get(record.clientId) ?? null
+        if (!mediaUrl) {
+          mediaUrl = URL.createObjectURL(record.mediaBlob)
+          outboxUrlsRef.current.set(record.clientId, mediaUrl)
+        }
+      }
+      return queuedRecordToMessage(record, sender, mediaUrl)
+    })
+    setOutboxMessages(next)
+  }, [conversationId, revokeOutboxUrls, sender, userId])
+
+  useEffect(() => {
+    if (!conversationId || !userId) return
+    let cancelled = false
+
+    const sync = async () => {
+      try {
+        await syncOutbox()
+      } catch (error) {
+        if (!cancelled) {
+          setSendError(
+            error instanceof Error ? error.message : t('Failed to send message.'),
+          )
+        }
+      }
+    }
+
+    void sync()
+    const unsubscribe = subscribeToMessageOutbox(detail => {
+      if (
+        detail.senderId === userId
+        && detail.conversationId === conversationId
+      ) {
+        void sync()
+      }
+    })
+
+    return () => {
+      cancelled = true
+      outboxSyncGenerationRef.current += 1
+      unsubscribe()
+    }
+  }, [conversationId, syncOutbox, t, userId])
+
+  const addDeliveredOutcome = useCallback((outcome: OutboxDeliveryOutcome) => {
+    if (
+      !outcome.result.data
+      || !sender
+      || outcome.conversationId !== conversationId
+    ) return
+    const delivered: Message = { ...outcome.result.data, sender }
+    if (messageIdsRef.current.has(delivered.id)) return
+    messageIdsRef.current.add(delivered.id)
+    setMessages(previous => [...previous, delivered].sort(
+      compareMessages,
+    ))
+  }, [conversationId, sender])
 
   // Initial fetch and conversation changes. The generation guard prevents a
   // slow response from the previous route replacing the active conversation.
   useEffect(() => {
     const generation = ++generationRef.current
+    firstPageCatchUpRef.current = { generation, status: 'pending' }
     let cancelled = false
 
-    revokeOptimisticUrls()
     loadingRef.current = false
     cursorRef.current = null
     messageIdsRef.current = new Set()
-    setMessages([])
-    setHasMore(true)
-    setIsLoadingMore(false)
-    setIsSending(false)
-    setLoadError(null)
-    setSendError(null)
-    setLoadedConversationId(null)
-
-    if (!conversationId || !user?.id) {
-      setIsLoading(false)
-      return () => {
-        cancelled = true
-      }
-    }
-
-    setIsLoading(true)
-
-    void (async () => {
-      const { data, error: fetchError } = await getMessagesApi(
-        conversationId,
-        user.id,
-        null,
-        PAGE_SIZE,
-      )
-
+    pendingReadRef.current = null
+    const startTimer = window.setTimeout(() => {
       if (cancelled || generation !== generationRef.current) return
 
-      if (fetchError) {
-        setLoadError(fetchError.message)
-        setLoadedConversationId(conversationId)
+      setMessages([])
+      setHasMore(true)
+      setIsLoadingMore(false)
+      setIsSending(false)
+      setLoadError(null)
+      setSendError(null)
+      setLoadedConversationId(null)
+      setLoadedParticipantDeleted(null)
+      setLoadedOwnerId(null)
+
+      if (!conversationId || !userId) {
         setIsLoading(false)
         return
       }
 
-      const oldestFirst = [...data].reverse()
-      oldestFirst.forEach(message => messageIdsRef.current.add(message.id))
+      setIsLoading(true)
 
-      setMessages(oldestFirst)
-      setLoadedConversationId(conversationId)
-      setHasMore(data.length >= PAGE_SIZE)
-      cursorRef.current = oldestFirst.length > 0
-        ? oldestFirst[0].created_at
-        : null
-      setIsLoading(false)
+      void (async () => {
+        const { data, error: fetchError } = await getMessagesApi(
+          conversationId,
+          userId,
+          null,
+          PAGE_SIZE,
+        )
 
-      await markReadAndNotify(conversationId, user.id)
-    })()
+        if (cancelled || generation !== generationRef.current) return
+
+        if (fetchError) {
+          const catchUp = firstPageCatchUpRef.current
+          if (
+            catchUp.generation !== generation
+            || catchUp.status !== 'succeeded'
+          ) {
+            setLoadError(fetchError.message)
+          }
+          setLoadedConversationId(conversationId)
+          setLoadedParticipantDeleted(participantDeleted)
+          setLoadedOwnerId(userId)
+          setIsLoading(false)
+          return
+        }
+
+        const oldestFirst = [...data].reverse()
+        oldestFirst.forEach(message => messageIdsRef.current.add(message.id))
+
+        // Preserve INSERTs delivered by Realtime while the initial SELECT was
+        // in flight. Replacing this state would also leave their IDs trapped
+        // in messageIdsRef, preventing a later duplicate event from healing it.
+        setMessages(previous => {
+          const byId = new Map(
+            oldestFirst.map(message => [message.id, message]),
+          )
+          previous
+            .filter(message => message.conversation_id === conversationId)
+            .forEach(message => byId.set(message.id, message))
+          return [...byId.values()].sort(compareMessages)
+        })
+        const catchUp = firstPageCatchUpRef.current
+        if (
+          catchUp.generation !== generation
+          || catchUp.status !== 'failed'
+        ) {
+          setLoadError(null)
+        }
+        setLoadedConversationId(conversationId)
+        setLoadedParticipantDeleted(participantDeleted)
+        setLoadedOwnerId(userId)
+        setHasMore(data.length >= PAGE_SIZE)
+        cursorRef.current = oldestFirst.length > 0
+          ? messageCursor(oldestFirst[0])
+          : null
+        setIsLoading(false)
+
+        await markReadAndNotify(conversationId, data[0]?.created_at ?? null)
+      })()
+    }, 0)
 
     return () => {
       cancelled = true
+      window.clearTimeout(startTimer)
     }
-  }, [conversationId, markReadAndNotify, reloadToken, revokeOptimisticUrls, user?.id])
+  }, [conversationId, markReadAndNotify, participantDeleted, reloadToken, userId])
 
   const loadMore = useCallback(async (): Promise<boolean> => {
-    if (!conversationId || !user?.id || !hasMore || loadingRef.current) {
+    if (!conversationId || !userId || !hasMore || loadingRef.current) {
       return false
     }
 
@@ -157,7 +413,7 @@ export function useMessages(
     try {
       const { data, error: fetchError } = await getMessagesApi(
         conversationId,
-        user.id,
+        userId,
         cursorRef.current,
         PAGE_SIZE,
       )
@@ -181,7 +437,7 @@ export function useMessages(
       })
 
       if (oldestFirst.length > 0) {
-        cursorRef.current = oldestFirst[0].created_at
+        cursorRef.current = messageCursor(oldestFirst[0])
       }
 
       return true
@@ -191,14 +447,14 @@ export function useMessages(
         setIsLoadingMore(false)
       }
     }
-  }, [conversationId, hasMore, user?.id])
+  }, [conversationId, hasMore, userId])
 
   const sendMessage = useCallback(async (
     content: string,
     mediaFile?: File,
   ): Promise<boolean> => {
-    if (!conversationId || !user?.id) return false
-    if (!profile) {
+    if (!conversationId || !userId) return false
+    if (!sender) {
       setSendError(t('Your profile is still loading. Please try again.'))
       return false
     }
@@ -206,90 +462,83 @@ export function useMessages(
     const trimmed = content.trim()
     if (!trimmed && !mediaFile) return false
 
-    const generation = generationRef.current
     const targetConversationId = conversationId
+    const requestGeneration = generationRef.current
+    const clientId = crypto.randomUUID()
     setIsSending(true)
     setSendError(null)
 
-    const tempId = `temp-${crypto.randomUUID()}`
-    const nowIso = new Date().toISOString()
-    const mediaType = mediaFile ? inferMediaType(mediaFile) : 'text'
-    const optimisticMediaUrl = mediaFile ? URL.createObjectURL(mediaFile) : null
-
-    if (optimisticMediaUrl) optimisticUrlsRef.current.add(optimisticMediaUrl)
-
-    const sender: MessageUser = {
-      id: profile.id,
-      username: profile.username,
-      name: profile.name ?? null,
-      photo_url: profile.photo_url ?? null,
-    }
-
-    const optimistic: Message = {
-      id: tempId,
-      conversation_id: targetConversationId,
-      sender_id: user.id,
-      content: trimmed || null,
-      media_type: mediaFile ? mediaType : 'text',
-      media_url: optimisticMediaUrl,
-      created_at: nowIso,
-      sender,
-    }
-
-    messageIdsRef.current.add(tempId)
-    setMessages(previous => [...previous, optimistic])
-
     try {
-      const { data, error: sendRequestError } = await sendMessageApi(
-        targetConversationId,
-        user.id,
-        trimmed || null,
-        mediaType,
-        mediaFile,
-      )
+      await enqueueMessage({
+        clientId,
+        conversationId: targetConversationId,
+        senderId: userId,
+        content: trimmed || null,
+        mediaType: mediaFile ? inferMediaType(mediaFile) : 'text',
+        mediaBlob: mediaFile ?? null,
+        mediaName: mediaFile?.name ?? null,
+        mediaMimeType: mediaFile?.type ?? null,
+        createdAt: new Date().toISOString(),
+      })
 
-      if (sendRequestError || !data) {
-        throw sendRequestError ?? new Error(t('Failed to send message.'))
+      const outcomes = await flushMessageOutbox(userId)
+      if (requestGeneration === generationRef.current) {
+        outcomes
+          .filter(outcome => outcome.state === 'sent')
+          .forEach(addDeliveredOutcome)
       }
 
-      if (generation !== generationRef.current) return true
-
-      const realMessage: Message = { ...data, sender }
-
-      setMessages(previous => previous
-        .map(message => (message.id === tempId ? realMessage : message))
-        .sort((left, right) => left.created_at.localeCompare(right.created_at)))
-      messageIdsRef.current.delete(tempId)
-      messageIdsRef.current.add(realMessage.id)
-
-      await markReadAndNotify(targetConversationId, user.id)
+      // Persistence succeeded even if delivery is waiting for connectivity or
+      // is visibly failed in the outbox bubble. The composer may clear safely.
       return true
     } catch (error) {
-      if (generation === generationRef.current) {
-        setMessages(previous => previous.filter(message => message.id !== tempId))
-        messageIdsRef.current.delete(tempId)
+      if (requestGeneration === generationRef.current) {
         setSendError(
           error instanceof Error ? error.message : t('Failed to send message.'),
         )
       }
       return false
     } finally {
-      if (optimisticMediaUrl) {
-        URL.revokeObjectURL(optimisticMediaUrl)
-        optimisticUrlsRef.current.delete(optimisticMediaUrl)
-      }
-      if (generation === generationRef.current) setIsSending(false)
+      if (requestGeneration === generationRef.current) setIsSending(false)
     }
-  }, [conversationId, markReadAndNotify, profile, t, user?.id])
+  }, [addDeliveredOutcome, conversationId, sender, t, userId])
 
-  // Realtime INSERTs are deduplicated against fetched and optimistic messages.
-  // Own messages are resolved through the send request, so they are not added a
-  // second time when the Realtime event arrives first.
+  const retryOutboxMessage = useCallback(async (clientId: string) => {
+    if (!userId) return
+    const requestGeneration = generationRef.current
+    setSendError(null)
+    try {
+      const outcomes = await retryQueuedMessage(userId, clientId)
+      if (requestGeneration === generationRef.current) {
+        outcomes
+          .filter(outcome => outcome.state === 'sent')
+          .forEach(addDeliveredOutcome)
+      }
+    } catch (error) {
+      if (requestGeneration === generationRef.current) {
+        setSendError(
+          error instanceof Error ? error.message : t('Failed to send message.'),
+        )
+      }
+    }
+  }, [addDeliveredOutcome, t, userId])
+
+  const discardOutboxMessage = useCallback(async (clientId: string) => {
+    if (!userId) return
+    const requestGeneration = generationRef.current
+    const { error } = await discardQueuedMessage(userId, clientId)
+    if (error && requestGeneration === generationRef.current) {
+      setSendError(error.message)
+    }
+  }, [userId])
+
+  // Realtime INSERTs are deduplicated against fetched and RPC-returned rows.
   useEffect(() => {
-    if (!conversationId || !user?.id) return
+    if (!conversationId || !userId) return
 
     const generation = generationRef.current
     let cancelled = false
+    let catchUpRequestSerial = 0
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -307,25 +556,25 @@ export function useMessages(
             id: string
             conversation_id: string
             sender_id: string
+            client_id: string
             content: string | null
             media_type: MessageMediaType
             media_url: string | null
             created_at: string
           }
 
-          if (!row?.id || row.sender_id === user.id) return
-          if (messageIdsRef.current.has(row.id)) return
+          if (!row?.id || messageIdsRef.current.has(row.id)) return
 
-          const sender = (await fetchPublicProfile(row.sender_id)) ?? ({
-            id: row.sender_id,
-            username: 'Unknown',
-            name: null,
-            photo_url: null,
-          } satisfies MessageUser)
+          const rowSender = row.sender_id === userId && sender
+            ? sender
+            : (await fetchPublicProfile(row.sender_id)) ?? ({
+              id: row.sender_id,
+              username: 'Unknown',
+              name: null,
+              photo_url: null,
+            } satisfies MessageUser)
 
           if (cancelled || generation !== generationRef.current) return
-          // The initial page fetch or another Realtime callback may have
-          // inserted this row while the sender profile was resolving.
           if (messageIdsRef.current.has(row.id)) return
           messageIdsRef.current.add(row.id)
 
@@ -333,26 +582,99 @@ export function useMessages(
             id: row.id,
             conversation_id: row.conversation_id,
             sender_id: row.sender_id,
+            client_id: row.client_id,
             content: row.content,
             media_type: row.media_type,
             media_url: row.media_url,
             created_at: row.created_at,
-            sender,
+            sender: rowSender,
           }
 
           setMessages(previous => [...previous, incoming].sort(
-            (left, right) => left.created_at.localeCompare(right.created_at),
+            compareMessages,
           ))
-          await markReadAndNotify(conversationId, user.id)
+          if (row.sender_id !== userId) {
+            await markReadAndNotify(conversationId, row.created_at)
+          }
         },
       )
-      .subscribe()
+      .subscribe(status => {
+        if (
+          status !== 'SUBSCRIBED'
+          || cancelled
+          || generation !== generationRef.current
+        ) return
+
+        // The initial SELECT may have snapshotted before the channel joined.
+        // Fetch the first page once the subscription is active and merge it
+        // with both the initial response and any delivered Realtime rows.
+        const catchUpRequest = ++catchUpRequestSerial
+        firstPageCatchUpRef.current = { generation, status: 'pending' }
+        void (async () => {
+          const { data, error: catchUpError } = await getMessagesApi(
+            conversationId,
+            userId,
+            null,
+            PAGE_SIZE,
+          )
+          if (
+            cancelled
+            || generation !== generationRef.current
+            || catchUpRequest !== catchUpRequestSerial
+          ) return
+          if (catchUpError) {
+            firstPageCatchUpRef.current = { generation, status: 'failed' }
+            setLoadError(catchUpError.message)
+            setLoadedConversationId(conversationId)
+            setLoadedParticipantDeleted(participantDeleted)
+            setLoadedOwnerId(userId)
+            setIsLoading(false)
+            return
+          }
+
+          firstPageCatchUpRef.current = { generation, status: 'succeeded' }
+          const oldestFirst = [...data].reverse()
+          oldestFirst.forEach(message => messageIdsRef.current.add(message.id))
+          setMessages(previous => {
+            const byId = new Map(
+              previous
+                .filter(message => message.conversation_id === conversationId)
+                .map(message => [message.id, message]),
+            )
+            oldestFirst.forEach(message => byId.set(message.id, message))
+            return [...byId.values()].sort(compareMessages)
+          })
+          setLoadError(null)
+          setLoadedConversationId(conversationId)
+          setLoadedParticipantDeleted(participantDeleted)
+          setLoadedOwnerId(userId)
+          setHasMore(data.length >= PAGE_SIZE)
+          if (oldestFirst.length > 0) {
+            const catchUpCursor = messageCursor(oldestFirst[0])
+            if (
+              cursorRef.current === null
+              || catchUpCursor.localeCompare(cursorRef.current) < 0
+            ) {
+              cursorRef.current = catchUpCursor
+            }
+          }
+          setIsLoading(false)
+          await markReadAndNotify(conversationId, data[0]?.created_at ?? null)
+        })()
+      })
 
     return () => {
       cancelled = true
       void supabase.removeChannel(channel)
     }
-  }, [conversationId, markReadAndNotify, user?.id])
+  }, [
+    conversationId,
+    markReadAndNotify,
+    participantDeleted,
+    reloadToken,
+    sender,
+    userId,
+  ])
 
   const retry = useCallback(() => {
     setReloadToken(value => value + 1)
@@ -362,11 +684,31 @@ export function useMessages(
     setSendError(null)
   }, [])
 
+  const combinedMessages = useMemo(() => {
+    const deliveredClientIds = new Set(
+      messages.map(message => message.client_id).filter(Boolean),
+    )
+    const deliveredIds = new Set(messages.map(message => message.id))
+    return [
+      ...messages,
+      ...outboxMessages.filter(message => (
+        !message.outbox_client_id
+        || (
+          !deliveredClientIds.has(message.outbox_client_id)
+          && !deliveredIds.has(message.outbox_client_id)
+        )
+      )),
+    ].sort(compareMessages)
+  }, [messages, outboxMessages])
+
   const isCurrentConversation = Boolean(conversationId)
+    && Boolean(userId)
+    && loadedOwnerId === userId
     && loadedConversationId === conversationId
+    && loadedParticipantDeleted === participantDeleted
 
   return {
-    messages: isCurrentConversation ? messages : [],
+    messages: isCurrentConversation ? combinedMessages : [],
     isLoading: Boolean(conversationId) && !isCurrentConversation ? true : isLoading,
     isLoadingMore: isCurrentConversation ? isLoadingMore : false,
     hasMore,
@@ -376,6 +718,8 @@ export function useMessages(
     loadMore,
     retry,
     sendMessage,
+    retryOutboxMessage,
+    discardOutboxMessage,
     dismissSendError,
   }
 }

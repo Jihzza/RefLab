@@ -125,6 +125,7 @@ function FixturePrivacySection() {
             {blockedUsers.map((blockedUser) => (
               <BlockedUserRow
                 key={blockedUser.id}
+                userId={blockedUser.id}
                 username={blockedUser.username}
                 name={blockedUser.name}
                 photoUrl={blockedUser.photo_url}

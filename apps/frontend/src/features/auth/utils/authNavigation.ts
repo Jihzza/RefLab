@@ -31,13 +31,18 @@ function isSafeAppPath(candidate: string): boolean {
     const base = new URL('https://reflab.local')
     const parsed = new URL(candidate, base)
     return parsed.origin === base.origin
-      && (parsed.pathname === '/app' || parsed.pathname.startsWith('/app/'))
+      && (
+        parsed.pathname === '/app'
+        || parsed.pathname.startsWith('/app/')
+        || parsed.pathname === '/admin'
+        || parsed.pathname.startsWith('/admin/')
+      )
   } catch {
     return false
   }
 }
 
-/** Only returns same-origin application routes under the protected `/app` tree. */
+/** Only returns same-origin routes under the protected app/admin trees. */
 export function sanitizeAuthReturnTo(
   candidate: string | null | undefined,
   fallback = DEFAULT_AUTH_RETURN_TO,
@@ -154,4 +159,11 @@ export function buildAuthCallbackUrl(returnTo?: string): string {
   const callbackUrl = new URL('/auth/callback', window.location.origin)
   if (returnTo) callbackUrl.searchParams.set('returnTo', sanitizeAuthReturnTo(returnTo))
   return callbackUrl.toString()
+}
+
+export function buildLegalAcceptanceUrl(returnTo: string): string {
+  const search = new URLSearchParams({
+    returnTo: sanitizeAuthReturnTo(returnTo),
+  })
+  return `/legal/accept?${search.toString()}`
 }

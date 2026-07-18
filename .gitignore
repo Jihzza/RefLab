@@ -10,7 +10,15 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+playwright-report/
+test-results/
 *.local
+
+# Local deployment and Supabase CLI state
+.netlify/
+supabase/.temp/
+backend/supabase/.temp/
+backend/supabase/supabase/.temp/
 
 # Environment variables
 .env

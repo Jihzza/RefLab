@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Avatar, Button } from '@/components/ui'
 
 interface BlockedUserRowProps {
+  userId: string
   username: string
   name: string | null
   photoUrl: string | null
@@ -10,6 +11,7 @@ interface BlockedUserRowProps {
 }
 
 export default function BlockedUserRow({
+  userId,
   username,
   name,
   photoUrl,
@@ -23,6 +25,7 @@ export default function BlockedUserRow({
     <div className="flex min-h-16 items-center gap-3 px-3 py-3 sm:px-4">
       <Avatar
         src={photoUrl}
+        ownerId={userId}
         alt={displayName}
         name={displayName}
         size="md"

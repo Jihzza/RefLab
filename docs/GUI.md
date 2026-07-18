@@ -1,4 +1,9 @@
 # RefLab — GUI Documentação
+
+> **Historical snapshot — [README](../README.md) +
+> [backend/supabase/LAUNCH_RUNBOOK.md](../backend/supabase/LAUNCH_RUNBOOK.md)
+> are authoritative for current launch state.**
+
 **Data:** 2026-04-17  
 **App:** RefLab (React + Vite + Tailwind)  
 **Repo:** github.com/Jihzza/RefLab  
@@ -41,8 +46,8 @@ Cada feature é um domínio autónomo.
 | `/app/pricing` | `PricingPage` | pricing | Planos e billing |
 | `/app/social` | `SocialPage` | social | Feed social |
 | `/app/post/:postId` | `PostDetailPage` | social | Post individual |
-| `/app/messages` | `MessagesPage` | messages | Mensagens directas |
-| `/app/messages/:convId` | `ConversationPage` | messages | Conversa individual |
+| `/app/messages` | `MessagesWorkspace` | messages | Lista e workspace de mensagens directas |
+| `/app/messages/:conversationId` | `MessagesWorkspace` | messages | Workspace com a conversa seleccionada |
 | `/app/search` | `SearchPage` | search | Pesquisa de utilizadores |
 | `/app/profile` | `ProfilePage` | profile | Perfil do utilizador |
 | `/app/profile/edit` | `EditProfilePage` | profile | Editar perfil |
@@ -54,16 +59,16 @@ Cada feature é um domínio autónomo.
 ## Layout
 
 ### AppShell
-`AppShell.tsx` — wrapper para app autenticada com BottomNav, Header, Sidebar.
+`AppShell.tsx` — wrapper da app autenticada com `MatchHeader`, `MobileTabBar`, `ResponsiveRail` e `Sidebar`.
 
-### BottomNav (mobile)
-Navegação em rodapé com 5 itens principais: Dashboard, Tests, Learn, Social, Profile.
+### MobileTabBar (mobile)
+Navegação em rodapé com 5 itens principais: Dashboard, Learn, Social, Messages e Profile.
 
-### Header
-Barra superior com logo, pesquisa, notificações.
+### MatchHeader
+Barra superior dos viewports compactos com menu, título da rota e notificações.
 
-### Sidebar
-Navegação lateral (desktop) com links para todas as secções.
+### ResponsiveRail e Sidebar
+`ResponsiveRail` fornece a navegação persistente em desktop; `Sidebar` abre como painel lateral nos viewports compactos.
 
 ---
 
@@ -77,7 +82,7 @@ Navegação lateral (desktop) com links para todas as secções.
 | `OAuthCallbackPage.tsx` | Callback Google OAuth (PKCE) |
 | `ForgotPassword.tsx` | Recuperação de password |
 | `ResetPassword.tsx` | Reset password com token |
-| `DeleteAccountDialog.tsx` | Eliminar conta |
+| `AccountSection.tsx` + `ConfirmDialog.tsx` (em `features/settings/`) | Eliminação de conta com confirmação e estado de erro |
 | `SessionExpiredModal.tsx` | Modal sessão expirada |
 | `AuthProvider.tsx` | Context provider para auth |
 | `useAuth.ts` | Hook de autenticação |
@@ -153,8 +158,10 @@ Fluxo: QuestionsLanding → QuestionsSetup → QuestionsSession → QuestionsRev
 #### Videos Tab
 - Video scenarios para decisões de árbitro
 - Baseado em `video_decision_tables` + `video_action_sanction` no DB
-- Carrega vídeos do Supabase Storage
-- `sync-video-scenarios` Edge Function para sync
+- Reproduz objetos do bucket Supabase Storage `learn-videos`
+- O catálogo é sincronizado apenas pela Edge Function autenticada
+  `sync-video-scenarios`; novas linhas ficam inativas até revisão administrativa
+- Não existem scripts de administração nem segredos service-role/storage no frontend
 
 #### Courses Tab (placeholder/future)
 #### Resources Tab (placeholder/future)
@@ -204,8 +211,7 @@ interface Post {
 ### 6. Messages (`features/messages/`)
 | Componente | Descrição |
 |-----------|-----------|
-| `MessagesPage.tsx` | Lista de conversas |
-| `ConversationPage.tsx` | Conversa individual |
+| `MessagesWorkspace.tsx` | Lista de conversas e conversa seleccionada num workspace responsivo |
 
 DMs com Supabase Realtime subscriptions para actualização instantânea.
 
@@ -248,8 +254,8 @@ Pesquisa de utilizadores com:
 ### 13. Chatbot (`features/chatbot/`)
 Chatbot básico. Conteúdo desconhecido — código não lido.
 
-### 14. Feedback (`features/feedback/`)
-`ReportIssueModal.tsx` — modal para reportar problemas.
+### 14. Support (`features/support/`)
+`SupportPage.tsx` — página pública em `/support` para pedidos de suporte, privacidade e feedback.
 
 ### 15. Landing (`features/landing/`)
 | Componente | Descrição |
@@ -261,8 +267,10 @@ Chatbot básico. Conteúdo desconhecido — código não lido.
 ### 16. Policies (`features/policies/`)
 TOS, Privacy, Cookies — 3 tabs numa só página com `defaultTab` prop.
 
-### 17. Videos (`features/videos/`)
-Apenas `seed-videos.ts` — script de seed. UI para vídeos está em `LearnPage → Videos tab`.
+### 17. Videos
+A UI está em `features/learn/components/VideoAnalysisView.tsx`. A ingestão do
+catálogo pertence ao backend (`sync-video-scenarios`) e exige um utilizador com
+`app_metadata.role = "admin"`; o browser público só lê cenários ativos.
 
 ---
 
@@ -312,8 +320,8 @@ Apenas `seed-videos.ts` — script de seed. UI para vídeos está em `LearnPage 
     ├── /app/social → SocialPage
     │   └── /app/post/:postId → PostDetailPage
     │
-    ├── /app/messages → MessagesPage
-    │   └── /app/messages/:convId → ConversationPage
+    ├── /app/messages → MessagesWorkspace
+    │   └── /app/messages/:conversationId → MessagesWorkspace (conversa seleccionada)
     │
     ├── /app/pricing → PricingPage (Stripe checkout)
     │
@@ -339,7 +347,7 @@ Apenas `seed-videos.ts` — script de seed. UI para vídeos está em `LearnPage 
 
 ## Edge Functions
 
-8 funções — todas Stripe + 1 sync de vídeos:
+Funções Edge relevantes para estes fluxos:
 - `create-checkout-session` — Stripe checkout
 - `create-portal-session` — Customer portal
 - `cancel-subscription` — Cancelar
@@ -347,5 +355,6 @@ Apenas `seed-videos.ts` — script de seed. UI para vídeos está em `LearnPage 
 - `list-invoices` — Facturas
 - `stripe-webhook` — Webhook handler
 - `delete-account` — Apagar conta
-- `sync-video-scenarios` — Sync de vídeos
+- `sync-video-scenarios` — Sync administrativo do bucket `learn-videos`; cria
+  cenários inativos para revisão antes de publicação
 

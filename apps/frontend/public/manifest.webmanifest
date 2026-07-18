@@ -1,0 +1,19 @@
+{
+  "name": "RefLab",
+  "short_name": "RefLab",
+  "description": "Treino prático para árbitros de futebol.",
+  "lang": "pt-PT",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07090d",
+  "theme_color": "#07090d",
+  "icons": [
+    {
+      "src": "/reflab-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

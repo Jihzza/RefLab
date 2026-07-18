@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /admin
+Disallow: /auth
+Disallow: /legal
+Disallow: /reset-password
+Disallow: /__forms.html
+
+Sitemap: https://reflab.netlify.app/sitemap.xml

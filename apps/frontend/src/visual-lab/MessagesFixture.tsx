@@ -69,6 +69,7 @@ function message(
     id,
     conversation_id: 'fixture-conversation',
     sender_id: sender.id,
+    client_id: id,
     content,
     media_type: 'text',
     media_url: null,

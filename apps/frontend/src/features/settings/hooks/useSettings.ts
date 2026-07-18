@@ -56,9 +56,11 @@ export function useSettings() {
   const [notificationSaving, setNotificationSaving] = useState(false)
   const [privacySaving, setPrivacySaving] = useState(false)
   const [reloadToken, setReloadToken] = useState(0)
+  const [dataOwnerId, setDataOwnerId] = useState<string | undefined>(undefined)
 
   const mountedRef = useRef(true)
   const activeUserIdRef = useRef(userId)
+  const dataOwnerIdRef = useRef<string | undefined>(undefined)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingUpdatesRef = useRef<Map<InAppNotificationType, boolean>>(new Map())
   const pendingUpdatesUserIdRef = useRef<string | undefined>(undefined)
@@ -81,6 +83,8 @@ export function useSettings() {
 
   useEffect(() => {
     if (!userId) {
+      dataOwnerIdRef.current = undefined
+      setDataOwnerId(undefined)
       pendingUpdatesRef.current.clear()
       pendingUpdatesUserIdRef.current = undefined
       persistedNotificationsRef.current = { ...DEFAULT_NOTIFICATION_PREFS }
@@ -99,12 +103,24 @@ export function useSettings() {
     }
 
     const authenticatedUserId = userId
+    const ownerChanged = dataOwnerIdRef.current !== authenticatedUserId
+    dataOwnerIdRef.current = authenticatedUserId
+    setDataOwnerId(authenticatedUserId)
+
     if (
       pendingUpdatesUserIdRef.current &&
       pendingUpdatesUserIdRef.current !== authenticatedUserId
     ) {
       pendingUpdatesRef.current.clear()
       pendingUpdatesUserIdRef.current = undefined
+    }
+    if (ownerChanged) {
+      persistedNotificationsRef.current = { ...DEFAULT_NOTIFICATION_PREFS }
+      persistedSettingsRef.current = { ...DEFAULT_SETTINGS }
+      setNotificationPreferences({ ...DEFAULT_NOTIFICATION_PREFS })
+      setSettings({ ...DEFAULT_SETTINGS })
+      setNotificationSaving(false)
+      privacyRequestRef.current += 1
     }
     let cancelled = false
 
@@ -119,7 +135,11 @@ export function useSettings() {
 
       try {
         const { data, error } = await fetchAllSettings(authenticatedUserId)
-        if (cancelled) return
+        if (
+          cancelled ||
+          activeUserIdRef.current !== authenticatedUserId ||
+          dataOwnerIdRef.current !== authenticatedUserId
+        ) return
 
         if (error) {
           setLoadError(error.message)
@@ -141,9 +161,21 @@ export function useSettings() {
         setNotificationPreferences(nextNotifications)
         setHasLoaded(true)
       } catch (error) {
-        if (!cancelled) setLoadError(toError(error).message)
+        if (
+          !cancelled &&
+          activeUserIdRef.current === authenticatedUserId &&
+          dataOwnerIdRef.current === authenticatedUserId
+        ) {
+          setLoadError(toError(error).message)
+        }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (
+          !cancelled &&
+          activeUserIdRef.current === authenticatedUserId &&
+          dataOwnerIdRef.current === authenticatedUserId
+        ) {
+          setLoading(false)
+        }
       }
     }
 
@@ -254,7 +286,14 @@ export function useSettings() {
 
   const toggleNotification = useCallback(
     (type: InAppNotificationType) => {
-      if (!userId || !hasLoaded || loading) return
+      if (
+        !userId ||
+        activeUserIdRef.current !== userId ||
+        dataOwnerId !== userId ||
+        dataOwnerIdRef.current !== userId ||
+        !hasLoaded ||
+        loading
+      ) return
 
       setSaveError(null)
       setSaveErrorScope(null)
@@ -274,12 +313,19 @@ export function useSettings() {
         void flushPendingUpdates()
       }, DEBOUNCE_MS)
     },
-    [flushPendingUpdates, hasLoaded, loading, userId],
+    [dataOwnerId, flushPendingUpdates, hasLoaded, loading, userId],
   )
 
   const setMessagingPrivacy = useCallback(
     async (value: MessagingPrivacy) => {
-      if (!userId || !hasLoaded || privacyInFlightRef.current) return
+      if (
+        !userId ||
+        activeUserIdRef.current !== userId ||
+        dataOwnerId !== userId ||
+        dataOwnerIdRef.current !== userId ||
+        !hasLoaded ||
+        privacyInFlightRef.current
+      ) return
       if (settings.messaging_privacy === value) return
 
       const previousValue = persistedSettingsRef.current.messaging_privacy
@@ -332,7 +378,7 @@ export function useSettings() {
       privacyInFlightRef.current = false
       setPrivacySaving(false)
     },
-    [hasLoaded, settings.messaging_privacy, userId],
+    [dataOwnerId, hasLoaded, settings.messaging_privacy, userId],
   )
 
   useEffect(() => () => {
@@ -345,22 +391,45 @@ export function useSettings() {
     }
   }, [flushPendingUpdates])
 
+  const ownsVisibleData = Boolean(userId && dataOwnerId === userId)
+  const visibleLoading = userId ? !ownsVisibleData || loading : false
+  const visibleLoadError = ownsVisibleData ? loadError : null
+  const visibleSaveError = ownsVisibleData ? saveError : null
+  const visibleSaveErrorScope = ownsVisibleData ? saveErrorScope : null
+  const visibleNotificationSaving = ownsVisibleData && notificationSaving
+  const visiblePrivacySaving = ownsVisibleData && privacySaving
+
   return {
-    settings,
-    notificationPreferences,
-    loading,
-    hasLoaded,
-    error: loadError,
-    loadError,
-    saveError,
-    saveErrorScope,
-    saving: notificationSaving || privacySaving,
-    notificationSaving,
-    privacySaving,
+    settings: ownsVisibleData ? settings : DEFAULT_SETTINGS,
+    notificationPreferences: ownsVisibleData
+      ? notificationPreferences
+      : DEFAULT_NOTIFICATION_PREFS,
+    loading: visibleLoading,
+    hasLoaded: ownsVisibleData && hasLoaded,
+    error: visibleLoadError,
+    loadError: visibleLoadError,
+    saveError: visibleSaveError,
+    saveErrorScope: visibleSaveErrorScope,
+    saving: visibleNotificationSaving || visiblePrivacySaving,
+    notificationSaving: visibleNotificationSaving,
+    privacySaving: visiblePrivacySaving,
     toggleNotification,
     setMessagingPrivacy,
-    retry: () => setReloadToken((current) => current + 1),
+    retry: () => {
+      if (
+        userId &&
+        activeUserIdRef.current === userId &&
+        dataOwnerIdRef.current === userId
+      ) {
+        setReloadToken((current) => current + 1)
+      }
+    },
     clearSaveError: () => {
+      if (
+        !userId ||
+        activeUserIdRef.current !== userId ||
+        dataOwnerIdRef.current !== userId
+      ) return
       setSaveError(null)
       setSaveErrorScope(null)
     },

@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Clock3, LoaderCircle, RotateCcw, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getMessageMediaPublicUrl } from '../api/messagesApi'
+import { useMessageMediaUrl } from '../hooks/useMessageMediaUrl'
 import type { Message } from '../types'
 
 interface MessageBubbleProps {
   message: Message
   isOwn: boolean
+  onRetry?: (clientId: string) => void
+  onDiscard?: (clientId: string) => void
 }
 
 function formatTimestamp(dateString: string, locale: string): string {
@@ -24,26 +26,24 @@ function formatTimestamp(dateString: string, locale: string): string {
   ).format(date)
 }
 
-function resolveMediaUrl(pathOrUrl: string): string {
-  if (
-    pathOrUrl.startsWith('http://')
-    || pathOrUrl.startsWith('https://')
-    || pathOrUrl.startsWith('blob:')
-  ) {
-    return pathOrUrl
-  }
-  return getMessageMediaPublicUrl(pathOrUrl)
-}
-
-export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
+export default function MessageBubble({
+  message,
+  isOwn,
+  onRetry,
+  onDiscard,
+}: MessageBubbleProps) {
   const { t, i18n } = useTranslation()
   const [failedMediaSource, setFailedMediaSource] = useState<string | null>(null)
   const hasText = Boolean(message.content?.trim())
-  const mediaSource = message.media_url
-    ? resolveMediaUrl(message.media_url)
-    : null
-  const mediaFailed = Boolean(mediaSource && failedMediaSource === mediaSource)
-  const isOptimistic = message.id.startsWith('temp-')
+  const media = useMessageMediaUrl(message.media_url)
+  const mediaSource = media.url
+  const mediaFailed = Boolean(
+    media.error
+    || (mediaSource && failedMediaSource === mediaSource),
+  )
+  const isPending = message.delivery_state === 'pending'
+  const isFailed = message.delivery_state === 'failed'
+  const outboxClientId = message.outbox_client_id
 
   return (
     <div className={`flex w-full ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -59,7 +59,16 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
               : 'rounded-[1rem] rounded-bl-sm border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text)',
           ].join(' ')}
         >
-          {mediaSource && !mediaFailed && (
+          {message.media_url && media.isLoading && (
+            <div className="mb-2.5 flex min-h-20 items-center justify-center rounded-xl bg-(--mc-color-canvas)">
+              <LoaderCircle
+                className="size-5 animate-spin text-(--mc-color-accent) motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+            </div>
+          )}
+
+          {mediaSource && !mediaFailed && !media.isLoading && (
             <div className={`${hasText ? 'mb-2.5' : 'mb-1'} overflow-hidden rounded-xl bg-(--mc-color-canvas)`}>
               {message.media_type === 'image' && (
                 <img
@@ -94,7 +103,7 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             </div>
           )}
 
-          {mediaSource && mediaFailed && (
+          {message.media_url && mediaFailed && !media.isLoading && (
             <div
               role="status"
               className={[
@@ -124,10 +133,49 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 : 'text-(--mc-color-text-muted)',
             ].join(' ')}
           >
-            {isOptimistic
-              ? t('Sending...')
-              : formatTimestamp(message.created_at, i18n.language)}
+            {isPending ? (
+              <span className="inline-flex items-center gap-1">
+                <Clock3 className="size-3" aria-hidden="true" />
+                {t('Sending...')}
+              </span>
+            ) : isFailed ? (
+              t('Failed to send message.')
+            ) : (
+              formatTimestamp(message.created_at, i18n.language)
+            )}
           </time>
+
+          {isFailed && outboxClientId && (
+            <div className="mt-2 border-t border-current/20 pt-2">
+              {message.delivery_error && (
+                <p className="mb-2 text-[11px] leading-4 opacity-80">
+                  {message.delivery_error}
+                </p>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                {onRetry && (
+                  <button
+                    type="button"
+                    onClick={() => onRetry(outboxClientId)}
+                    className="mc-focus-ring inline-flex min-h-8 items-center gap-1 rounded-lg border border-current/25 px-2 text-[11px] font-bold"
+                  >
+                    <RotateCcw className="size-3" aria-hidden="true" />
+                    {t('Retry')}
+                  </button>
+                )}
+                {onDiscard && (
+                  <button
+                    type="button"
+                    onClick={() => onDiscard(outboxClientId)}
+                    className="mc-focus-ring inline-flex min-h-8 items-center gap-1 rounded-lg border border-current/25 px-2 text-[11px] font-bold"
+                  >
+                    <Trash2 className="size-3" aria-hidden="true" />
+                    {t('Delete')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </article>
 
         {isOwn && (

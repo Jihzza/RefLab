@@ -8,7 +8,11 @@ import PostFooter from './PostFooter'
 import CommentSection from './CommentSection'
 import ReportDialog from './ReportDialog'
 import BlockConfirmDialog from './BlockConfirmDialog'
-import type { Post } from '../types'
+import type {
+  Post,
+  ReportSubmission,
+  ReportSubmissionResult,
+} from '../types'
 import { useTranslation } from 'react-i18next'
 
 interface PostBoxProps {
@@ -18,7 +22,11 @@ interface PostBoxProps {
   onRepost: (post: Post) => void
   onShare: (post: Post) => void
   onDelete: (post: Post) => void
-  onReport: (type: 'post' | 'user', targetId: string, reason: string) => void
+  onReport: (
+    type: 'post' | 'user',
+    targetId: string,
+    submission: ReportSubmission,
+  ) => Promise<ReportSubmissionResult>
   onBlock: (userId: string) => void
   onCommentCountChange: (postId: string, delta: number) => void
   defaultShowComments?: boolean
@@ -120,10 +128,11 @@ const PostBox: React.FC<PostBoxProps> = ({
       {reportDialog && (
         <ReportDialog
           type={reportDialog.type}
-          onSubmit={(reason) => {
-            onReport(reportDialog.type, reportDialog.targetId, reason)
-            setReportDialog(null)
-          }}
+          onSubmit={(submission) => onReport(
+            reportDialog.type,
+            reportDialog.targetId,
+            submission,
+          )}
           onClose={() => setReportDialog(null)}
         />
       )}

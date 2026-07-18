@@ -5,6 +5,10 @@ import {
   type ImgHTMLAttributes,
   type ReactNode,
 } from 'react'
+import {
+  resolveAuthProviderAvatarUrl,
+  resolveProfilePhotoUrl,
+} from '@/features/auth/utils/profilePhotoUrl'
 import { cx } from './utils'
 
 export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -15,6 +19,9 @@ export interface AvatarProps extends HTMLAttributes<HTMLDivElement> {
   name?: string | null
   fallback?: ReactNode
   size?: AvatarSize
+  ownerId?: string | null
+  providerSrc?: string | null
+  allowAuthProviderImage?: boolean
   imageProps?: Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt'>
 }
 
@@ -35,11 +42,14 @@ function getInitials(name?: string | null): string {
 
 export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
   {
+    allowAuthProviderImage = false,
     alt = '',
     className,
     fallback,
     imageProps,
     name,
+    ownerId,
+    providerSrc,
     size = 'md',
     src,
     ...props
@@ -48,7 +58,11 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
 ) {
   const { className: imageClassName, onError, ...restImageProps } = imageProps ?? {}
   const [failedSource, setFailedSource] = useState<string | null>(null)
-  const showImage = Boolean(src && failedSource !== src)
+  const safeSource = resolveProfilePhotoUrl(src, ownerId ?? undefined)
+    ?? (allowAuthProviderImage
+      ? resolveAuthProviderAvatarUrl(providerSrc ?? src)
+      : null)
+  const showImage = Boolean(safeSource && failedSource !== safeSource)
 
   return (
     <div
@@ -63,12 +77,12 @@ export const Avatar = forwardRef<HTMLDivElement, AvatarProps>(function Avatar(
     >
       {showImage ? (
         <img
-          src={src ?? undefined}
+          src={safeSource ?? undefined}
           alt={alt}
           className={cx('size-full object-cover', imageClassName)}
           loading="lazy"
           onError={(event) => {
-            setFailedSource(src ?? null)
+            setFailedSource(safeSource)
             onError?.(event)
           }}
           {...restImageProps}

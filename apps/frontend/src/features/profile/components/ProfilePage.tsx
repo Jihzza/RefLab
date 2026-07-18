@@ -139,7 +139,10 @@ export default function ProfilePage() {
     user?.user_metadata?.username ||
     user?.email?.split('@')[0] ||
     'user'
-  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
+  const profileAvatarUrl = profile?.photo_url ?? null
+  const providerAvatarUrl = typeof user?.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
   const memberSince = formatMemberSince(profile?.created_at, i18n.resolvedLanguage)
 
   useEffect(() => () => {
@@ -247,9 +250,12 @@ export default function ProfilePage() {
             <div className="absolute bottom-10 right-0 h-20 w-9 bg-(--mc-color-danger) [clip-path:polygon(100%_0,100%_100%,0_100%)]" aria-hidden="true" />
             <PitchDiagram />
 
-            <div className="relative z-10 flex min-h-[21rem] flex-col justify-end px-5 py-6 sm:min-h-[17rem] sm:flex-row sm:items-end sm:justify-start sm:gap-7 sm:px-8 sm:py-8">
+            <div className="relative z-10 flex min-h-[21rem] flex-col justify-end px-5 py-6 sm:px-8 sm:py-8 lg:min-h-[17rem] lg:flex-row lg:items-end lg:justify-start lg:gap-7">
               <Avatar
-                src={avatarUrl}
+                src={profileAvatarUrl}
+                ownerId={profile?.id ?? user?.id}
+                providerSrc={providerAvatarUrl}
+                allowAuthProviderImage
                 alt={displayName}
                 name={displayName}
                 size="xl"
@@ -257,11 +263,11 @@ export default function ProfilePage() {
                 imageProps={{ loading: 'eager' }}
               />
 
-              <div className="mt-5 min-w-0 flex-1 sm:mt-0">
-                <h2 className="truncate text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
+              <div className="mt-5 min-w-0 flex-1 lg:mt-0">
+                <h2 className="break-words text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
                   {displayName}
                 </h2>
-                <p className="mt-1 truncate text-base text-(--mc-color-text-muted) sm:text-lg">
+                <p className="mt-1 break-all text-base text-(--mc-color-text-muted) sm:text-lg">
                   @{username}
                 </p>
                 {memberSince && (
@@ -272,11 +278,11 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div className="mt-5 flex w-full gap-2 sm:mt-0 sm:w-auto sm:shrink-0">
+              <div className="mt-5 flex w-full gap-2 lg:mt-0 lg:w-auto lg:shrink-0">
                 <Button
                   variant="secondary"
                   leadingIcon={<Pencil className="size-4" />}
-                  className="flex-1 border-(--mc-color-accent)/80 text-(--mc-color-accent) sm:min-w-40"
+                  className="flex-1 border-(--mc-color-accent)/80 text-(--mc-color-accent) lg:min-w-40"
                   onClick={() => navigate('/app/profile/edit')}
                 >
                   {t('Edit Profile')}

@@ -26,7 +26,11 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
 
   if (context === 'signup') {
     if (msg.includes('User already registered')) {
-      return { field: 'email', message: 'Já existe uma conta com este email.' }
+      // Do not turn the public registration form into an account-enumeration
+      // oracle. Supabase may already obscure duplicate sign-ups depending on
+      // Auth configuration, but the client must remain safe if it returns this
+      // explicit error.
+      return { message: 'Não foi possível concluir o registo. Verifica os dados ou tenta iniciar sessão.' }
     }
     if (msg.includes('Password')) {
       return { field: 'password', message: msg }
@@ -47,6 +51,8 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
     return { message: 'Demasiados pedidos. Tenta novamente mais tarde.' }
   }
 
-  // Fallback: pass through raw message
-  return { message: msg }
+  // Never expose unexpected provider, database or Edge Function details in a
+  // public authentication surface. Operators retain the original error in the
+  // provider logs used for incident diagnosis.
+  return { message: 'Não foi possível concluir o pedido. Tenta novamente.' }
 }

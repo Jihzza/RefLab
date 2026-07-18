@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '@/features/auth/components/useAuth'
 import { completeQuestionSession, createQuestionSession } from '../api/testsApi'
-import type { QuestionSessionMode, SessionResult } from '../types'
+import type { QuestionSession, QuestionSessionMode, SessionResult } from '../types'
 import QuestionsLanding from './questions/QuestionsLanding'
 import QuestionsReview from './questions/QuestionsReview'
 import QuestionsSession from './questions/QuestionsSession'
@@ -15,7 +16,6 @@ interface ActiveSession {
   mode: QuestionSessionMode
   filterLaws: number[] | null
   filterAreas: string[] | null
-  startedAt: string
 }
 
 export interface LearnQuestionsViewProps {
@@ -26,6 +26,7 @@ export default function LearnQuestionsView({
   onImmersiveChange,
 }: LearnQuestionsViewProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [view, setView] = useState<QuestionsViewState>('landing')
   const [activeSession, setActiveSession] = useState<ActiveSession | null>(null)
   const [lastResult, setLastResult] = useState<SessionResult | null>(null)
@@ -33,10 +34,12 @@ export default function LearnQuestionsView({
   const [creationError, setCreationError] = useState(false)
   const creationRequestRef = useRef(0)
   const creatingRef = useRef(false)
+  const pendingCreationRef = useRef<{ signature: string; sessionId: string } | null>(null)
 
   useEffect(() => () => {
     creationRequestRef.current += 1
     creatingRef.current = false
+    pendingCreationRef.current = null
   }, [])
 
   const applyView = useCallback((nextView: QuestionsViewState) => {
@@ -47,6 +50,7 @@ export default function LearnQuestionsView({
   const changeView = (nextView: QuestionsViewState) => {
     creationRequestRef.current += 1
     creatingRef.current = false
+    pendingCreationRef.current = null
     setCreating(false)
     setCreationError(false)
     applyView(nextView)
@@ -57,16 +61,40 @@ export default function LearnQuestionsView({
     filterLaws: number[] | null,
     filterAreas: string[] | null,
   ) => {
-    if (creatingRef.current) return
+    const expectedUserId = user?.id
+    if (creatingRef.current || !expectedUserId) return
     creatingRef.current = true
     const requestId = creationRequestRef.current + 1
     creationRequestRef.current = requestId
     setCreating(true)
     setCreationError(false)
 
-    let result: Awaited<ReturnType<typeof createQuestionSession>>
+    const normalizedLaws = filterLaws
+      ? [...new Set(filterLaws)].sort((left, right) => left - right)
+      : null
+    const normalizedAreas = filterAreas
+      ? [...new Set(filterAreas.map((area) => area.trim()))].sort()
+      : null
+    const signature = JSON.stringify([
+      expectedUserId,
+      mode,
+      normalizedLaws,
+      normalizedAreas,
+    ])
+    if (!pendingCreationRef.current || pendingCreationRef.current.signature !== signature) {
+      pendingCreationRef.current = { signature, sessionId: crypto.randomUUID() }
+    }
+    const sessionId = pendingCreationRef.current.sessionId
+
+    let result: { data: QuestionSession | null; error: unknown }
     try {
-      result = await createQuestionSession(mode, filterLaws, filterAreas)
+      result = await createQuestionSession(
+        sessionId,
+        expectedUserId,
+        mode,
+        normalizedLaws,
+        normalizedAreas,
+      )
     } catch (error) {
       console.error('Failed to create question session:', error)
       result = { data: null, error: error instanceof Error ? error : new Error('Unknown error') }
@@ -74,7 +102,7 @@ export default function LearnQuestionsView({
 
     if (creationRequestRef.current !== requestId) {
       if (result.data) {
-        void completeQuestionSession(result.data.id, result.data.started_at, 0, 0)
+        void completeQuestionSession(result.data.id)
       }
       return
     }
@@ -85,16 +113,16 @@ export default function LearnQuestionsView({
       onImmersiveChange(false)
       return
     }
+    pendingCreationRef.current = null
 
     setActiveSession({
       sessionId: result.data.id,
-      mode,
-      filterLaws,
-      filterAreas,
-      startedAt: result.data.started_at,
+      mode: result.data.mode,
+      filterLaws: result.data.filter_laws,
+      filterAreas: result.data.filter_areas,
     })
     applyView('session')
-  }, [applyView, onImmersiveChange])
+  }, [applyView, onImmersiveChange, user?.id])
 
   const handleStartQuick = () => startSession('quick', null, null)
   const handleSetupConfirm = (laws: number[], areas: string[]) => {
@@ -165,7 +193,6 @@ export default function LearnQuestionsView({
         mode={activeSession.mode}
         filterLaws={activeSession.filterLaws}
         filterAreas={activeSession.filterAreas}
-        startedAt={activeSession.startedAt}
         onEndSession={(result) => {
           setLastResult(result)
           changeView('review')

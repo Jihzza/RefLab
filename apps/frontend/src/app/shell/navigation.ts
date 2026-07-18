@@ -90,6 +90,7 @@ interface MatchRouteTitle {
 }
 
 const MATCH_ROUTE_TITLES: readonly MatchRouteTitle[] = [
+  { titleKey: 'Moderation', pathPrefixes: ['/admin/moderation', '/app/moderation'] },
   { titleKey: 'Notifications', pathPrefixes: ['/app/notifications'] },
   { titleKey: 'Search', pathPrefixes: ['/app/search'] },
   { titleKey: 'Edit Profile', pathPrefixes: ['/app/profile/edit'] },

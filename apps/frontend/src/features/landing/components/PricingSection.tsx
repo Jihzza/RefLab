@@ -34,6 +34,7 @@ import {
   parseAuthPlan,
   persistAuthReturnTo,
 } from "@/features/auth/utils/authNavigation";
+import { PAID_PLANS_ENABLED } from "@/features/billing/config";
 
 // Import Swiper core styles
 import "swiper/css";
@@ -56,8 +57,8 @@ const swiperStyles = `
 /**
  * Pricing plans data
  *
- * Three tiers: Free, Pro (highlighted), and Plus
- * Prices are in EUR per month
+ * Free is launch-ready. Paid plans are strictly opt-in and remain announced
+ * without prices or purchase actions until the commercial gate is enabled.
  */
 const PRICING_PLANS: PricingPlan[] = [
   {
@@ -65,39 +66,29 @@ const PRICING_PLANS: PricingPlan[] = [
     name: "Free",
     pricePerMonth: 0,
     benefits: [
-      "Access to basic Laws of the Game content",
-      "Limited practice quizzes",
-      "Community forum access",
-      "Weekly newsletter",
+      'Practice tests and question sessions',
+      'Video decision scenarios',
+      'Community and direct messages',
+      'Progress dashboard and official IFAB links',
     ],
     buttonText: "Get Started",
   },
   {
     id: "pro",
     name: "Pro",
-    pricePerMonth: 4.99,
-    benefits: [
-      "Everything in Free",
-      "Full video scenario library",
-      "AI-powered feedback on decisions",
-      "Personalized training plans",
-      "Progress tracking & analytics",
-      "Priority support",
-    ],
-    isHighlighted: true,
-    buttonText: "Subscribe",
+    pricePerMonth: PAID_PLANS_ENABLED ? 4.99 : 0,
+    benefits: ["Everything in Free"],
+    isHighlighted: PAID_PLANS_ENABLED,
+    isComingSoon: !PAID_PLANS_ENABLED,
+    buttonText: PAID_PLANS_ENABLED ? "Subscribe" : "Coming soon",
   },
   {
     id: "plus",
     name: "Plus",
-    pricePerMonth: 9.99,
-    benefits: [
-      "Everything in Pro",
-      "Advanced analytics insights",
-      "Priority support + faster response",
-      "Early access to new premium features",
-    ],
-    buttonText: "Subscribe",
+    pricePerMonth: PAID_PLANS_ENABLED ? 9.99 : 0,
+    benefits: ["Everything in Free"],
+    isComingSoon: !PAID_PLANS_ENABLED,
+    buttonText: PAID_PLANS_ENABLED ? "Subscribe" : "Coming soon",
   },
 ];
 
@@ -124,10 +115,17 @@ export default function PricingSection({ onRequestSignup }: PricingSectionProps)
   const handlePlanSelect = (planId: string) => {
     const plan = parseAuthPlan(planId);
     if (!plan) return;
+    if (plan !== 'free' && !PAID_PLANS_ENABLED) return;
 
-    const returnTo = persistAuthReturnTo(`/app/pricing?plan=${plan}`);
+    const returnTo = persistAuthReturnTo(
+      plan === 'free' ? '/app/dashboard' : `/app/pricing?plan=${plan}`,
+    );
     onRequestSignup();
-    navigate(buildAuthLandingUrl('signup', returnTo, plan));
+    navigate(buildAuthLandingUrl(
+      'signup',
+      returnTo,
+      plan === 'free' ? null : plan,
+    ));
 
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {

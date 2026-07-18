@@ -2,7 +2,7 @@ import { Menu, Search } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import logo from '@/assets/logos/RefLab-Logo-No-BG.svg'
-import { IconButton } from '@/components/ui'
+import { Avatar, IconButton } from '@/components/ui'
 import NotificationBell from '@/features/notifications/components/NotificationBell'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { getMatchRouteTitleKey } from './navigation'
@@ -24,8 +24,10 @@ export default function MatchHeader({ menuOpen = false, onMenuToggle }: MatchHea
     user?.user_metadata?.full_name ||
     user?.email?.split('@')[0] ||
     t('Profile')
-  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const profileAvatarUrl = profile?.photo_url ?? null
+  const providerAvatarUrl = typeof user?.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
 
   return (
     <header className="fixed top-0 right-0 left-0 z-40 h-[calc(var(--mc-header-height)+var(--mc-safe-top))] border-b border-(--border-subtle) bg-(--bg-surface)/95 pt-[var(--mc-safe-top)] shadow-(--shadow-soft) backdrop-blur-md md:left-20 xl:left-64">
@@ -83,17 +85,16 @@ export default function MatchHeader({ menuOpen = false, onMenuToggle }: MatchHea
             className="ml-1 hidden h-10 min-w-10 items-center justify-center rounded-full border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-primary) transition-colors hover:border-(--brand-yellow) md:flex"
             aria-label={t('Profile')}
           >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={displayName}
-                className="h-9 w-9 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-(--brand-yellow) text-xs font-bold text-(--bg-primary)">
-                {initials}
-              </span>
-            )}
+            <Avatar
+              src={profileAvatarUrl}
+              ownerId={profile?.id ?? user?.id}
+              providerSrc={providerAvatarUrl}
+              name={displayName}
+              alt={displayName}
+              size="sm"
+              allowAuthProviderImage
+              className="size-9 border-0"
+            />
           </Link>
         </div>
       </div>

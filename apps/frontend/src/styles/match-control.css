@@ -240,6 +240,13 @@
   user-select: none;
 }
 
+/* Keep the perspective-transformed pseudo-element inside its decorative box.
+ * Without this clip, Chromium can include the 3D projection in the document's
+ * vertical overflow and create more than 10,000px of blank page space. */
+.mc-pitch-lines {
+  overflow: hidden;
+}
+
 .mc-brand-stripes {
   display: block;
   width: 3.25rem;

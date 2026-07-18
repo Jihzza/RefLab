@@ -10,11 +10,12 @@ import {
   MessageSquare,
   Search,
   Settings,
+  ShieldAlert,
   UserCircle,
   Users,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Sheet } from '@/components/ui'
+import { Avatar, Sheet } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 
 interface SidebarProps {
@@ -35,11 +36,20 @@ const NAV_ITEMS = [
   { key: 'Settings', path: '/app/settings', icon: Settings },
 ] as const
 
+const ADMIN_NAV_ITEM = {
+  key: 'Moderation',
+  path: '/admin/moderation',
+  icon: ShieldAlert,
+} as const
+
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const { t } = useTranslation()
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const navItems = user?.app_metadata?.role === 'admin'
+    ? [...NAV_ITEMS, ADMIN_NAV_ITEM]
+    : NAV_ITEMS
 
   const handleLogout = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault()
@@ -75,19 +85,13 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           {user ? (
             <div className="flex flex-col gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                {user.user_metadata?.avatar_url ? (
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt={t('Profile avatar')}
-                    className="size-10 shrink-0 rounded-full border border-(--mc-color-border) object-cover"
-                  />
-                ) : (
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-(--mc-color-accent)/20 font-bold text-(--mc-color-accent)">
-                    {user.user_metadata?.full_name?.charAt(0).toUpperCase()
-                      || user.email?.charAt(0).toUpperCase()
-                      || 'U'}
-                  </div>
-                )}
+                <Avatar
+                  ownerId={user.id}
+                  providerSrc={user.user_metadata?.avatar_url}
+                  name={user.user_metadata?.full_name || user.email}
+                  alt={t('Profile avatar')}
+                  allowAuthProviderImage
+                />
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-(--mc-color-text)" title={user.email}>
                     {user.user_metadata?.full_name || user.email}
@@ -118,7 +122,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       )}
     >
       <nav className="space-y-1 p-4" aria-label={t('Navigation')}>
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon
           const isActive = location.pathname === item.path
             || location.pathname.startsWith(`${item.path}/`)

@@ -12,27 +12,19 @@ import { Avatar, Button, Dialog, IconButton, Surface, TextArea } from '@/compone
 import { useAuth } from '@/features/auth/components/useAuth'
 import { createPost } from '../api/socialApi'
 import type { Post, PostMediaType } from '../types'
+import {
+  ACCEPTED_POST_MEDIA_TYPES,
+  POST_CONTENT_MAX_LENGTH,
+  POST_MEDIA_MAX_BYTES,
+  POST_MEDIA_MAX_MEBIBYTES,
+} from '../config'
 
 interface CreatePostModalProps {
   onClose: () => void
   onPostCreated: (post: Post) => void
 }
 
-const ACCEPTED_MEDIA_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-  'audio/webm',
-] as const
-
-const ACCEPTED_MEDIA_ATTRIBUTE = ACCEPTED_MEDIA_TYPES.join(',')
+const ACCEPTED_MEDIA_ATTRIBUTE = ACCEPTED_POST_MEDIA_TYPES.join(',')
 
 function getMediaType(mime: string): Exclude<PostMediaType, 'text'> | null {
   if (mime.startsWith('image/')) return 'image'
@@ -64,7 +56,10 @@ export default function CreatePostModal({
     user?.user_metadata?.full_name ||
     user?.email?.split('@')[0] ||
     t('Profile')
-  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
+  const profileAvatarUrl = profile?.photo_url ?? null
+  const providerAvatarUrl = typeof user?.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
 
   const clearPreviewObjectUrl = useCallback(() => {
     if (!previewObjectUrlRef.current) return
@@ -85,6 +80,18 @@ export default function CreatePostModal({
       setMediaPreview(null)
       setMediaType('text')
       setError(t('Unsupported media type. Please choose an image, video, or audio file.'))
+      event.target.value = ''
+      return
+    }
+
+    if (file.size <= 0 || file.size > POST_MEDIA_MAX_BYTES) {
+      clearPreviewObjectUrl()
+      setMediaFile(null)
+      setMediaPreview(null)
+      setMediaType('text')
+      setError(t('Media files must be no larger than {{count}} MB.', {
+        count: POST_MEDIA_MAX_MEBIBYTES,
+      }))
       event.target.value = ''
       return
     }
@@ -242,7 +249,10 @@ export default function CreatePostModal({
 
           <div className="flex min-w-0 items-start gap-3">
             <Avatar
-              src={avatarUrl}
+              src={profileAvatarUrl}
+              ownerId={profile?.id ?? user?.id}
+              providerSrc={providerAvatarUrl}
+              allowAuthProviderImage
               alt={displayName}
               name={displayName}
               size="lg"
@@ -262,8 +272,14 @@ export default function CreatePostModal({
                 placeholder={t("What's on your mind?")}
                 aria-label={t("What's on your mind?")}
                 rows={4}
+                maxLength={POST_CONTENT_MAX_LENGTH}
                 resize="none"
                 disabled={isSubmitting}
+                hint={(
+                  <span aria-live="polite" aria-atomic="true">
+                    {content.length} / {POST_CONTENT_MAX_LENGTH}
+                  </span>
+                )}
                 className="min-h-32 max-h-52 bg-(--mc-color-canvas) px-4 py-3 text-base"
               />
             </div>

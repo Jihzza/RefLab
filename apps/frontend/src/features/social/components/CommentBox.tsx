@@ -157,6 +157,7 @@ export default function CommentBox({
       >
         <Avatar
           src={comment.author.photo_url}
+          ownerId={comment.author.id}
           alt={displayName}
           name={displayName}
           size="sm"

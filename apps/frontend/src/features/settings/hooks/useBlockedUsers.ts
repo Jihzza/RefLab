@@ -4,6 +4,8 @@ import { unblockUser } from '@/features/social/api/socialApi'
 import { fetchBlockedUsers } from '../api/settingsApi'
 import type { BlockedUser } from '../types'
 
+const EMPTY_UNBLOCKING_IDS: ReadonlySet<string> = new Set()
+
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error('Unexpected blocked-users error')
 }
@@ -15,8 +17,10 @@ export function useBlockedUsers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [unblockingIds, setUnblockingIds] = useState<ReadonlySet<string>>(new Set())
+  const [dataOwnerId, setDataOwnerId] = useState<string | undefined>(undefined)
 
   const blockedUsersRef = useRef<BlockedUser[]>([])
+  const dataOwnerIdRef = useRef<string | undefined>(undefined)
   const unblockingIdsRef = useRef(new Set<string>())
   const unblockingUserIdRef = useRef<string | undefined>(undefined)
   const requestIdRef = useRef(0)
@@ -38,10 +42,14 @@ export function useBlockedUsers() {
   }, [])
 
   const load = useCallback(async () => {
+    if (activeUserIdRef.current !== userId) return
+
     const requestId = requestIdRef.current + 1
     requestIdRef.current = requestId
 
     if (!userId) {
+      dataOwnerIdRef.current = undefined
+      setDataOwnerId(undefined)
       unblockingIdsRef.current.clear()
       unblockingUserIdRef.current = undefined
       setUnblockingIds(new Set())
@@ -51,18 +59,27 @@ export function useBlockedUsers() {
       return
     }
 
-    if (unblockingUserIdRef.current !== userId) {
+    const ownerChanged = dataOwnerIdRef.current !== userId
+    dataOwnerIdRef.current = userId
+    setDataOwnerId(userId)
+
+    if (ownerChanged || unblockingUserIdRef.current !== userId) {
       unblockingIdsRef.current.clear()
       unblockingUserIdRef.current = userId
       setUnblockingIds(new Set())
     }
+    if (ownerChanged) replaceBlockedUsers([])
 
     setLoading(true)
     setError(null)
 
     try {
       const { blockedUsers: users, error: fetchError } = await fetchBlockedUsers(userId)
-      if (requestIdRef.current !== requestId || activeUserIdRef.current !== userId) return
+      if (
+        requestIdRef.current !== requestId ||
+        activeUserIdRef.current !== userId ||
+        dataOwnerIdRef.current !== userId
+      ) return
 
       if (fetchError) {
         setError(fetchError.message)
@@ -71,11 +88,19 @@ export function useBlockedUsers() {
 
       replaceBlockedUsers(users)
     } catch (loadError) {
-      if (requestIdRef.current === requestId && activeUserIdRef.current === userId) {
+      if (
+        requestIdRef.current === requestId &&
+        activeUserIdRef.current === userId &&
+        dataOwnerIdRef.current === userId
+      ) {
         setError(toError(loadError).message)
       }
     } finally {
-      if (requestIdRef.current === requestId && activeUserIdRef.current === userId) {
+      if (
+        requestIdRef.current === requestId &&
+        activeUserIdRef.current === userId &&
+        dataOwnerIdRef.current === userId
+      ) {
         setLoading(false)
       }
     }
@@ -89,7 +114,13 @@ export function useBlockedUsers() {
   }, [load])
 
   const unblock = useCallback(async (blockedId: string) => {
-    if (!userId) return
+    if (
+      !userId ||
+      activeUserIdRef.current !== userId ||
+      dataOwnerId !== userId ||
+      dataOwnerIdRef.current !== userId ||
+      loading
+    ) return
     if (unblockingUserIdRef.current !== userId) {
       unblockingIdsRef.current.clear()
       unblockingUserIdRef.current = userId
@@ -115,7 +146,12 @@ export function useBlockedUsers() {
       unblockError = toError(caughtError)
     }
 
-    if (mountedRef.current && activeUserIdRef.current === userId && unblockError) {
+    if (
+      mountedRef.current &&
+      activeUserIdRef.current === userId &&
+      dataOwnerIdRef.current === userId &&
+      unblockError
+    ) {
       const currentUsers = blockedUsersRef.current
       if (!currentUsers.some((blockedUser) => blockedUser.id === blockedId)) {
         const restoredUsers = [...currentUsers, removedUser].sort(
@@ -131,18 +167,21 @@ export function useBlockedUsers() {
     }
     if (
       activeUserIdRef.current === userId &&
+      dataOwnerIdRef.current === userId &&
       mountedRef.current &&
       unblockingUserIdRef.current === userId
     ) {
       setUnblockingIds(new Set(unblockingIdsRef.current))
     }
-  }, [replaceBlockedUsers, userId])
+  }, [dataOwnerId, loading, replaceBlockedUsers, userId])
+
+  const ownsVisibleData = Boolean(userId && dataOwnerId === userId)
 
   return {
-    blockedUsers,
-    loading,
-    error,
-    unblockingIds,
+    blockedUsers: ownsVisibleData ? blockedUsers : [],
+    loading: userId ? !ownsVisibleData || loading : false,
+    error: ownsVisibleData ? error : null,
+    unblockingIds: ownsVisibleData ? unblockingIds : EMPTY_UNBLOCKING_IDS,
     unblock,
     retry: load,
   }

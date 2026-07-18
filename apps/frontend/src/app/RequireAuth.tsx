@@ -1,7 +1,11 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth/components/useAuth";
-import { buildAuthLandingUrl, sanitizeAuthReturnTo } from "@/features/auth/utils/authNavigation";
+import {
+  buildAuthLandingUrl,
+  buildLegalAcceptanceUrl,
+  sanitizeAuthReturnTo,
+} from "@/features/auth/utils/authNavigation";
 import { useTranslation } from "react-i18next";
 import { LoaderCircle } from "lucide-react";
 
@@ -22,11 +26,18 @@ interface RequireAuthProps {
  */
 export default function RequireAuth({ children }: RequireAuthProps) {
   const { t } = useTranslation();
-  const { authStatus } = useAuth();
+  const { user, authStatus, legalAcceptanceStatus } = useAuth();
   const location = useLocation();
 
+  const returnTo = sanitizeAuthReturnTo(
+    `${location.pathname}${location.search}${location.hash}`,
+  );
+
   // While checking for existing session, show a loading skeleton
-  if (authStatus === "checking_session") {
+  if (
+    authStatus === "checking_session"
+    || (authStatus === "authenticated" && legalAcceptanceStatus === "loading")
+  ) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-(--mc-color-canvas) px-4 text-(--mc-color-text-secondary)" role="status">
         <div className="flex items-center gap-3 rounded-(--mc-radius-button) border border-(--mc-color-border) bg-(--mc-color-surface) px-4 py-3 shadow-(--mc-shadow-soft)">
@@ -39,12 +50,15 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
   // Not authenticated - silent redirect to landing
   if (authStatus === "unauthenticated" || authStatus === "error") {
-    const returnTo = sanitizeAuthReturnTo(
-      `${location.pathname}${location.search}${location.hash}`,
-    );
     return <Navigate to={buildAuthLandingUrl('login', returnTo)} replace />;
   }
 
-  // User is authenticated - render the protected content
-  return <>{children}</>;
+  if (legalAcceptanceStatus !== "accepted") {
+    return <Navigate to={buildLegalAcceptanceUrl(returnTo)} replace />;
+  }
+
+  // The browser can transition directly from account A to account B without
+  // remounting the router. Key the whole protected subtree by owner so no
+  // transient hook/form/attempt state survives that account boundary.
+  return <Fragment key={user?.id ?? 'authenticated-user'}>{children}</Fragment>;
 }

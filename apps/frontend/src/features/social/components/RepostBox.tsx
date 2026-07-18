@@ -50,6 +50,7 @@ const RepostBox: React.FC<RepostBoxProps> = ({ originalPost, resolveMediaUrl }) 
       >
         <Avatar
           src={originalPost.author.photo_url}
+          ownerId={originalPost.author.id}
           alt={displayName}
           name={displayName}
           size="sm"

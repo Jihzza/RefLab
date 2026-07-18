@@ -5,12 +5,23 @@ const ptPT = {
   'Try Again': 'Tentar novamente',
   Back: 'Voltar',
   'Back to Home': 'Voltar ao início',
+  'Back to dashboard': 'Voltar ao painel',
   'Back to login': 'Voltar ao início de sessão',
   Close: 'Fechar',
   Search: 'Pesquisar',
   Loading: 'A carregar',
   'Loading...': 'A carregar...',
   'No data yet': 'Ainda não existem dados',
+  'Technical interruption': 'Interrupção técnica',
+  'Something went wrong': 'Algo não correu como esperado',
+  'Try opening this screen again. If the problem continues, reload RefLab.':
+    'Tenta abrir este ecrã novamente. Se o problema continuar, recarrega o RefLab.',
+  'Reload RefLab': 'Recarregar o RefLab',
+  'Still having trouble?': 'O problema continua?',
+  'Error 404': 'Erro 404',
+  'Page not found': 'Página não encontrada',
+  'The address may be incorrect or the page may have moved. Use RefLab navigation to continue.':
+    'O endereço pode estar incorreto ou a página pode ter sido movida. Usa a navegação da RefLab para continuares.',
 
   // Navigation
   Dashboard: 'Painel',
@@ -36,16 +47,22 @@ const ptPT = {
   'We use cookies to improve your experience. By continuing to use RefLab, you agree to our':
     'Utilizamos cookies para melhorar a tua experiência. Ao continuares a usar o RefLab, concordas com a nossa',
   'Cookies Policy': 'Política de Cookies',
+  'Inter font licence': 'Licença da fonte Inter',
   Accept: 'Aceitar',
   Decline: 'Recusar',
   'Accept cookies': 'Aceitar cookies',
   'Decline cookies': 'Recusar cookies',
+  'Cookie and browser storage notice': 'Aviso de cookies e armazenamento do navegador',
+  'RefLab uses essential browser storage for sign-in, security, local preferences and offline resilience. Optional analytics and advertising storage are not currently enabled. Read our':
+    'O RefLab usa armazenamento essencial do navegador para início de sessão, segurança, preferências locais e resiliência offline. O armazenamento opcional de análise e publicidade não está atualmente ativo. Consulta a nossa',
+  'Dismiss cookie and browser storage notice': 'Fechar o aviso de cookies e armazenamento do navegador',
+  Understood: 'Compreendi',
 
   // Landing
   'Your Referee Training Laboratory': 'O teu laboratório de treino de arbitragem',
   'RefLab - Referee Training Laboratory': 'RefLab - Laboratório de Treino de Arbitragem',
-  'A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance.':
-    'Um espaço dedicado aos árbitros de futebol para estudar, praticar e manter-se alinhados com as Leis do Jogo. Desenvolve a tua competência com conhecimento fiável, prática deliberada e orientação com IA.',
+  'A dedicated hub for football referees to study the Laws of the Game, practise match decisions and review their progress through structured tests and video scenarios.':
+    'Um espaço dedicado aos árbitros de futebol para estudar as Leis do Jogo, praticar decisões de jogo e acompanhar a evolução através de testes estruturados e cenários de vídeo.',
   'Sign up': 'Criar conta',
   Legal: 'Legal',
   'Privacy Policy': 'Política de Privacidade',
@@ -61,7 +78,7 @@ const ptPT = {
   'Email is required': 'O email é obrigatório.',
   'Please enter a valid email': 'Introduz um email válido.',
   'Password is required': 'A palavra-passe é obrigatória.',
-  'Password must be at least 6 characters': 'A palavra-passe deve ter pelo menos 6 caracteres.',
+  'Password must be at least {{count}} characters': 'A palavra-passe deve ter pelo menos {{count}} caracteres.',
   'Please confirm your password': 'Confirma a tua palavra-passe.',
   'Passwords do not match': 'As palavras-passe não coincidem.',
   'Account created! Please check your email to confirm your account.':
@@ -71,9 +88,25 @@ const ptPT = {
   'Confirm Password': 'Confirmar palavra-passe',
   'Continue with Google': 'Continuar com Google',
   or: 'ou',
-  'Minimum 6 characters': 'Mínimo de 6 caracteres',
+  'Minimum {{count}} characters': 'Mínimo de {{count}} caracteres',
   'Creating account...': 'A criar conta...',
   'Create account': 'Criar conta',
+  'and acknowledge the': 'e que tomaste conhecimento da',
+  'I have read and agree to the': 'Li e concordo com os',
+  'You must explicitly accept the Terms of Service and acknowledge the Privacy Policy.':
+    'Tens de aceitar explicitamente os Termos de Serviço e confirmar que tomaste conhecimento da Política de Privacidade.',
+  'Review and accept to continue': 'Revê e aceita para continuar',
+  'Your session is active, but access to RefLab stays paused until you explicitly accept the current documents.':
+    'A tua sessão está ativa, mas o acesso ao RefLab fica suspenso até aceitares explicitamente os documentos atuais.',
+  'Checking document acceptance...': 'A verificar a aceitação dos documentos...',
+  "We couldn't verify the current document versions. Access remains paused.":
+    'Não foi possível verificar as versões atuais dos documentos. O acesso permanece suspenso.',
+  "We couldn't record your acceptance. Check your connection and try again.":
+    'Não foi possível registar a tua aceitação. Verifica a ligação e tenta novamente.',
+  'Document versions: Terms {{terms}}, Privacy {{privacy}}':
+    'Versões dos documentos: Termos {{terms}}, Privacidade {{privacy}}',
+  'Recording acceptance...': 'A registar a aceitação...',
+  'Accept and continue': 'Aceitar e continuar',
   'Sign in with Google': 'Iniciar sessão com Google',
   'Invalid email or password': 'Email ou palavra-passe inválidos.',
   'Please confirm your email before logging in': 'Confirma o teu email antes de iniciares sessão.',
@@ -83,6 +116,7 @@ const ptPT = {
   'Too many requests. Please try again later.': 'Demasiados pedidos. Tenta novamente mais tarde.',
   'Authentication failed. Please try signing in again.':
     'A autenticação falhou. Tenta iniciar sessão novamente.',
+  'Authentication required': 'É necessário iniciar sessão',
   'Signing you in...': 'A iniciar sessão...',
   'Bienvenido de nuevo': 'Bem-vindo de volta',
   'Ingresa tus credenciales para acceder a RefLab':
@@ -115,8 +149,6 @@ const ptPT = {
   'Your session has expired. Please log in again to continue.':
     'A tua sessão expirou. Inicia sessão novamente para continuar.',
   'Eliminar Cuenta': 'Eliminar conta',
-  'Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu perfil y progreso, seran eliminados permanentemente.':
-    'Esta ação é permanente e não pode ser desfeita. Todos os teus dados, incluindo perfil e progresso, serão eliminados permanentemente.',
   Cancelar: 'Cancelar',
   'Eliminando...': 'A eliminar...',
 
@@ -204,13 +236,14 @@ const ptPT = {
   'Failed to start conversation.': 'Não foi possível iniciar a conversa.',
   'Something went wrong loading your conversations.':
     'Ocorreu um erro ao carregar as tuas conversas.',
-  'Write message..:': 'Escrever mensagem...',
+  'Write a message...': 'Escrever mensagem...',
   Send: 'Enviar',
   'Attach media': 'Anexar multimédia',
   'Remove attachment': 'Remover anexo',
   'Open {{name}} profile': 'Abrir perfil de {{name}}',
   'Failed to send message.': 'Não foi possível enviar a mensagem.',
   'Unsupported attachment type.': 'Tipo de anexo não suportado.',
+  'Failed to load more notifications': 'Não foi possível carregar mais notificações',
 
   // Search
   'Search users...': 'Pesquisar utilizadores...',
@@ -242,8 +275,8 @@ const ptPT = {
   'Failed to send reset email. Please try again.':
     'Falha ao enviar o email de redefinição. Tenta novamente.',
   'Delete Account': 'Eliminar conta',
-  'This action is permanent and cannot be undone. All your data, including your profile, posts, and progress, will be permanently deleted.':
-    'Esta ação é permanente e não pode ser desfeita. Todos os teus dados, incluindo perfil, publicações e progresso, serão eliminados permanentemente.',
+  'This action cannot be undone. It permanently deletes your account and removes your active profile, posts and learning progress. Messages already delivered to other users, security or billing records, and provider backups may be retained where permitted, as described in the Privacy Policy.':
+    'Esta ação não pode ser desfeita. Elimina permanentemente a tua conta e remove o perfil ativo, as publicações e o progresso de aprendizagem. As mensagens já entregues a outros utilizadores, os registos de segurança ou faturação e as cópias de segurança dos fornecedores podem ser conservados quando permitido, conforme descrito na Política de Privacidade.',
   'Type {{phrase}} to confirm': 'Escreve {{phrase}} para confirmar',
   Processing: 'A processar',
   'Processing...': 'A processar...',
@@ -320,6 +353,10 @@ const ptPT = {
   'No questions available for this test.': 'Não há perguntas disponíveis para este teste.',
   'Failed to create attempt': 'Falha ao criar tentativa',
   'An unexpected error occurred': 'Ocorreu um erro inesperado',
+  'Could not load this test. Check your connection and try again.':
+    'Não foi possível carregar este teste. Verifica a ligação e tenta novamente.',
+  'Could not start your test. Check your connection and try again.':
+    'Não foi possível iniciar o teu teste. Verifica a ligação e tenta novamente.',
   'Failed to start session. Please try again.': 'Não foi possível iniciar a sessão. Tenta novamente.',
   'Failed to save answer. Please try again.': 'Não foi possível guardar a resposta. Tenta novamente.',
   'Failed to save video result. Please try again.': 'Não foi possível guardar o resultado do vídeo. Tenta novamente.',
@@ -352,6 +389,8 @@ const ptPT = {
   'Start Over': 'Recomeçar',
   'Next Video': 'Próximo vídeo',
   'Video failed to load': 'Falha ao carregar vídeo',
+  'Could not play this video. Check your connection and try again.':
+    'Não foi possível reproduzir este vídeo. Verifica a ligação e tenta novamente.',
   File: 'Ficheiro',
   'Verify that this file exists and is publicly available from the configured video service.':
     'Confirma que este ficheiro existe e está publicamente disponível no serviço de vídeo configurado.',
@@ -464,11 +503,6 @@ const ptPT = {
   'General Laws of the Game': 'Leis do Jogo (Geral)',
   Uncategorized: 'Sem categoria',
   'Penalty Kick': 'Pontapé de penálti',
-  'Laws of the Game 2024/25': 'Leis do Jogo 2024/25',
-  'Referee Positioning Guide': 'Guia de posicionamento do árbitro',
-  'Match Report Template': 'Modelo de relatório de jogo',
-  'Fitness Test Standards': 'Normas do teste físico',
-  'VAR Protocol Handbook': 'Manual do protocolo VAR',
 
   // Pricing
   'Pricing & Billing': 'Planos e faturação',
@@ -499,28 +533,21 @@ const ptPT = {
     'A tua subscrição mantém-se ativa até {{date}}. Depois disso, passas para o plano Gratuito e perdes acesso às funcionalidades premium.',
   'Your plan will be updated to {{plan}} at {{price}}. The new price will apply starting from your next billing cycle. No proration charges will be applied.':
     'O teu plano será atualizado para {{plan}} por {{price}}. O novo preço aplica-se no próximo ciclo de faturação. Não será cobrada qualquer proporcionalidade.',
-  'Upgrade to unlock advanced training tools and AI-powered feedback.':
-    'Faz upgrade para desbloquear ferramentas de treino avançadas e feedback com IA.',
+  'Review plan information and manage your subscription, invoices and billing settings.':
+    'Consulta a informação dos planos e gere a tua subscrição, faturas e definições de faturação.',
   Recommended: 'Recomendado',
-  'Free Forever': 'Gratuito para sempre',
   'Cancellation Pending': 'Cancelamento pendente',
   Redirecting: 'A redirecionar',
   'Redirecting...': 'A redirecionar...',
+  'Coming soon': 'Em breve',
+  'We are preparing this plan carefully. Features, pricing and terms will be published before launch.':
+    'Estamos a preparar este plano com cuidado. As funcionalidades, os preços e as condições serão publicados antes do lançamento.',
   'Resubscribe Required': 'É necessário voltar a subscrever',
   'Everything in Free': 'Tudo do plano Gratuito',
-  'Everything in Pro': 'Tudo do plano Pro',
-  'Access to basic Laws of the Game content': 'Acesso a conteúdos base das Leis do Jogo',
-  'Limited practice quizzes': 'Questionários de prática limitados',
-  'Community forum access': 'Acesso ao fórum da comunidade',
-  'Weekly newsletter': 'Newsletter semanal',
-  'Full video scenario library': 'Biblioteca completa de cenários em vídeo',
-  'AI-powered feedback on decisions': 'Feedback com IA sobre decisões',
-  'Personalized training plans': 'Planos de treino personalizados',
-  'Progress tracking & analytics': 'Acompanhamento de progresso e análises',
-  'Priority support': 'Suporte prioritário',
-  'Advanced analytics insights': 'Análises avançadas',
-  'Priority support + faster response': 'Suporte prioritário + resposta mais rápida',
-  'Early access to new premium features': 'Acesso antecipado a novas funcionalidades premium',
+  'Practice tests and question sessions': 'Testes e sessões de perguntas',
+  'Video decision scenarios': 'Cenários de decisão em vídeo',
+  'Community and direct messages': 'Comunidade e mensagens diretas',
+  'Progress dashboard and official IFAB links': 'Painel de progresso e ligações oficiais da IFAB',
   'Your subscription is taking longer than expected to update.':
     'A atualização da tua subscrição está a demorar mais do que o esperado.',
   'Check again': 'Verificar novamente',
@@ -549,40 +576,115 @@ const ptPT = {
   void: 'anulada',
   uncollectible: 'incobrável',
 
+  // Support
+  Support: 'Suporte',
+  'Support & legal': 'Suporte e informação legal',
+  'Footer navigation': 'Navegação do rodapé',
+  'Back to RefLab': 'Voltar à RefLab',
+  'Contact support': 'Contactar o suporte',
+  'Tell us what happened and our team will review your request.':
+    'Conta-nos o que aconteceu e a nossa equipa irá analisar o teu pedido.',
+  'Request sent': 'Pedido enviado',
+  'We received your message. If a reply is needed, we will use the email you provided.':
+    'Recebemos a tua mensagem. Se for necessária uma resposta, usaremos o email que indicaste.',
+  'Send another request': 'Enviar outro pedido',
+  Topic: 'Assunto',
+  'General question': 'Questão geral',
+  'Technical issue': 'Problema técnico',
+  'Account and access': 'Conta e acesso',
+  'Billing and subscriptions': 'Faturação e subscrições',
+  'Privacy request': 'Pedido de privacidade',
+  'Product feedback': 'Sugestão sobre o produto',
+  optional: 'opcional',
+  'Please write at least 20 characters so we can understand the request.':
+    'Escreve pelo menos 20 caracteres para conseguirmos compreender o pedido.',
+  'Write between 20 and 3,000 characters. Do not include passwords, card details or authentication codes.':
+    'Escreve entre 20 e 3 000 caracteres. Não incluas palavras-passe, dados de cartões ou códigos de autenticação.',
+  "We couldn't send your request. Check your connection and try again.":
+    'Não foi possível enviar o pedido. Verifica a ligação e tenta novamente.',
+  'We only use these details to review and respond to your request.':
+    'Usamos estes dados apenas para analisar e responder ao teu pedido.',
+  'Send request': 'Enviar pedido',
+  'This form is for product support and privacy requests. Emergencies should use the appropriate local services.':
+    'Este formulário destina-se a suporte do produto e pedidos de privacidade. Em situações de emergência, utiliza os serviços locais adequados.',
+
+  // Official learning resources
+  'Laws of the Game 2026/27 (PDF)': 'Leis do Jogo 2026/27 (PDF)',
+  'Official single-page edition from The IFAB.': 'Edição oficial em páginas individuais da The IFAB.',
+  'Latest law changes': 'Alterações mais recentes às Leis',
+  'Current changes and explanations from The IFAB.':
+    'Alterações atuais e respetivas explicações da The IFAB.',
+  'Laws of the Game online': 'Leis do Jogo online',
+  'Browse the current Laws of the Game on The IFAB website.':
+    'Consulta as Leis do Jogo atuais no website da The IFAB.',
+  'Laws of the Game documents': 'Documentos das Leis do Jogo',
+  'Official Law documents and supporting material from The IFAB.':
+    'Documentos oficiais das Leis e materiais de apoio da The IFAB.',
+  'Open official resource': 'Abrir recurso oficial',
+  Open: 'Abrir',
+
   // Policies
   'Policy sections': 'Secções legais',
   'Review our policies and terms': 'Consulta as nossas políticas e termos',
   'Last updated: February 2026': 'Última atualização: fevereiro de 2026',
+  'Last updated: July 2026': 'Última atualização: julho de 2026',
+  'Last updated: July 18, 2026': 'Última atualização: 18 de julho de 2026',
   '1. Information We Collect': '1. Informações que recolhemos',
-  'We collect information you provide directly, such as your name, email address, and profile details when you create an account. We also collect usage data automatically, including pages visited, features used, and interaction patterns to improve our services.':
-    'Recolhemos informações que nos forneces diretamente, como o teu nome, endereço de email e dados de perfil quando crias uma conta. Também recolhemos automaticamente dados de utilização, incluindo páginas visitadas, funcionalidades usadas e padrões de interação, para melhorar os nossos serviços.',
+  'RefLab handles account and profile information such as your name, email address, avatar and authentication provider. When you use the product, we also store the learning answers, sessions and progress needed to show your results.':
+    'O RefLab trata informações da conta e do perfil, como o teu nome, endereço de email, avatar e fornecedor de autenticação. Quando usas o produto, também guardamos as respostas, sessões e progresso de aprendizagem necessários para apresentar os teus resultados.',
+  'Community and communication features may process posts, comments, follows, blocks, reports, direct messages and media you choose to share. Billing records may include Stripe customer and subscription references, plan status and invoice information when billing is available.':
+    'As funcionalidades de comunidade e comunicação podem tratar publicações, comentários, seguidores, bloqueios, denúncias, mensagens diretas e ficheiros multimédia que decidas partilhar. Quando a faturação estiver disponível, os respetivos registos podem incluir referências de cliente e subscrição Stripe, estado do plano e informações de faturas.',
+  'When you contact support, we collect the selected topic, your reply email, your message, the page path and your name if provided. Our hosting, authentication and security providers may also process request, device, network and diagnostic data needed to deliver and protect the service. A support submission does not prove account ownership; identity-sensitive requests require a separate verification step.':
+    'Quando contactas o suporte, recolhemos o assunto selecionado, o email de resposta, a mensagem, o caminho da página e o teu nome se o indicares. Os nossos fornecedores de alojamento, autenticação e segurança também podem tratar os dados de pedidos, dispositivo, rede e diagnóstico necessários para prestar e proteger o serviço. Um pedido de suporte não prova a titularidade da conta; pedidos sensíveis exigem uma verificação de identidade separada.',
   '2. How We Use Your Information': '2. Como usamos as tuas informações',
-  'Your information is used to provide and maintain our services, personalize your experience, communicate important updates, and ensure account security. We may also use aggregated, anonymized data for analytics and service improvements.':
-    'As tuas informações são usadas para prestar e manter os nossos serviços, personalizar a tua experiência, comunicar atualizações importantes e garantir a segurança da conta. Também podemos usar dados agregados e anonimizados para análises e melhoria dos serviços.',
-  '3. Data Sharing': '3. Partilha de dados',
-  'We do not sell your personal information. We may share data with trusted third-party service providers who assist in operating our platform, subject to strict confidentiality agreements. We may also disclose information when required by law or to protect our rights.':
-    'Não vendemos as tuas informações pessoais. Podemos partilhar dados com prestadores de serviços terceiros de confiança que apoiam o funcionamento da nossa plataforma, sujeitos a acordos rigorosos de confidencialidade. Também podemos divulgar informações quando exigido por lei ou para proteger os nossos direitos.',
-  '4. Your Rights': '4. Os teus direitos',
-  'You have the right to access, update, or delete your personal information at any time through your account settings. You may also request a copy of your data or opt out of certain data processing activities by contacting our support team.':
-    'Tens o direito de aceder, atualizar ou eliminar as tuas informações pessoais em qualquer altura através das definições da tua conta. Também podes pedir uma cópia dos teus dados ou opor-te a determinadas atividades de tratamento de dados contactando a nossa equipa de suporte.',
-  '5. Contact Us': '5. Contacta-nos',
-  'If you have any questions about this Privacy Policy, please contact us at':
-    'Se tiveres alguma questão sobre esta Política de Privacidade, contacta-nos em',
+  'We use this information to authenticate users, provide learning progress, deliver community and messaging features, respond to support requests, protect accounts and the service, meet legal obligations and, when enabled, administer billing. RefLab does not currently use optional analytics or advertising tracking.':
+    'Usamos estas informações para autenticar utilizadores, apresentar o progresso de aprendizagem, disponibilizar as funcionalidades de comunidade e mensagens, responder a pedidos de suporte, proteger as contas e o serviço, cumprir obrigações legais e, quando estiver ativa, gerir a faturação. O RefLab não utiliza atualmente rastreamento opcional de análise ou publicidade.',
+  '3. Service Providers and Disclosures': '3. Prestadores de serviços e divulgações',
+  'RefLab does not sell personal information. Supabase provides database, authentication, storage, realtime and server functions; Netlify provides hosting and support-form processing; Stripe provides billing when you open a billing flow; and Google provides authentication only when you choose Google sign-in. These providers process information under their own terms and our applicable service arrangements.':
+    'O RefLab não vende informações pessoais. A Supabase fornece base de dados, autenticação, armazenamento, comunicação em tempo real e funções de servidor; a Netlify fornece alojamento e processamento do formulário de suporte; a Stripe fornece faturação quando abres um fluxo de faturação; e a Google fornece autenticação apenas quando escolhes iniciar sessão com a Google. Estes fornecedores tratam informações ao abrigo dos respetivos termos e dos acordos de serviço aplicáveis.',
+  'We may disclose information when reasonably necessary to comply with law, protect users or the service, investigate abuse, or establish and defend legal claims. External learning links, including official IFAB resources, take you to services governed by their own privacy notices.':
+    'Podemos divulgar informações quando tal for razoavelmente necessário para cumprir a lei, proteger os utilizadores ou o serviço, investigar abusos ou exercer e defender direitos legais. As ligações externas de aprendizagem, incluindo recursos oficiais da IFAB, remetem para serviços regidos pelos próprios avisos de privacidade.',
+  '4. Retention and Security': '4. Conservação e segurança',
+  'We keep information for as long as needed to operate your account and the features you use, then delete or de-identify it according to applicable legal, security and provider-backup requirements. Some records may be retained for fraud prevention, dispute handling or compliance. Clearing browser storage removes local copies but does not by itself delete server records.':
+    'Conservamos as informações durante o período necessário para operar a tua conta e as funcionalidades que usas, eliminando-as ou desidentificando-as depois, de acordo com os requisitos legais, de segurança e de cópias de segurança dos fornecedores aplicáveis. Alguns registos podem ser conservados para prevenção de fraude, resolução de litígios ou conformidade. Limpar o armazenamento do navegador remove cópias locais, mas não elimina por si só os registos do servidor.',
+  'We use access controls, encrypted connections and provider security controls intended to protect information. No online service can guarantee absolute security, so please use a unique password and report suspected account compromise promptly.':
+    'Usamos controlos de acesso, ligações encriptadas e controlos de segurança dos fornecedores destinados a proteger as informações. Nenhum serviço online pode garantir segurança absoluta; utiliza uma palavra-passe única e comunica rapidamente qualquer suspeita de comprometimento da conta.',
+  '5. Your Choices and Rights': '5. As tuas escolhas e direitos',
+  'Depending on where you live, you may have rights to access, correct, delete or receive a copy of personal information, and to object to or restrict certain processing. You can update available profile fields or start account deletion in Settings. Other requests can be made through support and may require identity verification. Applicable legal exceptions may limit a request.':
+    'Consoante o local onde resides, podes ter direitos de acesso, retificação, eliminação ou obtenção de uma cópia das informações pessoais, bem como de oposição ou limitação de certos tratamentos. Podes atualizar os campos de perfil disponíveis ou iniciar a eliminação da conta nas Definições. Outros pedidos podem ser feitos através do suporte e podem exigir verificação de identidade. As exceções legais aplicáveis podem limitar um pedido.',
+  '6. Contact Us': '6. Contacta-nos',
+  'For privacy questions or data-rights requests, use our support form.':
+    'Para questões de privacidade ou pedidos relativos aos teus direitos sobre os dados, utiliza o nosso formulário de suporte.',
+  'Contact privacy support': 'Contactar o suporte de privacidade',
   '1. Acceptance of Terms': '1. Aceitação dos termos',
-  'By accessing or using RefLab, you agree to be bound by these Terms of Service. If you do not agree to all the terms and conditions, you may not access or use our services. We reserve the right to update these terms at any time, and continued use of the platform constitutes acceptance of the updated terms.':
-    'Ao acederes ou usares o RefLab, concordas em ficar vinculado a estes Termos de Serviço. Se não concordares com todos os termos e condições, não poderás aceder nem usar os nossos serviços. Reservamo-nos o direito de atualizar estes termos a qualquer momento, e a utilização continuada da plataforma constitui aceitação dos termos atualizados.',
-  '2. User Accounts': '2. Contas de utilizador',
-  'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You must provide accurate and complete information during registration and keep your account information up to date. You must notify us immediately of any unauthorized use of your account.':
-    'És responsável por manter a confidencialidade das credenciais da tua conta e por todas as atividades realizadas na mesma. Deves fornecer informações exatas e completas durante o registo e manter os dados da conta atualizados. Deves notificar-nos imediatamente de qualquer utilização não autorizada da tua conta.',
-  '3. Acceptable Use': '3. Utilização aceitável',
-  'You agree not to use RefLab for any unlawful purpose or in any way that could damage, disable, or impair the platform. You must not attempt to gain unauthorized access to any part of the service, other accounts, or any systems or networks connected to our servers.':
-    'Concordas em não usar o RefLab para qualquer finalidade ilegal nem de forma que possa danificar, desativar ou prejudicar a plataforma. Não deves tentar obter acesso não autorizado a qualquer parte do serviço, a outras contas ou a quaisquer sistemas ou redes ligados aos nossos servidores.',
-  '4. Intellectual Property': '4. Propriedade intelectual',
-  'All content, features, and functionality of RefLab, including but not limited to text, graphics, logos, and software, are the exclusive property of RefLab and are protected by intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.':
-    'Todo o conteúdo, funcionalidades e características do RefLab, incluindo, entre outros, texto, elementos gráficos, logótipos e software, são propriedade exclusiva do RefLab e estão protegidos por leis de propriedade intelectual. Não podes reproduzir, distribuir ou criar obras derivadas sem a nossa autorização expressa por escrito.',
-  '5. Limitation of Liability': '5. Limitação de responsabilidade',
-  'RefLab shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use or inability to use the service. Our total liability for any claims arising from or related to the service shall not exceed the amount you have paid us in the twelve months preceding the claim.':
-    'O RefLab não será responsável por quaisquer danos indiretos, incidentais, especiais ou consequenciais resultantes da tua utilização ou incapacidade de utilização do serviço. A nossa responsabilidade total por quaisquer reclamações resultantes de ou relacionadas com o serviço não excederá o montante que nos tenhas pago nos doze meses anteriores à reclamação.',
+  'You must explicitly accept the current version of these Terms before using protected RefLab features. If we make a substantive change, we will present a new version for acceptance; continued use alone does not accept a new version. If you do not agree, do not create an account or continue into the protected service.':
+    'Tens de aceitar explicitamente a versão atual destes Termos antes de usares funcionalidades protegidas do RefLab. Se fizermos uma alteração substancial, apresentaremos uma nova versão para aceitação; a utilização continuada, por si só, não constitui aceitação de uma nova versão. Se não concordares, não cries uma conta nem continues para o serviço protegido.',
+  '2. Learning Service and Official Sources': '2. Serviço de aprendizagem e fontes oficiais',
+  'RefLab is an independent learning and practice tool. It is not affiliated with, endorsed by, or an official product of The IFAB, FIFA or any football association. RefLab exercises and progress indicators do not replace the current official Laws of the Game, competition rules, instructions from the relevant authority or professional training. Check the linked official sources when accuracy is critical.':
+    'O RefLab é uma ferramenta independente de aprendizagem e prática. Não é afiliado, aprovado nem um produto oficial da The IFAB, da FIFA ou de qualquer associação de futebol. Os exercícios e indicadores de progresso do RefLab não substituem as Leis do Jogo oficiais e atuais, os regulamentos da competição, as instruções da autoridade competente ou formação profissional. Consulta as fontes oficiais indicadas quando a exatidão for essencial.',
+  '3. User Accounts': '3. Contas de utilizador',
+  'You must be legally able to enter this agreement, provide accurate registration information, protect your credentials and promptly report suspected unauthorized access. You are responsible for activity performed through your account unless applicable law provides otherwise. Do not create or use an account on behalf of another person without authority.':
+    'Tens de ter capacidade legal para celebrar este acordo, fornecer informações de registo exatas, proteger as tuas credenciais e comunicar rapidamente qualquer suspeita de acesso não autorizado. És responsável pela atividade realizada através da tua conta, salvo disposição legal em contrário. Não cries nem uses uma conta em nome de outra pessoa sem autorização.',
+  '4. Acceptable Use and Community Content': '4. Utilização aceitável e conteúdo da comunidade',
+  'Do not use RefLab for unlawful, deceptive, abusive, harassing, hateful or infringing activity; spam or impersonation; distributing malware; exploiting another person; or attempting to bypass access controls, disrupt the service or obtain unauthorized access. Reports may be reviewed and content or accounts may be restricted when reasonably necessary to enforce these Terms, protect users or comply with law.':
+    'Não uses o RefLab para atividades ilegais, enganosas, abusivas, persecutórias, de ódio ou que violem direitos; spam ou usurpação de identidade; distribuição de software malicioso; exploração de outra pessoa; nem para tentar contornar controlos de acesso, perturbar o serviço ou obter acesso não autorizado. As denúncias podem ser analisadas e os conteúdos ou contas podem ser restringidos quando tal for razoavelmente necessário para aplicar estes Termos, proteger utilizadores ou cumprir a lei.',
+  'You keep ownership of content you submit and confirm that you have the rights needed to share it. You grant RefLab a limited, non-exclusive licence to host, copy, process and display that content only as needed to operate, secure and improve the features you use. Removing content or deleting an account may not remove copies already received by other users or retained where legally necessary.':
+    'Manténs a titularidade do conteúdo que envias e confirmas que tens os direitos necessários para o partilhar. Concedes ao RefLab uma licença limitada e não exclusiva para alojar, copiar, tratar e apresentar esse conteúdo apenas na medida necessária para operar, proteger e melhorar as funcionalidades que usas. Remover conteúdo ou eliminar uma conta pode não remover cópias já recebidas por outros utilizadores ou conservadas quando legalmente necessário.',
+  '5. RefLab and Third-Party Materials': '5. RefLab e materiais de terceiros',
+  'The RefLab software, interface and brand are protected by applicable intellectual-property laws, except for material identified as belonging to others. Official Laws resources, names, logos and linked third-party content remain the property of their respective owners and are governed by their terms. A link does not imply affiliation or endorsement.':
+    'O software, a interface e a marca RefLab estão protegidos pelas leis de propriedade intelectual aplicáveis, com exceção dos materiais identificados como pertencentes a terceiros. Os recursos oficiais das Leis, nomes, logótipos e conteúdos de terceiros ligados continuam a pertencer aos respetivos titulares e são regidos pelos seus termos. Uma ligação não implica afiliação ou aprovação.',
+  '6. Plans, Billing and Consumer Rights': '6. Planos, faturação e direitos do consumidor',
+  'RefLab currently launches with a Free plan. If paid plans are offered later, the price, currency, billing period and material conditions will be shown before purchase and Stripe will process payment. Available cancellation, renewal, refund and withdrawal rights depend on the offer and applicable law; nothing in these Terms removes mandatory consumer rights.':
+    'O RefLab é lançado atualmente com um plano Gratuito. Se forem disponibilizados planos pagos no futuro, o preço, a moeda, o período de faturação e as condições relevantes serão apresentados antes da compra, e a Stripe processará o pagamento. Os direitos de cancelamento, renovação, reembolso e livre resolução disponíveis dependem da oferta e da lei aplicável; nada nestes Termos elimina direitos obrigatórios do consumidor.',
+  '7. Availability, Suspension and Account Deletion': '7. Disponibilidade, suspensão e eliminação da conta',
+  'We may maintain, change or discontinue features and may restrict access where reasonably necessary for security, legal compliance or a material breach of these Terms. Where appropriate, you may contact support to challenge a restriction. You can start account deletion in Settings; completion may be delayed only for permitted security, legal, dispute or provider-backup reasons.':
+    'Podemos efetuar manutenção, alterar ou descontinuar funcionalidades e restringir o acesso quando tal for razoavelmente necessário por motivos de segurança, conformidade legal ou violação substancial destes Termos. Quando adequado, podes contactar o suporte para contestar uma restrição. Podes iniciar a eliminação da conta nas Definições; a conclusão só pode ser adiada por motivos permitidos de segurança, legais, de litígio ou de cópias de segurança dos fornecedores.',
+  '8. Service Responsibility': '8. Responsabilidade pelo serviço',
+  'RefLab is provided with reasonable care but may not always be uninterrupted, error-free or current. You remain responsible for checking official rules and making your own refereeing or professional decisions. Nothing in these Terms excludes or limits liability, warranties or remedies that cannot lawfully be excluded or limited.':
+    'O RefLab é prestado com diligência razoável, mas pode nem sempre estar ininterrupto, isento de erros ou atualizado. Continuas responsável por confirmar as regras oficiais e tomar as tuas próprias decisões de arbitragem ou profissionais. Nada nestes Termos exclui ou limita responsabilidades, garantias ou meios de reparação que não possam legalmente ser excluídos ou limitados.',
+  '9. Contact and Questions': '9. Contacto e questões',
+  'Questions about these Terms, account restrictions or the service can be submitted through the RefLab support form. Identity-sensitive requests may require a separate verification step.':
+    'As questões sobre estes Termos, restrições de conta ou o serviço podem ser enviadas através do formulário de suporte do RefLab. Os pedidos sensíveis podem exigir uma verificação de identidade separada.',
   '1. What Are Cookies': '1. O que são cookies',
   'Cookies are small text files that are stored on your device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the site owners. Cookies help us remember your preferences and improve your browsing experience.':
     'Cookies são pequenos ficheiros de texto armazenados no teu dispositivo quando visitas um website. São amplamente utilizados para tornar os websites mais eficientes e para fornecer informações aos proprietários dos sites. Os cookies ajudam-nos a recordar as tuas preferências e a melhorar a tua experiência de navegação.',
@@ -604,6 +706,27 @@ const ptPT = {
   '4. Third-Party Cookies': '4. Cookies de terceiros',
   "Some cookies on our platform are set by third-party services that appear on our pages. We do not control these cookies. Third-party providers include analytics and authentication services. Please refer to each provider's privacy policy for more information on how they use cookies.":
     'Alguns cookies na nossa plataforma são definidos por serviços de terceiros que aparecem nas nossas páginas. Não controlamos esses cookies. Os fornecedores terceiros incluem serviços de análise e autenticação. Consulta a política de privacidade de cada fornecedor para mais informações sobre a forma como usam cookies.',
+  '1. Cookies and Browser Storage': '1. Cookies e armazenamento do navegador',
+  'Web applications can use cookies, local storage and IndexedDB to keep sessions secure, remember local preferences and make features more resilient. These technologies store small amounts of data in your browser or device.':
+    'As aplicações web podem usar cookies, armazenamento local e IndexedDB para manter sessões seguras, recordar preferências locais e tornar as funcionalidades mais resilientes. Estas tecnologias guardam pequenas quantidades de dados no teu navegador ou dispositivo.',
+  '2. Storage RefLab Uses': '2. Armazenamento usado pelo RefLab',
+  'RefLab currently uses essential and functional browser storage for:':
+    'O RefLab usa atualmente armazenamento essencial e funcional do navegador para:',
+  'Authentication and security:': 'Autenticação e segurança:',
+  'Supabase authentication stores the session needed to keep you signed in and protect authenticated requests.':
+    'A autenticação Supabase guarda a sessão necessária para manter o início de sessão e proteger pedidos autenticados.',
+  'Preferences and resilience:': 'Preferências e resiliência:',
+  'Language, recent searches, this notice acknowledgement and temporary offline or cleanup queues may be stored locally on your device.':
+    'O idioma, pesquisas recentes, a confirmação deste aviso e filas temporárias offline ou de limpeza podem ser guardados localmente no teu dispositivo.',
+  '3. Optional Tracking': '3. Rastreamento opcional',
+  'RefLab does not currently enable optional analytics or advertising cookies. If that changes, we will update this policy and provide the required controls before optional tracking is activated.':
+    'O RefLab não ativa atualmente cookies opcionais de análise ou publicidade. Se isso mudar, atualizaremos esta política e disponibilizaremos os controlos necessários antes de ativar qualquer rastreamento opcional.',
+  '4. Third-Party Services': '4. Serviços de terceiros',
+  'When you choose Google sign-in, open Stripe billing or follow an external learning resource, that provider may use cookies or storage on its own domain under its own policy.':
+    'Quando escolhes iniciar sessão com Google, abrir a faturação Stripe ou seguir um recurso de aprendizagem externo, esse fornecedor pode usar cookies ou armazenamento no próprio domínio, segundo a sua política.',
+  '5. Managing Browser Data': '5. Gestão dos dados do navegador',
+  'You can inspect or clear browser data through your browser settings. Clearing essential storage may sign you out, reset local preferences or remove actions waiting to be retried while offline.':
+    'Podes consultar ou limpar os dados do navegador nas respetivas definições. Limpar o armazenamento essencial pode terminar a sessão, repor preferências locais ou remover ações offline que aguardam nova tentativa.',
 
   // Profile/Social generic
   All: 'Todos',
@@ -644,6 +767,10 @@ const ptPT = {
   'Refresh feed': 'Atualizar feed',
   'Unsupported media type. Please choose an image, video, or audio file.':
     'Tipo de multimédia não suportado. Escolhe um ficheiro de imagem, vídeo ou áudio.',
+  'Media files must be no larger than {{count}} MB.':
+    'Os ficheiros multimédia não podem exceder {{count}} MB.',
+  'Details (required)': 'Detalhes (obrigatório)',
+  'Additional details (optional)': 'Detalhes adicionais (opcional)',
   'New Post': 'Nova publicação',
   "What's on your mind?": 'O que estás a pensar?',
   'Remove media': 'Remover multimédia',
@@ -715,6 +842,7 @@ const ptPT = {
     'Não foi possível verificar o nome de utilizador agora. Vamos verificar novamente ao guardar.',
   Delete: 'Eliminar',
   'Failed to open conversation.': 'Não foi possível abrir a conversa.',
+  'Failed to update profile.': 'Não foi possível atualizar o perfil.',
   'Failed to upload avatar.': 'Não foi possível carregar o avatar.',
   Follow: 'Seguir',
   'Follow user': 'Seguir utilizador',
@@ -728,6 +856,8 @@ const ptPT = {
   'Missing username.': 'Falta o nome de utilizador.',
   Name: 'Nome',
   'New content is available. Check it out!': 'Há novo conteúdo disponível. Consulta-o!',
+  'Notifications changed while loading. Please retry.':
+    'As notificações mudaram durante o carregamento. Tenta novamente.',
   Next: 'Seguinte',
   'Performance metrics': 'Métricas de desempenho',
   'Please write something or attach media.': 'Escreve algo ou anexa multimédia.',
@@ -790,10 +920,58 @@ const ptPT = {
     'O teu plano está agora ativo. Aproveita todas as funcionalidades premium!',
   'Your plan will expire soon. Renew to keep premium features.':
     'O teu plano vai expirar em breve. Renova para manter as funcionalidades premium.',
+  'Your subscription is active.': 'A tua subscrição está ativa.',
+  'Your subscription will expire soon. Review it in billing.':
+    'A tua subscrição vai expirar em breve. Consulta-a na área de faturação.',
+  'Your subscription has expired. Your account is now on the Free plan.':
+    'A tua subscrição expirou. A tua conta está agora no plano Gratuito.',
+  'Your subscription will remain active until {{date}}. After that, your account will move to the Free plan.':
+    'A tua subscrição mantém-se ativa até {{date}}. Depois disso, a tua conta passa para o plano Gratuito.',
   'Your posts and reposts will appear here.':
     'As tuas publicações e republicações vão aparecer aqui.',
   'Your profile is still loading. Please try again.':
     'O teu perfil ainda está a carregar. Tenta novamente.',
+  'Actioned hides this content from RefLab app surfaces; it does not remove a cached public media URL.':
+    'A ação tomada oculta este conteúdo nas superfícies da aplicação RefLab; não remove um URL público de multimédia guardado em cache.',
+  'Account deletion is waiting for a confirmed server response. Messaging is paused on this device.':
+    'A eliminação da conta aguarda uma resposta confirmada do servidor. As mensagens estão em pausa neste dispositivo.',
+  'Blocked account': 'Conta bloqueada',
+  'All reports': 'Todas as denúncias',
+  Pending: 'Pendente',
+  Reviewing: 'Em análise',
+  Actioned: 'Com ação tomada',
+  Dismissed: 'Arquivada',
+  'Post report': 'Denúncia de publicação',
+  'Comment report': 'Denúncia de comentário',
+  'User report': 'Denúncia de utilizador',
+  'Content moderation': 'Moderação de conteúdos',
+  'Could not save this review.': 'Não foi possível guardar esta revisão.',
+  'Deleted or unavailable target': 'Conteúdo eliminado ou indisponível',
+  'Filter moderation reports': 'Filtrar denúncias de moderação',
+  'For security, sign in again before deleting your account.':
+    'Por segurança, inicia sessão novamente antes de eliminares a tua conta.',
+  'Loading moderation queue...': 'A carregar fila de moderação...',
+  'Loading more reports...': 'A carregar mais denúncias...',
+  'Load more reports': 'Carregar mais denúncias',
+  'No reason provided': 'Sem motivo indicado',
+  'No reports in this view': 'Não existem denúncias nesta vista',
+  'Open target': 'Abrir conteúdo',
+  'Open the private report review queue.': 'Abrir a fila privada de análise de denúncias.',
+  'Private admin area': 'Área privada de administração',
+  'Private review note': 'Nota privada da revisão',
+  'Refresh queue': 'Atualizar fila',
+  'Reported by @{{username}} on {{date}}': 'Denunciado por @{{username}} em {{date}}',
+  'Reported target': 'Conteúdo denunciado',
+  'Reporter details': 'Detalhes do denunciante',
+  'Review private reports, preserve evidence and apply reversible visibility decisions.':
+    'Analisa denúncias privadas, preserva provas e aplica decisões reversíveis de visibilidade.',
+  'Review status': 'Estado da revisão',
+  'Review and retry': 'Rever e tentar novamente',
+  'Save review': 'Guardar revisão',
+  'Saving review...': 'A guardar revisão...',
+  'Target removed': 'Conteúdo removido',
+  'The selected moderation queue is clear.': 'A fila de moderação selecionada está vazia.',
+  'deleted-account': 'conta-eliminada',
   'Check out this post': 'Vê esta publicação',
   'Progress metrics': 'Métricas de progresso',
   'Report submitted': 'Denúncia enviada',

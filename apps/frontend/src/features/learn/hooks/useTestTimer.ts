@@ -12,11 +12,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
  *
  * @param limitSeconds - Time limit in seconds (e.g., 2400 = 40 minutes)
  * @param onExpire - Callback function to execute when timer reaches 0
+ * @param startedAt - Persisted server timestamp used to resume the same clock
  */
 export function useTestTimer(
   limitSeconds: number,
   onExpire: () => void,
   enabled = true,
+  startedAt: string | null = null,
 ) {
   const [timeRemaining, setTimeRemaining] = useState(limitSeconds)
   const startTimeRef = useRef<number>(0)
@@ -29,37 +31,57 @@ export function useTestTimer(
   }, [onExpire])
 
   useEffect(() => {
+    let cancelled = false
+
     if (!enabled) {
       startTimeRef.current = Date.now()
       return
     }
 
-    // Record start time
-    startTimeRef.current = Date.now()
+    const persistedStart = startedAt ? Date.parse(startedAt) : Number.NaN
+    startTimeRef.current = Number.isFinite(persistedStart)
+      ? persistedStart
+      : Date.now()
 
-    // Start interval
-    intervalRef.current = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000)
+    const updateClock = () => {
+      const elapsed = Math.max(
+        0,
+        Math.floor((Date.now() - startTimeRef.current) / 1000),
+      )
       const remaining = Math.max(0, limitSeconds - elapsed)
 
       setTimeRemaining(remaining)
 
       if (remaining === 0) {
-        // Timer expired
         if (intervalRef.current) {
           clearInterval(intervalRef.current)
+          intervalRef.current = null
         }
-        onExpireRef.current()
+        return false
       }
-    }, 1000)
+
+      return true
+    }
+
+    if (!updateClock()) {
+      void Promise.resolve().then(() => {
+        if (!cancelled) onExpireRef.current()
+      })
+    } else {
+      intervalRef.current = setInterval(() => {
+        if (!updateClock() && !cancelled) onExpireRef.current()
+      }, 1000)
+    }
 
     // Cleanup on unmount
     return () => {
+      cancelled = true
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
+        intervalRef.current = null
       }
     }
-  }, [enabled, limitSeconds])
+  }, [enabled, limitSeconds, startedAt])
 
   const getElapsed = useCallback(() => {
     return limitSeconds - timeRemaining

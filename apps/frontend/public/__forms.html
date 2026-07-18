@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>RefLab form definitions</title>
+  </head>
+  <body>
+    <form
+      name="reflab-support"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
+      <input type="hidden" name="form-name" value="reflab-support" />
+      <select name="topic" required>
+        <option value="general">General question</option>
+        <option value="technical">Technical issue</option>
+        <option value="account">Account and access</option>
+        <option value="billing">Billing and subscriptions</option>
+        <option value="privacy">Privacy request</option>
+        <option value="feedback">Product feedback</option>
+      </select>
+      <input type="text" name="name" maxlength="100" />
+      <input type="email" name="email" maxlength="254" required />
+      <textarea name="message" minlength="20" maxlength="3000" required></textarea>
+      <input type="text" name="path" maxlength="500" />
+      <input type="text" name="bot-field" maxlength="100" />
+    </form>
+  </body>
+</html>

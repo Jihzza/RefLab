@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, IconButton, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
 import {
   getVideoPublicUrl,
   getVideoScenarios,
@@ -67,6 +68,7 @@ function shuffle<T>(items: T[]): T[] {
 
 export default function VideoAnalysisView() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
   const [scenarios, setScenarios] = useState<VideoScenario[]>([])
   const [actionOptionsPerScenario, setActionOptionsPerScenario] = useState<string[][]>([])
   const [loading, setLoading] = useState(true)
@@ -81,10 +83,12 @@ export default function VideoAnalysisView() {
   const [sanctionCorrect, setSanctionCorrect] = useState(false)
   const [savingAttempt, setSavingAttempt] = useState(false)
   const [attemptError, setAttemptError] = useState(false)
+  const pendingAttemptRef = useRef<{ signature: string; attemptId: string } | null>(null)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
-  const [videoError, setVideoError] = useState<string | null>(null)
+  const [videoError, setVideoError] = useState(false)
+  const [videoSourceVersion, setVideoSourceVersion] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -210,28 +214,38 @@ export default function VideoAnalysisView() {
   }
 
   async function handleConfirmSanction() {
-    if (selectedAction === null || selectedSanction === null || savingAttempt) return
+    const expectedUserId = user?.id
+    if (
+      selectedAction === null
+      || selectedSanction === null
+      || savingAttempt
+      || !expectedUserId
+    ) return
 
     const chosenAction = currentActionOptions[selectedAction]
     const chosenSanction = SANCTION_OPTIONS[selectedSanction]
-    const isActionCorrect = chosenAction === current.correct_action
-    const isSanctionCorrect = chosenSanction === current.correct_sanction
+    const signature = `${expectedUserId}:${current.id}:${chosenAction}:${chosenSanction}`
+    if (!pendingAttemptRef.current || pendingAttemptRef.current.signature !== signature) {
+      pendingAttemptRef.current = { signature, attemptId: crypto.randomUUID() }
+    }
+    const attemptId = pendingAttemptRef.current.attemptId
 
     setSavingAttempt(true)
     setAttemptError(false)
 
     try {
       const { data, error } = await saveVideoAttempt(
+        attemptId,
+        expectedUserId,
         current.id,
         chosenAction,
         chosenSanction,
-        isActionCorrect,
-        isSanctionCorrect,
       )
       if (error || !data) throw error || new Error('Missing saved video attempt')
 
-      setActionCorrect(isActionCorrect)
-      setSanctionCorrect(isSanctionCorrect)
+      pendingAttemptRef.current = null
+      setActionCorrect(data.action_correct)
+      setSanctionCorrect(data.sanction_correct)
       setStep('result')
     } catch (error) {
       console.error('Failed to save video attempt:', error)
@@ -249,8 +263,9 @@ export default function VideoAnalysisView() {
     setSanctionCorrect(false)
     setSavingAttempt(false)
     setAttemptError(false)
+    pendingAttemptRef.current = null
     setIsPlaying(false)
-    setVideoError(null)
+    setVideoError(false)
     setCurrentTime(0)
     setDuration(0)
 
@@ -277,7 +292,7 @@ export default function VideoAnalysisView() {
 
     if (video.paused) {
       void video.play().catch(() => {
-        setVideoError(current.video_url)
+        setVideoError(true)
       })
     } else {
       video.pause()
@@ -298,6 +313,14 @@ export default function VideoAnalysisView() {
     if (!videoRef.current || !Number.isFinite(value)) return
     videoRef.current.currentTime = value
     setCurrentTime(value)
+  }
+
+  function retryVideoSource() {
+    setIsPlaying(false)
+    setVideoError(false)
+    setCurrentTime(0)
+    setDuration(0)
+    setVideoSourceVersion((version) => version + 1)
   }
 
   if (step === 'result') {
@@ -339,7 +362,7 @@ export default function VideoAnalysisView() {
 
         <div className="relative aspect-video overflow-hidden bg-black">
           <video
-            key={current.id}
+            key={`${current.id}-${videoSourceVersion}`}
             ref={videoRef}
             className="size-full object-contain"
             aria-label={current.title}
@@ -349,7 +372,7 @@ export default function VideoAnalysisView() {
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
-            onError={() => setVideoError(current.video_url)}
+            onError={() => setVideoError(true)}
             onLoadedMetadata={(event) => {
               setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)
               setCurrentTime(event.currentTarget.currentTime)
@@ -363,17 +386,26 @@ export default function VideoAnalysisView() {
           </video>
 
           {videoError && (
-            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 p-5 text-center">
+            <div
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/90 p-5 text-center"
+              role="alert"
+            >
               <AlertTriangle className="size-7 text-(--mc-color-danger)" aria-hidden="true" />
               <p className="mt-3 text-sm font-semibold text-(--mc-color-danger)">
                 {t('Video failed to load')}
               </p>
-              <p className="mt-2 max-w-md break-all text-xs text-white/65">
-                {t('File')}: {videoError}
+              <p className="mt-2 max-w-md text-xs leading-5 text-white/65">
+                {t('Could not play this video. Check your connection and try again.')}
               </p>
-              <p className="mt-1 max-w-md text-xs leading-5 text-white/45">
-                {t('Verify that this file exists and is publicly available from the configured video service.')}
-              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="mt-4"
+                onClick={retryVideoSource}
+                leadingIcon={<RotateCcw className="size-4" />}
+              >
+                {t('Try Again')}
+              </Button>
             </div>
           )}
 

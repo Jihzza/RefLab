@@ -2,9 +2,12 @@ import { useState } from 'react'
 import { AlertTriangle, CalendarDays, CreditCard, ExternalLink } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
 import { createPortalSession } from '@/features/billing/api/billingApi'
 import PlanBadge from '@/features/billing/components/PlanBadge'
+import { useBillingRequestIdentity } from '@/features/billing/hooks/useBillingRequestIdentity'
 import type { PlanId, Subscription } from '@/features/billing/types'
+import { navigateToExternalBillingUrl } from '@/features/billing/utils/billingNavigation'
 
 interface SubscriptionCardProps {
   subscription: Subscription
@@ -18,8 +21,15 @@ export default function SubscriptionCard({
   onCancel,
 }: SubscriptionCardProps) {
   const { t, i18n } = useTranslation()
-  const [portalLoading, setPortalLoading] = useState(false)
-  const [portalError, setPortalError] = useState(false)
+  const { user } = useAuth()
+  const captureBillingIdentity = useBillingRequestIdentity()
+  const [portalStateOwnerId, setPortalStateOwnerId] = useState<string | null>(null)
+  const [portalLoadingState, setPortalLoadingState] = useState(false)
+  const [portalErrorState, setPortalErrorState] = useState(false)
+
+  const ownsPortalState = portalStateOwnerId === user?.id
+  const portalLoading = ownsPortalState ? portalLoadingState : false
+  const portalError = ownsPortalState ? portalErrorState : false
 
   const isCancelPending = subscription.cancel_at_period_end
   const planName = planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Plus'
@@ -31,17 +41,31 @@ export default function SubscriptionCard({
 
   const handleManageSubscription = async () => {
     if (portalLoading) return
-    setPortalLoading(true)
-    setPortalError(false)
+    const identity = captureBillingIdentity()
+    if (!identity || subscription.user_id !== identity.expectedUserId) {
+      setPortalStateOwnerId(user?.id ?? null)
+      setPortalErrorState(true)
+      return
+    }
+    setPortalStateOwnerId(identity.expectedUserId)
+    setPortalLoadingState(true)
+    setPortalErrorState(false)
 
     try {
-      const { url, error } = await createPortalSession()
+      const { url, error } = await createPortalSession(
+        identity.accessToken,
+        identity.expectedUserId,
+      )
+      if (!identity.isCurrent()) return
       if (error || !url) throw error || new Error('Missing portal URL')
-      window.location.assign(url)
+      if (!navigateToExternalBillingUrl(url)) {
+        throw new Error('Portal returned an invalid destination')
+      }
     } catch (error) {
+      if (!identity.isCurrent()) return
       console.error('Failed to open Stripe portal:', error)
-      setPortalError(true)
-      setPortalLoading(false)
+      setPortalErrorState(true)
+      setPortalLoadingState(false)
     }
   }
 
@@ -50,6 +74,8 @@ export default function SubscriptionCard({
     : subscription.status === 'past_due'
       ? 'warning'
       : 'neutral'
+
+  if (subscription.user_id !== user?.id) return null
 
   return (
     <Surface

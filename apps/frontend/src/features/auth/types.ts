@@ -4,6 +4,10 @@ import type { Profile } from './api/profilesApi'
 // Auth status states
 export type AuthStatus = 'checking_session' | 'authenticated' | 'unauthenticated' | 'error'
 
+// Current Terms/Privacy gate. A session is not enough to enter /app until the
+// server confirms acceptance of the exact configured document versions.
+export type LegalAcceptanceStatus = 'loading' | 'required' | 'accepted' | 'error'
+
 // Profile/onboarding status states
 // - loading: fetching profile data
 // - incomplete: username not customized OR name not set
@@ -27,6 +31,9 @@ export interface AuthContextType {
   // Profile onboarding status
   profileStatus: ProfileStatus
 
+  // Versioned Terms/Privacy acceptance gate
+  legalAcceptanceStatus: LegalAcceptanceStatus
+
   // True while we're checking for existing session (convenience getter)
   loading: boolean
 
@@ -36,6 +43,14 @@ export interface AuthContextType {
   // True when PASSWORD_RECOVERY event fires (user arrived via reset link)
   recoveryMode: boolean
 
+  // Monotonic owner-bound epoch for PASSWORD_RECOVERY events. Public recovery
+  // forms use it to discard secrets and async state from an older reset flow.
+  recoveryEpoch: number
+
+  // A local deletion tombstone exists but the durable server job has not yet
+  // been acknowledged. Writes stay locally blocked and the user can retry.
+  accountDeletionPending: boolean
+
   // Clears PASSWORD_RECOVERY state after a successful password update
   clearRecoveryMode: () => void
 
@@ -44,6 +59,11 @@ export interface AuthContextType {
 
   // Refresh profile data (after username is set)
   refreshProfile: () => Promise<void>
+
+  // Re-check server acceptance and record the current versions from the
+  // explicit authenticated consent gate.
+  refreshLegalAcceptance: () => Promise<void>
+  acceptLegalDocuments: () => Promise<{ error: Error | null }>
 
   // Auth actions
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -69,5 +89,6 @@ export interface AuthFormErrors {
   email?: string
   password?: string
   confirmPassword?: string
+  legal?: string
   general?: string // For errors not tied to a specific field
 }

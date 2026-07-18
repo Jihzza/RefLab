@@ -145,6 +145,7 @@ export default function MentionDropdown({
           >
             <Avatar
               src={result.photo_url}
+              ownerId={result.id}
               alt={displayName}
               name={displayName}
               size="sm"

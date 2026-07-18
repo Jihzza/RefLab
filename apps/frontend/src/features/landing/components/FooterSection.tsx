@@ -12,6 +12,7 @@ const FOOTER_LINKS = [
   { label: 'Privacy Policy', to: '/privacy' },
   { label: 'Terms of Service', to: '/terms' },
   { label: 'Cookies Policy', to: '/cookies' },
+  { label: 'Support', to: '/support' },
 ];
 
 export default function FooterSection() {
@@ -20,7 +21,7 @@ export default function FooterSection() {
   return (
     <footer className="border-t border-(--mc-color-border) bg-(--mc-color-canvas)/75 px-4 py-8 sm:px-6">
       <div className="mx-auto flex w-full max-w-[82rem] flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
-        <nav aria-label={t('Legal')} className="flex flex-wrap justify-center gap-x-5 gap-y-2 sm:justify-start">
+        <nav aria-label={t('Footer navigation')} className="flex flex-wrap justify-center gap-x-5 gap-y-2 sm:justify-start">
           {FOOTER_LINKS.map((link) => (
             <Link
               key={link.to}
@@ -30,6 +31,12 @@ export default function FooterSection() {
               {t(link.label)}
             </Link>
           ))}
+          <a
+            href="/licenses/inter-OFL-1.1.txt"
+            className="mc-focus-ring rounded-md text-sm font-medium text-(--mc-color-text-muted) transition-colors hover:text-(--mc-color-accent)"
+          >
+            {t('Inter font licence')}
+          </a>
         </nav>
 
         <p className="text-xs text-(--mc-color-text-muted)">

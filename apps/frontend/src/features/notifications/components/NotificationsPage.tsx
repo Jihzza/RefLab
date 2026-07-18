@@ -18,8 +18,17 @@ import { useTranslation } from 'react-i18next'
  */
 export default function NotificationsPage() {
   const { t } = useTranslation()
-  const { notifications, loading, error, retry, isVisuallyUnread } =
-    useNotifications()
+  const {
+    notifications,
+    loading,
+    loadingMore,
+    hasMore,
+    error,
+    loadMoreError,
+    retry,
+    loadMore,
+    isVisuallyUnread,
+  } = useNotifications()
 
   return (
     <section
@@ -78,15 +87,39 @@ export default function NotificationsPage() {
         )}
 
         {!loading && !error && notifications.length > 0 && (
-          <ul className="space-y-3" aria-label={t('Notifications list')}>
-            {notifications.map((notification) => (
-              <NotificationBanner
-                key={notification.id}
-                notification={notification}
-                isUnread={isVisuallyUnread(notification.id)}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-3" aria-label={t('Notifications list')}>
+              {notifications.map((notification) => (
+                <NotificationBanner
+                  key={notification.id}
+                  notification={notification}
+                  isUnread={isVisuallyUnread(notification.id)}
+                />
+              ))}
+            </ul>
+
+            {loadMoreError && (
+              <p
+                className="mt-4 text-center text-sm text-(--mc-color-danger)"
+                role="alert"
+              >
+                {t(loadMoreError)}
+              </p>
+            )}
+
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  variant="secondary"
+                  loading={loadingMore}
+                  loadingText={t('Loading...')}
+                  onClick={() => void loadMore()}
+                >
+                  {t('Load more')}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

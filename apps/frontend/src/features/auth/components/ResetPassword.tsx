@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import { Button, Input } from "@/components/ui";
 import PublicAuthFrame from "@/features/landing/components/PublicAuthFrame";
+import { MIN_PASSWORD_LENGTH } from "../config";
+import { useAuthOwnerGuard } from "../hooks/useAuthOwnerGuard";
 
 /**
  * ResetPassword - Page for setting a new password after clicking reset link
@@ -20,10 +22,15 @@ import PublicAuthFrame from "@/features/landing/components/PublicAuthFrame";
  *
  * Important: This page should only be accessible via the email reset link.
  */
-export default function ResetPassword() {
+interface ResetPasswordContentProps {
+  ownerId: string | null;
+}
+
+function ResetPasswordContent({ ownerId }: ResetPasswordContentProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { updatePassword, user, recoveryMode, clearRecoveryMode } = useAuth();
+  const isCurrentOwner = useAuthOwnerGuard(ownerId, user?.id ?? null);
 
   // Form state
   const [password, setPassword] = useState("");
@@ -37,10 +44,15 @@ export default function ResetPassword() {
   // Check if user arrived via a valid reset link.
   // With PKCE, detectSessionInUrl exchanges the code automatically and the
   // PASSWORD_RECOVERY event sets recoveryMode=true in AuthProvider.
-  const canResetPassword = Boolean(user && recoveryMode);
+  const canResetPassword = Boolean(
+    user
+    && user.id === ownerId
+    && recoveryMode
+  );
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
+      if (!isCurrentOwner()) return;
       if (user && recoveryMode) {
         setError("");
       } else {
@@ -51,15 +63,16 @@ export default function ResetPassword() {
     }, user && recoveryMode ? 0 : 5000);
 
     return () => window.clearTimeout(timer);
-  }, [recoveryMode, t, user]);
+  }, [isCurrentOwner, recoveryMode, t, user]);
 
   useEffect(() => {
     if (!success) return
     const timer = window.setTimeout(() => {
+      if (!isCurrentOwner()) return;
       navigate("/app/dashboard", { replace: true });
     }, 2000)
     return () => window.clearTimeout(timer)
-  }, [navigate, success])
+  }, [isCurrentOwner, navigate, success])
 
   const validateForm = (): boolean => {
     if (!password) {
@@ -67,8 +80,10 @@ export default function ResetPassword() {
       return false;
     }
 
-    if (password.length < 6) {
-      setError(t("Password must be at least 6 characters"));
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(t("Password must be at least {{count}} characters", {
+        count: MIN_PASSWORD_LENGTH,
+      }));
       return false;
     }
 
@@ -82,6 +97,7 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isCurrentOwner()) return;
     setError("");
 
     if (!canResetPassword) {
@@ -95,6 +111,7 @@ export default function ResetPassword() {
 
     try {
       const { error: updateError } = await updatePassword(password);
+      if (!isCurrentOwner()) return;
 
       if (updateError) {
         const mapped = mapAuthError(updateError, 'update-password');
@@ -107,6 +124,7 @@ export default function ResetPassword() {
       setSuccess(true);
       setLoading(false);
     } catch (err) {
+      if (!isCurrentOwner()) return;
       const mapped = mapAuthError(
         err instanceof Error ? err : new Error('Failed to update password'),
         'update-password'
@@ -169,9 +187,10 @@ export default function ResetPassword() {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={loading || !canResetPassword}
+            minLength={MIN_PASSWORD_LENGTH}
             label={t("New Password")}
             placeholder="••••••••"
-            hint={t("Minimum 6 characters")}
+            hint={t("Minimum {{count}} characters", { count: MIN_PASSWORD_LENGTH })}
           />
 
           <Input
@@ -182,6 +201,7 @@ export default function ResetPassword() {
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             disabled={loading || !canResetPassword}
+            minLength={MIN_PASSWORD_LENGTH}
             label={t("Confirm New Password")}
             placeholder="••••••••"
           />
@@ -210,5 +230,17 @@ export default function ResetPassword() {
         </form>
       </div>
     </PublicAuthFrame>
+  );
+}
+
+export default function ResetPassword() {
+  const { recoveryEpoch, user } = useAuth();
+  const ownerId = user?.id ?? null;
+
+  return (
+    <ResetPasswordContent
+      key={`${ownerId ?? 'unauthenticated'}:${recoveryEpoch}`}
+      ownerId={ownerId}
+    />
   );
 }

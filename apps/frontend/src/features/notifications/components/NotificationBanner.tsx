@@ -132,7 +132,9 @@ function getNotificationRoute(notification: EnrichedNotification): string | null
   }
 
   if (type === 'new_message') {
-    return '/app/messages'
+    return reference_id
+      ? `/app/messages/${encodeURIComponent(reference_id)}`
+      : '/app/messages'
   }
 
   if (type === 'profile_incomplete') {
@@ -164,11 +166,11 @@ function getLocalizedMessage(
     case 'streak_track':
       return t('You completed a learning activity today. Keep it up!')
     case 'welcome_to_plan':
-      return t('Your plan is now active. Enjoy all premium features!')
+      return t('Your subscription is active.')
     case 'plan_expiration_reminder':
-      return t('Your plan will expire soon. Renew to keep premium features.')
+      return t('Your subscription will expire soon. Review it in billing.')
     case 'plan_expired':
-      return t('Your plan has expired. Renew to keep premium features.')
+      return t('Your subscription has expired. Your account is now on the Free plan.')
     case 'new_content_available': {
       const match = notification.message.match(/"([^"]+)"/)
       if (match?.[1]) {
@@ -214,6 +216,7 @@ export default function NotificationBanner({
       {actor ? (
         <Avatar
           src={actor.photo_url}
+          ownerId={actor.id}
           alt={displayName}
           name={displayName}
           size="lg"

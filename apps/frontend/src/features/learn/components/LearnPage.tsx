@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import {
-  Download,
+  ExternalLink,
   FileText,
   GraduationCap,
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { Button, EmptyState, Surface } from '@/components/ui'
+import { EmptyState, Surface } from '@/components/ui'
 import LearnQuestionsView from './LearnQuestionsView'
 import LearnTestView from './LearnTestView'
 import VideoAnalysisView from './VideoAnalysisView'
@@ -24,11 +24,30 @@ const tabLabels: ReadonlyArray<{ key: TabKey; label: string }> = [
 ]
 
 const resources = [
-  { id: 1, title: 'Laws of the Game 2024/25', type: 'PDF', size: '2.4 MB' },
-  { id: 2, title: 'Referee Positioning Guide', type: 'PDF', size: '1.1 MB' },
-  { id: 3, title: 'Match Report Template', type: 'DOCX', size: '0.5 MB' },
-  { id: 4, title: 'Fitness Test Standards', type: 'PDF', size: '0.8 MB' },
-  { id: 5, title: 'VAR Protocol Handbook', type: 'PDF', size: '3.2 MB' },
+  {
+    id: 'laws-2026-27',
+    title: 'Laws of the Game 2026/27 (PDF)',
+    description: 'Official single-page edition from The IFAB.',
+    href: 'https://downloads.theifab.com/downloads/laws-of-the-game-202627-single-pages?l=en',
+  },
+  {
+    id: 'latest-law-changes',
+    title: 'Latest law changes',
+    description: 'Current changes and explanations from The IFAB.',
+    href: 'https://www.theifab.com/law-changes/latest/',
+  },
+  {
+    id: 'laws-online',
+    title: 'Laws of the Game online',
+    description: 'Browse the current Laws of the Game on The IFAB website.',
+    href: 'https://www.theifab.com/laws/latest/about-the-laws/',
+  },
+  {
+    id: 'laws-documents',
+    title: 'Laws of the Game documents',
+    description: 'Official Law documents and supporting material from The IFAB.',
+    href: 'https://www.theifab.com/laws-of-the-game-documents/',
+  },
 ] as const
 
 interface LearnNavProps {
@@ -131,20 +150,21 @@ function ResourcesView() {
                 <h3 className="line-clamp-2 text-sm font-semibold text-(--mc-color-text)">
                   {t(resource.title)}
                 </h3>
-                <p className="mt-1 text-xs text-(--mc-color-text-muted)">
-                  {resource.type} &middot; {resource.size}
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-(--mc-color-text-muted)">
+                  {t(resource.description)}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                leadingIcon={<Download className="size-4" />}
-                aria-label={`${t('Download')}: ${t(resource.title)}`}
-                className="shrink-0 px-2 text-(--mc-color-accent)"
+              <a
+                href={resource.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${t('Open official resource')}: ${t(resource.title)}`}
+                className="mc-interactive mc-focus-ring inline-flex min-h-10 shrink-0 items-center gap-2 rounded-(--mc-radius-button) px-2 text-xs font-semibold text-(--mc-color-accent) hover:bg-(--mc-color-surface-hover)"
               >
-                <span className="hidden sm:inline">{t('Download')}</span>
-                <span className="sr-only sm:hidden">{t('Download')}</span>
-              </Button>
+                <ExternalLink className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">{t('Open')}</span>
+                <span className="sr-only sm:hidden">{t('Open official resource')}</span>
+              </a>
             </Surface>
           </li>
         ))}

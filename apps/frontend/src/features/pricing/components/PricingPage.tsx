@@ -10,9 +10,12 @@ import CancelDialog from './CancelDialog'
 import ChangePlanDialog from './ChangePlanDialog'
 import { useTranslation } from 'react-i18next'
 import { getAuthPlanFromSearch } from '@/features/auth/utils/authNavigation'
+import { PAID_PLANS_ENABLED } from '@/features/billing/config'
+import { useBillingRequestIdentity } from '@/features/billing/hooks/useBillingRequestIdentity'
 
 export default function PricingPage() {
   const { t } = useTranslation()
+  const captureBillingIdentity = useBillingRequestIdentity()
   const [searchParams, setSearchParams] = useSearchParams()
   const requestedPlan = getAuthPlanFromSearch(`?${searchParams.toString()}`)
   const {
@@ -38,6 +41,8 @@ export default function PricingPage() {
   // Handle ?checkout=success after returning from Stripe
   useEffect(() => {
     if (!shouldHandleCheckoutRef.current) return
+    const identity = captureBillingIdentity()
+    if (!identity) return
     shouldHandleCheckoutRef.current = false
 
     // Remove the query param from URL
@@ -54,7 +59,7 @@ export default function PricingPage() {
     const poll = async () => {
       pollCount += 1
       await refreshBilling()
-      if (cancelled) return
+      if (cancelled || !identity.isCurrent()) return
 
       if (pollCount < 5) {
         timeoutId = window.setTimeout(() => void poll(), 2000)
@@ -68,7 +73,7 @@ export default function PricingPage() {
       cancelled = true
       if (timeoutId !== undefined) window.clearTimeout(timeoutId)
     }
-  }, [refreshBilling, setSearchParams])
+  }, [captureBillingIdentity, refreshBilling, setSearchParams])
 
   // Hide success banner after subscription data arrives
   useEffect(() => {
@@ -80,6 +85,7 @@ export default function PricingPage() {
 
   /** Open the change plan dialog with a target */
   const handleChangePlan = (plan: 'pro' | 'plus') => {
+    if (!PAID_PLANS_ENABLED) return
     setTargetPlan(plan)
     setChangePlanDialogOpen(true)
   }
@@ -109,7 +115,7 @@ export default function PricingPage() {
               {t('Pricing & Billing')}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
-              {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
+              {t('Review plan information and manage your subscription, invoices and billing settings.')}
             </p>
           </div>
         </header>
@@ -140,8 +146,12 @@ export default function PricingPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
+                    const identity = captureBillingIdentity()
+                    if (!identity) return
                     setCheckoutTimedOut(false)
-                    void refreshBilling().finally(() => setCheckoutTimedOut(true))
+                    void refreshBilling().finally(() => {
+                      if (identity.isCurrent()) setCheckoutTimedOut(true)
+                    })
                   }}
                   className="mt-1 -ml-3 text-(--mc-color-warning) hover:text-(--mc-color-warning)"
                 >
@@ -193,7 +203,7 @@ export default function PricingPage() {
           />
         )}
 
-        {subscription && (
+        {PAID_PLANS_ENABLED && subscription && (
           <ChangePlanDialog
             isOpen={changePlanDialogOpen}
             onClose={() => setChangePlanDialogOpen(false)}

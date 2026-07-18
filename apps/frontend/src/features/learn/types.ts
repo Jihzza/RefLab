@@ -22,6 +22,7 @@ export interface TestQuestion {
   option_c: string
   option_d: string
   correct_option: 'A' | 'B' | 'C' | 'D'
+  is_active: boolean
   topic: string | null  // Topic category (Offside, Fouls, Handball, etc.)
   law: number | null    // FIFA Law of the Game number (1-17)
   created_at: string
@@ -33,7 +34,7 @@ export interface TestAttempt {
   id: string
   user_id: string
   test_id: string | null  // null for random tests
-  status: 'in_progress' | 'submitted'
+  status: 'in_progress' | 'submitted' | 'superseded'
   started_at: string
   submitted_at: string | null
   score_correct: number | null
@@ -42,6 +43,8 @@ export interface TestAttempt {
   time_limit_seconds: number  // Time limit in seconds (default 2400 = 40 min)
   time_elapsed_seconds: number | null  // Actual time taken
   auto_submitted: boolean  // True if auto-submitted when timer expired
+  superseded_by: string | null
+  question_set_locked_at: string | null
   updated_at: string
 }
 
@@ -55,6 +58,12 @@ export interface TestAttemptAnswer {
   confirmed_at: string
   ai_explanation: string | null
   ai_explanation_created_at: string | null
+}
+
+export interface TestAttemptLaunchPayload {
+  attempt: TestAttempt
+  questions: TestQuestion[]
+  answers: TestAttemptAnswer[]
 }
 
 // Helper type for option letters
@@ -72,6 +81,18 @@ export interface VideoScenario {
   is_active: boolean
   created_at: string
   updated_at: string
+}
+
+export interface VideoAttempt {
+  id: string
+  user_id: string
+  scenario_id: string
+  selected_action: string
+  selected_sanction: string
+  action_correct: boolean
+  sanction_correct: boolean
+  is_correct: boolean
+  created_at: string
 }
 
 // Tab options for the Learn page navigation
@@ -109,6 +130,16 @@ export interface QuestionSession {
   total_answered: number
   total_correct: number
   created_at: string
+}
+
+export interface QuestionPracticeAnswer {
+  id: string
+  user_id: string
+  question_id: string
+  selected_option: OptionLetter
+  is_correct: boolean
+  created_at: string
+  session_id: string | null
 }
 
 export interface QuestionSessionKPIs {

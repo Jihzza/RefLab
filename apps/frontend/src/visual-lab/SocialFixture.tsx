@@ -68,6 +68,7 @@ export default function SocialFixture() {
   const [filter, setFilter] = useState<FeedFilter>('all')
   const noopPost = () => undefined
   const noopId = () => undefined
+  const noopReport = () => Promise.resolve({ created: false, error: null })
 
   return (
     <FixtureAuthProvider>
@@ -77,24 +78,30 @@ export default function SocialFixture() {
             {t('Social')}
           </h2>
           <NavigationBar filter={filter} onFilterChange={setFilter} />
-          <ul className="mt-4 space-y-4">
-            {posts.map((post) => (
-              <li key={post.id}>
-                <PostBox
-                  post={post}
-                  onLike={noopPost}
-                  onSave={noopPost}
-                  onRepost={noopPost}
-                  onShare={noopPost}
-                  onDelete={noopId}
-                  onReport={noopId}
-                  onBlock={noopId}
-                  onCommentCountChange={noopId}
-                  resolveMediaUrl={resolveFixtureMediaUrl}
-                />
-              </li>
-            ))}
-          </ul>
+          <div
+            id="community-feed"
+            role="tabpanel"
+            aria-labelledby={`community-filter-${filter}`}
+          >
+            <ul className="mt-4 space-y-4">
+              {posts.map((post) => (
+                <li key={post.id}>
+                  <PostBox
+                    post={post}
+                    onLike={noopPost}
+                    onSave={noopPost}
+                    onRepost={noopPost}
+                    onShare={noopPost}
+                    onDelete={noopId}
+                    onReport={noopReport}
+                    onBlock={noopId}
+                    onCommentCountChange={noopId}
+                    resolveMediaUrl={resolveFixtureMediaUrl}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
         <NewPostButton onClick={() => undefined} />
       </FixtureShell>

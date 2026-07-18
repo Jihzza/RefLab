@@ -10,6 +10,7 @@ import {
   persistAuthReturnTo,
   resolveAuthReturnTo,
 } from "../utils/authNavigation";
+import { clearPendingLegalAcceptance } from "../utils/legalAcceptanceIntent";
 
 interface LoginFormProps {
   onForgotPassword: () => void;
@@ -31,6 +32,8 @@ export default function LoginForm({ onForgotPassword, onPendingChange }: LoginFo
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, signInWithGoogle } = useAuth();
+  const accountDeletionReauthRequired = new URLSearchParams(location.search)
+    .get('reauth') === 'delete-account';
 
   // Form state
   const [email, setEmail] = useState("");
@@ -76,6 +79,7 @@ export default function LoginForm({ onForgotPassword, onPendingChange }: LoginFo
     setRequestPending(true);
 
     try {
+      clearPendingLegalAcceptance();
       const { error } = await signIn(email, password);
 
       if (error) {
@@ -104,6 +108,7 @@ export default function LoginForm({ onForgotPassword, onPendingChange }: LoginFo
     setRequestPending(true);
 
     try {
+      clearPendingLegalAcceptance();
       const returnTo = persistAuthReturnTo(resolveAuthReturnTo(location.search));
       const { error } = await signInWithGoogle(returnTo);
 
@@ -136,6 +141,11 @@ export default function LoginForm({ onForgotPassword, onPendingChange }: LoginFo
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        {accountDeletionReauthRequired && (
+          <div role="status" className="rounded-(--mc-radius-input) border border-(--mc-color-warning)/45 bg-(--mc-color-warning)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-text)">
+            {t('For security, sign in again before deleting your account.')}
+          </div>
+        )}
         {errors.general && (
           <div role="alert" className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-danger)">
             {errors.general}

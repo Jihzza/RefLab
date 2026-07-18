@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { AlertTriangle, ArrowRightLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, Dialog } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
+import { useBillingRequestIdentity } from '@/features/billing/hooks/useBillingRequestIdentity'
 import type { Subscription } from '@/features/billing/types'
 import { changeSubscriptionPlan } from '../api/pricingApi'
 
@@ -26,40 +28,61 @@ export default function ChangePlanDialog({
   onSuccess,
 }: ChangePlanDialogProps) {
   const { t } = useTranslation()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+  const captureBillingIdentity = useBillingRequestIdentity()
+  const [stateOwnerId, setStateOwnerId] = useState<string | null>(null)
+  const [loadingState, setLoadingState] = useState(false)
+  const [errorState, setErrorState] = useState<string | null>(null)
+  const ownsActionState = stateOwnerId === user?.id
+  const loading = ownsActionState ? loadingState : false
+  const error = ownsActionState ? errorState : null
   const target = PLAN_INFO[targetPlan]
 
   const closeDialog = () => {
     if (loading) return
-    setError(null)
+    setStateOwnerId(user?.id ?? null)
+    setErrorState(null)
     onClose()
   }
 
   const handleConfirm = async () => {
     if (loading) return
-    setLoading(true)
-    setError(null)
+    const identity = captureBillingIdentity()
+    if (!identity || subscription.user_id !== identity.expectedUserId) {
+      setStateOwnerId(user?.id ?? null)
+      setErrorState(t('Your session has expired. Please sign in again.'))
+      return
+    }
+    setStateOwnerId(identity.expectedUserId)
+    setLoadingState(true)
+    setErrorState(null)
 
     try {
       const { error: changeError } = await changeSubscriptionPlan(
+        identity.accessToken,
+        identity.expectedUserId,
         subscription.stripe_subscription_id,
         targetPlan,
       )
+      if (!identity.isCurrent()) return
       if (changeError) throw changeError
       await onSuccess()
-      setLoading(false)
+      if (!identity.isCurrent()) return
+      setLoadingState(false)
       onClose()
     } catch (changeError) {
+      if (!identity.isCurrent()) return
       console.error('Failed to change subscription plan:', changeError)
-      setError(
+      setErrorState(
         changeError instanceof Error
           ? changeError.message
           : t('Failed to change plan. Please try again.'),
       )
-      setLoading(false)
+      setLoadingState(false)
     }
   }
+
+  if (subscription.user_id !== user?.id) return null
 
   return (
     <Dialog

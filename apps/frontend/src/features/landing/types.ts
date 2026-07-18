@@ -26,6 +26,9 @@ export interface PricingPlan {
   /** Whether this plan is highlighted/recommended */
   isHighlighted?: boolean;
 
+  /** Whether the plan is announced but not available for purchase yet */
+  isComingSoon?: boolean;
+
   /** Button text (e.g., "Get Started", "Subscribe", "Contact Us") */
   buttonText: string;
 }

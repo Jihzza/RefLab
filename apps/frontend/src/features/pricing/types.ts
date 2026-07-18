@@ -9,6 +9,7 @@ export interface PlanConfig {
   period: string
   benefits: string[]
   isHighlighted?: boolean
+  isComingSoon?: boolean
 }
 
 /** Stripe invoice returned by the list-invoices edge function */

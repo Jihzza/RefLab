@@ -114,7 +114,7 @@ export default function ProfileFixture() {
             <div className="absolute bottom-10 right-0 h-20 w-9 bg-(--mc-color-danger) [clip-path:polygon(100%_0,100%_100%,0_100%)]" aria-hidden="true" />
             <PitchDiagram />
 
-            <div className="relative z-10 flex min-h-[21rem] flex-col justify-end px-5 py-6 sm:min-h-[17rem] sm:flex-row sm:items-end sm:justify-start sm:gap-7 sm:px-8 sm:py-8">
+            <div className="relative z-10 flex min-h-[21rem] flex-col justify-end px-5 py-6 sm:px-8 sm:py-8 lg:min-h-[17rem] lg:flex-row lg:items-end lg:justify-start lg:gap-7">
               <Avatar
                 src={refereePortrait}
                 alt="Rafael Martins"
@@ -124,11 +124,11 @@ export default function ProfileFixture() {
                 imageProps={{ loading: 'eager' }}
               />
 
-              <div className="mt-5 min-w-0 flex-1 sm:mt-0">
-                <h2 className="truncate text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
+              <div className="mt-5 min-w-0 flex-1 lg:mt-0">
+                <h2 className="break-words text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
                   Rafael Martins
                 </h2>
-                <p className="mt-1 truncate text-base text-(--mc-color-text-muted) sm:text-lg">
+                <p className="mt-1 break-all text-base text-(--mc-color-text-muted) sm:text-lg">
                   @rafael
                 </p>
                 <p className="mt-3 flex items-center gap-2 text-xs font-medium text-(--mc-color-text-muted)">
@@ -137,11 +137,11 @@ export default function ProfileFixture() {
                 </p>
               </div>
 
-              <div className="mt-5 flex w-full gap-2 sm:mt-0 sm:w-auto sm:shrink-0">
+              <div className="mt-5 flex w-full gap-2 lg:mt-0 lg:w-auto lg:shrink-0">
                 <Button
                   variant="secondary"
                   leadingIcon={<Pencil className="size-4" />}
-                  className="flex-1 border-(--mc-color-accent)/80 text-(--mc-color-accent) sm:min-w-40"
+                  className="flex-1 border-(--mc-color-accent)/80 text-(--mc-color-accent) lg:min-w-40"
                   onClick={() => navigate('/app/profile/edit')}
                 >
                   {t('Edit Profile')}
@@ -162,7 +162,12 @@ export default function ProfileFixture() {
             <NavigationBar filter={filter} onFilterChange={setFilter} />
           </div>
 
-          <div className="mx-auto max-w-3xl space-y-4">
+          <div
+            id="community-feed"
+            role="tabpanel"
+            aria-labelledby={`community-filter-${filter}`}
+            className="mx-auto max-w-3xl space-y-4"
+          >
             {visiblePosts.map((post) => (
               <FixturePostCard
                 key={post.id}

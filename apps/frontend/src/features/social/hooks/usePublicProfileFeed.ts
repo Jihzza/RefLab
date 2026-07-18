@@ -17,6 +17,7 @@ export function usePublicProfileFeed(
   const [hasMore, setHasMore] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [loadedTargetUserId, setLoadedTargetUserId] = useState<string | null>(null)
+  const [loadedViewerId, setLoadedViewerId] = useState<string | null>(null)
 
   const cursorRef = useRef<string | null>(null)
   const activeRequestRef = useRef<number | null>(null)
@@ -95,6 +96,7 @@ export function usePublicProfileFeed(
       setHasMore(false)
       setError(null)
       setLoadedTargetUserId(null)
+      setLoadedViewerId(null)
       cursorRef.current = null
       return
     }
@@ -109,6 +111,7 @@ export function usePublicProfileFeed(
     void fetchFeed(null, true, generation).then((completedCurrentRequest) => {
       if (!completedCurrentRequest || generation !== generationRef.current) return
       setLoadedTargetUserId(targetUserId)
+      setLoadedViewerId(viewerId)
       setIsLoading(false)
       setHasInitiallyLoaded(true)
     })
@@ -184,11 +187,15 @@ export function usePublicProfileFeed(
   }, [])
 
   const hasCurrentTarget = Boolean(targetUserId)
+    && Boolean(viewerId)
+    && loadedViewerId === viewerId
     && loadedTargetUserId === targetUserId
 
   return {
     posts: hasCurrentTarget ? posts : [],
-    isLoading: Boolean(enabled && targetUserId) && !hasCurrentTarget ? true : isLoading,
+    isLoading: Boolean(enabled && viewerId && targetUserId) && !hasCurrentTarget
+      ? true
+      : isLoading,
     hasInitiallyLoaded: hasCurrentTarget ? hasInitiallyLoaded : false,
     isRefreshing: hasCurrentTarget ? isRefreshing : false,
     isLoadingMore: hasCurrentTarget ? isLoadingMore : false,

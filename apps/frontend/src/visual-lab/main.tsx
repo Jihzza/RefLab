@@ -12,6 +12,7 @@ const screen = new URLSearchParams(window.location.search).get('screen') ?? 'das
 const fixtures = {
   dashboard: { path: '/app/dashboard', load: () => import('./DashboardFixture') },
   social: { path: '/app/social', load: () => import('./SocialFixture') },
+  moderation: { path: '/admin/moderation', load: () => import('./ModerationFixture') },
   messages: { path: '/app/messages/fixture-conversation', load: () => import('./MessagesFixture') },
   pricing: { path: '/app/pricing', load: () => import('./PricingFixture') },
   profile: { path: '/app/profile', load: () => import('./ProfileFixture') },

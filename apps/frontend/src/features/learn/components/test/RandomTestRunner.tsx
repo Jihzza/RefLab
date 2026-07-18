@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock3, LockKeyhole } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Clock3, LockKeyhole, RotateCcw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, EmptyState, ProgressBar, Skeleton, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
 import { generateRandomTest, saveAnswer, submitRandomTest } from '../../api/testsApi'
 import { useTestTimer } from '../../hooks/useTestTimer'
 import type { OptionLetter, TestQuestion } from '../../types'
@@ -18,18 +19,29 @@ export default function RandomTestRunner({
   onBackToTests,
 }: RandomTestRunnerProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const [loading, setLoading] = useState(true)
+  const [startError, setStartError] = useState(false)
+  const [startVersion, setStartVersion] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [expired, setExpired] = useState(false)
 
   const [questions, setQuestions] = useState<TestQuestion[]>([])
   const [attemptId, setAttemptId] = useState<string>('')
+  const [attemptStartedAt, setAttemptStartedAt] = useState<string | null>(null)
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState(TEST_TIME_LIMIT_SECONDS)
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [pendingSelection, setPendingSelection] = useState<{ questionId: string; index: number } | null>(null)
   const [answerError, setAnswerError] = useState<string | null>(null)
   const pendingSaveRef = useRef<Promise<void> | null>(null)
   const submittingRef = useRef(false)
+  const startRequestRef = useRef<{
+    version: number
+    ownerId: string
+    request: ReturnType<typeof generateRandomTest>
+  } | null>(null)
 
   const currentQuestion = questions[currentIndex]
   const answeredCount = Object.keys(answers).length
@@ -51,9 +63,6 @@ export default function RandomTestRunner({
       await pendingSaveRef.current
       const { data, error } = await submitRandomTest(
         attemptId,
-        TEST_TIME_LIMIT_SECONDS,
-        true,
-        questions.length,
       )
       if (error || !data) throw error || new Error('Missing submitted attempt')
       onComplete(attemptId)
@@ -63,39 +72,88 @@ export default function RandomTestRunner({
       setSubmitting(false)
       setAnswerError(t('Failed to submit test'))
     }
-  }, [attemptId, onComplete, questions.length, t])
+  }, [attemptId, onComplete, t])
 
   const timerData = useTestTimer(
-    TEST_TIME_LIMIT_SECONDS,
+    timeLimitSeconds,
     handleTimerExpire,
     !loading && Boolean(attemptId) && questions.length > 0,
+    attemptStartedAt,
   )
 
   useEffect(() => {
     let cancelled = false
 
     async function init() {
-      const { data, error } = await generateRandomTest()
-
-      if (cancelled) return
-
-      if (error || !data) {
-        console.error('Failed to generate test:', error)
+      if (!userId) {
+        setStartError(true)
         setLoading(false)
         return
       }
 
+      const request = startRequestRef.current?.version === startVersion
+        && startRequestRef.current.ownerId === userId
+        ? startRequestRef.current.request
+        : generateRandomTest(userId)
+
+      startRequestRef.current = { version: startVersion, ownerId: userId, request }
+      const { data, error } = await request
+
+      if (cancelled) return
+
+      if (error || !data || data.questions.length === 0) {
+        console.error('Failed to generate test:', error)
+        setStartError(true)
+        setLoading(false)
+        return
+      }
+
+      const restoredAnswers = data.answers.reduce<Record<string, number>>((restored, answer) => {
+        restored[answer.question_id] = answer.selected_option.charCodeAt(0) - 65
+        return restored
+      }, {})
+      const firstUnansweredIndex = data.questions.findIndex(
+        (question) => !(question.id in restoredAnswers),
+      )
+
       setQuestions(data.questions)
-      setAttemptId(data.attemptId)
+      setAttemptId(data.attempt.id)
+      setAttemptStartedAt(data.attempt.started_at)
+      setTimeLimitSeconds(data.attempt.time_limit_seconds || TEST_TIME_LIMIT_SECONDS)
+      setAnswers(restoredAnswers)
+      setCurrentIndex(
+        firstUnansweredIndex >= 0
+          ? firstUnansweredIndex
+          : Math.max(data.questions.length - 1, 0),
+      )
+      setStartError(false)
       setLoading(false)
     }
 
-    init()
+    void init()
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [startVersion, userId])
+
+  const handleRetryStart = () => {
+    setQuestions([])
+    setAttemptId('')
+    setAttemptStartedAt(null)
+    setTimeLimitSeconds(TEST_TIME_LIMIT_SECONDS)
+    setCurrentIndex(0)
+    setAnswers({})
+    setPendingSelection(null)
+    setAnswerError(null)
+    setExpired(false)
+    setSubmitting(false)
+    submittingRef.current = false
+    pendingSaveRef.current = null
+    setStartError(false)
+    setLoading(true)
+    setStartVersion((version) => version + 1)
+  }
 
   const handleSelectOption = async (index: number) => {
     if (
@@ -152,12 +210,8 @@ export default function RandomTestRunner({
 
     try {
       await pendingSaveRef.current
-      const { elapsed } = timerData
       const { data, error } = await submitRandomTest(
         attemptId,
-        elapsed,
-        false,
-        questions.length,
       )
       if (error || !data) throw error || new Error('Missing submitted attempt')
       onComplete(attemptId)
@@ -203,11 +257,21 @@ export default function RandomTestRunner({
         <EmptyState
           icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
           title={t('Failed to load test')}
-          description={t('Please try again')}
+          description={startError
+            ? t('Could not start your test. Check your connection and try again.')
+            : t('Please try again')}
           action={
-            <Button variant="secondary" onClick={onBackToTests}>
-              {t('Back to Tests')}
-            </Button>
+            <>
+              <Button
+                onClick={handleRetryStart}
+                leadingIcon={<RotateCcw className="size-4" />}
+              >
+                {t('Try Again')}
+              </Button>
+              <Button variant="secondary" onClick={onBackToTests}>
+                {t('Back to Tests')}
+              </Button>
+            </>
           }
         />
       </Surface>

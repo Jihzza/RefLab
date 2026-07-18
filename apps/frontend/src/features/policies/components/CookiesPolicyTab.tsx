@@ -15,63 +15,60 @@ export default function CookiesPolicyTab() {
   return (
     <PolicyDocument
       title={t('Cookies Policy')}
-      lastUpdated={t('Last updated: February 2026')}
+      lastUpdated={t('Last updated: July 18, 2026')}
       icon={<Cookie className="size-6" />}
     >
 
-      {/* What Are Cookies */}
-      <PolicySection id="cookies-what-are-cookies" title={t('1. What Are Cookies')}>
+      <PolicySection id="cookies-browser-storage" title={t('1. Cookies and Browser Storage')}>
         <p>
           {t(
-            'Cookies are small text files that are stored on your device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the site owners. Cookies help us remember your preferences and improve your browsing experience.'
+            'Web applications can use cookies, local storage and IndexedDB to keep sessions secure, remember local preferences and make features more resilient. These technologies store small amounts of data in your browser or device.'
           )}
         </p>
       </PolicySection>
 
-      {/* Cookies We Use */}
-      <PolicySection id="cookies-we-use" title={t('2. Cookies We Use')}>
+      <PolicySection id="cookies-we-use" title={t('2. Storage RefLab Uses')}>
         <p className="mb-4">
-          {t('We use the following types of cookies on RefLab:')}
+          {t('RefLab currently uses essential and functional browser storage for:')}
         </p>
         <ul className="space-y-3">
           <li className="flex gap-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas)/65 px-4 py-3">
             <span className="mt-[0.65rem] size-1.5 shrink-0 rounded-full bg-(--mc-color-accent)" aria-hidden="true" />
             <span>
-              <strong className="font-bold text-(--mc-color-text)">{t('Essential cookies:')}</strong>{' '}
-              {t('Required for the platform to function, including authentication and session management.')}
+              <strong className="font-bold text-(--mc-color-text)">{t('Authentication and security:')}</strong>{' '}
+              {t('Supabase authentication stores the session needed to keep you signed in and protect authenticated requests.')}
             </span>
           </li>
           <li className="flex gap-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas)/65 px-4 py-3">
             <span className="mt-[0.65rem] size-1.5 shrink-0 rounded-full bg-(--mc-color-accent)" aria-hidden="true" />
             <span>
-              <strong className="font-bold text-(--mc-color-text)">{t('Preference cookies:')}</strong>{' '}
-              {t('Remember your settings and preferences to provide a personalized experience.')}
-            </span>
-          </li>
-          <li className="flex gap-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas)/65 px-4 py-3">
-            <span className="mt-[0.65rem] size-1.5 shrink-0 rounded-full bg-(--mc-color-accent)" aria-hidden="true" />
-            <span>
-              <strong className="font-bold text-(--mc-color-text)">{t('Analytics cookies:')}</strong>{' '}
-              {t('Help us understand how visitors interact with the platform so we can improve our services.')}
+              <strong className="font-bold text-(--mc-color-text)">{t('Preferences and resilience:')}</strong>{' '}
+              {t('Language, recent searches, this notice acknowledgement and temporary offline or cleanup queues may be stored locally on your device.')}
             </span>
           </li>
         </ul>
       </PolicySection>
 
-      {/* Managing Cookies */}
-      <PolicySection id="cookies-managing" title={t('3. Managing Cookies')}>
+      <PolicySection id="cookies-optional" title={t('3. Optional Tracking')}>
         <p>
           {t(
-            'You can manage your cookie preferences through the cookie consent banner that appears when you first visit RefLab. You can also control cookies through your browser settings. Please note that disabling essential cookies may affect the functionality of the platform.'
+            'RefLab does not currently enable optional analytics or advertising cookies. If that changes, we will update this policy and provide the required controls before optional tracking is activated.'
           )}
         </p>
       </PolicySection>
 
-      {/* Third-Party Cookies */}
-      <PolicySection id="cookies-third-party" title={t('4. Third-Party Cookies')}>
+      <PolicySection id="cookies-third-party" title={t('4. Third-Party Services')}>
         <p>
           {t(
-            "Some cookies on our platform are set by third-party services that appear on our pages. We do not control these cookies. Third-party providers include analytics and authentication services. Please refer to each provider's privacy policy for more information on how they use cookies."
+            'When you choose Google sign-in, open Stripe billing or follow an external learning resource, that provider may use cookies or storage on its own domain under its own policy.'
+          )}
+        </p>
+      </PolicySection>
+
+      <PolicySection id="cookies-managing" title={t('5. Managing Browser Data')}>
+        <p>
+          {t(
+            'You can inspect or clear browser data through your browser settings. Clearing essential storage may sign you out, reset local preferences or remove actions waiting to be retried while offline.'
           )}
         </p>
       </PolicySection>

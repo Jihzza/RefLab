@@ -71,7 +71,11 @@ export default function ConversationItem({
   const { t, i18n } = useTranslation()
   const { user: authUser } = useAuth()
   const otherUser = conversation.other_user
-  const displayName = otherUser.name || otherUser.username
+  const displayName = otherUser.is_blocked
+    ? t('Blocked account')
+    : otherUser.is_deleted
+      ? t('This user is unavailable.')
+    : otherUser.name || otherUser.username
   const preview = getLastMessagePreview(conversation, authUser?.id, t)
   const timestamp = formatConversationTime(
     conversation.last_message?.created_at ?? conversation.updated_at,
@@ -100,6 +104,7 @@ export default function ConversationItem({
 
       <Avatar
         src={otherUser.photo_url}
+        ownerId={otherUser.id}
         alt={displayName}
         name={displayName}
         size="lg"

@@ -98,6 +98,7 @@ export default function UserSearchDropdown({
               >
                 <Avatar
                   src={user.photo_url}
+                  ownerId={user.id}
                   alt={displayName}
                   name={displayName}
                   size="md"

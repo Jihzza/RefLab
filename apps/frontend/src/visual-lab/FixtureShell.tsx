@@ -81,8 +81,12 @@ function FixtureRail() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-20 flex-col border-r border-(--mc-color-border) bg-(--mc-color-surface) md:flex xl:w-64">
-      <Link to="/app/dashboard" className="flex h-16 items-center justify-center gap-3 border-b border-(--mc-color-border) xl:justify-start xl:px-6">
-        <img src={logo} alt="" className="h-7 w-auto" />
+      <Link
+        to="/app/dashboard"
+        aria-label="RefLab"
+        className="flex h-16 items-center justify-center gap-3 border-b border-(--mc-color-border) xl:justify-start xl:px-6"
+      >
+        <img src={logo} alt="" aria-hidden="true" className="h-7 w-auto" />
         <span className="hidden text-xl font-bold text-(--mc-color-text) xl:block">RefLab</span>
       </Link>
       <nav className="flex flex-1 flex-col gap-2 px-2 py-5 xl:px-4" aria-label={t('Main navigation')}>
@@ -93,9 +97,11 @@ function FixtureRail() {
             <Link
               key={item.key}
               to={item.to}
+              aria-label={t(item.labelKey)}
+              aria-current={active ? 'page' : undefined}
               className={`relative flex h-12 items-center justify-center gap-3 rounded-(--mc-radius-button) px-3 xl:justify-start ${active ? 'border border-(--mc-color-accent)/25 bg-(--mc-color-accent)/10 text-(--mc-color-accent)' : 'text-(--mc-color-text-muted)'}`}
             >
-              <Icon className="size-5 shrink-0" />
+              <Icon className="size-5 shrink-0" aria-hidden="true" />
               <span className="hidden text-sm font-medium xl:block">{t(item.labelKey)}</span>
             </Link>
           )

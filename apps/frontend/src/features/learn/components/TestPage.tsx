@@ -5,15 +5,15 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardList,
+  RotateCcw,
   Send,
 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button, EmptyState, ProgressBar, Skeleton, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
 import {
-  getAttemptAnswers,
   getOrCreateAttempt,
-  getQuestions,
   getTestByReference,
   saveAnswer,
   submitAttempt,
@@ -42,6 +42,8 @@ export default function TestPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const userId = user?.id ?? null
 
   // Data state
   const [test, setTest] = useState<Test | null>(null)
@@ -53,6 +55,8 @@ export default function TestPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [canRetryLoad, setCanRetryLoad] = useState(true)
+  const [loadVersion, setLoadVersion] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [savingQuestionId, setSavingQuestionId] = useState<string | null>(null)
   const [answerError, setAnswerError] = useState<string | null>(null)
@@ -76,71 +80,52 @@ export default function TestPage() {
       setSavingQuestionId(null)
       setAnswerError(null)
 
-      if (!slug) {
+      if (!slug || !userId) {
         setError(t('No test specified'))
+        setCanRetryLoad(false)
         setLoading(false)
         return
       }
 
       setLoading(true)
       setError(null)
+      setCanRetryLoad(true)
 
       try {
         // 1. Get the test
         const { data: testData, error: testError } = await getTestByReference(slug)
         if (cancelled) return
         if (testError || !testData) {
-          setError(testError?.message || t('Test not found'))
+          setError(t('Could not load this test. Check your connection and try again.'))
           setLoading(false)
           return
         }
         setTest(testData)
 
-        // 2. Get questions
-        const { data: questionsData, error: questionsError } = await getQuestions(testData.id)
+        // 2. Atomically start/resume and load its fixed question snapshot.
+        const { data: launchData, error: attemptError } = await getOrCreateAttempt(
+          testData.id,
+          userId,
+        )
         if (cancelled) return
-        if (questionsError || !questionsData) {
-          setError(questionsError?.message || t('Failed to load questions'))
+        if (attemptError || !launchData) {
+          setError(t('Could not load this test. Check your connection and try again.'))
           setLoading(false)
           return
         }
-        setQuestions(questionsData)
+        setQuestions(launchData.questions)
+        setAttempt(launchData.attempt)
 
-        if (questionsData.length === 0) {
-          setLoading(false)
-          return
-        }
-
-        // 3. Get or create attempt
-        const { data: attemptData, error: attemptError } = await getOrCreateAttempt(testData.id)
-        if (cancelled) return
-        if (attemptError || !attemptData) {
-          setError(attemptError?.message || t('Failed to create attempt'))
-          setLoading(false)
-          return
-        }
-        setAttempt(attemptData)
-
-        // 4. Load existing answers (for resume)
-        const { data: existingAnswers, error: answersError } = await getAttemptAnswers(attemptData.id)
-        if (cancelled) return
-        if (answersError) {
-          setError(answersError.message || t('Failed to load answers'))
-          setLoading(false)
-          return
-        }
-        if (existingAnswers) {
-          const answersMap = new Map<string, OptionLetter>()
-          existingAnswers.forEach((answer: TestAttemptAnswer) => {
-            answersMap.set(answer.question_id, answer.selected_option)
-          })
-          setAnswers(answersMap)
-        }
+        const answersMap = new Map<string, OptionLetter>()
+        launchData.answers.forEach((answer: TestAttemptAnswer) => {
+          answersMap.set(answer.question_id, answer.selected_option)
+        })
+        setAnswers(answersMap)
 
         setLoading(false)
       } catch {
         if (cancelled) return
-        setError(t('An unexpected error occurred'))
+        setError(t('Could not load this test. Check your connection and try again.'))
         setLoading(false)
       }
     }
@@ -152,7 +137,7 @@ export default function TestPage() {
         loadGenerationRef.current += 1
       }
     }
-  }, [slug, t])
+  }, [loadVersion, slug, t, userId])
 
   // Handle selecting an option
   const handleSelectOption = async (option: OptionLetter) => {
@@ -265,13 +250,26 @@ export default function TestPage() {
             icon={<AlertTriangle className="size-5 text-(--mc-color-danger)" />}
             title={error}
             action={
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/app/learn')}
-                leadingIcon={<ArrowLeft className="size-4" />}
-              >
-                {t('Back to Learn')}
-              </Button>
+              <>
+                {canRetryLoad && (
+                  <Button
+                    onClick={() => {
+                      setLoading(true)
+                      setLoadVersion((version) => version + 1)
+                    }}
+                    leadingIcon={<RotateCcw className="size-4" />}
+                  >
+                    {t('Try Again')}
+                  </Button>
+                )}
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate('/app/learn')}
+                  leadingIcon={<ArrowLeft className="size-4" />}
+                >
+                  {t('Back to Learn')}
+                </Button>
+              </>
             }
           />
         </Surface>

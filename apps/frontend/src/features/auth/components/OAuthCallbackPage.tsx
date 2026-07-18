@@ -7,6 +7,7 @@ import { Button } from '@/components/ui'
 import PublicAuthFrame from '@/features/landing/components/PublicAuthFrame'
 import {
   buildAuthLandingUrl,
+  buildLegalAcceptanceUrl,
   consumeAuthReturnTo,
   persistAuthReturnTo,
   resolveAuthReturnTo,
@@ -43,7 +44,7 @@ export default function OAuthCallbackPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { authStatus } = useAuth()
+  const { authStatus, legalAcceptanceStatus } = useAuth()
   const [timedOut, setTimedOut] = useState(false)
   const redirectError = useMemo(
     () => readRedirectError(location.search, location.hash),
@@ -51,9 +52,26 @@ export default function OAuthCallbackPage() {
   )
 
   useEffect(() => {
-    if (redirectError || authStatus !== 'authenticated') return
-    navigate(consumeAuthReturnTo(location.search), { replace: true })
-  }, [authStatus, location.search, navigate, redirectError])
+    if (
+      redirectError
+      || authStatus !== 'authenticated'
+      || legalAcceptanceStatus === 'loading'
+    ) return
+
+    const returnTo = consumeAuthReturnTo(location.search)
+    navigate(
+      legalAcceptanceStatus === 'accepted'
+        ? returnTo
+        : buildLegalAcceptanceUrl(returnTo),
+      { replace: true },
+    )
+  }, [
+    authStatus,
+    legalAcceptanceStatus,
+    location.search,
+    navigate,
+    redirectError,
+  ])
 
   useEffect(() => {
     if (redirectError || authStatus === 'authenticated' || authStatus === 'error') return

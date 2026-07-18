@@ -30,7 +30,12 @@ import {
 } from '../api/socialApi'
 import { usePostActions } from '../hooks/usePostActions'
 import { usePublicProfileFeed } from '../hooks/usePublicProfileFeed'
-import type { Post, PublicProfileView } from '../types'
+import type {
+  Post,
+  PublicProfileView,
+  ReportSubmission,
+  ReportSubmissionResult,
+} from '../types'
 import BlockConfirmDialog from './BlockConfirmDialog'
 import PostBox from './PostBox'
 import PublicProfileMenu from './PublicProfileMenu'
@@ -106,6 +111,7 @@ export default function PublicProfilePage() {
 
   const [loadedProfileView, setProfileView] = useState<PublicProfileView | null>(null)
   const [loadedProfileUsername, setLoadedProfileUsername] = useState<string | null>(null)
+  const [loadedProfileViewerId, setLoadedProfileViewerId] = useState<string | null>(null)
   const [profileLoadPending, setProfileLoadPending] = useState(true)
   const [loadedProfileError, setProfileError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -122,7 +128,9 @@ export default function PublicProfilePage() {
   const activeProfileIdRef = useRef<string | null>(null)
   const relationshipActionRef = useRef<string | null>(null)
 
-  const hasCurrentProfile = loadedProfileUsername === username
+  const hasCurrentProfile = Boolean(userId)
+    && loadedProfileViewerId === userId
+    && loadedProfileUsername === username
   const profileView = hasCurrentProfile ? loadedProfileView : null
   const profileError = hasCurrentProfile ? loadedProfileError : null
   const isProfileLoading = profileLoadPending || !hasCurrentProfile
@@ -162,12 +170,14 @@ export default function PublicProfilePage() {
       setProfileError(t('Missing username.'))
       setProfileView(null)
       setLoadedProfileUsername(username)
+      setLoadedProfileViewerId(userId ?? null)
       setProfileLoadPending(false)
       return
     }
 
     if (!userId) {
       setLoadedProfileUsername(username)
+      setLoadedProfileViewerId(null)
       setProfileLoadPending(false)
       return
     }
@@ -194,11 +204,13 @@ export default function PublicProfilePage() {
         setProfileError(error.message)
         setProfileView(null)
         setLoadedProfileUsername(username)
+        setLoadedProfileViewerId(userId)
         return
       }
 
       setProfileView(publicProfile)
       setLoadedProfileUsername(username)
+      setLoadedProfileViewerId(userId)
     } catch (loadError) {
       if (requestId !== profileRequestIdRef.current) return
       setProfileError(
@@ -208,6 +220,7 @@ export default function PublicProfilePage() {
       )
       setProfileView(null)
       setLoadedProfileUsername(username)
+      setLoadedProfileViewerId(userId)
     } finally {
       if (requestId === profileRequestIdRef.current) {
         setProfileLoadPending(false)
@@ -446,7 +459,9 @@ export default function PublicProfilePage() {
         photo_url: profileView.photo_url,
       }
 
-      navigate(`/app/messages/${conversationId}`, { state: { otherUser } })
+      navigate(`/app/messages/${conversationId}`, {
+        state: { ownerId: userId, otherUser },
+      })
     } catch (conversationError) {
       setActionError(
         conversationError instanceof Error
@@ -459,23 +474,22 @@ export default function PublicProfilePage() {
   }, [navigate, profileView, t, userId])
 
   const handleSubmitReport = useCallback(
-    async (reason: string) => {
-      if (!userId || !profileView) return
-      setShowReportDialog(false)
+    async (submission: ReportSubmission): Promise<ReportSubmissionResult> => {
+      if (!userId || !profileView) {
+        return { created: false, error: new Error(t('Could not submit this report.')) }
+      }
 
       try {
-        const { error: reportError } = await reportUser(userId, profileView.id, reason)
-        if (reportError) {
-          setActionError(reportError.message)
-        } else {
-          showToast(t('Report submitted'))
-        }
+        const result = await reportUser(userId, profileView.id, submission)
+        if (!result.error) showToast(t('Report submitted'))
+        return result
       } catch (reportError) {
-        setActionError(
-          reportError instanceof Error
-            ? reportError.message
-            : t('Could not submit this report.'),
-        )
+        return {
+          created: false,
+          error: reportError instanceof Error
+            ? reportError
+            : new Error(t('Could not submit this report.')),
+        }
       }
     },
     [profileView, showToast, t, userId],
@@ -546,7 +560,7 @@ export default function PublicProfilePage() {
             padding="none"
             className="mx-auto max-w-4xl overflow-hidden border-(--mc-color-border-strong) shadow-none"
           >
-            <div className="flex min-h-[21rem] flex-col justify-end gap-5 px-5 py-6 sm:min-h-[17rem] sm:flex-row sm:items-end sm:px-8 sm:py-8">
+            <div className="flex min-h-[21rem] flex-col justify-end gap-5 px-5 py-6 sm:px-8 sm:py-8 lg:min-h-[17rem] lg:flex-row lg:items-end">
               <Skeleton variant="circular" width="8rem" className="shrink-0" />
               <div className="flex-1 space-y-3">
                 <Skeleton variant="text" width="12rem" className="h-8" />
@@ -623,9 +637,10 @@ export default function PublicProfilePage() {
                 </div>
               )}
 
-              <div className="relative z-10 flex min-h-[22rem] flex-col justify-end px-5 py-6 sm:min-h-[18rem] sm:flex-row sm:items-end sm:gap-7 sm:px-8 sm:py-8">
+              <div className="relative z-10 flex min-h-[22rem] flex-col justify-end px-5 py-6 sm:px-8 sm:py-8 lg:min-h-[18rem] lg:flex-row lg:items-end lg:gap-7">
                 <Avatar
                   src={profileView.photo_url}
+                  ownerId={profileView.id}
                   alt={displayName}
                   name={displayName}
                   size="xl"
@@ -633,11 +648,11 @@ export default function PublicProfilePage() {
                   imageProps={{ loading: 'eager' }}
                 />
 
-                <div className="mt-5 min-w-0 flex-1 sm:mt-0">
-                  <h2 className="truncate text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
+                <div className="mt-5 min-w-0 flex-1 lg:mt-0">
+                  <h2 className="break-words text-3xl font-extrabold tracking-[-0.035em] text-(--mc-color-text) sm:text-4xl">
                     {displayName}
                   </h2>
-                  <p className="mt-1 truncate text-base text-(--mc-color-text-muted) sm:text-lg">
+                  <p className="mt-1 break-all text-base text-(--mc-color-text-muted) sm:text-lg">
                     @{profileView.username}
                   </p>
 
@@ -649,7 +664,7 @@ export default function PublicProfilePage() {
                 </div>
 
                 {!profileView.has_blocked_viewer && (
-                  <div className="mt-5 flex w-full gap-2 sm:mt-0 sm:w-auto sm:shrink-0">
+                  <div className="mt-5 flex w-full gap-2 lg:mt-0 lg:w-auto lg:shrink-0">
                     <Button
                       variant={profileView.is_following ? 'secondary' : 'primary'}
                       leadingIcon={
@@ -661,7 +676,7 @@ export default function PublicProfilePage() {
                       disabled={isBlockUpdating || profileView.is_blocked_by_viewer}
                       onClick={() => void handleFollowToggle()}
                       aria-label={profileView.is_following ? t('Unfollow user') : t('Follow user')}
-                      className="flex-1 sm:min-w-32"
+                      className="flex-1 lg:min-w-32"
                     >
                       {profileView.is_following ? t('Unfollow') : t('Follow')}
                     </Button>
@@ -674,7 +689,7 @@ export default function PublicProfilePage() {
                       disabled={isBlockUpdating || profileView.is_blocked_by_viewer}
                       onClick={() => void handleStartConversation()}
                       aria-label={t('Send message')}
-                      className="flex-1 sm:min-w-32"
+                      className="flex-1 lg:min-w-32"
                     >
                       {t('Message')}
                     </Button>
@@ -783,9 +798,7 @@ export default function PublicProfilePage() {
       {showReportDialog && (
         <ReportDialog
           type="user"
-          onSubmit={reason => {
-            void handleSubmitReport(reason)
-          }}
+          onSubmit={handleSubmitReport}
           onClose={() => setShowReportDialog(false)}
         />
       )}

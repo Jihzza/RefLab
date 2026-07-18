@@ -13,7 +13,10 @@ export default function ProfileSection() {
   const fallbackIdentity = user.user_metadata?.full_name || user.email?.split('@')[0] || t('Profile')
   const displayName = profile?.name || profile?.username || fallbackIdentity
   const username = profile?.username || null
-  const avatarUrl = profile?.photo_url || user.user_metadata?.avatar_url || null
+  const profileAvatarUrl = profile?.photo_url ?? null
+  const providerAvatarUrl = typeof user.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
 
   return (
     <Surface
@@ -26,7 +29,10 @@ export default function ProfileSection() {
         aria-label={t('Edit profile')}
       >
         <Avatar
-          src={avatarUrl}
+          src={profileAvatarUrl}
+          ownerId={profile?.id ?? user.id}
+          providerSrc={providerAvatarUrl}
+          allowAuthProviderImage
           alt={t('Profile avatar')}
           name={displayName}
           size="xl"

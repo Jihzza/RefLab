@@ -13,6 +13,8 @@ import { useAuth } from '@/features/auth/components/useAuth'
 import { useComments } from '../hooks/useComments'
 import CommentBox from './CommentBox'
 import MentionDropdown from './MentionDropdown'
+import ReportDialog from './ReportDialog'
+import { COMMENT_CONTENT_MAX_LENGTH } from '../config'
 
 interface CommentSectionProps {
   id?: string
@@ -43,6 +45,7 @@ export default function CommentSection({
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [reportTargetId, setReportTargetId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const composerRef = useRef<HTMLFormElement>(null)
   const mentionListId = `${id ?? `post-${postId}-comments`}-mentions`
@@ -131,7 +134,7 @@ export default function CommentSection({
       if (atIndex === -1) return
 
       const updated = `${newComment.slice(0, atIndex)}@${username} ${newComment.slice(cursorPosition)}`
-      setNewComment(updated)
+      setNewComment(updated.slice(0, COMMENT_CONTENT_MAX_LENGTH))
       setMentionQuery(null)
 
       window.requestAnimationFrame(() => {
@@ -185,6 +188,8 @@ export default function CommentSection({
               }}
               placeholder={replyingTo ? t('Write a reply...') : t('Add a comment...')}
               autoComplete="off"
+              maxLength={COMMENT_CONTENT_MAX_LENGTH}
+              aria-describedby={`${mentionListId}-counter`}
               aria-autocomplete="list"
               aria-expanded={mentionQuery !== null}
               aria-controls={mentionQuery !== null ? mentionListId : undefined}
@@ -210,6 +215,14 @@ export default function CommentSection({
             <span className="hidden sm:inline">{t('Post')}</span>
           </Button>
         </div>
+        <p
+          id={`${mentionListId}-counter`}
+          className="mt-1 text-right text-xs tabular-nums text-(--mc-color-text-muted)"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {newComment.length} / {COMMENT_CONTENT_MAX_LENGTH}
+        </p>
       </form>
 
       {error && (
@@ -248,7 +261,7 @@ export default function CommentSection({
                 onLike={toggleLike}
                 onReply={() => handleReply(comment.id)}
                 onDelete={handleDelete}
-                onReport={reportComment}
+                onReport={setReportTargetId}
               />
               {comment.replies.length > 0 && (
                 <ul className="mt-3 space-y-3">
@@ -261,7 +274,7 @@ export default function CommentSection({
                         onLike={toggleLike}
                         onReply={() => handleReply(comment.id)}
                         onDelete={handleDelete}
-                        onReport={reportComment}
+                        onReport={setReportTargetId}
                       />
                     </li>
                   ))}
@@ -277,6 +290,14 @@ export default function CommentSection({
           <MessageCircle className="size-4" aria-hidden="true" />
           <span>{t('No comments yet. Be the first!')}</span>
         </div>
+      )}
+
+      {reportTargetId && (
+        <ReportDialog
+          type="comment"
+          onSubmit={(submission) => reportComment(reportTargetId, submission)}
+          onClose={() => setReportTargetId(null)}
+        />
       )}
     </section>
   )

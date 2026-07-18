@@ -12,7 +12,7 @@ import { Button, Dialog, EmptyState, Skeleton, Surface } from '@/components/ui'
 import {
   completeQuestionSession,
   getQuestionsByFilters,
-  savePracticeAnswerWithSession,
+  saveQuestionPracticeAnswer,
 } from '../../api/testsApi'
 import type {
   AnsweredQuestion,
@@ -126,7 +126,6 @@ interface QuestionsSessionProps {
   mode: QuestionSessionMode
   filterLaws: number[] | null
   filterAreas: string[] | null
-  startedAt: string
   onEndSession: (result: SessionResult) => void
   onExitSession: () => void
 }
@@ -136,7 +135,7 @@ interface QuestionsSessionProps {
  *
  * Features:
  * - Loads questions filtered by the chosen mode/laws/areas
- * - Infinite question pool: re-shuffles and loops when pool is exhausted
+ * - Each filtered question can be answered once per session
  * - Count-up timer (no limit)
  * - Immediate feedback after each answer
  * - "End Session" button with confirmation modal
@@ -147,13 +146,12 @@ export default function QuestionsSession({
   mode,
   filterLaws,
   filterAreas,
-  startedAt,
   onEndSession,
   onExitSession,
 }: QuestionsSessionProps) {
   const { t } = useTranslation()
-  const [pool, setPool] = useState<TestQuestion[]>([])
   const [, setQueue] = useState<TestQuestion[]>([])
+  const [questionCount, setQuestionCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [loadVersion, setLoadVersion] = useState(0)
@@ -161,6 +159,7 @@ export default function QuestionsSession({
   const [currentQ, setCurrentQ] = useState<TestQuestion | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
+  const [savedIsCorrect, setSavedIsCorrect] = useState<boolean | null>(null)
   const [savingAnswer, setSavingAnswer] = useState(false)
   const [operationError, setOperationError] = useState<string | null>(null)
 
@@ -173,9 +172,7 @@ export default function QuestionsSession({
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [ending, setEnding] = useState(false)
   const endingRef = useRef(false)
-
-  // Track the last question shown to avoid immediate repeats on reshuffle
-  const lastQuestionIdRef = useRef<string | null>(null)
+  const pendingAnswerRef = useRef<{ signature: string; answerId: string } | null>(null)
 
   // Load question pool on mount
   useEffect(() => {
@@ -193,10 +190,9 @@ export default function QuestionsSession({
           setLoadError(true)
         } else if (data && data.length > 0) {
           const shuffled = shuffle(data)
-          setPool(data)
+          setQuestionCount(data.length)
           setQueue(shuffled)
           setCurrentQ(shuffled[0])
-          lastQuestionIdRef.current = shuffled[0].id
         }
       } catch (error) {
         console.error('Failed to load practice questions:', error)
@@ -224,23 +220,21 @@ export default function QuestionsSession({
     if (savingAnswer || endingRef.current) return
     setSelectedOption(null)
     setShowAnswer(false)
+    setSavedIsCorrect(null)
+    pendingAnswerRef.current = null
 
     setQueue((previousQueue) => {
-      let remaining = previousQueue.slice(1)
+      const remaining = previousQueue.slice(1)
 
-      // Re-shuffle and refill when queue is nearly empty, avoiding repeat of last question
+      // A question can be answered only once in a session. Once the finite
+      // pool is exhausted, keep the last result visible and offer completion.
       if (remaining.length === 0) {
-        const reshuffled = shuffle(pool)
-        if (reshuffled[0].id === lastQuestionIdRef.current && reshuffled.length > 1) {
-          // Swap first and second to avoid immediate repeat
-          ;[reshuffled[0], reshuffled[1]] = [reshuffled[1], reshuffled[0]]
-        }
-        remaining = reshuffled
+        setShowEndConfirm(true)
+        return previousQueue
       }
 
       const next = remaining[0]
       setCurrentQ(next)
-      lastQuestionIdRef.current = next.id
       return remaining
     })
   }
@@ -248,29 +242,37 @@ export default function QuestionsSession({
   const handleCheck = async () => {
     if (selectedOption === null || !currentQ || showAnswer || savingAnswer || endingRef.current) return
 
-    const isCorrect = selectedOption === letterToIndex(currentQ.correct_option)
-    const answered: AnsweredQuestion = {
-      question: currentQ,
-      selectedOption: indexToLetter(selectedOption),
-      selectedIndex: selectedOption,
-      isCorrect,
+    const selectedLetter = indexToLetter(selectedOption)
+    const signature = `${sessionId}:${currentQ.id}:${selectedLetter}`
+    if (!pendingAnswerRef.current || pendingAnswerRef.current.signature !== signature) {
+      pendingAnswerRef.current = { signature, answerId: crypto.randomUUID() }
     }
+    const answerId = pendingAnswerRef.current.answerId
 
     setSavingAnswer(true)
     setOperationError(null)
 
     try {
-      const { data, error } = await savePracticeAnswerWithSession(
+      const { data, error } = await saveQuestionPracticeAnswer(
+        answerId,
         currentQ.id,
-        indexToLetter(selectedOption),
-        isCorrect,
+        selectedLetter,
         sessionId,
       )
       if (error || !data) throw error || new Error('Missing saved answer')
 
+      const answered: AnsweredQuestion = {
+        question: currentQ,
+        selectedOption: selectedLetter,
+        selectedIndex: selectedOption,
+        isCorrect: data.is_correct,
+      }
+
+      pendingAnswerRef.current = null
+      setSavedIsCorrect(data.is_correct)
       setShowAnswer(true)
       setAnsweredQuestions((previous) => [...previous, answered])
-      if (isCorrect) setTotalCorrect((previous) => previous + 1)
+      if (data.is_correct) setTotalCorrect((previous) => previous + 1)
     } catch (error) {
       console.error('Failed to save practice answer:', error)
       setOperationError(t('Failed to save answer. Please try again.'))
@@ -285,28 +287,21 @@ export default function QuestionsSession({
     setEnding(true)
     setOperationError(null)
 
-    const endedAt = new Date().toISOString()
-    const durationSeconds = Math.round(
-      (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000,
-    )
-
     try {
-      const { data, error } = await completeQuestionSession(
-        sessionId,
-        startedAt,
-        answeredQuestions.length,
-        totalCorrect,
-      )
+      const { data, error } = await completeQuestionSession(sessionId)
       if (error || !data) throw error || new Error('Missing completed session')
+      if (!data.ended_at || data.duration_seconds === null) {
+        throw new Error('Completed session is missing server timing')
+      }
 
       if (timerRef.current) clearInterval(timerRef.current)
       onEndSession({
         sessionId,
-        startedAt,
-        endedAt,
-        durationSeconds,
-        totalAnswered: answeredQuestions.length,
-        totalCorrect,
+        startedAt: data.started_at,
+        endedAt: data.ended_at,
+        durationSeconds: data.duration_seconds,
+        totalAnswered: data.total_answered,
+        totalCorrect: data.total_correct,
         answers: answeredQuestions,
       })
     } catch (error) {
@@ -325,13 +320,15 @@ export default function QuestionsSession({
     setOperationError(null)
 
     try {
-      const { data, error } = await completeQuestionSession(sessionId, startedAt, 0, 0)
+      const { data, error } = await completeQuestionSession(sessionId)
       if (error || !data) throw error || new Error('Missing completed session')
       if (timerRef.current) clearInterval(timerRef.current)
       onExitSession()
     } catch (error) {
       console.error('Failed to close empty question session:', error)
-      onExitSession()
+      endingRef.current = false
+      setEnding(false)
+      setOperationError(t('Failed to end session. Please try again.'))
     }
   }
 
@@ -407,7 +404,8 @@ export default function QuestionsSession({
   const options = getOptions(currentQ)
   const correctIndex = letterToIndex(currentQ.correct_option)
   const totalAnswered = answeredQuestions.length
-  const selectedIsCorrect = selectedOption === correctIndex
+  const selectedIsCorrect = savedIsCorrect ?? (selectedOption === correctIndex)
+  const isFinalQuestion = showAnswer && answeredQuestions.length >= questionCount
   const modeLabel = mode === 'quick'
     ? t('Quick Questions')
     : mode === 'by_law'
@@ -611,12 +609,12 @@ export default function QuestionsSession({
             <Button
               fullWidth
               size="lg"
-              onClick={advanceQuestion}
+              onClick={isFinalQuestion ? () => setShowEndConfirm(true) : advanceQuestion}
               disabled={ending}
-              trailingIcon={<ChevronRight className="size-5" />}
+              trailingIcon={isFinalQuestion ? undefined : <ChevronRight className="size-5" />}
               className="rounded-none pr-14"
             >
-              {t('Next Question')}
+              {isFinalQuestion ? t('End Session') : t('Next Question')}
             </Button>
           )}
           <span

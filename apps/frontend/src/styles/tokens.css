@@ -21,7 +21,8 @@
 
   --mc-yellow-500: #f6b800;
   --mc-yellow-200: #ffe078;
-  --mc-red-500: #ef2b2d;
+  /* Bright enough for WCAG AA body text on every dark surface token. */
+  --mc-red-500: #ff4d50;
   --mc-green-500: #22c55e;
   --mc-orange-500: #f59e0b;
   --mc-blue-500: #4da3ff;
@@ -47,7 +48,7 @@
   --mc-color-selection: rgb(246 194 28 / 25%);
 
   /* Typography */
-  --mc-font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --mc-font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --mc-font-weight-regular: 400;
   --mc-font-weight-medium: 500;
   --mc-font-weight-semibold: 600;

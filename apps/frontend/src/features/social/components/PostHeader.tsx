@@ -70,6 +70,7 @@ const PostHeader: React.FC<PostHeaderProps> = ({
       >
         <Avatar
           src={author.photo_url}
+          ownerId={author.id}
           alt={displayName}
           name={displayName}
           size="lg"

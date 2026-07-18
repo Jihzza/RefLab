@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Badge, Button, EmptyState, Skeleton, Surface } from '@/components/ui'
 import { useInvoices } from '../hooks/useInvoices'
+import { isTrustedStripeUrl } from '@/features/billing/utils/stripeUrls'
 
 function formatAmount(amountInCents: number, currency: string, locale: string): string {
   return new Intl.NumberFormat(locale, {
@@ -120,6 +121,12 @@ export default function InvoiceHistory() {
               <ul className="divide-y divide-(--mc-color-border)">
                 {invoices.map((invoice) => {
                   const date = formatDate(invoice.created, locale)
+                  const hostedInvoiceUrl = isTrustedStripeUrl(invoice.hosted_invoice_url)
+                    ? invoice.hosted_invoice_url
+                    : null
+                  const invoicePdfUrl = isTrustedStripeUrl(invoice.invoice_pdf)
+                    ? invoice.invoice_pdf
+                    : null
 
                   return (
                     <li key={invoice.id} className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:px-5">
@@ -141,20 +148,20 @@ export default function InvoiceHistory() {
                       </div>
 
                       <div className="flex flex-wrap gap-2">
-                        {invoice.hosted_invoice_url && (
+                        {hostedInvoiceUrl && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(invoice.hosted_invoice_url!, '_blank', 'noopener,noreferrer')}
+                            onClick={() => window.open(hostedInvoiceUrl, '_blank', 'noopener,noreferrer')}
                             trailingIcon={<ExternalLink className="size-3.5" />}
                             aria-label={t('View invoice from {{date}}', { date })}
                           >
                             {t('View')}
                           </Button>
                         )}
-                        {invoice.invoice_pdf && (
+                        {invoicePdfUrl && (
                           <a
-                            href={invoice.invoice_pdf}
+                            href={invoicePdfUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mc-focus-ring inline-flex min-h-9 items-center justify-center gap-2 rounded-(--mc-radius-button) px-3 py-1.5 text-xs font-semibold text-(--mc-color-accent) hover:bg-(--mc-color-surface-hover)"

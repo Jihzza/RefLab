@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.7'
 
 /**
  * sync-video-scenarios
@@ -10,20 +10,30 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * New rows are created with:
  *   - video_url = filename
  *   - title = filename without extension, formatted as title case
- *   - correct_decision = 'TBD' (must be updated before activating)
+ *   - correct_action = 'TBD' and correct_sanction = 'No card'
+ *     (both must be reviewed before activating)
  *   - is_active = false (won't appear in the app until configured)
  *
  * Usage:
  *   POST /functions/v1/sync-video-scenarios
  *
+ * Authorization:
+ *   - Requires `role: "admin"` in the authenticated user's Auth
+ *     `app_metadata` (`auth.users.raw_app_meta_data`).
+ *   - Never authorize from `profiles.role`; profile data may have historical
+ *     values that were writable by clients.
+ *   - Before deploying, audit the intended administrators and assign/remove
+ *     this Auth metadata through a trusted service-role/Admin API workflow.
+ *
  * After syncing, go to the Supabase Table Editor and update:
- *   - title, description, topic, correct_decision
+ *   - title, description, topic, correct_action, correct_sanction
  *   - Set is_active = true when ready
  */
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const BUCKET = 'learn-videos'
@@ -45,15 +55,54 @@ serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(
       JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      {
+        status: 405,
+        headers: {
+          ...corsHeaders,
+          'Allow': 'POST, OPTIONS',
+          'Content-Type': 'application/json',
+        },
+      },
     )
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+      throw new Error('Supabase environment is not configured')
+    }
+
+    const authHeader = req.headers.get('Authorization')
+    const accessToken = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1]
+    if (!accessToken) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    const authClient = createClient(supabaseUrl, anonKey)
+    const { data: { user }, error: userError } = await authClient.auth.getUser(accessToken)
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    // `getUser` resolves the token against Supabase Auth, so this checks the
+    // current server-owned app metadata instead of trusting a client-editable
+    // profile field or a locally decoded JWT claim.
+    if (user.app_metadata?.role !== 'admin') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     // 1. List all files in the bucket
     const { data: files, error: listError } = await supabase.storage
@@ -126,7 +175,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Sync error:', error)
     return new Response(
-      JSON.stringify({ error: (error as Error).message }),
+      JSON.stringify({ error: 'Failed to sync video scenarios' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }

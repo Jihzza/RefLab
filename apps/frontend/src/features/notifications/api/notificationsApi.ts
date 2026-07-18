@@ -15,6 +15,11 @@ const NOTIFICATION_SELECT = `
   )
 `
 
+export interface NotificationCursor {
+  createdAt: string
+  id: string
+}
+
 /**
  * Fetch all notifications for the current user (with actor profile data).
  */
@@ -24,6 +29,8 @@ export async function getNotifications(userId: string) {
     .select(NOTIFICATION_SELECT)
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(50)
 
   return { notifications: data as EnrichedNotification[] | null, error }
 }
@@ -33,19 +40,52 @@ export async function getNotifications(userId: string) {
  *
  * Returns newest first. System notifications (no actor) will have actor = null.
  */
-export async function getActiveNotifications(userId: string) {
-  const { data, error } = await supabase
+export async function getActiveNotifications(
+  userId: string,
+  cursor: NotificationCursor | null = null,
+  limit: number = 50,
+) {
+  let query = supabase
     .from('notifications')
     .select(NOTIFICATION_SELECT)
     .eq('user_id', userId)
     .eq('dismissed_permanently', false)
     .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(Math.max(1, Math.min(limit, 100)))
+
+  if (cursor) {
+    query = query.or(
+      `created_at.lt.${cursor.createdAt},and(created_at.eq.${cursor.createdAt},id.lt.${cursor.id})`,
+    )
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Failed to fetch notifications:', error)
   }
 
   return { notifications: data as EnrichedNotification[] | null, error }
+}
+
+/** Fetch only rows changed by Realtime, retaining the same active-row rule. */
+export async function getActiveNotificationsByIds(
+  userId: string,
+  notificationIds: string[],
+) {
+  if (notificationIds.length === 0) {
+    return { notifications: [] as EnrichedNotification[], error: null }
+  }
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select(NOTIFICATION_SELECT)
+    .eq('user_id', userId)
+    .eq('dismissed_permanently', false)
+    .in('id', notificationIds)
+
+  return { notifications: (data ?? []) as EnrichedNotification[], error }
 }
 
 /**
@@ -75,13 +115,21 @@ export async function markAsRead(notificationId: string) {
 }
 
 /**
- * Mark all notifications as read for a user.
+ * Mark the exact fetched notification snapshot as read for a user. Scoping the
+ * update to IDs prevents a notification inserted between SELECT and UPDATE
+ * from being silently consumed without ever appearing unread.
  */
-export async function markAllAsRead(userId: string) {
+export async function markNotificationsAsRead(
+  userId: string,
+  notificationIds: string[],
+) {
+  if (notificationIds.length === 0) return { error: null }
+
   const { error } = await supabase
     .from('notifications')
     .update({ read: true })
     .eq('user_id', userId)
+    .in('id', notificationIds)
 
   return { error }
 }

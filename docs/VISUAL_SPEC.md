@@ -1,4 +1,9 @@
 # RefLab — Visual Design Spec
+
+> **Historical snapshot — [README](../README.md) +
+> [backend/supabase/LAUNCH_RUNBOOK.md](../backend/supabase/LAUNCH_RUNBOOK.md)
+> are authoritative for current launch state.**
+
 **Version:** 1.0
 **Date:** 2026-04-17
 **App:** React + Vite — Web (Netlify)
@@ -129,9 +134,9 @@ Headings: font-semibold, larger sizes
 
 ---
 
-### MessagesPage
-**Conversation list:** DM threads
-**ConversationPage:** Chat UI, real-time messages
+### MessagesWorkspace
+**Conversation list state:** DM threads
+**Selected conversation state:** Chat UI with real-time messages in the same responsive workspace
 **People search:** Fuzzy search via trigram
 
 ---

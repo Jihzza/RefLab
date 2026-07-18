@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabaseClient'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter, VideoScenario, TopicPerformance, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
+import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, TestAttemptLaunchPayload, OptionLetter, VideoScenario, VideoAttempt, TopicPerformance, QuestionPracticeAnswer, QuestionSession, QuestionSessionMode, QuestionSessionKPIs } from '../types'
 
 /**
  * Fetch all active tests
@@ -77,51 +77,17 @@ export async function getQuestions(testId: string) {
 /**
  * Get or create an attempt for a test
  *
- * Logic:
- * 1. Check if user has an existing "in_progress" attempt for this test
- * 2. If yes, return it (allows resuming)
- * 3. If no, create a new attempt
- *
- * This ensures users can pause and resume tests
+ * The database RPC serializes concurrent callers, enforces one open attempt,
+ * and returns the immutable question order plus persisted answers in the same
+ * transaction. This keeps React StrictMode and multi-tab starts idempotent.
  */
-export async function getOrCreateAttempt(testId: string) {
-  // First, get the current user
-  const { data: { user } } = await supabase.auth.getUser()
+export async function getOrCreateAttempt(testId: string, expectedUserId: string) {
+  const { data, error } = await supabase.rpc('start_or_resume_test_attempt', {
+    p_test_id: testId,
+    p_expected_user_id: expectedUserId,
+  })
 
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
-  // Check for existing in-progress attempt
-  const { data: existingAttempt, error: fetchError } = await supabase
-    .from('test_attempts')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('test_id', testId)
-    .eq('status', 'in_progress')
-    .maybeSingle()
-
-  if (fetchError) {
-    return { data: null, error: fetchError }
-  }
-
-  // If found, return it
-  if (existingAttempt) {
-    return { data: existingAttempt as TestAttempt, error: null }
-  }
-
-  // Create new attempt
-  const { data: newAttempt, error: insertError } = await supabase
-    .from('test_attempts')
-    .insert({
-      user_id: user.id,
-      test_id: testId,
-      status: 'in_progress',
-    })
-    .select()
-    .single()
-
-  return { data: newAttempt as TestAttempt | null, error: insertError }
+  return { data: data as TestAttemptLaunchPayload | null, error }
 }
 
 /**
@@ -141,8 +107,9 @@ export async function getAttemptAnswers(attemptId: string) {
 /**
  * Save (or update) an answer for a question
  *
- * Uses upsert to handle both insert and update in one call
- * The unique constraint on (attempt_id, question_id) makes this work
+ * The RPC locks the attempt row and makes an identical retry idempotent.
+ * Concrete-test choices remain revisable until submit; timed random-test
+ * choices are immutable after their first successful save.
  */
 export async function saveAnswer(
   attemptId: string,
@@ -150,19 +117,11 @@ export async function saveAnswer(
   selectedOption: OptionLetter
 ) {
   const { data, error } = await supabase
-    .from('test_attempt_answers')
-    .upsert(
-      {
-        attempt_id: attemptId,
-        question_id: questionId,
-        selected_option: selectedOption,
-        confirmed_at: new Date().toISOString(),
-      },
-      {
-        onConflict: 'attempt_id,question_id',
-      }
-    )
-    .select()
+    .rpc('save_test_attempt_answer', {
+      p_attempt_id: attemptId,
+      p_question_id: questionId,
+      p_selected_option: selectedOption,
+    })
     .single()
 
   return { data: data as TestAttemptAnswer | null, error }
@@ -171,67 +130,17 @@ export async function saveAnswer(
 /**
  * Submit an attempt (finish the test)
  *
- * This will:
- * 1. Calculate the score by comparing answers to correct options
- * 2. Update the attempt with the score and mark as submitted
- * 3. Mark each answer as correct/incorrect
+ * Grading, answer updates, score calculation, timing, and the status transition
+ * happen atomically in PostgreSQL. A repeated submission returns the same row.
  */
 export async function submitAttempt(attemptId: string) {
-  // Get all answers for this attempt with their questions from question_bank
-  const { data: answers, error: answersError } = await supabase
-    .from('test_attempt_answers')
-    .select(`
-      id,
-      question_id,
-      selected_option,
-      question_bank!inner (
-        correct_option
-      )
-    `)
-    .eq('attempt_id', attemptId)
-
-  if (answersError || !answers) {
-    return { data: null, error: answersError || new Error('Failed to load attempt answers') }
-  }
-
-  // Calculate score
-  let correct = 0
-  const total = answers.length
-
-  // Update each answer with is_correct
-  for (const answer of answers) {
-    const question = answer.question_bank as unknown as { correct_option: string }
-    const isCorrect = answer.selected_option === question.correct_option
-
-    if (isCorrect) correct++
-
-    const { error: answerUpdateError } = await supabase
-      .from('test_attempt_answers')
-      .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
-
-    if (answerUpdateError) {
-      return { data: null, error: answerUpdateError }
-    }
-  }
-
-  const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
-
-  // Update the attempt
-  const { data: updatedAttempt, error: updateError } = await supabase
-    .from('test_attempts')
-    .update({
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      score_correct: correct,
-      score_total: total,
-      score_percent: scorePercent,
+  const { data, error } = await supabase
+    .rpc('submit_test_attempt', {
+      p_attempt_id: attemptId,
     })
-    .eq('id', attemptId)
-    .select()
     .single()
 
-  return { data: updatedAttempt as TestAttempt | null, error: updateError }
+  return { data: data as TestAttempt | null, error }
 }
 
 /**
@@ -277,17 +186,6 @@ export async function getUserCompletedAttempts() {
 }
 
 /**
- * Fetch all questions from the question bank (for practice mode)
- */
-export async function getAllQuestions() {
-  const { data, error } = await supabase
-    .from('question_bank')
-    .select('*')
-
-  return { data: data as TestQuestion[] | null, error }
-}
-
-/**
  * Fetch all active video scenarios
  */
 export async function getVideoScenarios() {
@@ -301,139 +199,48 @@ export async function getVideoScenarios() {
 }
 
 /**
- * Get the public URL for a video file stored in Cloudflare R2.
+ * Get the public URL for a video file in the reviewed Supabase Storage bucket.
  *
- * The video_url column stores the R2 key (e.g., "clips/A1.mp4").
- * This function builds the full R2 public URL.
+ * The video_url column stores only the object name. The bucket's launch access
+ * model is a release gate; no storage or service-role secret reaches the app.
  */
-const R2_BASE_URL = 'https://pub-a1f801f17afb4e44b8c270828fefc392.r2.dev'
-
 export function getVideoPublicUrl(filename: string): string {
-  return `${R2_BASE_URL}/${filename}`
+  return supabase.storage.from('learn-videos').getPublicUrl(filename).data.publicUrl
 }
 
 /**
- * Sync the "Learn Videos" bucket with the video_scenarios table.
- *
- * Calls the sync-video-scenarios Edge Function which:
- * 1. Lists all video files in the bucket
- * 2. Inserts new rows for files not yet tracked
- * 3. New rows have is_active=false until configured in the Table Editor
- */
-export async function syncVideoScenarios() {
-  const { data, error } = await supabase.functions.invoke('sync-video-scenarios', {
-    method: 'POST',
-  })
-
-  return { data, error }
-}
-
-/**
- * Save a practice question answer
- *
- * Called when the user clicks "Check" in the Questions (practice) tab.
- * This feeds into dashboard metrics: Overall Accuracy, Accuracy by Topic,
- * Accuracy Change, Total Questions Answered, and activity tracking.
- */
-export async function savePracticeAnswer(
-  questionId: string,
-  selectedOption: OptionLetter,
-  isCorrect: boolean
-) {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
-  const { data, error } = await supabase
-    .from('question_practice_answers')
-    .insert({
-      user_id: user.id,
-      question_id: questionId,
-      selected_option: selectedOption,
-      is_correct: isCorrect,
-    })
-    .select()
-    .single()
-
-  return { data, error }
-}
-
-/**
- * Save a video attempt (action + sanction decisions)
+ * Save a video attempt. The database derives all correctness fields from the
+ * active scenario. A stable caller-generated id makes exact retries safe.
  */
 export async function saveVideoAttempt(
+  attemptId: string,
+  expectedUserId: string,
   scenarioId: string,
   selectedAction: string,
-  selectedSanction: string,
-  actionCorrect: boolean,
-  sanctionCorrect: boolean
+  selectedSanction: string
 ) {
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
   const { data, error } = await supabase
-    .from('video_attempts')
-    .insert({
-      user_id: user.id,
-      scenario_id: scenarioId,
-      selected_action: selectedAction,
-      selected_sanction: selectedSanction,
-      action_correct: actionCorrect,
-      sanction_correct: sanctionCorrect,
-      is_correct: actionCorrect && sanctionCorrect,
+    .rpc('save_video_attempt', {
+      p_attempt_id: attemptId,
+      p_expected_user_id: expectedUserId,
+      p_scenario_id: scenarioId,
+      p_selected_action: selectedAction,
+      p_selected_sanction: selectedSanction,
     })
-    .select()
     .single()
 
-  return { data, error }
+  return { data: data as VideoAttempt | null, error }
 }
 
 /**
- * Generate a random test with 20 questions
- * Creates a test attempt and returns questions
+ * Start or resume a random test with an immutable, persisted question order.
  */
-export async function generateRandomTest() {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
+export async function generateRandomTest(expectedUserId: string) {
+  const { data, error } = await supabase.rpc('start_or_resume_random_test_attempt', {
+    p_expected_user_id: expectedUserId,
+  })
 
-  // Call RPC to get 20 random questions
-  const { data: questions, error: questionsError } = await supabase
-    .rpc('get_random_questions')
-
-  if (questionsError || !questions) {
-    return { data: null, error: questionsError }
-  }
-
-  // Create test attempt
-  const { data: attempt, error: attemptError } = await supabase
-    .from('test_attempts')
-    .insert({
-      user_id: user.id,
-      test_id: null, // Random tests don't belong to a specific test
-      status: 'in_progress',
-      time_limit_seconds: 2400, // 40 minutes
-    })
-    .select()
-    .single()
-
-  if (attemptError || !attempt) {
-    return { data: null, error: attemptError }
-  }
-
-  return {
-    data: {
-      questions: questions as TestQuestion[],
-      attemptId: attempt.id,
-    },
-    error: null,
-  }
+  return { data: data as TestAttemptLaunchPayload | null, error }
 }
 
 /**
@@ -441,68 +248,14 @@ export async function generateRandomTest() {
  */
 export async function submitRandomTest(
   attemptId: string,
-  timeElapsedSeconds: number,
-  autoSubmitted: boolean,
-  questionCount: number,
 ) {
-  // Get all answers with their questions from question_bank
-  const { data: answers, error: answersError } = await supabase
-    .from('test_attempt_answers')
-    .select(`
-      id,
-      question_id,
-      selected_option,
-      question_bank!inner (correct_option)
-    `)
-    .eq('attempt_id', attemptId)
-
-  if (answersError || !answers) {
-    return { data: null, error: answersError || new Error('Failed to load attempt answers') }
-  }
-
-  // Calculate score
-  let correct = 0
-  const normalizedQuestionCount = Number.isFinite(questionCount)
-    ? Math.max(0, Math.floor(questionCount))
-    : 0
-  const total = Math.max(answers.length, normalizedQuestionCount)
-
-  // Update each answer with is_correct
-  for (const answer of answers) {
-    const question = answer.question_bank as unknown as { correct_option: string }
-    const isCorrect = answer.selected_option === question.correct_option
-
-    if (isCorrect) correct++
-
-    const { error: answerUpdateError } = await supabase
-      .from('test_attempt_answers')
-      .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
-
-    if (answerUpdateError) {
-      return { data: null, error: answerUpdateError }
-    }
-  }
-
-  const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
-
-  // Update attempt with score and timing
-  const { data: updatedAttempt, error: updateError } = await supabase
-    .from('test_attempts')
-    .update({
-      status: 'submitted',
-      submitted_at: new Date().toISOString(),
-      score_correct: correct,
-      score_total: total,
-      score_percent: scorePercent,
-      time_elapsed_seconds: timeElapsedSeconds,
-      auto_submitted: autoSubmitted,
+  const { data, error } = await supabase
+    .rpc('submit_test_attempt', {
+      p_attempt_id: attemptId,
     })
-    .eq('id', attemptId)
-    .select()
     .single()
 
-  return { data: updatedAttempt as TestAttempt | null, error: updateError }
+  return { data: data as TestAttempt | null, error }
 }
 
 /**
@@ -531,13 +284,11 @@ export async function getTestKPIs() {
     return { data: null, error: new Error('Not authenticated') }
   }
 
-  // Tests completed this week (from Monday)
+  // Tests completed this week (from the current Monday, including Sunday).
   const weekStart = new Date()
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay()) // Start of week (Sunday)
-  if (weekStart.getDay() === 0) {
-    // If it's Sunday, go back to Monday
-    weekStart.setDate(weekStart.getDate() - 6)
-  }
+  const day = weekStart.getDay()
+  const daysToMonday = day === 0 ? 6 : day - 1
+  weekStart.setDate(weekStart.getDate() - daysToMonday)
   weekStart.setHours(0, 0, 0, 0)
 
   const { count: testsThisWeek } = await supabase
@@ -586,7 +337,7 @@ export async function getTestKPIs() {
     data: {
       testsThisWeek: testsThisWeek || 0,
       averageScore,
-      bestScore: bestTest?.score_percent || null,
+      bestScore: bestTest?.score_percent ?? null,
       averageTime, // in seconds
     },
     error: null,
@@ -602,24 +353,20 @@ export async function getTestKPIs() {
  * The session row is created before the user answers any questions.
  */
 export async function createQuestionSession(
+  sessionId: string,
+  expectedUserId: string,
   mode: QuestionSessionMode,
   filterLaws: number[] | null,
   filterAreas: string[] | null
 ) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
   const { data, error } = await supabase
-    .from('question_sessions')
-    .insert({
-      user_id: user.id,
-      mode,
-      filter_laws: filterLaws,
-      filter_areas: filterAreas,
+    .rpc('start_question_session', {
+      p_session_id: sessionId,
+      p_expected_user_id: expectedUserId,
+      p_mode: mode,
+      p_filter_laws: filterLaws,
+      p_filter_areas: filterAreas,
     })
-    .select()
     .single()
 
   return { data: data as QuestionSession | null, error }
@@ -631,26 +378,10 @@ export async function createQuestionSession(
  * Called when the user clicks "End Session". Writes the final score and duration.
  */
 export async function completeQuestionSession(
-  sessionId: string,
-  startedAt: string,
-  totalAnswered: number,
-  totalCorrect: number
+  sessionId: string
 ) {
-  const endedAt = new Date().toISOString()
-  const durationSeconds = Math.round(
-    (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
-  )
-
   const { data, error } = await supabase
-    .from('question_sessions')
-    .update({
-      ended_at: endedAt,
-      duration_seconds: durationSeconds,
-      total_answered: totalAnswered,
-      total_correct: totalCorrect,
-    })
-    .eq('id', sessionId)
-    .select()
+    .rpc('complete_question_session', { p_session_id: sessionId })
     .single()
 
   return { data: data as QuestionSession | null, error }
@@ -734,7 +465,10 @@ export async function getQuestionsByFilters(params: {
   laws?: number[]
   areas?: string[]
 }) {
-  let query = supabase.from('question_bank').select('*')
+  let query = supabase
+    .from('question_bank')
+    .select('*')
+    .eq('is_active', true)
 
   if (params.laws && params.laws.length > 0) {
     query = query.in('law', params.laws)
@@ -758,6 +492,7 @@ export async function getDistinctLaws() {
   const { data, error } = await supabase
     .from('question_bank')
     .select('law')
+    .eq('is_active', true)
     .not('law', 'is', null)
 
   if (error || !data) {
@@ -777,6 +512,7 @@ export async function getDistinctAreas() {
   const { data, error } = await supabase
     .from('question_bank')
     .select('topic')
+    .eq('is_active', true)
     .not('topic', 'is', null)
 
   if (error || !data) {
@@ -788,33 +524,23 @@ export async function getDistinctAreas() {
 }
 
 /**
- * Save a practice answer linked to a session
- *
- * Like savePracticeAnswer but also writes the session_id FK.
- * Used in QuestionsSession to track all answers within the session.
+ * Save a practice answer linked to an open session. The database validates the
+ * question against that session and derives is_correct from question_bank.
  */
-export async function savePracticeAnswerWithSession(
+export async function saveQuestionPracticeAnswer(
+  answerId: string,
   questionId: string,
   selectedOption: OptionLetter,
-  isCorrect: boolean,
   sessionId: string
 ) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return { data: null, error: new Error('Not authenticated') }
-  }
-
   const { data, error } = await supabase
-    .from('question_practice_answers')
-    .insert({
-      user_id: user.id,
-      question_id: questionId,
-      selected_option: selectedOption,
-      is_correct: isCorrect,
-      session_id: sessionId,
+    .rpc('save_question_practice_answer', {
+      p_answer_id: answerId,
+      p_session_id: sessionId,
+      p_question_id: questionId,
+      p_selected_option: selectedOption,
     })
-    .select()
     .single()
 
-  return { data, error }
+  return { data: data as QuestionPracticeAnswer | null, error }
 }

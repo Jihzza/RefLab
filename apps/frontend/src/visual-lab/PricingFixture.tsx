@@ -1,6 +1,7 @@
 import { BillingContext } from '@/features/billing/components/BillingContext'
 import type { Subscription } from '@/features/billing/types'
 import PricingPage from '@/features/pricing/components/PricingPage'
+import FixtureAuthProvider from './FixtureAuthProvider'
 import FixtureShell from './FixtureShell'
 
 const subscription: Subscription = {
@@ -17,20 +18,22 @@ const subscription: Subscription = {
 
 export default function PricingFixture() {
   return (
-    <BillingContext.Provider
-      value={{
-        subscription,
-        planId: 'pro',
-        isLoading: false,
-        error: null,
-        refreshBilling: async () => undefined,
-        isPro: true,
-        isPlus: false,
-      }}
-    >
-      <FixtureShell title="Planos e faturação">
-        <PricingPage />
-      </FixtureShell>
-    </BillingContext.Provider>
+    <FixtureAuthProvider>
+      <BillingContext.Provider
+        value={{
+          subscription,
+          planId: 'pro',
+          isLoading: false,
+          error: null,
+          refreshBilling: async () => undefined,
+          isPro: true,
+          isPlus: false,
+        }}
+      >
+        <FixtureShell title="Planos e faturação">
+          <PricingPage />
+        </FixtureShell>
+      </BillingContext.Provider>
+    </FixtureAuthProvider>
   )
 }

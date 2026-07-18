@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -38,6 +39,7 @@ const LOAD_MORE_THRESHOLD_PX = 96
 const STICK_TO_BOTTOM_THRESHOLD_PX = 120
 
 type LocationState = {
+  ownerId: string
   otherUser?: MessageUser
 }
 
@@ -321,16 +323,23 @@ function ConversationPane({
     loadMore,
     retry,
     sendMessage,
+    retryOutboxMessage,
+    discardOutboxMessage,
     dismissSendError,
   } = messageState
+  const participantUnavailable = Boolean(otherUser?.is_deleted || otherUser?.is_blocked)
   const scrollRef = useRef<HTMLDivElement>(null)
   const scrollSnapshotRef = useRef<{ height: number; top: number } | null>(null)
   const isNearBottomRef = useRef(true)
   const initialScrollDoneRef = useRef(false)
   const previousLastMessageIdRef = useRef<string | null>(null)
 
-  const displayName = otherUser
-    ? otherUser.name || otherUser.username
+  const displayName = otherUser?.is_blocked
+    ? t('Blocked account')
+    : participantUnavailable
+      ? t('This user is unavailable.')
+    : otherUser
+      ? otherUser.name || otherUser.username
     : t('Conversation')
   const lastMessage = messages.at(-1) ?? null
   const lastMessageId = lastMessage?.id ?? null
@@ -422,7 +431,7 @@ function ConversationPane({
           <ArrowLeft className="size-5" />
         </IconButton>
 
-        {otherUser?.username ? (
+        {otherUser?.username && !participantUnavailable ? (
           <button
             type="button"
             onClick={() => onOpenProfile(otherUser.username)}
@@ -431,6 +440,7 @@ function ConversationPane({
           >
             <Avatar
               src={otherUser.photo_url}
+              ownerId={otherUser.id}
               alt={displayName}
               name={displayName}
               size="lg"
@@ -518,6 +528,8 @@ function ConversationPane({
               key={message.id}
               message={message}
               isOwn={message.sender_id === currentUserId}
+              onRetry={clientId => void retryOutboxMessage(clientId)}
+              onDiscard={clientId => void discardOutboxMessage(clientId)}
             />
           ))}
 
@@ -526,7 +538,7 @@ function ConversationPane({
               <EmptyState
                 icon={<MessageSquare className="size-5" />}
                 title={t('No messages yet.')}
-                description={t('Write message..:')}
+                description={t('Write a message...')}
                 compact
               />
             </div>
@@ -537,7 +549,7 @@ function ConversationPane({
       <MessageInput
         onSend={sendMessage}
         isSending={isSending}
-        disabled={isLoading}
+        disabled={isLoading || participantUnavailable}
         error={sendError}
         onDismissError={dismissSendError}
       />
@@ -552,6 +564,7 @@ export default function MessagesWorkspace() {
   const navigate = useNavigate()
   const location = useLocation()
   const routeState = (location.state ?? null) as LocationState | null
+  const ownedRouteState = routeState?.ownerId === user?.id ? routeState : null
   const activeConversationId = conversationId ?? null
   const {
     conversations,
@@ -569,7 +582,6 @@ export default function MessagesWorkspace() {
     clearSearch,
     retrySearch,
   } = useUserSearch()
-  const messageState = useMessages(activeConversationId, refresh)
   const [actionError, setActionError] = useState<string | null>(null)
   const [isStarting, setIsStarting] = useState(false)
   const isStartingRef = useRef(false)
@@ -577,9 +589,38 @@ export default function MessagesWorkspace() {
   const activeConversation = useMemo(() => conversations.find(
     conversation => conversation.id === activeConversationId,
   ) ?? null, [activeConversationId, conversations])
+  const messageState = useMessages(
+    activeConversationId,
+    refresh,
+    Boolean(
+      activeConversation?.other_user.is_deleted
+      || activeConversation?.other_user.is_blocked,
+    ),
+  )
+
+  // Replace stale profile data kept in this route's history state as soon as
+  // the server exposes the privacy-safe deleted-account tombstone.
+  useEffect(() => {
+    const tombstone = activeConversation?.other_user
+    const isUnavailable = tombstone?.is_deleted || tombstone?.is_blocked
+    const routeIsUnavailable = ownedRouteState?.otherUser?.is_deleted
+      || ownedRouteState?.otherUser?.is_blocked
+    if (!user?.id || !isUnavailable || routeIsUnavailable) return
+    navigate(location.pathname, {
+      replace: true,
+      state: { ownerId: user.id, otherUser: tombstone } satisfies LocationState,
+    })
+  }, [
+    activeConversation,
+    location.pathname,
+    navigate,
+    ownedRouteState?.otherUser?.is_blocked,
+    ownedRouteState?.otherUser?.is_deleted,
+    user?.id,
+  ])
 
   const otherUser = activeConversation?.other_user
-    ?? routeState?.otherUser
+    ?? ownedRouteState?.otherUser
     ?? messageState.messages.find(message => (
       message.conversation_id === activeConversationId
       && message.sender_id !== user?.id
@@ -605,7 +646,7 @@ export default function MessagesWorkspace() {
 
       clearSearch()
       navigate(`/app/messages/${nextConversationId}`, {
-        state: { otherUser: selectedUser } satisfies LocationState,
+        state: { ownerId: user.id, otherUser: selectedUser } satisfies LocationState,
       })
     } catch (error) {
       setActionError(
@@ -618,12 +659,16 @@ export default function MessagesWorkspace() {
   }, [clearSearch, navigate, t, user])
 
   const handleOpenConversation = useCallback((conversation: Conversation) => {
+    if (!user?.id) return
     setActionError(null)
     clearSearch()
     navigate(`/app/messages/${conversation.id}`, {
-      state: { otherUser: conversation.other_user } satisfies LocationState,
+      state: {
+        ownerId: user.id,
+        otherUser: conversation.other_user,
+      } satisfies LocationState,
     })
-  }, [clearSearch, navigate])
+  }, [clearSearch, navigate, user?.id])
 
   const handleQueryChange = useCallback((value: string) => {
     setActionError(null)

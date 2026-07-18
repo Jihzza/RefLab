@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { Badge, Surface } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
+import { accountDeletionRequiresReauthentication } from '@/features/auth/api/authApi'
 import ConfirmDialog from './ConfirmDialog'
 import SettingsSection from './SettingsSection'
 
@@ -136,6 +137,13 @@ export function AccountActions() {
     try {
       const { error } = await deleteAccount()
       if (error) {
+        if (accountDeletionRequiresReauthentication(error)) {
+          navigate(
+            '/?auth=login&returnTo=%2Fapp%2Fsettings&reauth=delete-account#auth',
+            { replace: true },
+          )
+          return
+        }
         setDeleteError(error.message)
         return
       }
@@ -204,7 +212,7 @@ export function AccountActions() {
         }}
         onConfirm={handleDeleteAccount}
         title={t('Delete Account')}
-        description={t('This action is permanent and cannot be undone. All your data, including your profile, posts, and progress, will be permanently deleted.')}
+        description={t('This action cannot be undone. It permanently deletes your account and removes your active profile, posts and learning progress. Messages already delivered to other users, security or billing records, and provider backups may be retained where permitted, as described in the Privacy Policy.')}
         confirmLabel={t('Delete Account')}
         confirmPhrase="DELETE"
         variant="danger"

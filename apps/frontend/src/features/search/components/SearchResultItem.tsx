@@ -42,6 +42,7 @@ export default function SearchResultItem({
       >
         <Avatar
           src={user.photo_url}
+          ownerId={user.id}
           name={displayName}
           alt={displayName}
           size="lg"

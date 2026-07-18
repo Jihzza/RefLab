@@ -6,7 +6,92 @@ import type {
   FeedFilter,
   PublicProfileView,
   PublicProfileFeedResponse,
+  ReportSubmission,
+  ReportSubmissionResult,
 } from '../types'
+import {
+  ACCEPTED_POST_MEDIA_TYPES,
+  COMMENT_CONTENT_MAX_LENGTH,
+  POST_CONTENT_MAX_LENGTH,
+  POST_MEDIA_MAX_BYTES,
+  type AcceptedPostMediaType,
+} from '../config'
+import {
+  forgetDeferredPostMediaCleanup,
+  isDeferredPostMediaCleanupDue,
+  readDeferredPostMediaCleanup,
+  rememberDeferredPostMediaCleanup,
+} from '../utils/deferredPostMediaCleanup'
+
+const MEDIA_TYPE_DETAILS: Record<
+  AcceptedPostMediaType,
+  { extension: string; postMediaType: Exclude<PostMediaType, 'text'> }
+> = {
+  'image/jpeg': { extension: 'jpg', postMediaType: 'image' },
+  'image/png': { extension: 'png', postMediaType: 'image' },
+  'image/gif': { extension: 'gif', postMediaType: 'image' },
+  'image/webp': { extension: 'webp', postMediaType: 'image' },
+  'video/mp4': { extension: 'mp4', postMediaType: 'video' },
+  'video/webm': { extension: 'webm', postMediaType: 'video' },
+  'video/quicktime': { extension: 'mov', postMediaType: 'video' },
+  'audio/mpeg': { extension: 'mp3', postMediaType: 'audio' },
+  'audio/wav': { extension: 'wav', postMediaType: 'audio' },
+  'audio/ogg': { extension: 'ogg', postMediaType: 'audio' },
+  'audio/webm': { extension: 'webm', postMediaType: 'audio' },
+}
+
+function isAcceptedPostMediaType(value: string): value is AcceptedPostMediaType {
+  return (ACCEPTED_POST_MEDIA_TYPES as readonly string[]).includes(value)
+}
+
+function isOwnedPostMediaPath(userId: string, path: string | null): path is string {
+  if (!path || path.startsWith('/') || !path.startsWith(`${userId}/`)) return false
+  const segments = path.split('/')
+  return segments.length >= 2
+    && segments.every((segment) => segment.length > 0 && segment !== '.' && segment !== '..')
+}
+
+async function findPostByOperation(userId: string, operationId: string) {
+  return supabase
+    .from('posts')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('client_id', operationId)
+    .maybeSingle()
+}
+
+/** Reconcile only cleanup entries older than the 24-hour safety window. */
+export async function reconcileDeferredPostMediaCleanup(
+  userId: string,
+  now = Date.now(),
+): Promise<void> {
+  for (const entry of readDeferredPostMediaCleanup(userId, now)) {
+    if (!isDeferredPostMediaCleanupDue(entry, now)) continue
+
+    const operationLookup = await findPostByOperation(userId, entry.operationId)
+    if (operationLookup.error) continue
+    if (operationLookup.data?.media_url === entry.path) {
+      forgetDeferredPostMediaCleanup(userId, entry.path, entry.operationId)
+      continue
+    }
+
+    const referenceLookup = await supabase
+      .from('posts')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('media_url', entry.path)
+      .limit(1)
+      .maybeSingle()
+    if (referenceLookup.error || referenceLookup.data) continue
+
+    const { error: cleanupError } = await supabase.storage
+      .from('post-media')
+      .remove([entry.path])
+    if (!cleanupError) {
+      forgetDeferredPostMediaCleanup(userId, entry.path, entry.operationId)
+    }
+  }
+}
 
 // ============================================
 // Feed
@@ -120,33 +205,101 @@ export async function createPost(
   originalPostId?: string
 ): Promise<{ post: Post | null; error: Error | null }> {
   let mediaUrl: string | null = null
+  const operationId = crypto.randomUUID()
+
+  // Best effort only: due cleanup never masks the current post operation.
+  void reconcileDeferredPostMediaCleanup(userId).catch(() => undefined)
+
+  if (content && content.length > POST_CONTENT_MAX_LENGTH) {
+    return {
+      post: null,
+      error: new Error(`Post content cannot exceed ${POST_CONTENT_MAX_LENGTH} characters.`),
+    }
+  }
 
   if (mediaFile) {
+    if (!isAcceptedPostMediaType(mediaFile.type)) {
+      return { post: null, error: new Error('Unsupported post media type.') }
+    }
+    if (MEDIA_TYPE_DETAILS[mediaFile.type].postMediaType !== mediaType) {
+      return { post: null, error: new Error('Post media type does not match the selected file.') }
+    }
+
     const { url, error: uploadError } = await uploadPostMedia(userId, mediaFile)
     if (uploadError) return { post: null, error: uploadError }
     mediaUrl = url
+    if (mediaUrl) {
+      rememberDeferredPostMediaCleanup(userId, mediaUrl, operationId)
+    }
   }
 
-  const { data, error } = await supabase
-    .from('posts')
-    .insert({
-      user_id: userId,
-      content,
-      media_type: mediaType,
-      media_url: mediaUrl,
-      original_post_id: originalPostId || null,
-    })
-    .select()
-    .single()
+  const { data, error } = await supabase.rpc('create_social_post', {
+    p_expected_user_id: userId,
+    p_operation_id: operationId,
+    p_content: content,
+    p_media_type: mediaType,
+    p_media_url: mediaUrl,
+    p_original_post_id: originalPostId || null,
+  })
 
-  if (error) return { post: null, error: new Error(error.message) }
+  if (error) {
+    // A transport error can hide a committed RPC. Reconcile by the durable
+    // operation ID and never immediately delete media on an ambiguous result.
+    const committed = await findPostByOperation(userId, operationId)
+    if (!committed.error && committed.data) {
+      if (mediaUrl) {
+        forgetDeferredPostMediaCleanup(userId, mediaUrl, operationId)
+      }
+      return { post: committed.data as Post, error: null }
+    }
+    return { post: null, error: new Error(error.message) }
+  }
+  if (mediaUrl) {
+    forgetDeferredPostMediaCleanup(userId, mediaUrl, operationId)
+  }
   return { post: data as Post, error: null }
 }
 
-/** Delete a post by ID (owner-only via RLS). */
-export async function deletePost(postId: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase.from('posts').delete().eq('id', postId)
-  return { error: error ? new Error(error.message) : null }
+/** Delete an owned post, then best-effort remove its safely scoped media object. */
+export async function deletePost(
+  userId: string,
+  postId: string,
+): Promise<{ error: Error | null; cleanupError: Error | null }> {
+  const { data: post, error: lookupError } = await supabase
+    .from('posts')
+    .select('id,user_id,media_url')
+    .eq('id', postId)
+    .maybeSingle()
+
+  if (lookupError) {
+    return { error: new Error(lookupError.message), cleanupError: null }
+  }
+  if (!post || post.user_id !== userId) {
+    return { error: new Error('The post was not found or is not owned by this account.'), cleanupError: null }
+  }
+
+  const { error: deleteError } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId)
+    .eq('user_id', userId)
+
+  if (deleteError) {
+    return { error: new Error(deleteError.message), cleanupError: null }
+  }
+
+  if (!isOwnedPostMediaPath(userId, post.media_url)) {
+    return { error: null, cleanupError: null }
+  }
+
+  const { error: cleanupError } = await supabase.storage
+    .from('post-media')
+    .remove([post.media_url])
+
+  return {
+    error: null,
+    cleanupError: cleanupError ? new Error(cleanupError.message) : null,
+  }
 }
 
 // ============================================
@@ -263,14 +416,18 @@ export async function addComment(
   content: string,
   parentCommentId?: string
 ): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('post_comments')
-    .insert({
-      post_id: postId,
-      user_id: userId,
-      content,
-      parent_comment_id: parentCommentId || null,
-    })
+  if (content.length > COMMENT_CONTENT_MAX_LENGTH) {
+    return {
+      error: new Error(`Comment cannot exceed ${COMMENT_CONTENT_MAX_LENGTH} characters.`),
+    }
+  }
+
+  const { error } = await supabase.rpc('create_social_comment', {
+    p_expected_user_id: userId,
+    p_post_id: postId,
+    p_content: content,
+    p_parent_comment_id: parentCommentId || null,
+  })
   return { error: error ? new Error(error.message) : null }
 }
 
@@ -307,34 +464,49 @@ export async function toggleCommentLike(
 export async function reportPost(
   reporterId: string,
   postId: string,
-  reason?: string
-): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('post_reports')
-    .insert({ reporter_id: reporterId, post_id: postId, reason })
-  return { error: error ? new Error(error.message) : null }
+  submission: ReportSubmission,
+): Promise<ReportSubmissionResult> {
+  const { data, error } = await supabase.rpc('report_social_post', {
+    p_expected_reporter_id: reporterId,
+    p_post_id: postId,
+    p_reason_code: submission.reasonCode,
+    p_reason_details: submission.reasonDetails,
+  })
+  if (error) return { created: false, error: new Error(error.message) }
+  const row = Array.isArray(data) ? data[0] : data
+  return { created: Boolean(row?.created), error: null }
 }
 
 export async function reportComment(
   reporterId: string,
   commentId: string,
-  reason?: string
-): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('comment_reports')
-    .insert({ reporter_id: reporterId, comment_id: commentId, reason })
-  return { error: error ? new Error(error.message) : null }
+  submission: ReportSubmission,
+): Promise<ReportSubmissionResult> {
+  const { data, error } = await supabase.rpc('report_social_comment', {
+    p_expected_reporter_id: reporterId,
+    p_comment_id: commentId,
+    p_reason_code: submission.reasonCode,
+    p_reason_details: submission.reasonDetails,
+  })
+  if (error) return { created: false, error: new Error(error.message) }
+  const row = Array.isArray(data) ? data[0] : data
+  return { created: Boolean(row?.created), error: null }
 }
 
 export async function reportUser(
   reporterId: string,
   reportedUserId: string,
-  reason?: string
-): Promise<{ error: Error | null }> {
-  const { error } = await supabase
-    .from('user_reports')
-    .insert({ reporter_id: reporterId, reported_user_id: reportedUserId, reason })
-  return { error: error ? new Error(error.message) : null }
+  submission: ReportSubmission,
+): Promise<ReportSubmissionResult> {
+  const { data, error } = await supabase.rpc('report_social_user', {
+    p_expected_reporter_id: reporterId,
+    p_reported_user_id: reportedUserId,
+    p_reason_code: submission.reasonCode,
+    p_reason_details: submission.reasonDetails,
+  })
+  if (error) return { created: false, error: new Error(error.message) }
+  const row = Array.isArray(data) ? data[0] : data
+  return { created: Boolean(row?.created), error: null }
 }
 
 export async function blockUser(
@@ -368,7 +540,14 @@ export async function uploadPostMedia(
   userId: string,
   file: File
 ): Promise<{ url: string | null; error: Error | null }> {
-  const extension = file.name.split('.').pop() || 'bin'
+  if (!isAcceptedPostMediaType(file.type)) {
+    return { url: null, error: new Error('Unsupported post media type.') }
+  }
+  if (file.size <= 0 || file.size > POST_MEDIA_MAX_BYTES) {
+    return { url: null, error: new Error('Post media cannot exceed 20 MB.') }
+  }
+
+  const extension = MEDIA_TYPE_DETAILS[file.type].extension
   const path = `${userId}/${crypto.randomUUID()}.${extension}`
 
   const { error } = await supabase.storage

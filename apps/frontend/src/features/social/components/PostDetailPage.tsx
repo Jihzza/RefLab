@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, LoaderCircle, MessageSquareWarning, RotateCcw } from 'lucide-react'
 import Button from '@/components/ui/Button'
@@ -26,26 +26,47 @@ export default function PostDetailPage() {
   const navigate = useNavigate()
 
   const [post, setPost] = useState<Post | null>(null)
+  const [loadedOwnerId, setLoadedOwnerId] = useState<string | null>(null)
+  const [loadedPostId, setLoadedPostId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
+  const activeScopeRef = useRef({ userId, postId })
+  useLayoutEffect(() => {
+    activeScopeRef.current = { userId, postId }
+  }, [postId, userId])
+
+  const hasCurrentScope = Boolean(userId && postId)
+    && loadedOwnerId === userId
+    && loadedPostId === postId
+  const visiblePost = hasCurrentScope ? post : null
+  const visibleLoading = hasCurrentScope ? loading : Boolean(userId && postId)
+  const visibleError = hasCurrentScope ? error : null
 
   // Post state helpers for usePostActions
   const updatePost = useCallback((_postId: string, updates: Partial<Post>) => {
+    if (
+      activeScopeRef.current.userId !== userId
+      || activeScopeRef.current.postId !== postId
+    ) return
     setPost((prev) => (prev ? { ...prev, ...updates } : null))
-  }, [])
+  }, [postId, userId])
 
   const removePost = useCallback(() => {
+    if (
+      activeScopeRef.current.userId !== userId
+      || activeScopeRef.current.postId !== postId
+    ) return
     setPost(null)
-  }, [])
+  }, [postId, userId])
 
   const removePostsByUser = useCallback(
     (userId: string) => {
-      if (post?.author.id === userId) {
+      if (visiblePost?.author.id === userId) {
         navigate('/app/social', { replace: true })
       }
     },
-    [post, navigate],
+    [navigate, visiblePost],
   )
 
   const addPost = useCallback(() => {
@@ -53,8 +74,12 @@ export default function PostDetailPage() {
   }, [])
 
   const restorePost = useCallback((deletedPost: Post) => {
+    if (
+      activeScopeRef.current.userId !== userId
+      || activeScopeRef.current.postId !== postId
+    ) return
     setPost(deletedPost)
-  }, [])
+  }, [postId, userId])
 
   const handleDeleteSuccess = useCallback(() => {
     navigate('/app/social', { replace: true })
@@ -96,12 +121,17 @@ export default function PostDetailPage() {
       if (cancelled) return
 
       if (fetchError || !data) {
+        setPost(null)
         setError(t('Post not found or has been deleted.'))
+        setLoadedOwnerId(authenticatedUserId)
+        setLoadedPostId(resolvedPostId)
         setLoading(false)
         return
       }
 
       setPost(data)
+      setLoadedOwnerId(authenticatedUserId)
+      setLoadedPostId(resolvedPostId)
       setLoading(false)
     }
 
@@ -145,7 +175,7 @@ export default function PostDetailPage() {
 
       <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto w-full max-w-3xl px-3 py-4 sm:px-6 sm:py-6">
-          {loading && (
+          {visibleLoading && (
             <Surface
               role="status"
               aria-label={t('Loading post')}
@@ -166,7 +196,7 @@ export default function PostDetailPage() {
             </Surface>
           )}
 
-          {!loading && !error && !post && pendingAction === postId && (
+          {!visibleLoading && !visibleError && !visiblePost && pendingAction === postId && (
             <Surface
               role="status"
               aria-label={t('Deleting post')}
@@ -180,11 +210,11 @@ export default function PostDetailPage() {
             </Surface>
           )}
 
-          {error && !loading && (
+          {visibleError && !visibleLoading && (
             <Surface>
               <EmptyState
                 icon={<MessageSquareWarning className="size-6" />}
-                title={error}
+                title={visibleError}
                 description={t('Post not found or has been deleted.')}
                 action={(
                   <>
@@ -204,9 +234,9 @@ export default function PostDetailPage() {
             </Surface>
           )}
 
-          {!loading && !error && post && (
+          {!visibleLoading && !visibleError && visiblePost && (
             <PostBox
-              post={post}
+              post={visiblePost}
               onLike={handleLike}
               onSave={handleSave}
               onRepost={handleRepost}

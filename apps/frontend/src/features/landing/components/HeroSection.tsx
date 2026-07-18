@@ -37,7 +37,7 @@ export default function HeroSection() {
 
       <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-(--mc-color-text-secondary) sm:text-lg sm:leading-8 lg:mx-0">
         {t(
-          "A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance."
+          'A dedicated hub for football referees to study the Laws of the Game, practise match decisions and review their progress through structured tests and video scenarios.'
         )}
       </p>
 

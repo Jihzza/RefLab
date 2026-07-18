@@ -1,22 +1,21 @@
 import { supabase } from '@/lib/supabaseClient'
+import { normalizeProfilePhotoStoragePath } from '../utils/profilePhotoUrl'
 
 // Profile shape matching the profiles table
 export interface Profile {
   id: string
   username: string
   username_customized: boolean
-  role: 'user' | 'moderator' | 'admin'
   name: string | null
-  email: string | null
   photo_url: string | null
-  last_login_at: string | null
   created_at: string
   updated_at: string
 }
 
 const USERNAME_REGEX = /^[a-z0-9_.]{3,30}$/
 const PROFILE_MEDIA_BUCKET = 'profile-media'
-const PROFILE_MEDIA_PUBLIC_PREFIX = '/storage/v1/object/public/profile-media/'
+const PROFILE_SELECT_COLUMNS =
+  'id, username, username_customized, name, photo_url, created_at, updated_at'
 
 /**
  * Normalize username input before persistence/checks.
@@ -46,7 +45,7 @@ export function isProfileComplete(profile: Profile | null): boolean {
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT_COLUMNS)
     .eq('id', userId)
     .single()
 
@@ -68,7 +67,7 @@ export async function updateProfile(
     .from('profiles')
     .update(persistedUpdates)
     .eq('id', userId)
-    .select()
+    .select(PROFILE_SELECT_COLUMNS)
     .single()
 
   return { profile: data as Profile | null, error }
@@ -83,7 +82,7 @@ export async function setUsername(userId: string, username: string) {
     .from('profiles')
     .update({ username, username_customized: true })
     .eq('id', userId)
-    .select()
+    .select(PROFILE_SELECT_COLUMNS)
     .single()
 
   // Check for unique constraint violation (username taken)
@@ -157,30 +156,11 @@ export async function uploadProfileAvatar(
  * Delete an avatar when it belongs to the profile-media bucket.
  */
 export async function deleteProfileAvatarByUrl(
-  photoUrl: string
+  photoUrl: string,
+  expectedOwnerId: string,
 ): Promise<{ error: Error | null }> {
-  let path: string | null = null
-
-  try {
-    const parsed = new URL(photoUrl)
-    const prefixIndex = parsed.pathname.indexOf(PROFILE_MEDIA_PUBLIC_PREFIX)
-
-    if (prefixIndex === -1) {
-      return { error: null }
-    }
-
-    const encodedPath = parsed.pathname.slice(
-      prefixIndex + PROFILE_MEDIA_PUBLIC_PREFIX.length
-    )
-
-    if (!encodedPath) {
-      return { error: null }
-    }
-
-    path = decodeURIComponent(encodedPath)
-  } catch {
-    return { error: null }
-  }
+  const path = normalizeProfilePhotoStoragePath(photoUrl, expectedOwnerId)
+  if (!path) return { error: null }
 
   const { error } = await supabase.storage
     .from(PROFILE_MEDIA_BUCKET)
@@ -190,13 +170,10 @@ export async function deleteProfileAvatarByUrl(
 }
 
 /**
- * Update last_login_at timestamp
+ * Ask the server to record the authenticated user's login time.
  */
-export async function updateLastLogin(userId: string) {
-  const { error } = await supabase
-    .from('profiles')
-    .update({ last_login_at: new Date().toISOString() })
-    .eq('id', userId)
+export async function updateLastLogin() {
+  const { error } = await supabase.rpc('touch_last_login')
 
   return { error }
 }

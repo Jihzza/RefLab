@@ -7,7 +7,11 @@ import {
   toggleCommentLike,
   reportComment as apiReportComment,
 } from '../api/socialApi'
-import type { Comment } from '../types'
+import type {
+  Comment,
+  ReportSubmission,
+  ReportSubmissionResult,
+} from '../types'
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback
@@ -151,13 +155,20 @@ export function useComments(postId: string) {
   )
 
   const reportComment = useCallback(
-    async (commentId: string, reason?: string) => {
-      if (!userId) return
+    async (
+      commentId: string,
+      submission: ReportSubmission,
+    ): Promise<ReportSubmissionResult> => {
+      if (!userId) {
+        return { created: false, error: new Error('You must be signed in to report content.') }
+      }
       try {
-        const { error: reportError } = await apiReportComment(userId, commentId, reason)
-        if (reportError) setError(reportError.message)
+        return await apiReportComment(userId, commentId, submission)
       } catch (reportError) {
-        setError(getErrorMessage(reportError, 'Failed to report comment.'))
+        return {
+          created: false,
+          error: new Error(getErrorMessage(reportError, 'Failed to report comment.')),
+        }
       }
     },
     [userId]

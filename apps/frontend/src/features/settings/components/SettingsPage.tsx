@@ -1,4 +1,5 @@
-import { AlertTriangle, RefreshCw, Settings, X } from 'lucide-react'
+import { AlertTriangle, ChevronRight, RefreshCw, Settings, ShieldAlert, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import DocumentPage from '@/app/layouts/DocumentPage'
 import { Badge, Button, EmptyState, IconButton, Skeleton, Surface } from '@/components/ui'
@@ -137,6 +138,27 @@ export default function SettingsPage() {
             <LearningSection />
             <LegalSection />
           </Surface>
+          {user.app_metadata?.role === 'admin' && (
+            <Surface padding="none" className="overflow-hidden border-(--mc-color-accent)/35 shadow-none">
+              <Link
+                to="/admin/moderation"
+                className="mc-focus-ring group flex min-h-[4.75rem] items-center gap-3 px-4 py-3.5 text-left hover:bg-(--mc-color-surface-hover) sm:px-5"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center text-(--mc-color-accent)" aria-hidden="true">
+                  <ShieldAlert className="size-7" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold text-(--mc-color-text)">
+                    {t('Content moderation')}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-(--mc-color-text-secondary)">
+                    {t('Open the private report review queue.')}
+                  </span>
+                </span>
+                <ChevronRight className="size-5 shrink-0 text-(--mc-color-text-muted) transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
+              </Link>
+            </Surface>
+          )}
           <AccountActions />
         </div>
       )}

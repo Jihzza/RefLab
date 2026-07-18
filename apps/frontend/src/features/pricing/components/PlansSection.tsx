@@ -3,8 +3,11 @@ import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, SegmentedControl, Surface } from '@/components/ui'
 import { createCheckoutSession } from '@/features/billing/api/billingApi'
+import { PAID_PLANS_ENABLED } from '@/features/billing/config'
 import { useBilling } from '@/features/billing/components/useBilling'
+import { useBillingRequestIdentity } from '@/features/billing/hooks/useBillingRequestIdentity'
 import type { PlanId } from '@/features/billing/types'
+import { navigateToExternalBillingUrl } from '@/features/billing/utils/billingNavigation'
 import type { PlanConfig } from '../types'
 
 const PLANS: PlanConfig[] = [
@@ -15,40 +18,30 @@ const PLANS: PlanConfig[] = [
     pricePerMonth: 0,
     period: '',
     benefits: [
-      'Access to basic Laws of the Game content',
-      'Limited practice quizzes',
-      'Community forum access',
-      'Weekly newsletter',
+      'Practice tests and question sessions',
+      'Video decision scenarios',
+      'Community and direct messages',
+      'Progress dashboard and official IFAB links',
     ],
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '€4.99',
-    pricePerMonth: 4.99,
-    period: '/ month',
-    isHighlighted: true,
-    benefits: [
-      'Everything in Free',
-      'Full video scenario library',
-      'AI-powered feedback on decisions',
-      'Personalized training plans',
-      'Progress tracking & analytics',
-      'Priority support',
-    ],
+    price: PAID_PLANS_ENABLED ? '€4.99' : 'Coming soon',
+    pricePerMonth: PAID_PLANS_ENABLED ? 4.99 : 0,
+    period: PAID_PLANS_ENABLED ? '/ month' : '',
+    isHighlighted: PAID_PLANS_ENABLED,
+    isComingSoon: !PAID_PLANS_ENABLED,
+    benefits: ['Everything in Free'],
   },
   {
     id: 'plus',
     name: 'Plus',
-    price: '€9.99',
-    pricePerMonth: 9.99,
-    period: '/ month',
-    benefits: [
-      'Everything in Pro',
-      'Advanced analytics insights',
-      'Priority support + faster response',
-      'Early access to new premium features',
-    ],
+    price: PAID_PLANS_ENABLED ? '€9.99' : 'Coming soon',
+    pricePerMonth: PAID_PLANS_ENABLED ? 9.99 : 0,
+    period: PAID_PLANS_ENABLED ? '/ month' : '',
+    isComingSoon: !PAID_PLANS_ENABLED,
+    benefits: ['Everything in Free'],
   },
 ]
 
@@ -60,6 +53,7 @@ interface PlansSectionProps {
 export default function PlansSection({ initialPlan, onChangePlan }: PlansSectionProps) {
   const { t, i18n } = useTranslation()
   const { planId: currentPlan, subscription, isLoading: billingLoading } = useBilling()
+  const captureBillingIdentity = useBillingRequestIdentity()
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(() => (
     initialPlan ?? (currentPlan === 'free' ? 'pro' : currentPlan)
   ))
@@ -70,15 +64,28 @@ export default function PlansSection({ initialPlan, onChangePlan }: PlansSection
   const plan = PLANS.find((candidate) => candidate.id === selectedPlan) ?? PLANS[1]
 
   const handleSubscribe = async (target: Exclude<PlanId, 'free'>) => {
-    if (loadingPlan) return
+    if (!PAID_PLANS_ENABLED || loadingPlan) return
+    const identity = captureBillingIdentity()
+    if (!identity) {
+      setError(t('Your session has expired. Please sign in again.'))
+      return
+    }
     setLoadingPlan(target)
     setError(null)
 
     try {
-      const { url, error: checkoutError } = await createCheckoutSession(target)
+      const { url, error: checkoutError } = await createCheckoutSession(
+        identity.accessToken,
+        identity.expectedUserId,
+        target,
+      )
+      if (!identity.isCurrent()) return
       if (checkoutError || !url) throw checkoutError || new Error('Missing checkout URL')
-      window.location.assign(url)
+      if (!navigateToExternalBillingUrl(url)) {
+        throw new Error('Checkout returned an invalid destination')
+      }
     } catch (checkoutError) {
+      if (!identity.isCurrent()) return
       console.error('Failed to start checkout:', checkoutError)
       setError(
         checkoutError instanceof Error
@@ -178,14 +185,20 @@ export default function PlansSection({ initialPlan, onChangePlan }: PlansSection
 
           <div className="my-6 h-px bg-(--mc-color-border)" />
 
-          <ul className="space-y-3" aria-label={t('{{plan}} plan benefits', { plan: t(plan.name) })}>
-            {plan.benefits.map((benefit) => (
-              <li key={benefit} className="flex items-start gap-3 text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-(--mc-color-success)" aria-hidden="true" />
-                <span>{t(benefit)}</span>
-              </li>
-            ))}
-          </ul>
+          {plan.isComingSoon ? (
+            <p className="text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
+              {t('We are preparing this plan carefully. Features, pricing and terms will be published before launch.')}
+            </p>
+          ) : (
+            <ul className="space-y-3" aria-label={t('{{plan}} plan benefits', { plan: t(plan.name) })}>
+              {plan.benefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-3 text-sm leading-6 text-(--mc-color-text-secondary) sm:text-base">
+                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-(--mc-color-success)" aria-hidden="true" />
+                  <span>{t(benefit)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="relative mt-7 overflow-hidden rounded-(--mc-radius-button)">
             <Button
@@ -248,6 +261,15 @@ function getPlanAction({
   if (currentPlan === plan.id) {
     return {
       label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
+      disabled: true,
+      loading: false,
+      onClick: () => undefined,
+    }
+  }
+
+  if (!PAID_PLANS_ENABLED) {
+    return {
+      label: t('Coming soon'),
       disabled: true,
       loading: false,
       onClick: () => undefined,

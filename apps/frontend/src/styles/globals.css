@@ -2,8 +2,8 @@
    RefLab design tokens + Tailwind v4 entrypoint
 */
 
-/* 1) Font (Inter) - @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+/* 1) Self-hosted Inter variable font - @import must precede all other statements */
+@import "@fontsource-variable/inter/wght.css";
 
 /* 2) Tailwind v4 import */
 @import "tailwindcss";
@@ -35,7 +35,6 @@ body {
 
 /* Links */
 a {
-  color: inherit;
   text-decoration: none;
 }
 a:hover {
@@ -52,6 +51,22 @@ a:hover {
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* Keep keyboard-focused controls above the fixed browser-storage notice. */
+html.mc-storage-notice-visible {
+  scroll-padding-bottom: calc(var(--mc-storage-notice-height, 0px) + 1rem);
+}
+
+html.mc-storage-notice-visible #root::after {
+  content: "";
+  display: block;
+  height: calc(var(--mc-storage-notice-height, 0px) + 1rem);
+  pointer-events: none;
+}
+
+html.mc-storage-notice-visible :where(a, button, input, select, textarea, [tabindex]):focus {
+  scroll-margin-bottom: calc(var(--mc-storage-notice-height, 0px) + 1rem);
 }
 
 /* Scrollbars (optional polish) */

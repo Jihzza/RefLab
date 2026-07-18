@@ -6,6 +6,10 @@ import type { AuthFormErrors } from "../types";
 import { useTranslation } from "react-i18next";
 import { Button, Input } from "@/components/ui";
 import { persistAuthReturnTo, resolveAuthReturnTo } from "../utils/authNavigation";
+import { MIN_PASSWORD_LENGTH } from "../config";
+import {
+  clearPendingLegalAcceptance,
+} from "../utils/legalAcceptanceIntent";
 
 interface SignupFormProps {
   onPendingChange?: (pending: boolean) => void;
@@ -16,7 +20,7 @@ interface SignupFormProps {
  *
  * Features:
  * - Email, password, and confirm password fields
- * - Password strength validation (minimum 6 characters)
+ * - Password length validation aligned with the launch policy
  * - "Sign up with Google" button
  * - Field-specific error messages
  * - Shows success message after signup (email confirmation required)
@@ -30,6 +34,7 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   // UI state
   const [loading, setLoading] = useState(false);
@@ -53,14 +58,20 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
 
     if (!password) {
       newErrors.password = t("Password is required");
-    } else if (password.length < 6) {
-      newErrors.password = t("Password must be at least 6 characters");
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      newErrors.password = t("Password must be at least {{count}} characters", {
+        count: MIN_PASSWORD_LENGTH,
+      });
     }
 
     if (!confirmPassword) {
       newErrors.confirmPassword = t("Please confirm your password");
     } else if (password !== confirmPassword) {
       newErrors.confirmPassword = t("Passwords do not match");
+    }
+
+    if (!legalAccepted) {
+      newErrors.legal = t("You must explicitly accept the Terms of Service and acknowledge the Privacy Policy.");
     }
 
     setErrors(newErrors);
@@ -82,9 +93,11 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
 
     try {
       const returnTo = persistAuthReturnTo(resolveAuthReturnTo(location.search));
+      clearPendingLegalAcceptance();
       const { error } = await signUp(email, password, returnTo);
 
       if (error) {
+        clearPendingLegalAcceptance();
         const mapped = mapAuthError(error, 'signup');
         setErrors(mapped.field ? { [mapped.field]: mapped.message } : { general: mapped.message });
         setRequestPending(false);
@@ -99,7 +112,9 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
+      setLegalAccepted(false);
     } catch (caughtError) {
+      clearPendingLegalAcceptance();
       const mapped = mapAuthError(
         caughtError instanceof Error ? caughtError : new Error('Account creation failed'),
         'signup',
@@ -113,18 +128,29 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
   const handleGoogleSignup = async () => {
     setErrors({});
     setSuccessMessage("");
+
+    if (!legalAccepted) {
+      setErrors({
+        legal: t("You must explicitly accept the Terms of Service and acknowledge the Privacy Policy."),
+      });
+      return;
+    }
+
     setRequestPending(true);
 
     try {
       const returnTo = persistAuthReturnTo(resolveAuthReturnTo(location.search));
+      clearPendingLegalAcceptance();
       const { error } = await signInWithGoogle(returnTo);
 
       if (!error) return;
 
       const mapped = mapAuthError(error, 'oauth');
+      clearPendingLegalAcceptance();
       setErrors({ general: mapped.message });
       setRequestPending(false);
     } catch (caughtError) {
+      clearPendingLegalAcceptance();
       const mapped = mapAuthError(
         caughtError instanceof Error ? caughtError : new Error('Authentication failed'),
         'oauth',
@@ -178,9 +204,10 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           disabled={loading}
+          minLength={MIN_PASSWORD_LENGTH}
           label={t("Password")}
           placeholder="••••••••"
-          hint={t("Minimum 6 characters")}
+          hint={t("Minimum {{count}} characters", { count: MIN_PASSWORD_LENGTH })}
           error={errors.password}
         />
 
@@ -192,10 +219,60 @@ export default function SignupForm({ onPendingChange }: SignupFormProps) {
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           disabled={loading}
+          minLength={MIN_PASSWORD_LENGTH}
           label={t("Confirm Password")}
           placeholder="••••••••"
           error={errors.confirmPassword}
         />
+
+        <div>
+          <div className="flex items-start gap-3">
+            <input
+              id="signup-legal-acceptance"
+              type="checkbox"
+              checked={legalAccepted}
+              onChange={(event) => {
+                setLegalAccepted(event.target.checked);
+                if (event.target.checked) {
+                  setErrors((current) => ({ ...current, legal: undefined }));
+                }
+              }}
+              disabled={loading}
+              required
+              aria-invalid={Boolean(errors.legal)}
+              aria-describedby={errors.legal ? "signup-legal-error" : undefined}
+              className="mc-focus-ring mt-0.5 size-5 shrink-0 cursor-pointer rounded border-(--mc-color-border-strong) accent-(--mc-color-accent) disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <label
+              htmlFor="signup-legal-acceptance"
+              className="text-xs leading-5 text-(--mc-color-text-muted)"
+            >
+              {t('I have read and agree to the')}{' '}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noreferrer"
+                className="mc-focus-ring rounded-sm font-semibold text-(--mc-color-info) underline underline-offset-2"
+              >
+                {t('Terms of Service')}
+              </a>{' '}
+              {t('and acknowledge the')}{' '}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="mc-focus-ring rounded-sm font-semibold text-(--mc-color-info) underline underline-offset-2"
+              >
+                {t('Privacy Policy')}
+              </a>.
+            </label>
+          </div>
+          {errors.legal && (
+            <p id="signup-legal-error" role="alert" className="mt-2 text-xs leading-5 text-(--mc-color-danger)">
+              {errors.legal}
+            </p>
+          )}
+        </div>
 
         <Button
           type="submit"

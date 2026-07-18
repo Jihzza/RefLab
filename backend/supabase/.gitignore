@@ -1,0 +1,3 @@
+# Supabase CLI runtime state. Never commit project refs or connection metadata.
+.temp/
+supabase/.temp/

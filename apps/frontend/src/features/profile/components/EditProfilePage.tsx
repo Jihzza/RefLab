@@ -13,6 +13,15 @@ import {
   uploadProfileAvatar,
 } from '@/features/auth/api/profilesApi'
 import { useAuth } from '@/features/auth/components/useAuth'
+import {
+  forgetDeferredAvatarCleanup as forgetAvatarCleanup,
+  readDeferredAvatarCleanup,
+  rememberDeferredAvatarCleanup as rememberAvatarCleanup,
+} from '../utils/deferredAvatarCleanup'
+import {
+  commitProfileUpdateWithAvatarRecovery,
+  reconcileDeferredAvatarCleanup,
+} from '../utils/avatarMutationRecovery'
 import { useTranslation } from 'react-i18next'
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
@@ -22,59 +31,6 @@ const ALLOWED_AVATAR_MIME_TYPES = new Set([
   'image/webp',
   'image/gif',
 ])
-const AVATAR_CLEANUP_STORAGE_PREFIX = 'reflab-avatar-cleanup:'
-const MAX_QUEUED_AVATAR_CLEANUPS = 20
-
-function getAvatarCleanupStorageKey(userId: string): string {
-  return `${AVATAR_CLEANUP_STORAGE_PREFIX}${userId}`
-}
-
-function readPendingAvatarCleanupUrls(userId: string): string[] {
-  if (typeof window === 'undefined') return []
-
-  try {
-    const raw = window.localStorage.getItem(getAvatarCleanupStorageKey(userId))
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter((value): value is string => typeof value === 'string' && value.length > 0)
-      .slice(-MAX_QUEUED_AVATAR_CLEANUPS)
-  } catch {
-    return []
-  }
-}
-
-function writePendingAvatarCleanupUrls(userId: string, urls: Iterable<string>): void {
-  if (typeof window === 'undefined') return
-
-  try {
-    const queuedUrls = [...new Set(urls)].slice(-MAX_QUEUED_AVATAR_CLEANUPS)
-    const storageKey = getAvatarCleanupStorageKey(userId)
-    if (queuedUrls.length === 0) {
-      window.localStorage.removeItem(storageKey)
-      return
-    }
-    window.localStorage.setItem(storageKey, JSON.stringify(queuedUrls))
-  } catch {
-    // The in-memory retry path remains available when local storage is blocked.
-  }
-}
-
-function rememberAvatarCleanup(userId: string, photoUrl: string): void {
-  writePendingAvatarCleanupUrls(userId, [
-    ...readPendingAvatarCleanupUrls(userId),
-    photoUrl,
-  ])
-}
-
-function forgetAvatarCleanup(userId: string, photoUrl: string): void {
-  writePendingAvatarCleanupUrls(
-    userId,
-    readPendingAvatarCleanupUrls(userId).filter((queuedUrl) => queuedUrl !== photoUrl),
-  )
-}
-
 type UsernameAvailability = 'idle' | 'checking' | 'available' | 'taken' | 'error'
 type InitialSnapshot = {
   name: string
@@ -147,7 +103,7 @@ function EditProfileForm({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingUploadedAvatarUrlRef = useRef<string | null>(null)
   const supersededAvatarUrlsRef = useRef(
-    new Set(readPendingAvatarCleanupUrls(user.id)),
+    new Set(readDeferredAvatarCleanup(user.id).map(entry => entry.url)),
   )
 
   const normalizedUsername = useMemo(() => normalizeUsername(username), [username])
@@ -172,10 +128,10 @@ function EditProfileForm({
 
   const displayAvatar =
     avatarPreviewUrl ??
-    profile.photo_url ??
-    (typeof user.user_metadata?.avatar_url === 'string'
-      ? user.user_metadata.avatar_url
-      : null)
+    profile.photo_url
+  const providerAvatarUrl = typeof user.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
 
   const displayInitials = getInitials(normalizedName, normalizedUsername)
 
@@ -198,28 +154,17 @@ function EditProfileForm({
   useEffect(() => {
     let cancelled = false
 
-    void (async () => {
-      for (const queuedUrl of readPendingAvatarCleanupUrls(user.id)) {
-        if (queuedUrl === profile.photo_url) {
-          forgetAvatarCleanup(user.id, queuedUrl)
-          supersededAvatarUrlsRef.current.delete(queuedUrl)
-          continue
+    void reconcileDeferredAvatarCleanup(user.id, profile.photo_url)
+      .then(() => {
+        if (!cancelled) {
+          supersededAvatarUrlsRef.current = new Set(
+            readDeferredAvatarCleanup(user.id).map(entry => entry.url),
+          )
         }
-
-        try {
-          const { error: cleanupError } = await deleteProfileAvatarByUrl(queuedUrl)
-          if (cleanupError) {
-            console.error('Failed to retry queued avatar cleanup:', cleanupError)
-            continue
-          }
-
-          forgetAvatarCleanup(user.id, queuedUrl)
-          if (!cancelled) supersededAvatarUrlsRef.current.delete(queuedUrl)
-        } catch (cleanupError) {
-          console.error('Failed to retry queued avatar cleanup:', cleanupError)
-        }
-      }
-    })()
+      })
+      .catch(cleanupError => {
+        console.error('Failed to retry queued avatar cleanup:', cleanupError)
+      })
 
     return () => {
       cancelled = true
@@ -340,7 +285,6 @@ function EditProfileForm({
     }
 
     let uploadedAvatarUrl: string | null = null
-    let uploadedAvatarThisAttempt = false
     let profileUpdated = false
 
     try {
@@ -348,20 +292,19 @@ function EditProfileForm({
         if (pendingUploadedAvatarUrlRef.current) {
           uploadedAvatarUrl = pendingUploadedAvatarUrlRef.current
         } else {
-          const { publicUrl, error } = await uploadProfileAvatar(user.id, avatarFile)
+          const { path, error } = await uploadProfileAvatar(user.id, avatarFile)
 
-          if (error || !publicUrl) {
+          if (error || !path) {
             setAvatarError(error?.message ?? t('Failed to upload avatar.'))
             setIsSaving(false)
             return
           }
 
-          uploadedAvatarUrl = publicUrl
-          uploadedAvatarThisAttempt = true
-          pendingUploadedAvatarUrlRef.current = publicUrl
+          uploadedAvatarUrl = path
+          pendingUploadedAvatarUrlRef.current = path
           // Durable outbox: a reload between upload and profile commit must
           // still leave enough information to remove an orphaned file.
-          rememberAvatarCleanup(user.id, publicUrl)
+          rememberAvatarCleanup(user.id, path)
         }
       }
 
@@ -380,31 +323,23 @@ function EditProfileForm({
         profileUpdates.photo_url = uploadedAvatarUrl
       }
 
-      const { error: profileError } = await updateUser(profileUpdates)
+      const profileMutation = await commitProfileUpdateWithAvatarRecovery(
+        user.id,
+        profileUpdates,
+        hasAvatarChanged ? uploadedAvatarUrl : null,
+        updateUser,
+      )
 
-      if (profileError) {
-        if (uploadedAvatarThisAttempt && uploadedAvatarUrl) {
-          try {
-            const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
-            if (!deleteError) {
-              pendingUploadedAvatarUrlRef.current = null
-              forgetAvatarCleanup(user.id, uploadedAvatarUrl)
-            } else {
-              console.error('Failed to clean up uploaded avatar:', deleteError)
-              rememberAvatarCleanup(user.id, uploadedAvatarUrl)
-            }
-          } catch (deleteError) {
-            console.error('Failed to clean up uploaded avatar:', deleteError)
-            rememberAvatarCleanup(user.id, uploadedAvatarUrl)
-            // The profile error remains the primary actionable failure.
-          }
-        }
-        setFormError(profileError.message)
+      if (profileMutation.error || !profileMutation.committed) {
+        setFormError(profileMutation.error?.message ?? t('Failed to update profile.'))
         setIsSaving(false)
         return
       }
 
       profileUpdated = true
+      if (hasAvatarChanged && uploadedAvatarUrl) {
+        pendingUploadedAvatarUrlRef.current = null
+      }
 
       if (hasAvatarChanged && uploadedAvatarUrl) {
         // The profile now references this file. It must never remain in the
@@ -419,7 +354,7 @@ function EditProfileForm({
 
         for (const obsoleteAvatarUrl of avatarUrlsToDelete) {
           try {
-            const { error: deleteError } = await deleteProfileAvatarByUrl(obsoleteAvatarUrl)
+            const { error: deleteError } = await deleteProfileAvatarByUrl(obsoleteAvatarUrl, user.id)
             if (deleteError) {
               console.error('Failed to delete previous avatar file:', deleteError)
               supersededAvatarUrlsRef.current.add(obsoleteAvatarUrl)
@@ -479,21 +414,10 @@ function EditProfileForm({
 
       navigateBackWithFallback()
     } catch (error) {
-      if (!profileUpdated && uploadedAvatarThisAttempt && uploadedAvatarUrl) {
-        try {
-          const { error: deleteError } = await deleteProfileAvatarByUrl(uploadedAvatarUrl)
-          if (!deleteError) {
-            pendingUploadedAvatarUrlRef.current = null
-            forgetAvatarCleanup(user.id, uploadedAvatarUrl)
-          } else {
-            console.error('Failed to clean up uploaded avatar:', deleteError)
-            rememberAvatarCleanup(user.id, uploadedAvatarUrl)
-          }
-        } catch (deleteError) {
-          console.error('Failed to clean up uploaded avatar:', deleteError)
-          rememberAvatarCleanup(user.id, uploadedAvatarUrl)
-          // Keep the original save error as the actionable message.
-        }
+      if (!profileUpdated && uploadedAvatarUrl) {
+        // Never delete on an ambiguous mutation outcome. A reload-safe,
+        // timestamped queue waits at least 24 hours and rechecks profiles.
+        rememberAvatarCleanup(user.id, uploadedAvatarUrl)
       }
       const message =
         error instanceof Error ? error.message : t('Something went wrong while saving.')
@@ -551,6 +475,9 @@ function EditProfileForm({
           >
             <Avatar
               src={displayAvatar}
+              ownerId={user.id}
+              providerSrc={providerAvatarUrl}
+              allowAuthProviderImage
               alt={t('Profile avatar preview')}
               name={normalizedName || normalizedUsername}
               fallback={displayInitials}
@@ -593,6 +520,7 @@ function EditProfileForm({
               setFormError(null)
             }}
             disabled={isSaving}
+            maxLength={100}
             placeholder={t('Your name')}
             autoComplete="name"
           />

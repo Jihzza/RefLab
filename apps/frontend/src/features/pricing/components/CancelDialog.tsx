@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button, Dialog } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
+import { useBillingRequestIdentity } from '@/features/billing/hooks/useBillingRequestIdentity'
 import type { Subscription } from '@/features/billing/types'
 import { cancelSubscription } from '../api/pricingApi'
 
@@ -19,8 +21,14 @@ export default function CancelDialog({
   onSuccess,
 }: CancelDialogProps) {
   const { t, i18n } = useTranslation()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+  const captureBillingIdentity = useBillingRequestIdentity()
+  const [stateOwnerId, setStateOwnerId] = useState<string | null>(null)
+  const [loadingState, setLoadingState] = useState(false)
+  const [errorState, setErrorState] = useState<string | null>(null)
+  const ownsActionState = stateOwnerId === user?.id
+  const loading = ownsActionState ? loadingState : false
+  const error = ownsActionState ? errorState : null
 
   const endDate = subscription.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString(i18n.language || 'pt-PT', {
@@ -32,33 +40,48 @@ export default function CancelDialog({
 
   const closeDialog = () => {
     if (loading) return
-    setError(null)
+    setStateOwnerId(user?.id ?? null)
+    setErrorState(null)
     onClose()
   }
 
   const handleConfirm = async () => {
     if (loading) return
-    setLoading(true)
-    setError(null)
+    const identity = captureBillingIdentity()
+    if (!identity || subscription.user_id !== identity.expectedUserId) {
+      setStateOwnerId(user?.id ?? null)
+      setErrorState(t('Your session has expired. Please sign in again.'))
+      return
+    }
+    setStateOwnerId(identity.expectedUserId)
+    setLoadingState(true)
+    setErrorState(null)
 
     try {
       const { error: cancelError } = await cancelSubscription(
+        identity.accessToken,
+        identity.expectedUserId,
         subscription.stripe_subscription_id,
       )
+      if (!identity.isCurrent()) return
       if (cancelError) throw cancelError
       await onSuccess()
-      setLoading(false)
+      if (!identity.isCurrent()) return
+      setLoadingState(false)
       onClose()
     } catch (cancelError) {
+      if (!identity.isCurrent()) return
       console.error('Failed to cancel subscription:', cancelError)
-      setError(
+      setErrorState(
         cancelError instanceof Error
           ? cancelError.message
           : t('Failed to cancel subscription. Please try again.'),
       )
-      setLoading(false)
+      setLoadingState(false)
     }
   }
+
+  if (subscription.user_id !== user?.id) return null
 
   return (
     <Dialog
@@ -67,7 +90,7 @@ export default function CancelDialog({
         if (!open) closeDialog()
       }}
       title={t('Cancel Subscription')}
-      description={t("Your subscription will remain active until {{date}}. After that, you'll be downgraded to the Free plan and lose access to premium features.", { date: endDate })}
+      description={t('Your subscription will remain active until {{date}}. After that, your account will move to the Free plan.', { date: endDate })}
       size="sm"
       dialogRole="alertdialog"
       showCloseButton={false}

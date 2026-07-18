@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@17?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.7'
+import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
+import { billingRequestMatchesAuthenticatedUser } from '../_shared/billingIdentity.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,14 +15,25 @@ serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: corsHeaders })
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        ...corsHeaders,
+        'Allow': 'POST, OPTIONS',
+        'Content-Type': 'application/json',
+      },
+    })
   }
 
   try {
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
-    if (!stripeKey) {
-      return new Response(JSON.stringify({ error: 'Missing STRIPE_SECRET_KEY' }), {
-        status: 500,
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if (!stripeKey || !supabaseUrl || !anonKey || !serviceRoleKey) {
+      console.error('list-invoices: billing environment is not configured')
+      return new Response(JSON.stringify({ error: 'Billing is temporarily unavailable' }), {
+        status: 503,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
@@ -36,8 +48,8 @@ serve(async (req) => {
 
     // Verify user identity
     const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      supabaseUrl,
+      anonKey,
       { global: { headers: { Authorization: authHeader } } }
     )
 
@@ -49,17 +61,29 @@ serve(async (req) => {
       })
     }
 
+    const body = await req.json().catch(() => null)
+    if (!billingRequestMatchesAuthenticatedUser(body, user.id)) {
+      return new Response(JSON.stringify({ error: 'Billing identity mismatch' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Look up the Stripe customer ID
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      supabaseUrl,
+      serviceRoleKey,
     )
 
-    const { data: customer } = await supabaseAdmin
+    const { data: customer, error: customerError } = await supabaseAdmin
       .from('stripe_customers')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
       .maybeSingle()
+
+    if (customerError) {
+      throw new Error(`Failed to load billing customer: ${customerError.message}`)
+    }
 
     // No Stripe customer means no invoices
     if (!customer?.stripe_customer_id) {
@@ -69,8 +93,10 @@ serve(async (req) => {
       })
     }
 
-    const body = await req.json().catch(() => null)
-    const limit = Math.min(body?.limit ?? 10, 50)
+    const requestedLimit = Number(body?.limit ?? 10)
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.max(1, Math.min(Math.trunc(requestedLimit), 50))
+      : 10
 
     // Fetch invoices from Stripe (use fetch client to avoid Deno Node compat issues)
     const stripe = new Stripe(stripeKey, {
@@ -83,7 +109,7 @@ serve(async (req) => {
     })
 
     // Map to simplified objects
-    const invoices = invoiceList.data.map((inv) => ({
+    const invoices = invoiceList.data.map((inv: Stripe.Invoice) => ({
       id: inv.id,
       number: inv.number,
       amount_paid: inv.amount_paid,

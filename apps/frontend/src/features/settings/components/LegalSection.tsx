@@ -1,9 +1,10 @@
-import { Scale, ChevronRight } from 'lucide-react'
+import { CircleHelp, ChevronRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import SettingsSection from './SettingsSection'
 import { useTranslation } from 'react-i18next'
 
 const LEGAL_LINKS = [
+  { label: 'Support', to: '/support' },
   { label: 'Privacy Policy', to: '/privacy' },
   { label: 'Terms of Service', to: '/terms' },
   { label: 'Cookies Policy', to: '/cookies' },
@@ -14,9 +15,9 @@ export default function LegalSection() {
 
   return (
     <SettingsSection
-      title={t('Legal')}
-      description={`${t('Privacy Policy')} · ${t('Terms of Service')} · ${t('Cookies Policy')}`}
-      icon={<Scale className="size-7" />}
+      title={t('Support & legal')}
+      description={`${t('Support')} · ${t('Privacy Policy')} · ${t('Terms of Service')} · ${t('Cookies Policy')}`}
+      icon={<CircleHelp className="size-7" />}
       grouped
     >
       {LEGAL_LINKS.map((link) => (

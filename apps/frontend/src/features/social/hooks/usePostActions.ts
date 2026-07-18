@@ -10,7 +10,11 @@ import {
   reportUser,
   blockUser,
 } from '../api/socialApi'
-import type { Post } from '../types'
+import type {
+  Post,
+  ReportSubmission,
+  ReportSubmissionResult,
+} from '../types'
 
 interface UsePostActionsParams {
   updatePost: (postId: string, updates: Partial<Post>) => void
@@ -201,6 +205,7 @@ export function usePostActions({
 
   const handleDelete = useCallback(
     async (post: Post) => {
+      if (!user?.id) return
       const actionKey = `delete:${post.id}`
       if (inFlightActionsRef.current.has(actionKey)) return
       inFlightActionsRef.current.add(actionKey)
@@ -208,7 +213,7 @@ export function usePostActions({
       removePost(post.id)
 
       try {
-        const { error } = await deletePost(post.id)
+        const { error, cleanupError } = await deletePost(user.id, post.id)
         if (error) {
           console.error('Failed to delete post:', error)
           restoreDeletedPost(post)
@@ -216,6 +221,12 @@ export function usePostActions({
         }
         removePost(post.id)
         onDeleteSuccess?.(post)
+        if (cleanupError) {
+          // The database deletion succeeded. Do not restore a post that no
+          // longer exists; surface the separate orphan-cleanup failure for
+          // monitoring and the operational sweep documented in the runbook.
+          console.error('Post deleted, but its media cleanup failed:', cleanupError)
+        }
       } catch (error) {
         console.error('Failed to delete post:', error)
         restoreDeletedPost(post)
@@ -224,21 +235,35 @@ export function usePostActions({
         setPendingAction((current) => (current === post.id ? null : current))
       }
     },
-    [onDeleteSuccess, removePost, restoreDeletedPost]
+    [onDeleteSuccess, removePost, restoreDeletedPost, user?.id]
   )
 
   const handleReport = useCallback(
-    async (type: 'post' | 'user', targetId: string, reason?: string) => {
-      if (!user?.id) return
+    async (
+      type: 'post' | 'user',
+      targetId: string,
+      submission: ReportSubmission,
+    ): Promise<ReportSubmissionResult> => {
+      if (!user?.id) {
+        return { created: false, error: new Error('You must be signed in to report content.') }
+      }
       const actionKey = `report:${type}:${targetId}`
-      if (inFlightActionsRef.current.has(actionKey)) return
+      if (inFlightActionsRef.current.has(actionKey)) {
+        return { created: false, error: new Error('This report is already being submitted.') }
+      }
       inFlightActionsRef.current.add(actionKey)
 
       try {
         if (type === 'post') {
-          await reportPost(user.id, targetId, reason)
-        } else {
-          await reportUser(user.id, targetId, reason)
+          return await reportPost(user.id, targetId, submission)
+        }
+        return await reportUser(user.id, targetId, submission)
+      } catch (reportError) {
+        return {
+          created: false,
+          error: reportError instanceof Error
+            ? reportError
+            : new Error('Failed to submit report.'),
         }
       } finally {
         inFlightActionsRef.current.delete(actionKey)

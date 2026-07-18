@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import logo from '@/assets/logos/RefLab-Logo-No-BG.svg'
+import { Avatar } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import NavigationBadge from './NavigationBadge'
 import {
@@ -28,8 +29,10 @@ export default function ResponsiveRail({
     user?.email?.split('@')[0] ||
     t('Profile')
   const username = profile?.username || user?.user_metadata?.username || ''
-  const avatarUrl = profile?.photo_url || user?.user_metadata?.avatar_url || null
-  const initials = displayName.slice(0, 2).toUpperCase()
+  const profileAvatarUrl = profile?.photo_url ?? null
+  const providerAvatarUrl = typeof user?.user_metadata?.avatar_url === 'string'
+    ? user.user_metadata.avatar_url
+    : null
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 hidden w-20 flex-col border-r border-(--border-subtle) bg-(--bg-surface) md:flex xl:w-64">
@@ -109,17 +112,16 @@ export default function ResponsiveRail({
         className="m-2 flex min-h-14 items-center justify-center gap-3 rounded-(--radius-button) border border-(--border-subtle) bg-(--bg-surface-2) p-2 transition-colors hover:border-(--brand-yellow)/50 xl:m-4 xl:justify-start xl:p-3"
         aria-label={t('Profile')}
       >
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={displayName}
-            className="h-9 w-9 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-(--brand-yellow) text-xs font-bold text-(--bg-primary)">
-            {initials}
-          </span>
-        )}
+        <Avatar
+          src={profileAvatarUrl}
+          ownerId={profile?.id ?? user?.id}
+          providerSrc={providerAvatarUrl}
+          name={displayName}
+          alt={displayName}
+          size="sm"
+          allowAuthProviderImage
+          className="size-9"
+        />
 
         <span className="hidden min-w-0 xl:block">
           <span className="block truncate text-sm font-semibold text-(--text-primary)">

@@ -1,77 +1,55 @@
 import { supabase } from '@/lib/supabaseClient'
+import { PAID_PLANS_ENABLED } from '../config'
 import type { Subscription, PlanId } from '../types'
+import { isTrustedStripeUrl } from '../utils/stripeUrls'
+import {
+  postBillingFunction,
+  type BillingRequestIdentity,
+} from './billingFunctionClient'
 
 /**
  * Create a Stripe Checkout Session via the create-checkout-session Edge Function.
  * Returns the Stripe Checkout URL to redirect the user to.
  */
 export async function createCheckoutSession(
+  accessToken: string,
+  expectedUserId: string,
   plan: Exclude<PlanId, 'free'>,
 ): Promise<{ url: string | null; error: Error | null }> {
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    return { url: null, error: new Error('No active session') }
+  if (!PAID_PLANS_ENABLED) {
+    return { url: null, error: new Error('Billing is temporarily unavailable') }
   }
 
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/create-checkout-session`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': supabaseAnonKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ plan }),
-    }
+  const { data, error } = await postBillingFunction<{ url?: unknown }>(
+    'create-checkout-session',
+    { accessToken, expectedUserId },
+    { plan },
   )
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}))
-    return { url: null, error: new Error(body.error || `Checkout failed (${response.status})`) }
+  if (error) return { url: null, error }
+  if (!isTrustedStripeUrl(data?.url)) {
+    return { url: null, error: new Error('Checkout returned an invalid destination') }
   }
-
-  const { url } = await response.json()
-  return { url, error: null }
+  return { url: data.url, error: null }
 }
 
 /**
  * Create a Stripe Customer Portal Session via the create-portal-session Edge Function.
  * Returns the Portal URL to redirect the user to.
  */
-export async function createPortalSession(): Promise<{ url: string | null; error: Error | null }> {
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    return { url: null, error: new Error('No active session') }
-  }
-
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-  const response = await fetch(
-    `${supabaseUrl}/functions/v1/create-portal-session`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'apikey': supabaseAnonKey,
-        'Content-Type': 'application/json',
-      },
-    }
+export async function createPortalSession(
+  accessToken: string,
+  expectedUserId: string,
+): Promise<{ url: string | null; error: Error | null }> {
+  const identity: BillingRequestIdentity = { accessToken, expectedUserId }
+  const { data, error } = await postBillingFunction<{ url?: unknown }>(
+    'create-portal-session',
+    identity,
   )
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}))
-    return { url: null, error: new Error(body.error || `Portal session failed (${response.status})`) }
+  if (error) return { url: null, error }
+  if (!isTrustedStripeUrl(data?.url)) {
+    return { url: null, error: new Error('Portal returned an invalid destination') }
   }
-
-  const { url } = await response.json()
-  return { url, error: null }
+  return { url: data.url, error: null }
 }
 
 /**

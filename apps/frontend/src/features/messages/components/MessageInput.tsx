@@ -2,6 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FileAudio, FileVideo, Image as ImageIcon, Paperclip, SendHorizontal, X } from 'lucide-react'
 import { IconButton } from '@/components/ui'
 import { useTranslation } from 'react-i18next'
+import {
+  MAX_MESSAGE_MEDIA_BYTES,
+  MESSAGE_MEDIA_MIME_TYPES,
+} from '../mediaConfig'
 
 interface MessageInputProps {
   onSend: (content: string, mediaFile?: File) => Promise<boolean>
@@ -11,21 +15,8 @@ interface MessageInputProps {
   onDismissError?: () => void
 }
 
-const ACCEPT_MIME = [
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-  'audio/mpeg',
-  'audio/wav',
-  'audio/ogg',
-  'audio/webm',
-].join(',')
-
-const ACCEPTED_TYPES = new Set(ACCEPT_MIME.split(','))
+const ACCEPT_MIME = MESSAGE_MEDIA_MIME_TYPES.join(',')
+const ACCEPTED_TYPES = new Set(MESSAGE_MEDIA_MIME_TYPES)
 
 function formatFileSize(size: number): string {
   if (size < 1024) return `${size} B`
@@ -84,6 +75,14 @@ export default function MessageInput({
 
     if (!ACCEPTED_TYPES.has(file.type)) {
       setAttachmentError(t('Unsupported attachment type.'))
+      event.target.value = ''
+      return
+    }
+
+    if (file.size <= 0 || file.size > MAX_MESSAGE_MEDIA_BYTES) {
+      setAttachmentError(t('Media files must be no larger than {{count}} MB.', {
+        count: 20,
+      }))
       event.target.value = ''
       return
     }
@@ -209,7 +208,7 @@ export default function MessageInput({
               void handleSend()
             }
           }}
-          placeholder={t('Write message..:')}
+          placeholder={t('Write a message...')}
           aria-describedby={visibleError ? 'message-composer-error' : undefined}
           className="min-h-11 max-h-28 flex-1 resize-none overflow-y-auto rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-surface-raised) px-3 py-[11px] text-sm leading-5 text-(--mc-color-text) placeholder:text-(--mc-color-text-muted) hover:border-(--mc-color-border-strong) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) focus-visible:ring-offset-1 focus-visible:ring-offset-(--mc-color-canvas) disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isSending || disabled}

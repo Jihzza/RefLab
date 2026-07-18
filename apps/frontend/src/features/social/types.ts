@@ -12,6 +12,8 @@ export interface PostAuthor {
 // Post as returned by get_social_feed RPC
 export interface Post {
   id: string
+  /** Durable mutation identity; present on direct post rows. */
+  client_id?: string
   content: string | null
   media_type: PostMediaType
   media_url: string | null
@@ -48,6 +50,24 @@ export interface Comment {
 
 // Filter tabs
 export type FeedFilter = 'all' | PostMediaType
+
+export type ReportableType = 'post' | 'comment' | 'user'
+
+export type ReportReasonCode =
+  | 'spam_scam'
+  | 'harassment_bullying'
+  | 'inappropriate_content'
+  | 'other'
+
+export interface ReportSubmission {
+  reasonCode: ReportReasonCode
+  reasonDetails: string | null
+}
+
+export interface ReportSubmissionResult {
+  created: boolean
+  error: Error | null
+}
 
 // Feed state used by useFeed hook
 export interface FeedState {
