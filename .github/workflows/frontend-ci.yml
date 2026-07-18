@@ -19,6 +19,12 @@ jobs:
     name: Test, lint, build and audit
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # CI must exercise the fail-closed application paths without depending on,
+    # or accidentally contacting, any live Supabase project.
+    env:
+      VITE_SUPABASE_URL: https://ci-backend-disabled.invalid
+      VITE_SUPABASE_ANON_KEY: ci-backend-disabled
+      VITE_ENABLE_PAID_PLANS: "false"
     defaults:
       run:
         working-directory: apps/frontend
