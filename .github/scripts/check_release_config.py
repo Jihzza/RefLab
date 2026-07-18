@@ -117,6 +117,27 @@ def validate_frontend_build() -> None:
         fail("the typography token must reference the bundled Inter Variable family")
 
 
+def validate_frontend_ci_environment() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "frontend-ci.yml").read_text(encoding="utf-8")
+    if "VITE_ENABLE_PAID_PLANS" in workflow:
+        fail("frontend CI uses the obsolete paid-plan environment variable name")
+
+    expected = {
+        "VITE_SUPABASE_URL": "https://ci-backend-disabled.invalid",
+        "VITE_SUPABASE_ANON_KEY": "ci-backend-disabled",
+        "VITE_PAID_PLANS_ENABLED": "false",
+    }
+    for name, expected_value in expected.items():
+        match = re.search(
+            rf'^\s+{re.escape(name)}:\s*["\']?([^"\'\s#]+)["\']?\s*(?:#.*)?$',
+            workflow,
+            re.MULTILINE,
+        )
+        actual_value = match.group(1) if match else None
+        if actual_value != expected_value:
+            fail(f"frontend CI {name} must be the fail-closed value {expected_value!r}")
+
+
 def validate_action_pins() -> None:
     workflow_dir = ROOT / ".github" / "workflows"
     action_pattern = re.compile(r"^\s*uses:\s*([^@\s]+)@([^\s#]+)", re.MULTILINE)
@@ -169,9 +190,13 @@ def validate_edge_function_dependency_pins() -> None:
 def main() -> None:
     validate_netlify()
     validate_frontend_build()
+    validate_frontend_ci_environment()
     validate_action_pins()
     validate_edge_function_dependency_pins()
-    print("Release configuration, redirects, headers, action pins and Edge Function dependencies are valid.")
+    print(
+        "Release configuration, CI isolation, redirects, headers, action pins "
+        "and Edge Function dependencies are valid."
+    )
 
 
 if __name__ == "__main__":
