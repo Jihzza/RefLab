@@ -1,149 +1,163 @@
-import { useState, useEffect } from 'react'
-import { Zap, Scale, MapPin, BarChart3, Target, TrendingUp, BookOpen } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { BarChart3, BookOpen, ChevronRight, MapPin, Scale, Target, TrendingUp, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Surface } from '@/components/ui'
 import { getQuestionSessionKPIs } from '../../api/testsApi'
 import type { QuestionSessionKPIs } from '../../types'
+import { LearningError, LearningMetric, LearningSectionHeading } from '../LearningUI'
 
 interface QuestionsLandingProps {
   onStartQuick: () => void
   onStartByLaw: () => void
   onStartByArea: () => void
+  creating?: boolean
 }
 
-/**
- * QuestionsLanding - Landing dashboard for the Questions tab
- *
- * Displays:
- * - 4 KPI cards (sessions this week, questions answered, overall accuracy, avg session accuracy)
- * - 3 mode buttons: Quick Questions, By Law, By Area
- * - Info box describing the session format
- */
 export default function QuestionsLanding({
   onStartQuick,
   onStartByLaw,
   onStartByArea,
+  creating = false,
 }: QuestionsLandingProps) {
   const { t } = useTranslation()
   const [kpis, setKpis] = useState<QuestionSessionKPIs | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const loadKPIs = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    const { data, error } = await getQuestionSessionKPIs()
+    setKpis(data)
+    setLoadError(Boolean(error))
+    setLoading(false)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
-
-    async function fetchKPIs() {
-      const { data } = await getQuestionSessionKPIs()
-      if (!cancelled) {
-        setKpis(data)
-        setLoading(false)
-      }
-    }
-
-    fetchKPIs()
-
-    return () => {
-      cancelled = true
-    }
+    void getQuestionSessionKPIs().then(({ data, error }) => {
+      if (cancelled) return
+      setKpis(data)
+      setLoadError(Boolean(error))
+      setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-(--text-primary) mb-2">
-          {t('Practice Questions')}
-        </h2>
-        <p className="text-sm text-(--text-secondary)">
-          {t('Answer at your own pace · No time limit')}
-        </p>
-      </div>
+    <div className="space-y-5 md:space-y-6">
+      <LearningSectionHeading
+        eyebrow={t('Questions')}
+        title={t('Practice Questions')}
+        description={t('Answer at your own pace · No time limit')}
+      />
 
-      {/* KPIs Section */}
-      <div className="grid grid-cols-2 gap-3">
-        <KPICard
-          icon={<BarChart3 size={18} />}
-          label={t('Sessions This Week')}
-          value={loading ? '—' : kpis?.sessionsThisWeek.toString() || '0'}
-          emptyText={t('No sessions yet')}
-        />
-        <KPICard
-          icon={<BookOpen size={18} />}
-          label={t('Questions Answered')}
-          value={loading ? '—' : kpis?.totalQuestionsAnswered.toString() || '0'}
-          emptyText={t('No answers yet')}
-        />
-        <KPICard
-          icon={<Target size={18} />}
-          label={t('Overall Accuracy')}
-          value={loading ? '—' : kpis?.overallAccuracy !== null && kpis?.overallAccuracy !== undefined ? `${kpis.overallAccuracy}%` : '—'}
-          emptyText={t('Answer questions to see')}
-        />
-        <KPICard
-          icon={<TrendingUp size={18} />}
-          label={t('Avg Session Accuracy')}
-          value={loading ? '—' : kpis?.avgSessionAccuracy !== null && kpis?.avgSessionAccuracy !== undefined ? `${kpis.avgSessionAccuracy}%` : '—'}
-          emptyText={t('Complete a session')}
-        />
-      </div>
-
-      {/* Mode Buttons */}
-      <div className="space-y-3">
-        <button
+      <div className="grid gap-3 md:grid-cols-3">
+        <ModeCard
+          icon={<Zap size={22} />}
+          title={t('Quick Questions')}
+          description={t('Answer at your own pace · No time limit')}
+          featured
           onClick={onStartQuick}
-          className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-md"
-        >
-          <Zap size={22} />
-          {t('Quick Questions')}
-        </button>
-
-        <button
+          loading={creating}
+        />
+        <ModeCard
+          icon={<Scale size={22} />}
+          title={t('By Law')}
+          description={t('Choose one or more FIFA laws to practise. Questions from all selected laws will appear.')}
           onClick={onStartByLaw}
-          className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
-        >
-          <Scale size={18} />
-          {t('By Law')}
-        </button>
-
-        <button
+        />
+        <ModeCard
+          icon={<MapPin size={22} />}
+          title={t('By Area')}
+          description={t('Choose one or more areas to practise. Questions from all selected areas will appear.')}
           onClick={onStartByArea}
-          className="w-full py-3 bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-(--bg-hover) transition-colors"
-        >
-          <MapPin size={18} />
-          {t('By Area')}
-        </button>
+        />
       </div>
+
+      {loadError ? (
+        <LearningError
+          title={t('Failed to load results')}
+          description={t('Please try again')}
+          retryLabel={t('Try Again')}
+          onRetry={() => void loadKPIs()}
+        />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <LearningMetric
+            icon={<BarChart3 size={17} />}
+            label={t('Sessions This Week')}
+            value={kpis?.sessionsThisWeek.toString() ?? '0'}
+            loading={loading}
+            emptyText={t('No sessions yet')}
+          />
+          <LearningMetric
+            icon={<BookOpen size={17} />}
+            label={t('Questions Answered')}
+            value={kpis?.totalQuestionsAnswered.toString() ?? '0'}
+            loading={loading}
+            emptyText={t('No answers yet')}
+          />
+          <LearningMetric
+            icon={<Target size={17} />}
+            label={t('Overall Accuracy')}
+            value={kpis?.overallAccuracy !== null && kpis?.overallAccuracy !== undefined ? `${kpis.overallAccuracy}%` : '—'}
+            loading={loading}
+            emptyText={t('Answer questions to see')}
+          />
+          <LearningMetric
+            icon={<TrendingUp size={17} />}
+            label={t('Avg Session Accuracy')}
+            value={kpis?.avgSessionAccuracy !== null && kpis?.avgSessionAccuracy !== undefined ? `${kpis.avgSessionAccuracy}%` : '—'}
+            loading={loading}
+            emptyText={t('Complete a session')}
+          />
+        </div>
+      )}
     </div>
   )
 }
 
-/**
- * KPICard - Reusable card for displaying a single KPI metric
- */
-function KPICard({
+function ModeCard({
   icon,
-  label,
-  value,
-  emptyText,
+  title,
+  description,
+  onClick,
+  featured = false,
+  loading = false,
 }: {
   icon: React.ReactNode
-  label: string
-  value: string
-  emptyText: string
+  title: React.ReactNode
+  description: React.ReactNode
+  onClick: () => void
+  featured?: boolean
+  loading?: boolean
 }) {
-  const isEmpty = value === '—'
-
   return (
-    <div className="p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-      <div className="flex items-center gap-2 mb-2 text-(--text-secondary)">
+    <Surface
+      className={`group flex min-h-48 flex-col ${featured ? 'border-(--mc-color-accent)/55' : ''}`}
+      padding="md"
+      variant={featured ? 'raised' : 'default'}
+    >
+      <div className={`mb-4 flex size-10 items-center justify-center rounded-xl border ${
+        featured
+          ? 'border-(--mc-color-accent)/35 bg-(--mc-color-accent)/15 text-(--mc-color-accent)'
+          : 'border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text-secondary)'
+      }`}>
         {icon}
-        <span className="text-xs font-medium">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-(--text-primary)">
-        {isEmpty ? (
-          <span className="text-sm font-normal text-(--text-tertiary)">{emptyText}</span>
-        ) : (
-          value
-        )}
-      </div>
-    </div>
+      <h3 className="font-bold text-(--mc-color-text)">{title}</h3>
+      <p className="mt-1.5 line-clamp-3 text-xs leading-5 text-(--mc-color-text-muted)">{description}</p>
+      <Button
+        className="mt-auto pt-3"
+        variant={featured ? 'primary' : 'ghost'}
+        fullWidth
+        trailingIcon={<ChevronRight size={16} />}
+        onClick={onClick}
+        loading={loading}
+      >
+        {title}
+      </Button>
+    </Surface>
   )
 }

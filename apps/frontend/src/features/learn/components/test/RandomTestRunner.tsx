@@ -1,253 +1,207 @@
-import { useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Clock, AlertTriangle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, ProgressBar, Surface } from '@/components/ui'
 import { generateRandomTest, saveAnswer, submitRandomTest } from '../../api/testsApi'
 import { useTestTimer, getTimerColorClass } from '../../hooks/useTestTimer'
 import type { TestQuestion, OptionLetter } from '../../types'
+import { LearningChoice, LearningLoading, LearningMessage, LearningSectionHeading } from '../LearningUI'
 
 interface RandomTestRunnerProps {
   onComplete: (attemptId: string) => void
 }
 
-/**
- * RandomTestRunner - Test-taking interface with timer and navigation
- *
- * Features:
- * - 20 random questions
- * - 40-minute countdown timer
- * - Progress bar
- * - Answer locking
- * - Auto-submit at 0:00
- * - Navigation between questions
- */
 export default function RandomTestRunner({ onComplete }: RandomTestRunnerProps) {
   const { t } = useTranslation()
-  // Loading states
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-
-  // Test data
   const [questions, setQuestions] = useState<TestQuestion[]>([])
   const [attemptId, setAttemptId] = useState<string>('')
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, number>>({}) // questionId -> index (0-3)
+  const [answers, setAnswers] = useState<Record<string, number>>({})
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
 
-  // Current question
   const currentQuestion = questions[currentIndex]
   const answeredCount = Object.keys(answers).length
-  const isAnswered = currentQuestion && currentQuestion.id in answers
+  const isAnswered = Boolean(currentQuestion && currentQuestion.id in answers)
   const isLastQuestion = currentIndex === questions.length - 1
 
-  // Timer
   const handleTimerExpire = useCallback(async () => {
-    if (submitting) return // Prevent double submission
+    if (submitting) return
     setSubmitting(true)
-    const { elapsed } = timerData
-    await submitRandomTest(attemptId, elapsed, true)
+    await submitRandomTest(attemptId, 2400, true)
     onComplete(attemptId)
   }, [attemptId, submitting, onComplete])
 
-  const timerData = useTestTimer(2400, handleTimerExpire) // 40 minutes
+  const timerData = useTestTimer(2400, handleTimerExpire)
 
-  // Initialize test
   useEffect(() => {
     let cancelled = false
 
     async function init() {
       const { data, error } = await generateRandomTest()
-
       if (cancelled) return
-
       if (error || !data) {
         console.error('Failed to generate test:', error)
         setLoading(false)
         return
       }
-
       setQuestions(data.questions)
       setAttemptId(data.attemptId)
       setLoading(false)
     }
 
-    init()
-
-    return () => {
-      cancelled = true
-    }
+    void init()
+    return () => { cancelled = true }
   }, [])
 
-  // Restore selected option when navigating
-  useEffect(() => {
-    if (currentQuestion) {
-      setSelectedOption(answers[currentQuestion.id] ?? null)
-    }
-  }, [currentIndex, currentQuestion, answers])
-
-  // Handle option selection
   const handleSelectOption = async (index: number) => {
-    if (!currentQuestion || isAnswered) return // Can't change answer once locked
-
+    if (!currentQuestion || isAnswered) return
     setSelectedOption(index)
-
-    // Save answer immediately
-    const optionLetter = String.fromCharCode(65 + index) as OptionLetter // 0=A, 1=B, etc.
+    const optionLetter = String.fromCharCode(65 + index) as OptionLetter
     await saveAnswer(attemptId, currentQuestion.id, optionLetter)
-
-    // Lock answer
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: index }))
   }
 
-  // Navigation
   const handleNext = () => {
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1)
+      const nextIndex = currentIndex + 1
+      setCurrentIndex(nextIndex)
+      setSelectedOption(answers[questions[nextIndex].id] ?? null)
     }
   }
 
   const handlePrevious = () => {
     if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1)
+      const previousIndex = currentIndex - 1
+      setCurrentIndex(previousIndex)
+      setSelectedOption(answers[questions[previousIndex].id] ?? null)
     }
   }
 
-  // Submit test
   const handleSubmit = async () => {
     if (submitting) return
     setSubmitting(true)
-
     const { elapsed } = timerData
     await submitRandomTest(attemptId, elapsed, false)
     onComplete(attemptId)
   }
 
-  // Render loading state
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--info) mx-auto mb-4" />
-          <p className="text-sm text-(--text-secondary)">{t('Generating your test...')}</p>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <LearningLoading label={t('Generating your test...')} />
 
-  // Render error state
   if (questions.length === 0) {
     return (
-      <div className="text-center py-20">
-        <AlertTriangle size={48} className="text-(--error) mx-auto mb-4" />
-        <p className="text-(--text-primary) font-semibold">{t('Failed to load test')}</p>
-        <p className="text-sm text-(--text-secondary) mt-2">{t('Please try again')}</p>
-      </div>
+      <LearningMessage
+        icon={<AlertTriangle size={22} />}
+        title={t('Failed to load test')}
+        description={t('Please try again')}
+      />
     )
   }
 
+  const options = [
+    { letter: 'A', text: currentQuestion.option_a },
+    { letter: 'B', text: currentQuestion.option_b },
+    { letter: 'C', text: currentQuestion.option_c },
+    { letter: 'D', text: currentQuestion.option_d },
+  ]
+
   return (
-    <div className="space-y-4">
-      {/* Header: Timer and Progress */}
-      <div className="flex items-center justify-between gap-4 p-4 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
-        <div className="flex items-center gap-2">
-          <Clock size={18} className={getTimerColorClass(timerData.timeRemaining)} />
-          <span className={`font-mono font-semibold text-sm ${getTimerColorClass(timerData.timeRemaining)}`}>
-            {timerData.formatted}
+    <div className="space-y-4 md:space-y-5">
+      <LearningSectionHeading
+        eyebrow={t('Test')}
+        title={t('Referee Knowledge Test')}
+        description={t('{{answered}} of {{total}} answered', { answered: answeredCount, total: questions.length })}
+      />
+
+      <Surface className="sticky top-2 z-10 backdrop-blur-xl" padding="sm" variant="raised">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className={`flex items-center gap-2 ${getTimerColorClass(timerData.timeRemaining)}`}>
+            <Clock size={17} aria-hidden="true" />
+            <span className="mc-tabular font-mono text-sm font-bold">{timerData.formatted}</span>
+          </div>
+          <span className="mc-tabular text-xs font-semibold text-(--mc-color-text-secondary)">
+            {t('Question {{current}} of {{total}}', { current: currentIndex + 1, total: questions.length })}
           </span>
         </div>
-        <div className="text-sm text-(--text-secondary)">
-          {t('Question {{current}} of {{total}}', { current: currentIndex + 1, total: questions.length })}
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="relative h-2 bg-(--bg-surface) rounded-full overflow-hidden">
-        <div
-          className="absolute top-0 left-0 h-full bg-(--info) transition-all duration-300"
-          style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+        <ProgressBar
+          value={answeredCount}
+          max={questions.length}
+          size="sm"
+          tone="accent"
+          aria-label={t('{{answered}} of {{total}} answered', { answered: answeredCount, total: questions.length })}
         />
-      </div>
-      <p className="text-xs text-(--text-secondary) text-center">
-        {t('{{answered}} of {{total}} answered', { answered: answeredCount, total: questions.length })}
-      </p>
+      </Surface>
 
-      {/* Question Card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl">
-        <h3 className="text-lg font-semibold text-(--text-primary) mb-6">
-          {currentQuestion.question_text}
-        </h3>
-
-        <div className="space-y-3">
-          {[
-            { letter: 'A', text: currentQuestion.option_a },
-            { letter: 'B', text: currentQuestion.option_b },
-            { letter: 'C', text: currentQuestion.option_c },
-            { letter: 'D', text: currentQuestion.option_d },
-          ].map((option, index) => {
-            const isSelected = selectedOption === index
-            const isLocked = isAnswered
-
-            return (
-              <button
-                key={option.letter}
-                onClick={() => handleSelectOption(index)}
-                disabled={isLocked}
-                className={`
-                  w-full p-4 text-left rounded-xl border transition-all
-                  ${
-                    isSelected
-                      ? 'bg-(--info)/10 border-(--info) text-(--text-primary)'
-                      : 'bg-(--bg-primary) border-(--border-subtle) text-(--text-primary) hover:border-(--border-default)'
-                  }
-                  ${isLocked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}
-                `}
-              >
-                <div className="flex items-start gap-3">
-                  <span className="font-semibold text-sm shrink-0">{option.letter}.</span>
-                  <span className="text-sm">{option.text}</span>
-                </div>
-              </button>
-            )
-          })}
+      <Surface className="overflow-hidden" padding="none" variant="raised">
+        <div className="border-b border-(--mc-color-border) px-4 py-4 sm:px-6">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Badge variant="accent">
+              {t('Question {{number}}', { number: currentIndex + 1 })}
+            </Badge>
+            {currentQuestion.law !== null && (
+              <Badge>L{currentQuestion.law}</Badge>
+            )}
+            {currentQuestion.topic && <Badge>{currentQuestion.topic}</Badge>}
+          </div>
+          <h3 className="text-base font-semibold leading-7 text-(--mc-color-text) sm:text-lg">
+            {currentQuestion.question_text}
+          </h3>
         </div>
 
-        {isAnswered && (
-          <p className="text-xs text-(--text-secondary) mt-4 text-center">
-            {t('Answer locked. Use navigation buttons to continue.')}
-          </p>
-        )}
-      </div>
+        <div className="space-y-2.5 p-4 sm:p-6">
+          {options.map((option, index) => (
+            <LearningChoice
+              key={option.letter}
+              marker={selectedOption === index && isAnswered ? <Check size={15} /> : option.letter}
+              state={selectedOption === index ? 'selected' : 'default'}
+              onClick={() => void handleSelectOption(index)}
+              disabled={isAnswered}
+              aria-pressed={selectedOption === index}
+            >
+              {option.text}
+            </LearningChoice>
+          ))}
 
-      {/* Navigation Buttons */}
-      <div className="flex items-center justify-between gap-3">
-        <button
+          {isAnswered && (
+            <p className="pt-1 text-center text-xs leading-5 text-(--mc-color-text-muted)">
+              {t('Answer locked. Use navigation buttons to continue.')}
+            </p>
+          )}
+        </div>
+      </Surface>
+
+      <div className="grid grid-cols-[auto_1fr] gap-3">
+        <Button
+          variant="secondary"
+          leadingIcon={<ChevronLeft size={17} />}
           onClick={handlePrevious}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-3 rounded-xl border border-(--border-subtle) bg-(--bg-surface) text-(--text-primary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <ChevronLeft size={18} />
           {t('Back')}
-        </button>
+        </Button>
 
         {isLastQuestion ? (
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || answeredCount < questions.length}
-            className="flex-1 px-6 py-3 rounded-xl bg-(--success) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          <Button
+            fullWidth
+            loading={submitting}
+            loadingText={t('Submitting...')}
+            disabled={answeredCount < questions.length}
+            onClick={() => void handleSubmit()}
           >
-            {submitting ? t('Submitting...') : t('Submit Test')}
-          </button>
+            {t('Submit Test')}
+          </Button>
         ) : (
-          <button
+          <Button
+            fullWidth
+            trailingIcon={<ChevronRight size={17} />}
             onClick={handleNext}
             disabled={!isAnswered}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('Next')}
-            <ChevronRight size={18} />
-          </button>
+          </Button>
         )}
       </div>
-
     </div>
   )
 }

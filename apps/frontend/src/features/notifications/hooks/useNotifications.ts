@@ -16,6 +16,7 @@ import type { EnrichedNotification } from '../types'
  */
 export function useNotifications() {
   const { user } = useAuth()
+  const userId = user?.id
   const [notifications, setNotifications] = useState<EnrichedNotification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -24,7 +25,8 @@ export function useNotifications() {
   const unreadSnapshotRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!userId) return
+    const currentUserId = userId
 
     let cancelled = false
 
@@ -33,7 +35,7 @@ export function useNotifications() {
       setError(null)
 
       const { notifications: data, error: fetchError } =
-        await getActiveNotifications(user!.id)
+        await getActiveNotifications(currentUserId)
 
       if (cancelled) return
 
@@ -56,7 +58,7 @@ export function useNotifications() {
 
       // Mark all as read in background (fire-and-forget)
       if (unreadIds.size > 0) {
-        markAllAsRead(user!.id).catch((err) =>
+        markAllAsRead(currentUserId).catch((err) =>
           console.error('Failed to mark all as read:', err)
         )
       }
@@ -67,7 +69,7 @@ export function useNotifications() {
     return () => {
       cancelled = true
     }
-  }, [user?.id])
+  }, [userId])
 
   // Check if a notification should display as "unread" in this session
   const isVisuallyUnread = useCallback(

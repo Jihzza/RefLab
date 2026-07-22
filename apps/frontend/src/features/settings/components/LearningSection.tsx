@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { GraduationCap } from 'lucide-react'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { clearLearningHistory } from '../api/settingsApi'
+import Button from '@/components/ui/Button'
 import SettingsSection from './SettingsSection'
 import ConfirmDialog from './ConfirmDialog'
 import { useTranslation } from 'react-i18next'
@@ -38,31 +39,31 @@ export default function LearningSection() {
 
   return (
     <>
-      <SettingsSection title={t('Learning')} icon={<GraduationCap className="w-4.5 h-4.5" />}>
-        <div className="px-4 py-3">
-          <p className="text-sm text-(--text-secondary) mb-3">
+      <SettingsSection title={t('Learning')} icon={<GraduationCap className="size-5" />}>
+        <div className="bg-(--mc-color-warning)/5 px-4 py-4 sm:px-5">
+          <p className="text-sm leading-6 text-(--mc-color-text-secondary)">
             {t('Clear your test history, question attempts, video watch history, streak data, and all learning progress. This cannot be undone.')}
           </p>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setDialogOpen(true)}
-            className="text-sm font-medium px-4 py-2 rounded-(--radius-button)
-              border border-(--error)/20 text-(--error)
-              hover:bg-(--error)/10 transition-colors"
+            leadingIcon={<GraduationCap className="size-4" />}
+            className="mt-3 border-(--mc-color-warning)/40 text-(--mc-color-warning) hover:bg-(--mc-color-warning)/10"
             aria-label={t('Clear Learning History')}
           >
             {t('Clear Learning History')}
-          </button>
+          </Button>
 
           {success && (
-            <p className="text-xs text-(--success) mt-2" role="status">
+            <p className="mt-2 text-xs text-(--mc-color-success)" role="status">
               {t('Learning history cleared successfully.')}
             </p>
           )}
 
           {error && (
-            <p className="text-xs text-(--error) mt-2" role="alert">
+            <p className="mt-2 text-xs text-(--mc-color-danger)" role="alert">
               {error}
             </p>
           )}

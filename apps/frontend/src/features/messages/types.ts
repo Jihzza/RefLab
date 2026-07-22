@@ -7,7 +7,20 @@ export interface MessageUser {
   username: string
   name: string | null
   photo_url: string | null
+  // Older RPC payloads omit this field. Keeping it optional preserves
+  // compatibility while the launch migration rolls out.
+  is_deleted?: false
 }
+
+export interface DeletedMessageUser {
+  id: null
+  username: null
+  name: null
+  photo_url: null
+  is_deleted: true
+}
+
+export type ConversationPeer = MessageUser | DeletedMessageUser
 
 export interface Message {
   id: string
@@ -33,7 +46,7 @@ export interface LastMessagePreview {
 export interface Conversation {
   id: string
   updated_at: string
-  other_user: MessageUser
+  other_user: ConversationPeer
   last_message: LastMessagePreview | null
   unread_count: number
 }

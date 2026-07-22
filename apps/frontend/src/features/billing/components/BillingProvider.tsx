@@ -10,12 +10,13 @@ interface BillingProviderProps {
 
 export function BillingProvider({ children }: BillingProviderProps) {
   const { user, authStatus } = useAuth()
+  const userId = user?.id
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchBilling = useCallback(async () => {
-    if (!user) {
+    if (!userId) {
       setSubscription(null)
       setIsLoading(false)
       return
@@ -31,22 +32,29 @@ export function BillingProvider({ children }: BillingProviderProps) {
     }
     setSubscription(subResult.subscription)
     setIsLoading(false)
-  }, [user])
+  }, [userId])
 
   // Fetch billing data when user becomes authenticated
   useEffect(() => {
-    if (authStatus === 'authenticated' && user) {
-      fetchBilling()
-    } else if (authStatus === 'unauthenticated') {
-      setSubscription(null)
-      setError(null)
-    }
-  }, [authStatus, user, fetchBilling])
+    if (authStatus !== 'authenticated' || !userId) return
+
+    // Defer the async refresh so the effect only schedules external work.
+    const timer = window.setTimeout(() => {
+      void fetchBilling()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [authStatus, userId, fetchBilling])
+
+  const currentSubscription = authStatus === 'authenticated'
+    ? subscription
+    : null
+  const currentError = authStatus === 'authenticated' ? error : null
 
   // Derive plan from subscription
-  const planId: PlanId = subscription &&
-    ['active', 'trialing', 'past_due'].includes(subscription.status)
-    ? subscription.plan
+  const planId: PlanId = currentSubscription &&
+    ['active', 'trialing', 'past_due'].includes(currentSubscription.status)
+    ? currentSubscription.plan
     : 'free'
 
   const isPro = planId === 'pro' || planId === 'plus'
@@ -55,10 +63,10 @@ export function BillingProvider({ children }: BillingProviderProps) {
   return (
     <BillingContext.Provider
       value={{
-        subscription,
+        subscription: currentSubscription,
         planId,
         isLoading,
-        error,
+        error: currentError,
         refreshBilling: fetchBilling,
         isPro,
         isPlus,

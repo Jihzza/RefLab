@@ -10,7 +10,22 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+playwright-report/
+test-results/
+__pycache__/
+*.py[cod]
 *.local
+
+# Local deployment and Supabase CLI state
+.netlify/
+supabase/.temp/
+backend/supabase/.temp/
+**/supabase/.temp/
+backend/supabase/supabase/.temp/
+
+# Launch evidence can contain operator names, local paths or production metadata.
+ops/launch/launch-inputs.json
+ops/launch/evidence/
 
 # Environment variables
 .env

@@ -1,12 +1,9 @@
-import { useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, LockKeyhole } from 'lucide-react'
 import { useBilling } from '@/features/billing/components/useBilling'
-import { createCheckoutSession } from '@/features/billing/api/billingApi'
-import type { PlanId } from '@/features/billing/types'
 import type { PlanConfig } from '../types'
 import { useTranslation } from 'react-i18next'
 
-/** Plan definitions with correct prices */
+/** Launch plan. Paid tiers return only after their entitlements are validated. */
 const PLANS: PlanConfig[] = [
   {
     id: 'free',
@@ -15,181 +12,84 @@ const PLANS: PlanConfig[] = [
     pricePerMonth: 0,
     period: '',
     benefits: [
-      'Access to basic Laws of the Game content',
-      'Limited practice quizzes',
-      'Community forum access',
-      'Weekly newsletter',
-    ],
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '€4.99',
-    pricePerMonth: 4.99,
-    period: '/ month',
-    isHighlighted: true,
-    benefits: [
-      'Everything in Free',
-      'Full video scenario library',
-      'AI-powered feedback on decisions',
-      'Personalized training plans',
-      'Progress tracking & analytics',
-      'Priority support',
-    ],
-  },
-  {
-    id: 'plus',
-    name: 'Plus',
-    price: '€9.99',
-    pricePerMonth: 9.99,
-    period: '/ month',
-    benefits: [
-      'Everything in Pro',
-      'Advanced analytics insights',
-      'Priority support + faster response',
-      'Early access to new premium features',
+      'All available referee tests',
+      'Practice questions by law and topic',
+      'Video decision scenarios',
+      'Progress dashboard',
+      'Community and direct messages',
     ],
   },
 ]
 
-interface PlansSectionProps {
-  onChangePlan: (targetPlan: 'pro' | 'plus') => void
-}
-
-export default function PlansSection({ onChangePlan }: PlansSectionProps) {
+export default function PlansSection() {
   const { t } = useTranslation()
-  const { planId: currentPlan, subscription, isLoading: billingLoading } = useBilling()
-  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const isCancelPending = subscription?.cancel_at_period_end === true
-
-  /** Subscribe to a paid plan (for free users) */
-  const handleSubscribe = async (plan: Exclude<PlanId, 'free'>) => {
-    setLoadingPlan(plan)
-    setError(null)
-
-    const { url, error: checkoutError } = await createCheckoutSession(plan)
-
-    if (checkoutError || !url) {
-      setError(checkoutError?.message || 'Failed to start checkout')
-      setLoadingPlan(null)
-      return
-    }
-
-    window.location.assign(url)
-  }
-
-  /** Get the button config for each plan card */
-  const getButtonConfig = (plan: PlanConfig) => {
-    const isCurrentPlan = currentPlan === plan.id
-
-    // Free plan card
-    if (plan.id === 'free') {
-      return {
-        label: isCurrentPlan ? t('Current Plan') : t('Free Forever'),
-        disabled: true,
-        onClick: () => {},
-        className: 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed',
-      }
-    }
-
-    // Current paid plan
-    if (isCurrentPlan) {
-      return {
-        label: isCancelPending ? t('Cancellation Pending') : t('Current Plan'),
-        disabled: true,
-        onClick: () => {},
-        className: 'bg-(--brand-yellow)/20 text-(--brand-yellow) cursor-not-allowed',
-      }
-    }
-
-    // Free user looking at a paid plan
-    if (currentPlan === 'free') {
-      return {
-        label: loadingPlan === plan.id ? t('Redirecting...') : t('Subscribe'),
-        disabled: billingLoading || loadingPlan !== null,
-        onClick: () => handleSubscribe(plan.id as Exclude<PlanId, 'free'>),
-        className: plan.isHighlighted
-          ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-          : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
-      }
-    }
-
-    // Paid user looking at a different paid plan
-    return {
-      label: isCancelPending ? t('Resubscribe Required') : t('Switch to {{plan}}', { plan: plan.name }),
-      disabled: isCancelPending || billingLoading,
-      onClick: () => onChangePlan(plan.id as 'pro' | 'plus'),
-      className: plan.isHighlighted
-        ? 'bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)'
-        : 'bg-(--bg-surface-2) text-(--text-primary) hover:bg-(--bg-surface-2)/80 border border-(--border-subtle)',
-    }
-  }
+  const { planId: currentPlan } = useBilling()
 
   return (
-    <section className="mb-6" aria-label={t('Choose Your Plan')}>
-      <h2 className="text-lg font-semibold text-(--text-primary) mb-1">{t('Choose Your Plan')}</h2>
-      <p className="text-sm text-(--text-muted) mb-4">
-        {t('Upgrade to unlock advanced training tools and AI-powered feedback.')}
+    <section className="mb-8" aria-label={t('Choose Your Plan')}>
+      <div className="mb-5">
+        <p className="mc-eyebrow mb-2">RefLab</p>
+        <h2 className="text-xl font-bold text-(--mc-color-text)">{t('Choose Your Plan')}</h2>
+      </div>
+      <p className="mb-4 max-w-2xl text-sm leading-6 text-(--mc-color-text-muted)">
+        {t('All currently available training and community features are included in the launch plan.')}
       </p>
 
-      {error && (
-        <div
-          className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-4 py-3 rounded-lg mb-4 text-center"
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
+      <div
+        className="mb-5 flex items-start gap-3 rounded-(--mc-radius-input) border border-(--mc-color-accent)/30 bg-(--mc-color-accent)/10 px-4 py-3 text-sm leading-6 text-(--mc-color-text-secondary)"
+        role="note"
+      >
+        <LockKeyhole className="mt-0.5 size-4 shrink-0 text-(--mc-color-accent)" aria-hidden="true" />
+        <span>{t('RefLab is launching free. Paid subscriptions are currently unavailable.')}</span>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid max-w-md grid-cols-1 items-stretch gap-4">
         {PLANS.map((plan) => {
-          const btn = getButtonConfig(plan)
+          const buttonLabel = currentPlan === plan.id ? t('Current Plan') : t('Free Forever')
 
           return (
             <div
               key={plan.id}
-              className={`relative rounded-(--radius-card) p-5 flex flex-col ${
+              className={`relative isolate flex min-h-full flex-col overflow-hidden rounded-(--mc-radius-card) p-5 shadow-(--mc-shadow-soft) ${
                 plan.isHighlighted
-                  ? 'border-2 border-(--brand-yellow) bg-(--bg-surface)'
-                  : 'border border-(--border-subtle) bg-(--bg-surface)'
+                  ? 'border border-(--mc-color-accent) bg-(--mc-color-surface-raised)'
+                  : 'border border-(--mc-color-border) bg-(--mc-color-surface)'
               }`}
             >
-              {/* Recommended badge */}
-              {plan.isHighlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-(--brand-yellow) text-(--bg-primary) text-xs font-bold px-3 py-1 rounded-full">
-                  {t('Recommended')}
-                </div>
-              )}
+              <div
+                className={`absolute right-0 top-0 h-20 w-20 -translate-y-10 translate-x-10 rotate-45 ${plan.isHighlighted ? 'bg-(--mc-color-accent)' : 'bg-(--mc-color-border)'}`}
+                aria-hidden="true"
+              />
+              <div className="h-5" aria-hidden="true" />
 
-              <h3 className="text-lg font-bold text-(--text-primary) mb-1">{t(plan.name)}</h3>
+              <h3 className="mt-1 text-lg font-bold text-(--mc-color-text)">{t(plan.name)}</h3>
 
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-(--text-primary)">{plan.price}</span>
+              <div className="mb-5 mt-2 flex items-baseline">
+                <span className="mc-tabular text-3xl font-extrabold tracking-tight text-(--mc-color-text)">
+                  {plan.id === 'free' ? t('Free') : plan.price}
+                </span>
                 {plan.period && (
-                  <span className="text-sm text-(--text-muted) ml-1">{plan.period}</span>
+                  <span className="ml-1 text-xs text-(--mc-color-text-muted)">{plan.period}</span>
                 )}
               </div>
 
-              {/* Benefits list */}
               <ul className="space-y-2 mb-5 grow" aria-label={`${plan.name} plan benefits`}>
                 {plan.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-sm text-(--text-secondary)">
-                    <Check className="w-4 h-4 text-(--success) shrink-0 mt-0.5" aria-hidden="true" />
-                    {t(benefit)}
+                  <li key={benefit} className="flex items-start gap-2.5 text-sm leading-5 text-(--mc-color-text-secondary)">
+                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-(--mc-color-success)/15 text-(--mc-color-success)">
+                      <Check className="size-3" aria-hidden="true" />
+                    </span>
+                    <span>{t(benefit)}</span>
                   </li>
                 ))}
               </ul>
 
-              {/* Action button */}
               <button
-                onClick={btn.onClick}
-                disabled={btn.disabled}
-                aria-label={`${btn.label} - ${plan.name} plan`}
-                className={`w-full py-2.5 rounded-(--radius-button) text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${btn.className}`}
+                disabled
+                aria-label={`${buttonLabel}: ${t(plan.name)}`}
+                className="min-h-11 w-full cursor-not-allowed rounded-(--mc-radius-button) bg-(--bg-surface-2) px-4 py-2.5 text-sm font-bold text-(--text-muted) opacity-60"
               >
-                {btn.label}
+                {buttonLabel}
               </button>
             </div>
           )

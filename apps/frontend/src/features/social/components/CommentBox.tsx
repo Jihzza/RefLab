@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { Flag, Heart, MoreHorizontal, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import type { Comment } from '../types'
 import { useTranslation } from 'react-i18next'
+import type { Comment } from '../types'
 
 interface CommentBoxProps {
   comment: Comment
@@ -13,12 +14,9 @@ interface CommentBoxProps {
   onReport: (commentId: string) => void
 }
 
-/** Formats a timestamp into a relative time string. */
-function formatRelativeTime(dateString: string): string {
-  const now = Date.now()
-  const date = new Date(dateString).getTime()
-  const seconds = Math.floor((now - date) / 1000)
-  if (seconds < 60) return 'now'
+function formatRelativeTime(dateString: string, nowLabel: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
+  if (seconds < 60) return nowLabel
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
@@ -28,49 +26,39 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(days / 30)}mo`
 }
 
-/** Parses comment text and renders @username mentions as highlighted clickable spans. */
 function renderContentWithMentions(
   content: string,
   navigate: ReturnType<typeof useNavigate>,
-): React.ReactNode[] {
+): ReactNode[] {
   const mentionRegex = /@([a-z0-9_.]{3,30})/gi
-  const parts: React.ReactNode[] = []
+  const parts: ReactNode[] = []
   let lastIndex = 0
   let match: RegExpExecArray | null
 
   while ((match = mentionRegex.exec(content)) !== null) {
-    // Text before the mention
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index))
-    }
-
+    if (match.index > lastIndex) parts.push(content.slice(lastIndex, match.index))
     const username = match[1]
     parts.push(
-      <span
+      <button
         key={match.index}
-        className="text-(--brand-yellow) font-medium cursor-pointer hover:underline"
-        role="link"
-        onClick={(e) => {
-          e.stopPropagation()
-          navigate(`/app/profile/${username}`)
+        type="button"
+        className="mc-focus-ring inline rounded font-semibold text-(--mc-color-accent) hover:underline"
+        onClick={(event) => {
+          event.stopPropagation()
+          navigate(`/app/profile/${encodeURIComponent(username)}`)
         }}
       >
         @{username}
-      </span>,
+      </button>,
     )
     lastIndex = mentionRegex.lastIndex
   }
 
-  // Remaining text after last mention
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex))
-  }
-
+  if (lastIndex < content.length) parts.push(content.slice(lastIndex))
   return parts
 }
 
-/** Single comment with avatar, content, like button, and optional reply button. */
-const CommentBox: React.FC<CommentBoxProps> = ({
+export default function CommentBox({
   comment,
   currentUserId,
   depth,
@@ -78,7 +66,7 @@ const CommentBox: React.FC<CommentBoxProps> = ({
   onReply,
   onDelete,
   onReport,
-}) => {
+}: CommentBoxProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -86,113 +74,115 @@ const CommentBox: React.FC<CommentBoxProps> = ({
   const initials = displayName.slice(0, 2).toUpperCase()
   const isOwnComment = comment.user_id === currentUserId
 
+  const openProfile = () => {
+    const route = isOwnComment
+      ? '/app/profile'
+      : `/app/profile/${encodeURIComponent(comment.author.username)}`
+    navigate(route)
+  }
+
   return (
-    <div className={`flex gap-2 ${depth === 1 ? 'ml-10' : ''}`}>
-      {/* Avatar */}
-      {comment.author.photo_url ? (
-        <img
-          src={comment.author.photo_url}
-          alt={displayName}
-          className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5"
-        />
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span className="text-[10px] font-semibold text-(--bg-primary)">
+    <article className="flex min-w-0 gap-2.5" data-depth={depth}>
+      <button
+        type="button"
+        onClick={openProfile}
+        className="mc-focus-ring mt-0.5 size-9 shrink-0 overflow-hidden rounded-full"
+        aria-label={t('Open {{name}} profile', { name: displayName })}
+      >
+        {comment.author.photo_url ? (
+          <img
+            src={comment.author.photo_url}
+            alt=""
+            className="size-full border border-(--mc-color-border) object-cover"
+          />
+        ) : (
+          <span className="flex size-full items-center justify-center border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/15 text-[10px] font-bold text-(--mc-color-accent)">
             {initials}
           </span>
-        </div>
-      )}
+        )}
+      </button>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-(--text-primary)">
-            {displayName}
-          </span>
-          <span className="text-[10px] text-(--text-muted)">
-            {formatRelativeTime(comment.created_at)}
-          </span>
-        </div>
-
-        <p className="text-sm text-(--text-primary) mt-0.5 break-words">
-          {renderContentWithMentions(comment.content, navigate)}
-        </p>
-
-        {/* Actions row */}
-        <div className="flex items-center gap-4 mt-1.5">
-          {/* Like */}
-          <button
-            onClick={() => onLike(comment.id, comment.is_liked)}
-            className={`flex items-center gap-1 text-[11px] transition-colors ${
-              comment.is_liked
-                ? 'text-(--error)'
-                : 'text-(--text-muted) hover:text-(--error)'
-            }`}
-            aria-label={comment.is_liked ? t('Unlike comment') : t('Like comment')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24"
-              fill={comment.is_liked ? 'currentColor' : 'none'}
-              stroke="currentColor" strokeWidth={comment.is_liked ? 0 : 2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-              />
-            </svg>
-            {comment.like_count > 0 && <span>{comment.like_count}</span>}
-          </button>
-
-          {/* Reply */}
-          {onReply && (
+      <div className="min-w-0 flex-1 rounded-(--mc-radius-input) bg-(--mc-color-canvas) px-3 py-2.5">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
             <button
-              onClick={onReply}
-              className="text-[11px] text-(--text-muted) hover:text-(--info) transition-colors"
-              aria-label={t('Reply to comment')}
+              type="button"
+              onClick={openProfile}
+              className="mc-focus-ring max-w-full truncate rounded text-xs font-semibold text-(--mc-color-text) hover:underline"
             >
-              {t('Reply')}
+              {displayName}
             </button>
-          )}
+            <span className="ml-2 text-[10px] tabular-nums text-(--mc-color-text-muted)">
+              {formatRelativeTime(comment.created_at, t('now'))}
+            </span>
+          </div>
 
-          {/* 3-dot menu */}
-          <div className="relative ml-auto">
+          <div className="relative -mr-1 -mt-1 shrink-0">
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="p-0.5 text-(--text-muted) hover:text-(--text-secondary) transition-colors"
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
+              className="mc-focus-ring inline-flex size-9 items-center justify-center rounded-(--mc-radius-button) text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)"
               aria-label={t('Comment options')}
+              aria-expanded={menuOpen}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="5" cy="12" r="2" />
-                <circle cx="12" cy="12" r="2" />
-                <circle cx="19" cy="12" r="2" />
-              </svg>
+              <MoreHorizontal className="size-4" aria-hidden="true" />
             </button>
 
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-6 z-50 w-36 bg-(--bg-surface) border border-(--border-subtle) rounded-lg shadow-xl overflow-hidden">
-                  {isOwnComment ? (
-                    <button
-                      onClick={() => { setMenuOpen(false); onDelete(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--error) hover:bg-(--bg-hover) transition-colors"
-                    >
-                      {t('Delete')}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => { setMenuOpen(false); onReport(comment.id) }}
-                      className="w-full text-left px-3 py-2 text-xs text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
-                    >
-                      {t('Report')}
-                    </button>
-                  )}
+                <button
+                  type="button"
+                  className="fixed inset-0 z-(--mc-z-sticky) cursor-default"
+                  onClick={() => setMenuOpen(false)}
+                  aria-label={t('Close comment options')}
+                />
+                <div className="absolute right-0 top-9 z-(--mc-z-popover) min-w-40 overflow-hidden rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) p-1 shadow-(--mc-shadow-raised)" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      if (isOwnComment) onDelete(comment.id)
+                      else onReport(comment.id)
+                    }}
+                    className={`mc-focus-ring flex min-h-11 w-full items-center gap-2 rounded-(--mc-radius-compact) px-3 py-2 text-left text-sm font-medium hover:bg-(--mc-color-surface-hover) ${isOwnComment ? 'text-(--mc-color-danger)' : 'text-(--mc-color-text-secondary)'}`}
+                  >
+                    {isOwnComment ? <Trash2 className="size-4" aria-hidden="true" /> : <Flag className="size-4" aria-hidden="true" />}
+                    {isOwnComment ? t('Delete') : t('Report')}
+                  </button>
                 </div>
               </>
             )}
           </div>
         </div>
+
+        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-(--mc-color-text-secondary)">
+          {renderContentWithMentions(comment.content, navigate)}
+        </p>
+
+        <div className="mt-1.5 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onLike(comment.id, comment.is_liked)}
+            className={`mc-focus-ring inline-flex min-h-9 items-center gap-1 rounded-(--mc-radius-button) px-2 text-[11px] font-semibold transition-colors hover:bg-(--mc-color-surface-hover) ${comment.is_liked ? 'text-(--mc-color-danger)' : 'text-(--mc-color-text-muted) hover:text-(--mc-color-danger)'}`}
+            aria-label={comment.is_liked ? t('Unlike comment') : t('Like comment')}
+            aria-pressed={comment.is_liked}
+          >
+            <Heart className="size-3.5" fill={comment.is_liked ? 'currentColor' : 'none'} aria-hidden="true" />
+            {comment.like_count > 0 && <span>{comment.like_count}</span>}
+          </button>
+
+          {onReply && (
+            <button
+              type="button"
+              onClick={onReply}
+              className="mc-focus-ring min-h-9 rounded-(--mc-radius-button) px-2 text-[11px] font-semibold text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-info)"
+            >
+              {t('Reply')}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </article>
   )
 }
-
-export default CommentBox

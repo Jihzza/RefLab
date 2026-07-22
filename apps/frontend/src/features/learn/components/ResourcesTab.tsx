@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { BookOpen } from 'lucide-react'
+import { LearningMessage } from './LearningUI'
 
 /**
  * ResourcesTab - Placeholder for Resources feature
@@ -9,11 +11,10 @@ export default function ResourcesTab() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6">
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">{t('Resources')}</h2>
-        <p className="mt-2 text-gray-500">{t('Study resources coming soon.')}</p>
-      </div>
-    </div>
+    <LearningMessage
+      icon={<BookOpen size={22} />}
+      title={t('Resources')}
+      description={t('Study resources coming soon.')}
+    />
   )
 }

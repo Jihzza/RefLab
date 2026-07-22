@@ -5,11 +5,8 @@ export interface Profile {
   id: string
   username: string
   username_customized: boolean
-  role: 'user' | 'moderator' | 'admin'
   name: string | null
-  email: string | null
   photo_url: string | null
-  last_login_at: string | null
   created_at: string
   updated_at: string
 }
@@ -17,6 +14,8 @@ export interface Profile {
 const USERNAME_REGEX = /^[a-z0-9_.]{3,30}$/
 const PROFILE_MEDIA_BUCKET = 'profile-media'
 const PROFILE_MEDIA_PUBLIC_PREFIX = '/storage/v1/object/public/profile-media/'
+const PROFILE_SELECT =
+  'id, username, username_customized, name, photo_url, created_at, updated_at'
 
 /**
  * Normalize username input before persistence/checks.
@@ -46,7 +45,7 @@ export function isProfileComplete(profile: Profile | null): boolean {
 export async function getProfile(userId: string) {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT)
     .eq('id', userId)
     .single()
 
@@ -64,7 +63,7 @@ export async function updateProfile(
     .from('profiles')
     .update(updates)
     .eq('id', userId)
-    .select()
+    .select(PROFILE_SELECT)
     .single()
 
   return { profile: data as Profile | null, error }
@@ -79,7 +78,7 @@ export async function setUsername(userId: string, username: string) {
     .from('profiles')
     .update({ username, username_customized: true })
     .eq('id', userId)
-    .select()
+    .select(PROFILE_SELECT)
     .single()
 
   // Check for unique constraint violation (username taken)

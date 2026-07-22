@@ -11,49 +11,51 @@ import type { Comment } from '../types'
 
 export function useComments(postId: string) {
   const { user } = useAuth()
+  const userId = user?.id
   const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const fetchComments = useCallback(async () => {
-    if (!user?.id) return
+    if (!userId) return
     setIsLoading(true)
     setError(null)
 
-    const { comments: data, error: fetchError } = await getComments(postId, user.id)
+    const { comments: data, error: fetchError } = await getComments(postId, userId)
     if (fetchError) {
       setError(fetchError.message)
     } else {
       setComments(data)
     }
     setIsLoading(false)
-  }, [postId, user?.id])
+  }, [postId, userId])
 
   const addComment = useCallback(
     async (content: string, parentCommentId?: string) => {
-      if (!user?.id) return
+      if (!userId) throw new Error('You must be logged in to comment.')
 
       const { error: addError } = await apiAddComment(
         postId,
-        user.id,
+        userId,
         content,
         parentCommentId
       )
 
       if (addError) {
         setError(addError.message)
-        return
+        throw addError
       }
 
       // Refetch comments to get proper nested structure with author data
+      setError(null)
       await fetchComments()
     },
-    [user?.id, postId, fetchComments]
+    [userId, postId, fetchComments]
   )
 
   const toggleLike = useCallback(
     async (commentId: string, isCurrentlyLiked: boolean) => {
-      if (!user?.id) return
+      if (!userId) return
 
       // Optimistic update: find comment in top-level or replies
       setComments(prev =>
@@ -81,7 +83,7 @@ export function useComments(postId: string) {
       )
 
       const { error: likeError } = await toggleCommentLike(
-        user.id,
+        userId,
         commentId,
         isCurrentlyLiked
       )
@@ -90,7 +92,7 @@ export function useComments(postId: string) {
         await fetchComments()
       }
     },
-    [user?.id, fetchComments]
+    [userId, fetchComments]
   )
 
   const deleteComment = useCallback(
@@ -108,6 +110,8 @@ export function useComments(postId: string) {
       const { error: delError } = await apiDeleteComment(commentId)
       if (delError) {
         await fetchComments()
+        setError(delError.message)
+        throw delError
       }
     },
     [fetchComments]
@@ -115,10 +119,11 @@ export function useComments(postId: string) {
 
   const reportComment = useCallback(
     async (commentId: string, reason?: string) => {
-      if (!user?.id) return
-      await apiReportComment(user.id, commentId, reason)
+      if (!userId) return
+      const { error: reportError } = await apiReportComment(userId, commentId, reason)
+      if (reportError) setError(reportError.message)
     },
-    [user?.id]
+    [userId]
   )
 
   return {

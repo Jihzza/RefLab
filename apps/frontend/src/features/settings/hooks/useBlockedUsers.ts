@@ -6,18 +6,16 @@ import type { BlockedUser } from '../types'
 
 export function useBlockedUsers() {
   const { user } = useAuth()
+  const userId = user?.id
 
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => Boolean(userId))
   const [error, setError] = useState<string | null>(null)
   const [unblocking, setUnblocking] = useState<string | null>(null)
 
   // Load blocked users on mount
   useEffect(() => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
+    if (!userId) return
 
     let cancelled = false
 
@@ -25,7 +23,7 @@ export function useBlockedUsers() {
       setLoading(true)
       setError(null)
 
-      const { blockedUsers: users, error: fetchError } = await fetchBlockedUsers(user!.id)
+      const { blockedUsers: users, error: fetchError } = await fetchBlockedUsers(userId!)
 
       if (cancelled) return
 
@@ -39,35 +37,36 @@ export function useBlockedUsers() {
       setLoading(false)
     }
 
-    load()
+    const timeoutId = window.setTimeout(() => void load(), 0)
 
     return () => {
       cancelled = true
+      window.clearTimeout(timeoutId)
     }
-  }, [user?.id])
+  }, [userId])
 
   // Unblock a user: optimistic removal from list
   const unblock = useCallback(
     async (blockedId: string) => {
-      if (!user?.id) return
+      if (!userId) return
 
       setUnblocking(blockedId)
 
       // Optimistic removal
       setBlockedUsers((prev) => prev.filter((u) => u.id !== blockedId))
 
-      const { error: unblockError } = await unblockUser(user.id, blockedId)
+      const { error: unblockError } = await unblockUser(userId, blockedId)
 
       if (unblockError) {
         console.error('Failed to unblock user:', unblockError)
         // Re-fetch to restore accurate state
-        const { blockedUsers: users } = await fetchBlockedUsers(user.id)
+        const { blockedUsers: users } = await fetchBlockedUsers(userId)
         setBlockedUsers(users)
       }
 
       setUnblocking(null)
     },
-    [user?.id]
+    [userId]
   )
 
   return {

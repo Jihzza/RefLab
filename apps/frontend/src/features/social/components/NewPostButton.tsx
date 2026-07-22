@@ -1,24 +1,22 @@
-import React from 'react'
+import { PenLine } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 interface NewPostButtonProps {
   onClick: () => void
 }
 
-/** Floating action button for creating a new post. */
-const NewPostButton: React.FC<NewPostButtonProps> = ({ onClick }) => {
+export default function NewPostButton({ onClick }: NewPostButtonProps) {
   const { t } = useTranslation()
+
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-(--brand-yellow) shadow-lg flex items-center justify-center hover:bg-(--brand-yellow-soft) transition-colors active:scale-95"
+      className="mc-focus-ring absolute bottom-4 right-4 z-(--mc-z-sticky) inline-flex min-h-12 items-center justify-center gap-2 rounded-(--mc-radius-pill) bg-(--mc-color-accent) px-3.5 font-bold text-(--mc-color-canvas) shadow-(--mc-shadow-raised) transition-[background-color,transform] hover:bg-(--mc-color-accent-soft) active:translate-y-0.5 sm:px-4"
       aria-label={t('Create new post')}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-(--bg-primary)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-      </svg>
+      <PenLine className="size-5" aria-hidden="true" />
+      <span className="hidden text-sm sm:inline">{t('New Post')}</span>
     </button>
   )
 }
-
-export default NewPostButton

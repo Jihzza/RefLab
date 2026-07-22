@@ -34,18 +34,19 @@ export default function NotificationBell() {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
-      className="relative p-2"
+      className="mc-focus-ring relative inline-flex size-11 shrink-0 items-center justify-center rounded-(--mc-radius-button) text-(--mc-color-text-muted) transition-colors hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)"
       aria-label={
         unreadCount > 0
           ? `${t('Notifications')} (${unreadCount})`
           : t('Notifications')
       }
     >
-      <Bell className="w-6 h-6 text-(--text-secondary) hover:text-(--text-primary) transition-colors" />
+      <Bell className="size-5" aria-hidden="true" />
 
       {unreadCount > 0 && (
-        <span className="absolute -top-1 -right-1 bg-(--brand-red) text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+        <span aria-hidden="true" className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--mc-color-danger) px-1 text-[9px] font-bold leading-none text-white">
           {unreadCount > 9 ? '9+' : unreadCount}
         </span>
       )}

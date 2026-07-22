@@ -1,4 +1,3 @@
-import React from 'react'
 import { getMediaPublicUrl } from '../api/socialApi'
 import type { PostMediaType } from '../types'
 import { useTranslation } from 'react-i18next'
@@ -10,11 +9,11 @@ interface MediaDisplayProps {
 }
 
 /** Renders media content (image, video, or audio) based on type. */
-const MediaDisplay: React.FC<MediaDisplayProps> = ({
+const MediaDisplay = ({
   mediaType,
   mediaUrl,
   mediaMetadata,
-}) => {
+}: MediaDisplayProps) => {
   const { t } = useTranslation()
   if (!mediaUrl || mediaType === 'text') return null
 
@@ -26,7 +25,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
         src={publicUrl}
         alt={t('Post media')}
         loading="lazy"
-        className="w-full max-h-96 object-cover rounded-lg mt-3"
+        className="mt-4 max-h-[32rem] w-full rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas) object-cover"
         style={
           mediaMetadata?.width && mediaMetadata?.height
             ? { aspectRatio: `${mediaMetadata.width}/${mediaMetadata.height}` }
@@ -42,7 +41,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
         src={publicUrl}
         controls
         preload="metadata"
-        className="w-full max-h-96 rounded-lg mt-3 bg-black"
+        className="mt-4 max-h-[32rem] w-full rounded-(--mc-radius-input) border border-(--mc-color-border) bg-black"
         aria-label={t('Post video')}
       />
     )
@@ -50,7 +49,7 @@ const MediaDisplay: React.FC<MediaDisplayProps> = ({
 
   if (mediaType === 'audio') {
     return (
-      <div className="mt-3 bg-(--bg-surface-2) p-4 rounded-lg border border-(--border-subtle)">
+      <div className="mt-4 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas) p-4">
         <audio
           src={publicUrl}
           controls

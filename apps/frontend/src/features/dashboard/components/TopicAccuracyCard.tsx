@@ -1,117 +1,96 @@
-import { BookOpen } from 'lucide-react'
-import type { TopicAccuracy } from '../types'
+import type { LucideIcon } from 'lucide-react'
+import { AlertTriangle, BookOpen, Flag, Hand, MonitorCheck, ShieldAlert } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import Surface from '@/components/ui/Surface'
+import type { TopicAccuracy } from '../types'
+import { getTranslatedTopic } from './topicLabels'
 
 interface TopicAccuracyCardProps {
   topics: TopicAccuracy[]
 }
 
-/**
- * TopicAccuracyCard — Displays accuracy breakdown per topic as a vertical list
- * with inline progress bars and percentage values.
- */
+const toneClasses = {
+  success: 'text-(--mc-color-success)',
+  accent: 'text-(--mc-color-accent)',
+  warning: 'text-(--mc-color-warning)',
+  danger: 'text-(--mc-color-danger)',
+}
+
 export default function TopicAccuracyCard({ topics }: TopicAccuracyCardProps) {
-  const { t } = useTranslation()
-  const hasTopics = topics.length > 0
+  const { t, i18n } = useTranslation()
 
   return (
-    <div
-      className="bg-(--bg-surface) rounded-2xl p-4 shadow-sm border border-(--border-subtle)"
+    <Surface
+      padding="none"
+      className="overflow-hidden border-(--mc-color-border-strong) shadow-none"
       role="region"
       aria-label={t('Accuracy by Topic')}
     >
-      <h3 className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider mb-3">
-        {t('Accuracy by Topic')}
-      </h3>
+      <div className="border-b border-(--mc-color-border) px-4 py-3.5">
+        <h2 className="text-sm font-semibold text-(--mc-color-text)">{t('Accuracy by Topic')}</h2>
+      </div>
 
-      {hasTopics ? (
-        <div className="space-y-0">
+      {topics.length > 0 ? (
+        <ul className="divide-y divide-(--mc-color-border)">
           {topics.map((topic) => {
             const topicLabel = getTranslatedTopic(topic.topic, t)
+            const tier = getAccuracyTier(topic.accuracy)
+            const TopicIcon = getTopicIcon(topic.topic)
 
             return (
-              <div
-                key={topic.topic}
-                className="flex items-center justify-between py-2.5 border-b border-(--border-subtle) last:border-b-0"
-              >
-                {/* Topic name */}
-                <span className="text-sm text-(--text-primary) flex-1 mr-3 truncate">
-                  {topicLabel}
-                </span>
+              <li key={topic.topic} className="relative flex min-h-[58px] items-center gap-3 overflow-hidden px-4 py-2.5">
+                <div
+                  className="pointer-events-none absolute inset-y-0 right-12 w-28 opacity-[0.07]"
+                  style={{
+                    backgroundImage:
+                      'repeating-linear-gradient(112deg, transparent 0 8px, var(--mc-color-text-muted) 8px 13px)',
+                  }}
+                  aria-hidden="true"
+                />
 
-                {/* Bar + percentage */}
-                <div className="flex items-center gap-2.5 shrink-0">
-                  {/* Progress bar (fixed width) */}
-                  <div
-                    className="w-20 bg-(--bg-surface-2) h-1.5 rounded-full overflow-hidden"
-                    role="progressbar"
-                    aria-valuenow={topic.accuracy}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`${topicLabel}: ${topic.accuracy}%`}
-                  >
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(topic.accuracy, 100)}%`,
-                        backgroundColor: getBarColor(topic.accuracy),
-                      }}
-                    />
-                  </div>
-
-                  {/* Percentage */}
-                  <span
-                    className="text-xs font-semibold w-10 text-right"
-                    style={{ color: getBarColor(topic.accuracy) }}
-                  >
-                    {topic.accuracy}%
-                  </span>
+                <TopicIcon className="relative z-10 size-5 shrink-0 text-(--mc-color-accent)" aria-hidden="true" />
+                <div className="relative z-10 min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-(--mc-color-text)">{topicLabel}</p>
+                  <p className="mt-0.5 text-[10px] text-(--mc-color-text-muted)">
+                    {topic.total_questions} {topic.total_questions === 1 ? t('question') : t('questions')}
+                  </p>
                 </div>
-              </div>
+                <span className={`relative z-10 w-12 shrink-0 text-right text-sm font-bold tabular-nums ${toneClasses[tier]}`}>
+                  {formatNumber(topic.accuracy, i18n.resolvedLanguage)}%
+                </span>
+              </li>
             )
           })}
-        </div>
+        </ul>
       ) : (
-        /* Empty state */
-        <div className="flex flex-col items-center justify-center py-6 text-center">
-          <BookOpen size={20} className="text-(--text-muted) mb-2" aria-hidden="true" />
-          <p className="text-xs text-(--text-muted)">
+        <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+          <BookOpen className="size-5 text-(--mc-color-accent)" aria-hidden="true" />
+          <p className="mt-2 text-xs text-(--mc-color-text-muted)">
             {t('Complete tests to see topic breakdown')}
           </p>
         </div>
       )}
-    </div>
+    </Surface>
   )
 }
 
-function getTranslatedTopic(topic: string, t: (key: string) => string): string {
+function getTopicIcon(topic: string): LucideIcon {
   const normalized = topic.trim().toLowerCase()
-  const topicAliases: Record<string, string> = {
-    offside: 'Offside',
-    fouls: 'Fouls',
-    'fouls & misconduct': 'Fouls & Misconduct',
-    handball: 'Handball',
-    penalties: 'Penalties',
-    advantage: 'Advantage',
-    cards: 'Cards',
-    'cards & discipline': 'Cards & Discipline',
-    substitutions: 'Substitutions',
-    var: 'VAR',
-    'free kicks': 'Free Kicks',
-    'throw-ins': 'Throw-Ins',
-    'goal kicks': 'Goal Kicks',
-    'corner kicks': 'Corner Kicks',
-    general: 'General',
-    'general laws of the game': 'General Laws of the Game',
-    uncategorized: 'Uncategorized',
-  }
-
-  return t(topicAliases[normalized] ?? topic)
+  if (normalized.includes('offside')) return Flag
+  if (normalized.includes('foul') || normalized.includes('free kick')) return AlertTriangle
+  if (normalized.includes('var') || normalized.includes('video')) return MonitorCheck
+  if (normalized.includes('handball')) return Hand
+  if (normalized.includes('card') || normalized.includes('discipline')) return ShieldAlert
+  return BookOpen
 }
 
-/** Returns a color based on accuracy percentage */
-function getBarColor(accuracy: number): string {
-  if (accuracy >= 80) return 'var(--success)'
-  if (accuracy >= 60) return 'var(--warning)'
-  return 'var(--error)'
+function getAccuracyTier(accuracy: number): keyof typeof toneClasses {
+  if (accuracy >= 85) return 'success'
+  if (accuracy >= 75) return 'accent'
+  if (accuracy >= 60) return 'warning'
+  return 'danger'
+}
+
+function formatNumber(value: number, locale?: string): string {
+  return new Intl.NumberFormat(locale ?? 'pt-PT', { maximumFractionDigits: 1 }).format(value)
 }

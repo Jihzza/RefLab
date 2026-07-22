@@ -1,20 +1,22 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/features/auth/components/useAuth';
+import type { MouseEvent } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  ClipboardList,
-  BookOpen,
   Bell,
+  BookOpen,
+  ClipboardList,
   CreditCard,
-  Users,
+  LayoutDashboard,
+  LogOut,
   MessageSquare,
   Search,
-  UserCircle,
   Settings,
-  LogOut,
+  UserCircle,
+  Users,
+  X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import logo from '@/assets/logos/RefLab-Logo-No-BG.svg';
+import { useAuth } from '@/features/auth/components/useAuth';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,19 +34,32 @@ const NAV_ITEMS = [
   { key: 'Profile', path: '/app/profile', icon: UserCircle },
   { key: 'Pricing', path: '/app/pricing', icon: CreditCard },
   { key: 'Settings', path: '/app/settings', icon: Settings },
-];
+] as const;
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+function isNavigationItemActive(pathname: string, path: string) {
+  if (path === '/app/dashboard') {
+    return pathname === '/app' || pathname === '/app/dashboard';
+  }
+
+  if (path === '/app/social' && pathname.startsWith('/app/post/')) {
+    return true;
+  }
+
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleLogout = async (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
     try {
       await signOut();
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error('Error signing out:', error);
     } finally {
       onClose();
       navigate('/');
@@ -56,91 +71,125 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const displayName = user?.user_metadata?.full_name || user?.email || t('Profile');
+
   return (
     <>
-      {/* Backdrop Overlay */}
-      <div
-        className={`fixed inset-0 bg-(--bg-primary)/50 z-30 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+      <button
+        type="button"
+        tabIndex={isOpen ? 0 : -1}
+        className={`fixed inset-x-0 top-[calc(var(--mc-header-height)+var(--mc-safe-top))] bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] z-(--mc-z-sticky) bg-(--mc-color-overlay) transition-opacity duration-200 md:hidden ${
+          isOpen ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
         onClick={onClose}
-        aria-hidden="true"
+        aria-label={t('Close')}
       />
 
-      {/* Sidebar Panel */}
       <aside
-        className={`fixed top-16 left-0 ${user ? 'bottom-16' : 'bottom-0'} w-64 bg-(--bg-surface) border-r border-(--border-subtle) shadow-xl z-60 transform transition-transform duration-300 ease-in-out flex flex-col ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        id="app-navigation-menu"
+        className={`fixed left-0 top-[calc(var(--mc-header-height)+var(--mc-safe-top))] bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] z-(--mc-z-navigation) flex w-[min(88vw,18rem)] flex-col border-r border-(--mc-color-border) bg-(--mc-color-surface) shadow-(--mc-shadow-raised) transition-[transform,visibility] duration-200 md:inset-y-0 md:w-20 md:visible md:translate-x-0 md:shadow-none xl:w-64 ${
+          isOpen ? 'visible translate-x-0' : 'invisible -translate-x-full'
         }`}
         aria-label={t('Sidebar')}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') onClose();
+        }}
       >
-        {/* Navigation Links (Top) */}
-        <div className="p-4 grow overflow-y-auto">
-          <nav className="space-y-1">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className="w-full text-left px-4 py-3 text-(--text-secondary) hover:bg-(--bg-surface-2) hover:text-(--text-primary) rounded-(--radius-button) transition-colors flex items-center gap-3 font-medium"
-                >
-                  <Icon className="w-4.5 h-4.5 shrink-0" />
-                  <span>{t(item.key)}</span>
-                </button>
-              );
-            })}
-          </nav>
+        <div className="hidden h-16 shrink-0 items-center justify-center gap-3 border-b border-(--mc-color-border) px-4 md:flex xl:justify-start xl:px-6">
+          <img src={logo} alt="" className="h-7 w-auto" aria-hidden="true" />
+          <span className="hidden text-xl font-bold tracking-tight text-(--mc-color-text) xl:block">RefLab</span>
+          <span aria-hidden="true" className="absolute left-0 right-0 top-[3.875rem] h-0.5 bg-linear-to-r from-(--mc-color-accent) via-(--mc-color-danger) to-transparent" />
         </div>
 
-        {/* User Profile & Logout (Bottom) */}
-        <div className="p-4 border-t border-(--border-subtle) bg-(--bg-surface-2)">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-(--mc-color-border) px-4 md:hidden">
+          <p className="text-sm font-bold uppercase tracking-[0.14em] text-(--mc-color-text-secondary)">
+            {t('Sidebar')}
+          </p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mc-focus-ring inline-flex size-11 items-center justify-center rounded-(--mc-radius-button) text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)"
+            aria-label={t('Close')}
+          >
+            <X className="size-5" aria-hidden="true" />
+          </button>
+        </div>
+
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3 md:px-2 md:py-4 xl:px-4" aria-label={t('Sidebar')}>
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = isNavigationItemActive(location.pathname, item.path);
+            const label = t(item.key);
+
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => handleNavigation(item.path)}
+                aria-current={isActive ? 'page' : undefined}
+                title={label}
+                className={`mc-focus-ring relative flex min-h-12 w-full items-center gap-3 rounded-(--mc-radius-button) border px-4 py-3 text-left text-sm font-semibold transition-colors md:justify-center md:px-3 xl:justify-start ${
+                  isActive
+                    ? 'border-(--mc-color-accent)/30 bg-(--mc-color-accent)/10 text-(--mc-color-accent)'
+                    : 'border-transparent text-(--mc-color-text-secondary) hover:border-(--mc-color-border) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)'
+                }`}
+              >
+                {isActive && (
+                  <span aria-hidden="true" className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-(--mc-color-accent)" />
+                )}
+                <Icon className="size-5 shrink-0" strokeWidth={isActive ? 2.25 : 1.75} aria-hidden="true" />
+                <span className="min-w-0 truncate md:hidden xl:block">{label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="shrink-0 border-t border-(--mc-color-border) bg-(--mc-color-surface-raised) p-3 md:px-2 xl:p-4">
           {user ? (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => handleNavigation('/app/profile')}
+                className="mc-focus-ring flex min-w-0 items-center gap-3 rounded-(--mc-radius-button) text-left md:justify-center xl:justify-start"
+              >
                 {user.user_metadata?.avatar_url ? (
                   <img
                     src={user.user_metadata.avatar_url}
                     alt={t('Profile avatar')}
-                    className="w-10 h-10 rounded-full object-cover border border-(--border-subtle)"
+                    className="size-10 shrink-0 rounded-full border border-(--mc-color-border-strong) object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-(--brand-yellow)/20 flex items-center justify-center text-(--brand-yellow) font-bold shrink-0">
-                    {user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
-                  </div>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full border border-(--mc-color-accent)/30 bg-(--mc-color-accent)/10 font-bold text-(--mc-color-accent)" aria-hidden="true">
+                    {displayName.charAt(0).toUpperCase() || 'U'}
+                  </span>
                 )}
-                <div className="overflow-hidden">
-                  <p className="text-sm font-medium text-(--text-primary) truncate" title={user.email}>
-                    {user.user_metadata?.full_name || user.email}
-                  </p>
-                  <p className="text-xs text-(--text-muted) truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
+                <span className="min-w-0 md:hidden xl:block">
+                  <span className="block truncate text-sm font-semibold text-(--mc-color-text)">{displayName}</span>
+                  <span className="block truncate text-xs text-(--mc-color-text-muted)">{user.email}</span>
+                </span>
+              </button>
 
               <button
                 onClick={handleLogout}
                 type="button"
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-(--error) hover:bg-(--error)/10 rounded-(--radius-button) transition-colors border border-(--error)/20 hover:border-(--error)/40 text-sm font-medium"
+                title={t('Log Out')}
+                className="mc-focus-ring flex min-h-11 w-full items-center justify-center gap-2 rounded-(--mc-radius-button) border border-(--mc-color-danger)/35 px-3 py-2 text-sm font-semibold text-(--mc-color-danger) transition-colors hover:bg-(--mc-color-danger)/10"
               >
-                <LogOut className="w-4 h-4" />
-                {t('Log Out')}
+                <LogOut className="size-4 shrink-0" aria-hidden="true" />
+                <span className="md:hidden xl:inline">{t('Log Out')}</span>
               </button>
             </div>
           ) : (
-             <div className="flex flex-col gap-3">
-                <p className="text-sm text-(--text-muted) px-1">{t('Guest')}</p>
-                <button
-                  onClick={() => handleNavigation('/')}
-                  className="w-full px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors text-sm font-bold"
-                >
-                  {t('Log In')}
-                </button>
-             </div>
+            <button
+              type="button"
+              onClick={() => handleNavigation('/')}
+              className="mc-focus-ring min-h-11 w-full rounded-(--mc-radius-button) bg-(--mc-color-accent) px-3 py-2 text-sm font-bold text-(--mc-color-canvas)"
+            >
+              {t('Log In')}
+            </button>
           )}
         </div>
       </aside>
     </>
   );
-};
+}

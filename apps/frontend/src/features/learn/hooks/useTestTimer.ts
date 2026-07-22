@@ -18,7 +18,7 @@ export function useTestTimer(
   onExpire: () => void
 ) {
   const [timeRemaining, setTimeRemaining] = useState(limitSeconds)
-  const startTimeRef = useRef<number>(Date.now())
+  const startTimeRef = useRef<number>(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onExpireRef = useRef(onExpire)
 

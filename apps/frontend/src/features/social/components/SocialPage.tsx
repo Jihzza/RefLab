@@ -1,38 +1,39 @@
-import React, { useState, useRef, useCallback } from 'react'
-import NavigationBar from './NavigationBar'
-import PostBox from './PostBox'
-import NewPostButton from './NewPostButton'
-import CreatePostModal from './CreatePostModal'
+import { useCallback, useRef, useState, type TouchEvent } from 'react'
+import { MessageCircleMore, RefreshCw } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import ViewportPage from '@/app/layouts/ViewportPage'
+import { Button, EmptyState, Skeleton, Surface } from '@/components/ui'
 import { useFeed } from '../hooks/useFeed'
 import { usePostActions } from '../hooks/usePostActions'
 import type { Post } from '../types'
-import { useTranslation } from 'react-i18next'
+import CreatePostModal from './CreatePostModal'
+import NavigationBar from './NavigationBar'
+import NewPostButton from './NewPostButton'
+import PostBox from './PostBox'
 
-/** Loading skeleton for a post card. */
 function PostSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <Surface className="space-y-4" padding="md" aria-hidden="true">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
+        <Skeleton variant="circular" width="2.75rem" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+          <Skeleton variant="text" width="8rem" />
+          <Skeleton variant="text" width="5.5rem" className="h-3" />
         </div>
       </div>
-      <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+      <div className="space-y-2">
+        <Skeleton variant="text" />
+        <Skeleton variant="text" width="76%" />
       </div>
-      <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+      <div className="flex justify-between border-t border-(--mc-color-border) pt-3">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Skeleton key={index} variant="circular" width="1.75rem" />
+        ))}
       </div>
-    </div>
+    </Surface>
   )
 }
 
-/** Main social feed page. */
 export default function SocialPage() {
   const { t } = useTranslation()
   const {
@@ -66,185 +67,162 @@ export default function SocialPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [copiedToast, setCopiedToast] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
-
-  // Pull-to-refresh state
-  const touchStartY = useRef<number>(0)
+  const touchStartY = useRef(0)
   const [pullDistance, setPullDistance] = useState(0)
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (scrollRef.current && scrollRef.current.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY
+  const handleTouchStart = useCallback((event: TouchEvent) => {
+    if (scrollRef.current?.scrollTop === 0) {
+      touchStartY.current = event.touches[0].clientY
     }
   }, [])
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((event: TouchEvent) => {
     if (!touchStartY.current) return
-    const distance = e.touches[0].clientY - touchStartY.current
+    const distance = event.touches[0].clientY - touchStartY.current
     if (distance > 0 && scrollRef.current?.scrollTop === 0) {
       setPullDistance(Math.min(distance * 0.4, 80))
     }
   }, [])
 
   const handleTouchEnd = useCallback(async () => {
-    if (pullDistance > 50) {
-      await refresh()
-    }
+    if (pullDistance > 50) await refresh()
     setPullDistance(0)
     touchStartY.current = 0
   }, [pullDistance, refresh])
 
-  // Infinite scroll
   const handleScroll = useCallback(() => {
-    const el = scrollRef.current
-    if (!el || isLoadingMore || !hasMore) return
-    if (el.scrollHeight - el.scrollTop - el.clientHeight < 300) {
-      loadMore()
+    const element = scrollRef.current
+    if (!element || isLoadingMore || !hasMore) return
+    if (element.scrollHeight - element.scrollTop - element.clientHeight < 300) {
+      void loadMore()
     }
-  }, [isLoadingMore, hasMore, loadMore])
+  }, [hasMore, isLoadingMore, loadMore])
 
-  // Share with toast notification
   const handleShareWithToast = useCallback(
     async (post: Post) => {
       await handleShare(post)
-      // Show toast if clipboard was used (non-mobile)
       if (!navigator.share) {
         setCopiedToast(true)
-        setTimeout(() => setCopiedToast(false), 2000)
+        window.setTimeout(() => setCopiedToast(false), 2000)
       }
     },
-    [handleShare]
+    [handleShare],
   )
 
-  // Update comment count optimistically
   const handleCommentCountChange = useCallback(
     (postId: string, delta: number) => {
       updatePost(postId, {
-        comment_count:
-          Math.max(
-            0,
-            (posts.find(p => p.id === postId)?.comment_count ?? 0) + delta
-          ),
+        comment_count: Math.max(
+          0,
+          (posts.find((post) => post.id === postId)?.comment_count ?? 0) + delta,
+        ),
       })
     },
-    [posts, updatePost]
+    [posts, updatePost],
   )
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Filter tabs */}
-      <NavigationBar filter={filter} onFilterChange={setFilter} />
-
-      {/* Pull-to-refresh indicator */}
-      {pullDistance > 0 && (
-        <div
-          className="flex justify-center transition-all"
-          style={{ height: pullDistance }}
-        >
+    <ViewportPage
+      ariaLabel={t('Social feed')}
+      width="narrow"
+      scroll="managed"
+      header={<NavigationBar filter={filter} onFilterChange={setFilter} />}
+    >
+      <div className="relative flex h-full min-h-0 flex-col">
+        {pullDistance > 0 && (
           <div
-            className={`w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full ${
-              pullDistance > 50 ? 'animate-spin' : ''
-            }`}
-            style={{
-              transform: `rotate(${pullDistance * 3}deg)`,
-            }}
-          />
-        </div>
-      )}
-
-      {/* Refreshing indicator */}
-      {isRefreshing && (
-        <div className="flex justify-center py-2">
-          <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Feed */}
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 space-y-4 py-4 pb-20"
-        onScroll={handleScroll}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Loading skeleton */}
-        {isLoading && (
-          <div className="space-y-4">
-            <PostSkeleton />
-            <PostSkeleton />
-            <PostSkeleton />
-          </div>
-        )}
-
-        {/* Error state */}
-        {error && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">
-              {t('Something went wrong loading the feed.')}
-            </p>
-            <button
-              onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            >
-              {t('Try Again')}
-            </button>
-          </div>
-        )}
-
-        {/* Posts */}
-        {!isLoading &&
-          !error &&
-          posts.map(post => (
-            <PostBox
-              key={post.id}
-              post={post}
-              onLike={handleLike}
-              onSave={handleSave}
-              onRepost={handleRepost}
-              onShare={handleShareWithToast}
-              onDelete={handleDelete}
-              onReport={handleReport}
-              onBlock={handleBlock}
-              onCommentCountChange={handleCommentCountChange}
+            className="flex shrink-0 items-center justify-center overflow-hidden transition-[height]"
+            style={{ height: pullDistance }}
+            aria-hidden="true"
+          >
+            <RefreshCw
+              className={`size-5 text-(--mc-color-accent) ${pullDistance > 50 ? 'animate-spin' : ''}`}
+              style={{ transform: `rotate(${pullDistance * 3}deg)` }}
             />
-          ))}
-
-        {/* Loading more indicator */}
-        {isLoadingMore && (
-          <div className="flex justify-center py-4">
-            <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
-        {/* End of feed */}
-        {!isLoading && !hasMore && posts.length > 0 && (
-          <p className="text-center text-(--text-muted) text-xs py-4">
-            {t("You're all caught up!")}
-          </p>
-        )}
+        <div
+          ref={scrollRef}
+          className="mc-scroll-region flex-1 px-3 py-4 pb-24 sm:px-4 md:py-6"
+          onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="space-y-4">
+            {isRefreshing && (
+              <div className="flex items-center justify-center gap-2 py-1 text-xs font-medium text-(--mc-color-text-muted)" role="status">
+                <RefreshCw className="size-4 animate-spin text-(--mc-color-accent)" aria-hidden="true" />
+                {t('Refreshing feed')}
+              </div>
+            )}
 
-        {/* Empty state */}
-        {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-              </svg>
-            </div>
-            <h3 className="text-base font-medium text-(--text-primary) mb-1">
-              {t('No posts yet')}
-            </h3>
-            <p className="text-sm text-(--text-muted)">
-              {t('When people start posting, their posts will appear here.')}
-            </p>
+            {isLoading && (
+              <div className="space-y-4" role="status" aria-label={t('Loading feed')}>
+                <PostSkeleton />
+                <PostSkeleton />
+                <PostSkeleton />
+              </div>
+            )}
+
+            {error && !isLoading && (
+              <Surface padding="none">
+                <EmptyState
+                  icon={<RefreshCw className="size-6" />}
+                  title={t('Unable to load the feed')}
+                  description={t('Something went wrong loading the feed.')}
+                  action={<Button onClick={() => void refresh()}>{t('Try Again')}</Button>}
+                />
+              </Surface>
+            )}
+
+            {!isLoading &&
+              !error &&
+              posts.map((post) => (
+                <PostBox
+                  key={post.id}
+                  post={post}
+                  onLike={handleLike}
+                  onSave={handleSave}
+                  onRepost={handleRepost}
+                  onShare={handleShareWithToast}
+                  onDelete={handleDelete}
+                  onReport={handleReport}
+                  onBlock={handleBlock}
+                  onCommentCountChange={handleCommentCountChange}
+                />
+              ))}
+
+            {isLoadingMore && (
+              <div className="flex items-center justify-center gap-2 py-4 text-xs text-(--mc-color-text-muted)" role="status">
+                <span className="size-5 animate-spin rounded-full border-2 border-(--mc-color-border-strong) border-t-(--mc-color-accent)" aria-hidden="true" />
+                {t('Loading more posts')}
+              </div>
+            )}
+
+            {!isLoading && !hasMore && posts.length > 0 && (
+              <p className="py-3 text-center text-xs text-(--mc-color-text-muted)">
+                {t("You're all caught up!")}
+              </p>
+            )}
+
+            {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
+              <Surface padding="none">
+                <EmptyState
+                  icon={<MessageCircleMore className="size-6" />}
+                  title={t('No posts yet')}
+                  description={t('When people start posting, their posts will appear here.')}
+                  action={<Button onClick={() => setShowCreateModal(true)}>{t('Create new post')}</Button>}
+                />
+              </Surface>
+            )}
           </div>
-        )}
+        </div>
+
+        <NewPostButton onClick={() => setShowCreateModal(true)} />
       </div>
 
-      {/* FAB */}
-      <NewPostButton onClick={() => setShowCreateModal(true)} />
-
-      {/* Create post modal */}
       {showCreateModal && (
         <CreatePostModal
           onClose={() => setShowCreateModal(false)}
@@ -252,12 +230,14 @@ export default function SocialPage() {
         />
       )}
 
-      {/* Copy toast */}
       {copiedToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div
+          className="fixed bottom-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom)+1rem)] left-1/2 z-(--mc-z-toast) -translate-x-1/2 rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) px-4 py-3 text-sm font-medium text-(--mc-color-text) shadow-(--mc-shadow-raised) md:bottom-6"
+          role="status"
+        >
           {t('Link copied to clipboard')}
         </div>
       )}
-    </div>
+    </ViewportPage>
   )
 }

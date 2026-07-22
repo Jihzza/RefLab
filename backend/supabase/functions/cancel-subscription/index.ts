@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@17?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
+import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -94,10 +94,16 @@ serve(async (req) => {
     })
 
     // Update DB directly so the frontend sees the change immediately
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('stripe_subscriptions')
       .update({ cancel_at_period_end: true })
       .eq('stripe_subscription_id', subscriptionId)
+
+    if (updateError) {
+      // Stripe is already authoritative and the webhook can reconcile this
+      // state. Returning a retryable error avoids falsely reporting completion.
+      throw new Error(`Failed to update local subscription: ${updateError.message}`)
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

@@ -1,81 +1,63 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "./useAuth";
-import { mapAuthError } from "../api/authErrors";
-import { useTranslation } from "react-i18next";
+import { useEffect, useState } from 'react';
+import { CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Button, Input } from '@/components/ui';
+import { mapAuthError } from '../api/authErrors';
+import { meetsPasswordPolicy, PASSWORD_REQUIREMENT_KEY } from '../passwordPolicy';
+import PublicAuthFrame from './PublicAuthFrame';
+import { useAuth } from './useAuth';
 
-/**
- * ResetPassword - Page for setting a new password after clicking reset link
- *
- * Flow:
- * 1. User clicks reset link in email
- * 2. Link redirects to: /reset-password?code=xxx (PKCE flow)
- * 3. Supabase client automatically exchanges the code (detectSessionInUrl: true)
- * 4. PASSWORD_RECOVERY event fires, setting recoveryMode=true in AuthProvider
- * 5. User is temporarily authenticated and can set a new password
- * 6. After setting password, redirect to dashboard
- *
- * Important: This page should only be accessible via the email reset link.
- */
 export default function ResetPassword() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { updatePassword, user, recoveryMode } = useAuth();
-
-  // Form state
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-
-  // UI state
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
+  const [linkTimedOut, setLinkTimedOut] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Check if user arrived via a valid reset link.
-  // With PKCE, detectSessionInUrl exchanges the code automatically and the
-  // PASSWORD_RECOVERY event sets recoveryMode=true in AuthProvider.
   useEffect(() => {
-    // If the exchange succeeded, clear any prior error
-    if (user || recoveryMode) {
-      setError("");
-      return;
-    }
+    if (user || recoveryMode) return;
 
-    // Give Supabase time to exchange the code and fire the recovery event
     const timer = setTimeout(() => {
       if (!user && !recoveryMode) {
-        setError(
-          t("Invalid or expired reset link. Please request a new password reset.")
-        );
+        setLinkTimedOut(true);
       }
     }, 5000);
 
     return () => clearTimeout(timer);
   }, [user, recoveryMode]);
 
+  const linkError = !user && !recoveryMode && linkTimedOut
+    ? t('Invalid or expired reset link. Please request a new password reset.')
+    : '';
+  const displayedError = error || linkError;
+
   const validateForm = (): boolean => {
     if (!password) {
-      setError(t("Password is required"));
+      setError(t('Password is required'));
       return false;
     }
 
-    if (password.length < 6) {
-      setError(t("Password must be at least 6 characters"));
+    if (!meetsPasswordPolicy(password)) {
+      setError(t(PASSWORD_REQUIREMENT_KEY));
       return false;
     }
 
     if (password !== confirmPassword) {
-      setError(t("Passwords do not match"));
+      setError(t('Passwords do not match'));
       return false;
     }
 
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
     if (!validateForm()) return;
 
     setLoading(true);
@@ -90,139 +72,99 @@ export default function ResetPassword() {
         return;
       }
 
-      // Success!
       setSuccess(true);
       setLoading(false);
 
-      // Redirect to dashboard after a short delay
       setTimeout(() => {
-        navigate("/app/dashboard", { replace: true });
+        navigate('/app/dashboard', { replace: true });
       }, 2000);
-    } catch (err) {
+    } catch (caughtError) {
       const mapped = mapAuthError(
-        err instanceof Error ? err : new Error('Failed to update password'),
-        'update-password'
+        caughtError instanceof Error ? caughtError : new Error('Failed to update password'),
+        'update-password',
       );
       setError(mapped.message);
       setLoading(false);
     }
   };
 
-  // Show success message and redirect
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
-        <div className="w-full max-w-md text-center">
-          <div className="p-4 rounded-(--radius-card) bg-(--success)/10 border border-(--success)/20 text-(--success)">
-            <h2 className="text-lg font-semibold mb-2">{t("Password updated!")}</h2>
-            <p>{t("Redirecting you to the dashboard...")}</p>
-          </div>
+      <PublicAuthFrame>
+        <div className="py-3 text-center" role="status" aria-live="polite">
+          <CheckCircle2 className="mx-auto size-12 text-(--mc-color-success)" aria-hidden="true" />
+          <h1 className="mt-4 text-2xl font-extrabold tracking-[-0.025em] text-(--mc-color-text)">
+            {t('Password updated!')}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-(--mc-color-text-secondary)">
+            {t('Redirecting you to the dashboard...')}
+          </p>
         </div>
-      </div>
+      </PublicAuthFrame>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-(--bg-primary)">
-      <div className="w-full max-w-md p-8 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-(--shadow-soft)">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-(--text-primary)">{t("Set new password")}</h1>
-          <p className="mt-2 text-(--text-secondary)">
-            {t("Enter your new password below.")}
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Error message */}
-          {error && (
-            <div className="p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm text-center">
-              {error}
-            </div>
-          )}
-
-          {/* New password field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="new-password"
-              className="block text-sm font-medium text-(--text-secondary)"
-            >
-              {t("New Password")}
-            </label>
-            <input
-              id="new-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading || !user}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2) 
-                border border-(--border-subtle) 
-                rounded-(--radius-input) 
-                text-(--text-primary) 
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow) 
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="••••••••"
-            />
-            <p className="text-xs text-(--text-muted)">{t("Minimum 6 characters")}</p>
-          </div>
-
-          {/* Confirm password field */}
-          <div className="space-y-2">
-            <label
-              htmlFor="confirm-new-password"
-              className="block text-sm font-medium text-(--text-secondary)"
-            >
-              {t("Confirm New Password")}
-            </label>
-            <input
-              id="confirm-new-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading || !user}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2) 
-                border border-(--border-subtle) 
-                rounded-(--radius-input) 
-                text-(--text-primary) 
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow) 
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-50 disabled:cursor-not-allowed"
-              placeholder="••••••••"
-            />
-          </div>
-
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={loading || !user}
-            className="w-full py-3.5 px-4 font-bold transition-all transform active:scale-[0.98]
-              bg-(--brand-yellow) 
-              text-(--bg-primary) 
-              rounded-(--radius-button)
-              hover:bg-(--brand-yellow-soft) 
-              hover:shadow-[0_0_15px_rgb(var(--brand-yellow)_/_0.3)]
-              disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? t("Updating...") : t("Update password")}
-          </button>
-
-          {/* Back to login link */}
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              className="text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline"
-            >
-              {t("Back to login")}
-            </button>
-          </div>
-        </form>
+    <PublicAuthFrame>
+      <div className="mb-6">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-(--mc-color-accent)">
+          Match Control
+        </p>
+        <h1 className="text-2xl font-extrabold tracking-[-0.025em] text-(--mc-color-text)">
+          {t('Set new password')}
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-(--mc-color-text-secondary)">
+          {t('Enter your new password below.')}
+        </p>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {displayedError && (
+          <div role="alert" className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-danger)">
+            {displayedError}
+          </div>
+        )}
+
+        <Input
+          id="new-password"
+          type="password"
+          autoComplete="new-password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          disabled={loading || !user}
+          label={t('New Password')}
+          placeholder="••••••••"
+          hint={t(PASSWORD_REQUIREMENT_KEY)}
+        />
+
+        <Input
+          id="confirm-new-password"
+          type="password"
+          autoComplete="new-password"
+          required
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+          disabled={loading || !user}
+          label={t('Confirm New Password')}
+          placeholder="••••••••"
+        />
+
+        <Button
+          type="submit"
+          size="lg"
+          fullWidth
+          loading={loading}
+          loadingText={t('Updating...')}
+          disabled={!user}
+        >
+          {t('Update password')}
+        </Button>
+
+        <Button type="button" variant="ghost" fullWidth onClick={() => navigate('/')}>
+          {t('Back to login')}
+        </Button>
+      </form>
+    </PublicAuthFrame>
   );
 }

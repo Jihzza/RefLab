@@ -1,4 +1,5 @@
-import { Settings } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
+import DocumentPage from '@/app/layouts/DocumentPage'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useSettings } from '../hooks/useSettings'
 import ProfileSection from './ProfileSection'
@@ -16,6 +17,7 @@ export default function SettingsPage() {
     settings,
     notificationPreferences,
     loading,
+    saving,
     error,
     toggleNotification,
     setMessagingPrivacy,
@@ -24,71 +26,72 @@ export default function SettingsPage() {
   // Auth guard
   if (!user) {
     return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
-          <p className="mt-2 text-sm text-(--error)">
+      <DocumentPage ariaLabel={t('Settings')} title={t('Settings')} width="narrow">
+        <div className="rounded-(--mc-radius-card) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-5">
+          <p className="text-sm text-(--mc-color-danger)">
             {t('You must be signed in to access settings.')}
           </p>
         </div>
-      </section>
+      </DocumentPage>
     )
   }
 
   return (
-    <section className="p-4 pb-20">
-      {/* Page header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Settings className="w-5 h-5 text-(--text-muted)" />
-        <h1 className="text-xl font-semibold text-(--text-primary)">{t('Settings')}</h1>
-      </div>
-
-      {/* Error banner */}
+    <DocumentPage
+      ariaLabel={t('Settings')}
+      eyebrow="Match Control"
+      title={t('Settings')}
+      width="wide"
+      actions={saving ? (
+        <span className="inline-flex items-center gap-2 text-xs text-(--mc-color-text-muted)" role="status">
+          <span className="size-3 animate-spin rounded-full border-2 border-(--mc-color-accent) border-t-transparent motion-reduce:animate-none" aria-hidden="true" />
+          {t('Saving...')}
+        </span>
+      ) : undefined}
+    >
       {error && (
         <div
-          className="mb-4 p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm"
+          className="mb-5 flex items-start gap-3 rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-4 text-sm text-(--mc-color-danger)"
           role="alert"
         >
-          {t('Failed to load settings: {{error}}', { error })}
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{t('Failed to load settings: {{error}}', { error })}</span>
         </div>
       )}
 
-      {/* Loading skeleton */}
       {loading && (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+        <div className="grid gap-4 lg:grid-cols-2" aria-label={t('Loading...')}>
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) h-24 animate-pulse"
+              className="h-40 animate-pulse rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface)"
             />
           ))}
         </div>
       )}
 
-      {/* Settings sections */}
       {!loading && (
-        <div className="space-y-4">
-          <ProfileSection />
-
-          <AccountSection />
-
-          <NotificationsSection
-            preferences={notificationPreferences}
-            onToggle={toggleNotification}
-            loading={loading}
-          />
-
-          <PrivacySection
-            settings={settings}
-            onMessagingPrivacyChange={setMessagingPrivacy}
-            loading={loading}
-          />
-
-          <LearningSection />
-
-          <LegalSection />
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="space-y-4">
+            <ProfileSection />
+            <AccountSection />
+            <LearningSection />
+          </div>
+          <div className="space-y-4">
+            <NotificationsSection
+              preferences={notificationPreferences}
+              onToggle={toggleNotification}
+              loading={loading}
+            />
+            <PrivacySection
+              settings={settings}
+              onMessagingPrivacyChange={setMessagingPrivacy}
+              loading={loading}
+            />
+            <LegalSection />
+          </div>
         </div>
       )}
-    </section>
+    </DocumentPage>
   )
 }

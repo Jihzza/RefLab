@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "backup-manifest",
+  "passed": true,
+  "capturedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+  "sourceProjectRef": "iqebkyjcoqggwhausgje",
+  "encryptedAtRest": true,
+  "offsiteCopyVerified": true,
+  "approvedBy": "REPLACE_ME",
+  "approvalReference": "REPLACE_WITH_EXTERNAL_APPROVAL_REFERENCE",
+  "artifacts": [
+    {
+      "kind": "roles",
+      "path": "roles.sql",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "schema",
+      "path": "schema.sql",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "data",
+      "path": "data.sql",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "migration-history-schema",
+      "path": "migration-history-schema.sql",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "migration-history-data",
+      "path": "migration-history-data.sql",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "storage-inventory",
+      "path": "storage-inventory.json",
+      "sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "kind": "storage-objects",
+      "path": "storage-objects.encrypted-archive",
+      "sha256": "REPLACE_WITH_SHA256"
+    }
+  ]
+}

@@ -18,23 +18,21 @@ export default function FooterSection() {
   const { t } = useTranslation();
 
   return (
-    <footer className="border-t border-(--border-subtle) mt-8 py-6 px-6">
-      <div className="max-w-xl mx-auto text-center">
-        {/* Policy links */}
-        <nav aria-label={t('Legal')} className="flex flex-wrap justify-center gap-4 mb-4">
+    <footer className="border-t border-(--mc-color-border) bg-(--mc-color-canvas)/75 px-4 py-8 sm:px-6">
+      <div className="mx-auto flex w-full max-w-[82rem] flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+        <nav aria-label={t('Legal')} className="flex flex-wrap justify-center gap-x-5 gap-y-2 sm:justify-start">
           {FOOTER_LINKS.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="text-sm text-(--text-muted) hover:text-(--text-secondary) transition-colors"
+              className="mc-focus-ring rounded-md text-sm font-medium text-(--mc-color-text-muted) transition-colors hover:text-(--mc-color-accent)"
             >
               {t(link.label)}
             </Link>
           ))}
         </nav>
 
-        {/* Copyright */}
-        <p className="text-xs text-(--text-muted)">
+        <p className="text-xs text-(--mc-color-text-muted)">
           {t('© {{year}} RefLab. All rights reserved.', { year: new Date().getFullYear() })}
         </p>
       </div>

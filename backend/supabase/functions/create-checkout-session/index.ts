@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@17?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
+import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +25,13 @@ serve(async (req) => {
   }
 
   try {
+    if (Deno.env.get('PAID_PLANS_ENABLED') !== 'true') {
+      return new Response(JSON.stringify({ error: 'Paid plans are not available yet' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
     if (!stripeKey) {
       return new Response(JSON.stringify({ error: 'Missing STRIPE_SECRET_KEY' }), {
@@ -82,33 +89,75 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: existingCustomer } = await supabaseAdmin
+    const { data: deletionJob, error: deletionJobError } = await supabaseAdmin
+      .from('account_deletion_jobs')
+      .select('status')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (deletionJobError) {
+      throw new Error(`Failed to check account deletion state: ${deletionJobError.message}`)
+    }
+
+    if (deletionJob) {
+      return new Response(JSON.stringify({ error: 'Account deletion is in progress' }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: existingSubscription, error: existingSubscriptionError } = await supabaseAdmin
+      .from('stripe_subscriptions')
+      .select('stripe_subscription_id, status')
+      .eq('user_id', user.id)
+      .in('status', ['active', 'trialing', 'past_due', 'unpaid'])
+      .limit(1)
+      .maybeSingle()
+
+    if (existingSubscriptionError) {
+      throw new Error(`Failed to check current subscription: ${existingSubscriptionError.message}`)
+    }
+
+    if (existingSubscription) {
+      return new Response(JSON.stringify({ error: 'An active subscription already exists' }), {
+        status: 409,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { data: existingCustomer, error: existingCustomerError } = await supabaseAdmin
       .from('stripe_customers')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
       .maybeSingle()
 
+    if (existingCustomerError) {
+      throw new Error(`Failed to load Stripe customer: ${existingCustomerError.message}`)
+    }
+
     let stripeCustomerId = existingCustomer?.stripe_customer_id ?? ''
+    const checkoutLifetimeSeconds = 60 * 60
+    const checkoutWindow = Math.floor(Date.now() / (checkoutLifetimeSeconds * 1000))
 
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: user.email,
         metadata: { supabase_user_id: user.id },
+      }, {
+        idempotencyKey: `reflab-customer-${user.id}`,
       })
       stripeCustomerId = customer.id
 
-      await supabaseAdmin
+      const { error: customerUpsertError } = await supabaseAdmin
         .from('stripe_customers')
         .upsert({ user_id: user.id, stripe_customer_id: stripeCustomerId }, { onConflict: 'user_id' })
+
+      if (customerUpsertError) {
+        throw new Error(`Failed to store Stripe customer: ${customerUpsertError.message}`)
+      }
     }
 
-    const origin = req.headers.get('origin') ?? Deno.env.get('SITE_URL') ?? ''
-    if (!origin) {
-      return new Response(JSON.stringify({ error: 'Missing SITE_URL configuration' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    const origin = (Deno.env.get('SITE_URL') ?? 'https://reflab.netlify.app').replace(/\/$/, '')
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -126,6 +175,9 @@ serve(async (req) => {
           plan,
         },
       },
+      expires_at: Math.floor(Date.now() / 1000) + checkoutLifetimeSeconds,
+    }, {
+      idempotencyKey: `reflab-checkout-${user.id}-${plan}-${checkoutWindow}`,
     })
 
     if (!session.url) {

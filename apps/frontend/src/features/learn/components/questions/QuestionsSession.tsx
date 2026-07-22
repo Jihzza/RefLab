@@ -1,77 +1,34 @@
-import { useState, useEffect, useRef } from 'react'
-import { Loader2, Timer } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ArrowRight, BookOpen, Check, Timer, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, Dialog, Surface } from '@/components/ui'
 import {
+  completeQuestionSession,
   getQuestionsByFilters,
   savePracticeAnswerWithSession,
-  completeQuestionSession,
 } from '../../api/testsApi'
-import type { TestQuestion, OptionLetter, QuestionSessionMode, AnsweredQuestion, SessionResult } from '../../types'
-
-/* ─── Helpers ─── */
+import type { AnsweredQuestion, OptionLetter, QuestionSessionMode, SessionResult, TestQuestion } from '../../types'
+import { LearningChoice, LearningError, LearningLoading, LearningMessage, LearningSectionHeading } from '../LearningUI'
 
 const LETTERS: OptionLetter[] = ['A', 'B', 'C', 'D']
-const getOptions = (q: TestQuestion) => [q.option_a, q.option_b, q.option_c, q.option_d]
-const indexToLetter = (idx: number): OptionLetter => LETTERS[idx]
+const getOptions = (question: TestQuestion) => [question.option_a, question.option_b, question.option_c, question.option_d]
+const indexToLetter = (index: number): OptionLetter => LETTERS[index]
 const letterToIndex = (letter: OptionLetter): number => LETTERS.indexOf(letter)
 
 function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[a[i], a[j]] = [a[j], a[i]]
+  const copy = [...arr]
+  for (let index = copy.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    ;[copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]]
   }
-  return a
+  return copy
 }
 
 function formatElapsed(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`
 }
-
-/* ─── Warning Modal ─── */
-
-function WarningModal({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onCancel,
-}: {
-  title: string
-  message: string
-  confirmLabel: string
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-      <div className="bg-(--bg-surface) p-6 rounded-lg max-w-sm w-full border border-(--border-subtle)">
-        <h3 className="font-semibold text-(--text-primary) mb-2">{title}</h3>
-        <p className="text-sm text-(--text-secondary) mb-6">{message}</p>
-        <div className="flex gap-3">
-          <button
-            onClick={onCancel}
-            className="flex-1 py-2 rounded-lg bg-(--bg-surface-2) text-(--text-secondary) font-medium text-sm"
-          >
-            {t('Cancel')}
-          </button>
-          <button
-            onClick={onConfirm}
-            className="flex-1 py-2 rounded-lg bg-(--error) text-white font-medium text-sm"
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─── QuestionsSession ─── */
 
 interface QuestionsSessionProps {
   sessionId: string
@@ -82,19 +39,9 @@ interface QuestionsSessionProps {
   onEndSession: (result: SessionResult) => void
 }
 
-/**
- * QuestionsSession - Active question practice session
- *
- * Features:
- * - Loads questions filtered by the chosen mode/laws/areas
- * - Infinite question pool: re-shuffles and loops when pool is exhausted
- * - Count-up timer (no limit)
- * - Immediate feedback after each answer
- * - "End Session" button with confirmation modal
- * - Saves each answer to DB (linked to session)
- */
 export default function QuestionsSession({
   sessionId,
+  mode,
   filterLaws,
   filterAreas,
   startedAt,
@@ -104,52 +51,46 @@ export default function QuestionsSession({
   const [pool, setPool] = useState<TestQuestion[]>([])
   const [, setQueue] = useState<TestQuestion[]>([])
   const [loading, setLoading] = useState(true)
-
+  const [loadError, setLoadError] = useState(false)
   const [currentQ, setCurrentQ] = useState<TestQuestion | null>(null)
   const [selectedOption, setSelectedOption] = useState<number | null>(null)
   const [showAnswer, setShowAnswer] = useState(false)
-
   const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestion[]>([])
   const [totalCorrect, setTotalCorrect] = useState(0)
-
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [ending, setEnding] = useState(false)
-
-  // Track the last question shown to avoid immediate repeats on reshuffle
   const lastQuestionIdRef = useRef<string | null>(null)
 
-  // Load question pool on mount
   useEffect(() => {
     let cancelled = false
 
     async function load() {
-      const { data } = await getQuestionsByFilters({
+      const { data, error } = await getQuestionsByFilters({
         laws: filterLaws ?? undefined,
         areas: filterAreas ?? undefined,
       })
-      if (!cancelled && data && data.length > 0) {
+
+      if (!cancelled && data?.length) {
         const shuffled = shuffle(data)
         setPool(data)
         setQueue(shuffled)
         setCurrentQ(shuffled[0])
         lastQuestionIdRef.current = shuffled[0].id
       }
-      if (!cancelled) setLoading(false)
+      if (!cancelled) {
+        setLoadError(Boolean(error))
+        setLoading(false)
+      }
     }
 
-    load()
+    void load()
     return () => { cancelled = true }
   }, [filterLaws, filterAreas])
 
-  // Start count-up timer
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setElapsedSeconds(prev => prev + 1)
-    }, 1000)
-
+    timerRef.current = setInterval(() => setElapsedSeconds((current) => current + 1), 1000)
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
@@ -159,29 +100,25 @@ export default function QuestionsSession({
     setSelectedOption(null)
     setShowAnswer(false)
 
-    setQueue(prevQueue => {
-      let remaining = prevQueue.slice(1)
-
-      // Re-shuffle and refill when queue is nearly empty, avoiding repeat of last question
+    setQueue((currentQueue) => {
+      let remaining = currentQueue.slice(1)
       if (remaining.length === 0) {
-        let reshuffled = shuffle(pool)
-        if (reshuffled[0].id === lastQuestionIdRef.current && reshuffled.length > 1) {
-          // Swap first and second to avoid immediate repeat
+        const reshuffled = shuffle(pool)
+        if (reshuffled[0]?.id === lastQuestionIdRef.current && reshuffled.length > 1) {
           ;[reshuffled[0], reshuffled[1]] = [reshuffled[1], reshuffled[0]]
         }
         remaining = reshuffled
       }
 
       const next = remaining[0]
-      setCurrentQ(next)
-      lastQuestionIdRef.current = next.id
+      setCurrentQ(next ?? null)
+      lastQuestionIdRef.current = next?.id ?? null
       return remaining
     })
   }
 
   const handleCheck = async () => {
     if (selectedOption === null || !currentQ || showAnswer) return
-
     const isCorrect = selectedOption === letterToIndex(currentQ.correct_option)
     setShowAnswer(true)
 
@@ -192,31 +129,20 @@ export default function QuestionsSession({
       isCorrect,
     }
 
-    setAnsweredQuestions(prev => [...prev, answered])
-    if (isCorrect) setTotalCorrect(prev => prev + 1)
-
-    // Save to DB in background
-    savePracticeAnswerWithSession(currentQ.id, indexToLetter(selectedOption), isCorrect, sessionId)
+    setAnsweredQuestions((current) => [...current, answered])
+    if (isCorrect) setTotalCorrect((current) => current + 1)
+    await savePracticeAnswerWithSession(currentQ.id, indexToLetter(selectedOption), isCorrect, sessionId)
   }
 
   const handleEndSession = async () => {
     if (ending) return
     setEnding(true)
-
     if (timerRef.current) clearInterval(timerRef.current)
 
     const endedAt = new Date().toISOString()
-    const durationSeconds = Math.round(
-      (new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000
-    )
+    const durationSeconds = Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000)
 
-    await completeQuestionSession(
-      sessionId,
-      startedAt,
-      answeredQuestions.length,
-      totalCorrect
-    )
-
+    await completeQuestionSession(sessionId, startedAt, answeredQuestions.length, totalCorrect)
     onEndSession({
       sessionId,
       startedAt,
@@ -228,123 +154,124 @@ export default function QuestionsSession({
     })
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3">
-        <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        <p className="text-sm text-(--text-muted)">{t('Loading questions…')}</p>
-      </div>
-    )
+  if (loading) return <LearningLoading label={t('Loading questions…')} />
+
+  if (loadError) {
+    return <LearningError title={t('Failed to load questions')} description={t('Please try again')} />
   }
 
   if (!currentQ) {
     return (
-      <div className="text-center py-16">
-        <p className="text-(--text-muted) text-sm">{t('No questions found for the selected filters.')}</p>
-        <button
-          onClick={handleEndSession}
-          className="mt-4 px-4 py-2 text-sm rounded-lg bg-(--bg-surface-2) text-(--text-secondary)"
-        >
-          {t('Go Back')}
-        </button>
-      </div>
+      <LearningMessage
+        icon={<BookOpen size={22} />}
+        title={t('No questions found for the selected filters.')}
+        action={(
+          <Button variant="secondary" onClick={() => void handleEndSession()} loading={ending}>
+            {t('Go Back')}
+          </Button>
+        )}
+      />
     )
   }
 
   const options = getOptions(currentQ)
-  const correctIdx = letterToIndex(currentQ.correct_option)
+  const correctIndex = letterToIndex(currentQ.correct_option)
   const totalAnswered = answeredQuestions.length
+  const modeLabel = mode === 'quick' ? t('Quick Questions') : mode === 'by_law' ? t('By Law') : t('By Area')
 
   return (
     <>
-      {showEndConfirm && (
-        <WarningModal
-          title={t('End Session?')}
-          message={t("You've answered {{total}} {{label}} so far. Your results will be shown on the next screen.", {
-            total: totalAnswered,
-            label: t(totalAnswered === 1 ? 'question' : 'questions'),
-          })}
-          confirmLabel={t('End Session')}
-          onConfirm={handleEndSession}
-          onCancel={() => setShowEndConfirm(false)}
-        />
-      )}
+      <Dialog
+        open={showEndConfirm}
+        onOpenChange={setShowEndConfirm}
+        title={t('End Session?')}
+        description={t("You've answered {{total}} {{label}} so far. Your results will be shown on the next screen.", {
+          total: totalAnswered,
+          label: t(totalAnswered === 1 ? 'question' : 'questions'),
+        })}
+        dialogRole="alertdialog"
+        size="sm"
+        footer={(
+          <>
+            <Button variant="secondary" onClick={() => setShowEndConfirm(false)}>{t('Cancel')}</Button>
+            <Button variant="danger" loading={ending} onClick={() => void handleEndSession()}>{t('End Session')}</Button>
+          </>
+        )}
+      />
 
-      <div className="flex flex-col gap-4">
-        {/* Session header */}
-        <div className="flex items-center justify-between py-2 border-b border-(--border-subtle)">
-          <div className="flex items-center gap-1.5 text-(--text-muted)">
-            <Timer size={15} />
-            <span className="text-sm font-mono">{formatElapsed(elapsedSeconds)}</span>
+      <div className="space-y-4 md:space-y-5">
+        <LearningSectionHeading
+          eyebrow={modeLabel}
+          title={t('Practice Questions')}
+          description={t('Answer at your own pace · No time limit')}
+        />
+
+        <Surface className="sticky top-2 z-10 backdrop-blur-xl" padding="sm" variant="raised">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-(--mc-color-accent)">
+              <Timer size={17} aria-hidden="true" />
+              <span className="mc-tabular font-mono text-sm font-bold">{formatElapsed(elapsedSeconds)}</span>
+            </div>
+            <Badge variant={totalAnswered > 0 ? 'accent' : 'neutral'}>
+              {t('{{correct}}/{{total}} correct', { correct: totalCorrect, total: totalAnswered })}
+            </Badge>
+            <Button variant="ghost" size="sm" className="text-(--mc-color-danger)" onClick={() => setShowEndConfirm(true)}>
+              {t('End Session')}
+            </Button>
+          </div>
+        </Surface>
+
+        <Surface padding="none" variant="raised">
+          <div className="border-b border-(--mc-color-border) px-4 py-4 sm:px-6">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {currentQ.law !== null && <Badge variant="accent">L{currentQ.law}</Badge>}
+              {currentQ.topic && <Badge>{currentQ.topic}</Badge>}
+            </div>
+            <h3 className="text-base font-semibold leading-7 text-(--mc-color-text) sm:text-lg">
+              {currentQ.question_text}
+            </h3>
           </div>
 
-          <span className="text-xs text-(--text-muted)">
-            {t('{{correct}}/{{total}} correct', { correct: totalCorrect, total: totalAnswered })}
-          </span>
+          <div className="space-y-2.5 p-4 sm:p-6">
+            {options.map((option, index) => {
+              let state: 'default' | 'selected' | 'correct' | 'incorrect' | 'muted' = 'default'
+              if (showAnswer) {
+                if (index === correctIndex) state = 'correct'
+                else if (index === selectedOption) state = 'incorrect'
+                else state = 'muted'
+              } else if (index === selectedOption) {
+                state = 'selected'
+              }
 
-          <button
-            onClick={() => setShowEndConfirm(true)}
-            className="text-xs font-medium text-(--error) hover:opacity-80 transition-opacity"
-          >
-            {t('End Session')}
-          </button>
-        </div>
+              return (
+                <LearningChoice
+                  key={LETTERS[index]}
+                  marker={showAnswer && index === correctIndex
+                    ? <Check size={15} />
+                    : showAnswer && index === selectedOption
+                      ? <X size={15} />
+                      : LETTERS[index]}
+                  state={state}
+                  disabled={showAnswer}
+                  aria-pressed={index === selectedOption}
+                  onClick={() => setSelectedOption(index)}
+                >
+                  {option}
+                </LearningChoice>
+              )
+            })}
+          </div>
+        </Surface>
 
-        {/* Question */}
-        <h3 className="text-base font-medium text-(--text-primary) leading-snug">
-          {currentQ.question_text}
-        </h3>
-
-        {/* Options */}
-        <div className="space-y-2">
-          {options.map((opt, idx) => {
-            let styles =
-              'w-full text-left px-4 py-3 rounded-lg border-2 text-sm transition-colors '
-            if (showAnswer) {
-              if (idx === correctIdx)
-                styles += 'border-(--success) bg-(--success)/10 text-(--text-primary)'
-              else if (idx === selectedOption)
-                styles += 'border-(--error) bg-(--error)/10 text-(--text-primary)'
-              else styles += 'border-(--border-subtle) text-(--text-muted)'
-            } else if (idx === selectedOption) {
-              styles += 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-            } else {
-              styles += 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-surface-2)'
-            }
-
-            return (
-              <button
-                key={idx}
-                onClick={() => !showAnswer && setSelectedOption(idx)}
-                disabled={showAnswer}
-                className={`${styles} ${showAnswer ? 'cursor-default' : ''}`}
-              >
-                <span className="font-semibold mr-2">{LETTERS[idx]}.</span>
-                {opt}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-4 pt-4 border-t border-(--border-subtle)">
-          {!showAnswer ? (
-            <button
-              onClick={handleCheck}
-              disabled={selectedOption === null}
-              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white disabled:opacity-40 transition-colors"
-            >
-              {t('Check Answer')}
-            </button>
-          ) : (
-            <button
-              onClick={advanceQuestion}
-              className="w-full py-3 rounded-lg text-sm font-medium bg-(--info) text-white transition-colors"
-            >
-              {t('Next Question')} &rarr;
-            </button>
-          )}
-        </div>
+        {!showAnswer ? (
+          <Button fullWidth size="lg" disabled={selectedOption === null} onClick={() => void handleCheck()}>
+            {t('Check Answer')}
+          </Button>
+        ) : (
+          <Button fullWidth size="lg" trailingIcon={<ArrowRight size={17} />} onClick={advanceQuestion}>
+            {t('Next Question')}
+          </Button>
+        )}
       </div>
     </>
   )

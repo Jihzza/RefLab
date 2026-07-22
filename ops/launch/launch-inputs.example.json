@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "release": {
+    "repository": "Jihzza/RefLab",
+    "expectedRemoteUrl": "https://github.com/Jihzza/RefLab.git",
+    "expectedBranch": "agent/reflab-launch-redesign",
+    "expectedCommit": "REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA",
+    "pullRequestNumber": 22,
+    "baseBranch": "main",
+    "requireApproval": true,
+    "requiredGithubChecks": [
+      "REPLACE_WITH_EXACT_BACKEND_GATE_NAME",
+      "REPLACE_WITH_EXACT_FRONTEND_GATE_NAME",
+      "REPLACE_WITH_EXACT_SECURITY_GATE_NAME",
+      "REPLACE_WITH_EXACT_PREVIEW_GATE_NAME"
+    ],
+    "requiredPreviewCheckName": "REPLACE_WITH_EXACT_PREVIEW_GATE_NAME",
+    "supabaseProjectRef": "iqebkyjcoqggwhausgje",
+    "netlifySiteId": "df99b355-fbfb-4097-875e-ae322175c876",
+    "netlifySiteName": "reflab",
+    "productionUrl": "https://reflab.netlify.app",
+    "previewUrl": "https://deploy-preview-22--reflab.netlify.app",
+    "expectedPaidPlansEnabled": false
+  },
+  "policies": {
+    "requireManagedBackupForFirstPublicLaunch": true
+  },
+  "auth": {
+    "googleOAuthMode": "disabled",
+    "captchaMode": "disabled"
+  },
+  "legal": {
+    "controllerName": "REPLACE_ME",
+    "legalForm": "REPLACE_ME",
+    "registrationAndTaxIdentifiersOrNotApplicable": "REPLACE_ME",
+    "registeredAddress": "REPLACE_ME",
+    "country": "REPLACE_ME",
+    "privacyEmail": "REPLACE_ME",
+    "supportEmail": "REPLACE_ME",
+    "dataProtectionContactOrNotApplicable": "REPLACE_ME",
+    "minimumAge": "REPLACE_ME",
+    "governingLaw": "REPLACE_ME",
+    "competentJurisdiction": "REPLACE_ME",
+    "retentionScheduleApproved": "REPLACE_ME",
+    "privacyPolicyVersion": "REPLACE_ME",
+    "termsVersion": "REPLACE_ME",
+    "cookiesVersion": "REPLACE_ME",
+    "approvedBy": "REPLACE_ME",
+    "privacyApprovedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+    "termsApprovedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+    "cookiesApprovedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP"
+  },
+  "operations": {
+    "communityMode": "enabled",
+    "moderationOwner": "REPLACE_ME",
+    "moderationContact": "REPLACE_ME",
+    "incidentOwner": "REPLACE_ME",
+    "rollbackOwner": "REPLACE_ME",
+    "goNoGoOwner": "REPLACE_ME",
+    "launchWindowStartUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+    "launchWindowEndUtc": "REPLACE_WITH_UTC_TIMESTAMP"
+  },
+  "evidence": {
+    "managedBackupPolicyPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "functionRolloutReadinessPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "functionRolloutPath": "",
+    "legalPublicationPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "backupManifestPath": "REPLACE_WITH_ABSOLUTE_PATH_OUTSIDE_REPOSITORY",
+    "restoreRehearsalPath": "REPLACE_WITH_ABSOLUTE_PATH_OUTSIDE_REPOSITORY",
+    "migrationBaselinePath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "smtpRecoveryPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "supportChannelPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "authProductionReadinessPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "captchaReadinessPath": "",
+    "captchaWaiverPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "credentialRotationPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "googleOAuthReadinessPath": "",
+    "googleOAuthDisabledPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "stripeInventoryPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "previewQaPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "moderationReadinessPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "communityDisablePath": "",
+    "rollbackRehearsalPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "observabilityReadinessPath": "REPLACE_WITH_EVIDENCE_JSON_PATH",
+    "postDeploySmokePath": "",
+    "qaCleanupPath": ""
+  }
+}

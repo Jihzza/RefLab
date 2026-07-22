@@ -1,84 +1,49 @@
-import type { SearchHistoryEntry } from '../types'
+import { ChevronRight, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { IconButton, Surface } from '@/components/ui'
+import type { SearchHistoryEntry } from '../types'
 
 interface SearchResultItemProps {
   user: SearchHistoryEntry
   onClick: () => void
-  /** When provided, renders an X button to remove the item (used in history). */
   onRemove?: () => void
 }
 
-/**
- * A single user row shared by both live search results and search history.
- * Shows avatar (photo or initials fallback), display name, and @username.
- */
-export default function SearchResultItem({
-  user,
-  onClick,
-  onRemove,
-}: SearchResultItemProps) {
+export default function SearchResultItem({ user, onClick, onRemove }: SearchResultItemProps) {
   const { t } = useTranslation()
   const displayName = user.name || user.username
   const initials = displayName.slice(0, 2).toUpperCase()
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 hover:bg-(--bg-hover) transition-colors">
-      {/* Clickable area: avatar + user info */}
+    <Surface className="flex items-center" padding="none" role="listitem">
       <button
         type="button"
         onClick={onClick}
-        className="flex items-center gap-3 flex-1 min-w-0 text-left cursor-pointer"
+        className="mc-focus-ring flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-l-(--mc-radius-card) px-3 py-2.5 text-left hover:bg-(--mc-color-surface-hover) sm:px-4"
         aria-label={t('View profile of {{name}}', { name: displayName })}
       >
-        {/* Avatar */}
         {user.photo_url ? (
-          <img
-            src={user.photo_url}
-            alt=""
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
+          <img src={user.photo_url} alt="" className="size-11 shrink-0 rounded-full border border-(--mc-color-border-strong) object-cover" />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-semibold text-(--bg-primary)">
-              {initials}
-            </span>
-          </div>
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/15 text-xs font-bold text-(--mc-color-accent)">{initials}</span>
         )}
-
-        {/* Name + username */}
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-(--text-primary) truncate">
-            {displayName}
-          </p>
-          <p className="text-xs text-(--text-muted) truncate">
-            @{user.username}
-          </p>
-        </div>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-semibold text-(--mc-color-text)">{displayName}</span>
+          <span className="block truncate text-xs text-(--mc-color-text-muted)">@{user.username}</span>
+        </span>
+        {!onRemove && <ChevronRight className="size-4 shrink-0 text-(--mc-color-text-muted)" aria-hidden="true" />}
       </button>
 
-      {/* Remove button (only for history items) */}
       {onRemove && (
-        <button
-          type="button"
-          onClick={e => {
-            e.stopPropagation()
-            onRemove()
-          }}
-          className="w-7 h-7 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-surface-2) hover:text-(--text-primary) transition-colors flex-shrink-0 cursor-pointer"
-          aria-label={t('Remove {{name}} from search history', { name: displayName })}
+        <IconButton
+          label={t('Remove {{name}} from search history', { name: displayName })}
+          variant="ghost"
+          onClick={onRemove}
+          className="mr-2"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+          <X className="size-4" />
+        </IconButton>
       )}
-    </div>
+    </Surface>
   )
 }

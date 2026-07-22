@@ -8,10 +8,11 @@ import { supabase } from '@/lib/supabaseClient'
  * 2. Return a session with access_token and refresh_token
  * 3. Automatically store the session in localStorage (because we set persistSession: true)
  */
-export async function signInWithPassword(email: string, password: string) {
+export async function signInWithPassword(email: string, password: string, captchaToken?: string) {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: captchaToken ? { captchaToken } : undefined,
   })
 
   return { data, error }
@@ -25,7 +26,7 @@ export async function signInWithPassword(email: string, password: string) {
  * 2. Send a confirmation email (if enabled in Supabase dashboard)
  * 3. Return the user object (session may be null until email is confirmed)
  */
-export async function signUpWithPassword(email: string, password: string) {
+export async function signUpWithPassword(email: string, password: string, captchaToken?: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -33,6 +34,7 @@ export async function signUpWithPassword(email: string, password: string) {
       // Where to redirect after email confirmation
       // This URL must be in your Supabase "Redirect URLs" list
       emailRedirectTo: `${window.location.origin}/auth/callback`,
+      ...(captchaToken ? { captchaToken } : {}),
     },
   })
 
@@ -82,11 +84,12 @@ export async function signOut(scope: 'global' | 'local' | 'others' = 'local') {
  * 2. The link contains a token and redirects to your reset-password page
  * 3. The token is valid for a limited time (configurable in Supabase)
  */
-export async function resetPasswordForEmail(email: string) {
+export async function resetPasswordForEmail(email: string, captchaToken?: string) {
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
     // Where the reset link in the email should redirect to
     // This URL must be in your Supabase "Redirect URLs" list
     redirectTo: `${window.location.origin}/reset-password`,
+    ...(captchaToken ? { captchaToken } : {}),
   })
 
   return { data, error }
@@ -161,10 +164,8 @@ export async function updateUserMetadata(updates: Record<string, unknown>) {
 /**
  * Delete the current user's account via the delete-account Edge Function
  */
-export async function deleteAccountRequest() {
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
+export async function deleteAccountRequest(accessToken: string) {
+  if (!accessToken) {
     return { error: new Error('No active session') }
   }
 
@@ -176,7 +177,7 @@ export async function deleteAccountRequest() {
     {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'apikey': supabaseAnonKey,
         'Content-Type': 'application/json',
       },
@@ -185,7 +186,9 @@ export async function deleteAccountRequest() {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    return { error: new Error(body.error || `Failed to delete account (${response.status})`) }
+    const detail = body.error || `Failed to delete account (${response.status})`
+    const message = body.code ? `${body.code}: ${detail}` : detail
+    return { error: new Error(message) }
   }
 
   return { error: null }

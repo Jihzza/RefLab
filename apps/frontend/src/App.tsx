@@ -3,6 +3,7 @@ import Router from "@/app/Router";
 import { AuthProvider } from "@/features/auth/components/AuthProvider";
 import { BillingProvider } from "@/features/billing/components/BillingProvider";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import AppErrorBoundary from "@/app/AppErrorBoundary";
 
 function App() {
   // AuthProvider wraps everything so any component can access auth state
@@ -10,14 +11,16 @@ function App() {
   // Both must be inside BrowserRouter if their functions need navigation
   // CookieConsentBanner sits outside providers (only needs BrowserRouter for Link)
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <BillingProvider>
-          <Router />
-        </BillingProvider>
-      </AuthProvider>
-      <CookieConsentBanner />
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <BillingProvider>
+            <Router />
+          </BillingProvider>
+        </AuthProvider>
+        <CookieConsentBanner />
+      </BrowserRouter>
+    </AppErrorBoundary>
   );
 }
 

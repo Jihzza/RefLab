@@ -20,27 +20,28 @@ import { useTranslation } from "react-i18next";
 export default function HeroSection() {
   const { t } = useTranslation();
   return (
-    <section className="px-6 pt-8 pb-4 text-center">
-      {/* Logo container - centered with responsive sizing */}
-      <div className="flex justify-center mb-6">
+    <section className="relative py-3 text-center lg:py-8 lg:text-left">
+      <div className="mb-8 flex justify-center lg:justify-start">
         <img
           src={BannerLogo}
           alt={t('RefLab - Referee Training Laboratory')}
-          className="h-16 md:h-20 w-auto"
+          className="h-16 w-auto sm:h-20 lg:h-24"
         />
       </div>
 
-      {/* Main title */}
-      <h1 className="text-2xl md:text-3xl font-bold text-(--text-primary) mb-4">
+      <span aria-hidden="true" className="mc-brand-stripes mx-auto mb-6 lg:mx-0" />
+
+      <h1 className="mx-auto max-w-3xl text-[clamp(2.15rem,7vw,4.8rem)] font-extrabold leading-[0.98] tracking-[-0.045em] text-(--mc-color-text) lg:mx-0">
         {t("Your Referee Training Laboratory")}
       </h1>
 
-      {/* Value proposition description */}
-      <p className="text-(--text-secondary) text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+      <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-(--mc-color-text-secondary) sm:text-lg sm:leading-8 lg:mx-0">
         {t(
-          "A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance."
+          "A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Train with tests, decision scenarios and clear progress feedback."
         )}
       </p>
+
+      <div aria-hidden="true" className="mx-auto mt-8 h-px max-w-xl bg-[linear-gradient(90deg,transparent,var(--mc-color-border-strong),transparent)] lg:mx-0 lg:bg-[linear-gradient(90deg,var(--mc-color-accent),var(--mc-color-border),transparent)]" />
     </section>
   );
 }

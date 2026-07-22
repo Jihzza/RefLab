@@ -35,11 +35,12 @@ const DEBOUNCE_MS = 300
 
 export function useSettings() {
   const { user } = useAuth()
+  const userId = user?.id
 
   const [notificationPreferences, setNotificationPreferences] =
     useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFS)
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(() => Boolean(userId))
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -50,10 +51,7 @@ export function useSettings() {
 
   // Load all settings on mount
   useEffect(() => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
+    if (!userId) return
 
     let cancelled = false
 
@@ -61,7 +59,7 @@ export function useSettings() {
       setLoading(true)
       setError(null)
 
-      const { data, error: fetchError } = await fetchAllSettings(user!.id)
+      const { data, error: fetchError } = await fetchAllSettings(userId!)
 
       if (cancelled) return
 
@@ -76,16 +74,17 @@ export function useSettings() {
       setLoading(false)
     }
 
-    load()
+    const timeoutId = window.setTimeout(() => void load(), 0)
 
     return () => {
       cancelled = true
+      window.clearTimeout(timeoutId)
     }
-  }, [user?.id])
+  }, [userId])
 
   // Flush pending notification preference updates to the DB
   const flushPendingUpdates = useCallback(async () => {
-    if (!user?.id || pendingUpdatesRef.current.size === 0) return
+    if (!userId || pendingUpdatesRef.current.size === 0) return
 
     setSaving(true)
     const updates = new Map(pendingUpdatesRef.current)
@@ -93,7 +92,7 @@ export function useSettings() {
 
     // Save each pending update (parallel)
     const promises = Array.from(updates.entries()).map(([type, enabled]) =>
-      updateNotificationPreference(user!.id, type, enabled)
+      updateNotificationPreference(userId, type, enabled)
     )
 
     const results = await Promise.all(promises)
@@ -104,7 +103,7 @@ export function useSettings() {
     }
 
     setSaving(false)
-  }, [user?.id])
+  }, [userId])
 
   // Toggle a notification preference (optimistic + debounced save)
   const toggleNotification = useCallback(
@@ -129,13 +128,13 @@ export function useSettings() {
   // Update messaging privacy (immediate save)
   const setMessagingPrivacy = useCallback(
     async (value: MessagingPrivacy) => {
-      if (!user?.id) return
+      if (!userId) return
 
       // Optimistic update
       setSettings((prev) => ({ ...prev, messaging_privacy: value }))
 
       setSaving(true)
-      const { error: saveError } = await updateUserSettings(user.id, {
+      const { error: saveError } = await updateUserSettings(userId, {
         messaging_privacy: value,
       })
       setSaving(false)
@@ -146,7 +145,7 @@ export function useSettings() {
         setSettings((prev) => ({ ...prev, messaging_privacy: prev.messaging_privacy }))
       }
     },
-    [user?.id]
+    [userId]
   )
 
   // Cleanup debounce timer on unmount
@@ -156,9 +155,7 @@ export function useSettings() {
         clearTimeout(debounceRef.current)
       }
       // Flush any pending saves
-      if (pendingUpdatesRef.current.size > 0) {
-        flushPendingUpdates()
-      }
+      void flushPendingUpdates()
     }
   }, [flushPendingUpdates])
 

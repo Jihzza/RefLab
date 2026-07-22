@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { cancelSubscription } from '../api/pricingApi'
 import type { Subscription } from '@/features/billing/types'
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
+import Dialog from '@/components/ui/Dialog'
 
 interface CancelDialogProps {
   isOpen: boolean
@@ -14,8 +16,7 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
   const { t } = useTranslation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  if (!isOpen) return null
+  const keepButtonRef = useRef<HTMLButtonElement>(null)
 
   const endDate = subscription.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString('pt-PT', {
@@ -42,65 +43,43 @@ export default function CancelDialog({ isOpen, onClose, subscription, onSuccess 
     onClose()
   }
 
+  const handleClose = () => {
+    if (loading) return
+    setError(null)
+    onClose()
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal */}
-      <div
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-        className="relative bg-(--bg-surface) rounded-(--radius-card) shadow-xl p-6 max-w-sm w-full mx-4 border border-(--border-subtle)"
-      >
-        <h2
-          id="cancel-dialog-title"
-          className="text-lg font-semibold mb-2 text-(--warning)"
-        >
-          {t('Cancel Subscription')}
-        </h2>
-
-        <p
-          id="cancel-dialog-description"
-          className="text-(--text-secondary) text-sm mb-4"
-        >
-          {t("Your subscription will remain active until {{date}}. After that, you'll be downgraded to the Free plan and lose access to premium features.", { date: endDate })}
-        </p>
-
-        {error && (
-          <div
-            className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mb-4"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors disabled:opacity-50"
-          >
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
+      }}
+      title={<span className="text-(--mc-color-warning)">{t('Cancel Subscription')}</span>}
+      description={t("Your subscription will remain active until {{date}}. After that, billing will stop and your account will continue on the Free plan.", { date: endDate })}
+      dialogRole="alertdialog"
+      size="sm"
+      initialFocusRef={keepButtonRef}
+      closeOnEscape={!loading}
+      closeOnOverlayClick={!loading}
+      showCloseButton={!loading}
+      bodyClassName={error ? undefined : 'hidden'}
+      footer={(
+        <div className="grid w-full grid-cols-2 gap-3">
+          <Button ref={keepButtonRef} variant="secondary" onClick={handleClose} disabled={loading}>
             {t('Keep Subscription')}
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
-            disabled={loading}
-            className="flex-1 py-2.5 px-4 rounded-(--radius-button) font-bold bg-(--warning) text-(--bg-primary) hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? t('Canceling...') : t('Cancel Plan')}
-          </button>
+          </Button>
+          <Button onClick={handleConfirm} loading={loading} loadingText={t('Canceling...')}>
+            {t('Cancel Plan')}
+          </Button>
         </div>
-      </div>
-    </div>
+      )}
+    >
+      {error && (
+        <div className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-3 text-sm text-(--mc-color-danger)" role="alert">
+          {error}
+        </div>
+      )}
+    </Dialog>
   )
 }

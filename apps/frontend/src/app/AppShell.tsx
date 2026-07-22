@@ -18,22 +18,22 @@ export default function AppShell() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-(--bg-primary) flex flex-col">
-      {/* Fixed header */}
+    <div className="mc-min-screen bg-(--mc-color-canvas) text-(--mc-color-text)">
       <Header
         onMenuToggle={() => setIsSidebarOpen((prev) => !prev)}
         onMenuClose={() => setIsSidebarOpen(false)}
+        isMenuOpen={isSidebarOpen}
       />
 
-      {/* Sidebar overlay */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      {/* Main content area: offset for fixed header (pt-16) and bottom nav (pb-16) */}
-      <main className="flex-1 pt-16 pb-16">
+      <main
+        id="app-content"
+        className="min-h-dvh pt-[calc(var(--mc-header-height)+var(--mc-safe-top))] pb-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] md:pl-20 md:pb-0 xl:pl-64"
+      >
         <Outlet />
       </main>
 
-      {/* Fixed bottom navigation */}
       <BottomNav />
     </div>
   );

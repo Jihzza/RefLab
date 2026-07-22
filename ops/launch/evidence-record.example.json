@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "preview-qa",
+  "passed": true,
+  "capturedAtUtc": "2026-07-22T12:00:00Z",
+  "releaseCommit": "REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA",
+  "productionProjectRef": "iqebkyjcoqggwhausgje",
+  "approvedBy": "REPLACE_ME",
+  "approvalReference": "REPLACE_WITH_EXTERNAL_APPROVAL_REFERENCE",
+  "artifacts": [
+    {
+      "kind": "qa-report",
+      "path": "REPLACE_WITH_ABSOLUTE_EXTERNAL_ARTIFACT_PATH",
+      "sha256": "REPLACE_WITH_SHA256"
+    }
+  ],
+  "checks": {
+    "mobilePassed": true,
+    "desktopPassed": true,
+    "anonymousPassed": true,
+    "authenticatedPassed": true,
+    "accessibilityNoSeriousCritical": true,
+    "noP0P1": true
+  }
+}

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { ArrowLeft, Check, MapPin, Scale } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getDistinctLaws, getDistinctAreas } from '../../api/testsApi'
+import { Badge, Button, Surface } from '@/components/ui'
+import { getDistinctAreas, getDistinctLaws } from '../../api/testsApi'
+import { LearningError, LearningLoading, LearningMessage, LearningSectionHeading } from '../LearningUI'
 
-// Human-readable names for FIFA laws that appear in the question bank
 const LAW_NAMES: Record<number, string> = {
   11: 'Offside',
   12: 'Fouls & Misconduct',
@@ -15,168 +16,206 @@ interface QuestionsSetupProps {
   mode: 'by_law' | 'by_area'
   onStart: (selectedLaws: number[], selectedAreas: string[]) => void
   onBack: () => void
+  creating?: boolean
+  createError?: boolean
 }
 
-/**
- * QuestionsSetup - Filter configuration screen for By Law and By Area modes
- *
- * Renders multi-select chips for laws or areas. The user must select at least
- * one before the "Start Session" CTA is enabled.
- */
-export default function QuestionsSetup({ mode, onStart, onBack }: QuestionsSetupProps) {
+export default function QuestionsSetup({
+  mode,
+  onStart,
+  onBack,
+  creating = false,
+  createError = false,
+}: QuestionsSetupProps) {
   const { t } = useTranslation()
   const [laws, setLaws] = useState<number[]>([])
   const [areas, setAreas] = useState<string[]>([])
   const [selectedLaws, setSelectedLaws] = useState<number[]>([])
   const [selectedAreas, setSelectedAreas] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+
+  const loadOptions = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    if (mode === 'by_law') {
+      const { data, error } = await getDistinctLaws()
+      setLaws(data ?? [])
+      setLoadError(Boolean(error))
+    } else {
+      const { data, error } = await getDistinctAreas()
+      setAreas(data ?? [])
+      setLoadError(Boolean(error))
+    }
+    setLoading(false)
+  }, [mode])
 
   useEffect(() => {
     let cancelled = false
-
-    async function load() {
-      if (mode === 'by_law') {
-        const { data } = await getDistinctLaws()
-        if (!cancelled && data) setLaws(data)
-      } else {
-        const { data } = await getDistinctAreas()
-        if (!cancelled && data) setAreas(data)
-      }
-      if (!cancelled) setLoading(false)
-    }
-
-    load()
+    const request = mode === 'by_law' ? getDistinctLaws() : getDistinctAreas()
+    void request.then(({ data, error }) => {
+      if (cancelled) return
+      if (mode === 'by_law') setLaws((data ?? []) as number[])
+      else setAreas((data ?? []) as string[])
+      setLoadError(Boolean(error))
+      setLoading(false)
+    })
     return () => { cancelled = true }
   }, [mode])
 
   const toggleLaw = (law: number) => {
-    setSelectedLaws(prev =>
-      prev.includes(law) ? prev.filter(l => l !== law) : [...prev, law]
-    )
+    setSelectedLaws((current) => current.includes(law) ? current.filter((item) => item !== law) : [...current, law])
   }
 
   const toggleArea = (area: string) => {
-    setSelectedAreas(prev =>
-      prev.includes(area) ? prev.filter(a => a !== area) : [...prev, area]
-    )
+    setSelectedAreas((current) => current.includes(area) ? current.filter((item) => item !== area) : [...current, area])
   }
 
-  const selectAllLaws = () => setSelectedLaws([...laws])
-  const clearLaws = () => setSelectedLaws([])
-  const selectAllAreas = () => setSelectedAreas([...areas])
-  const clearAreas = () => setSelectedAreas([])
-
-  const canStart = mode === 'by_law' ? selectedLaws.length > 0 : selectedAreas.length > 0
-
-  const handleStart = () => {
-    onStart(selectedLaws, selectedAreas)
-  }
+  const selectedCount = mode === 'by_law' ? selectedLaws.length : selectedAreas.length
+  const optionsCount = mode === 'by_law' ? laws.length : areas.length
+  const canStart = selectedCount > 0
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="text-sm text-(--text-muted) hover:text-(--text-primary) transition-colors"
-        >
-          &larr; {t('Back')}
-        </button>
-        <h2 className="text-lg font-semibold text-(--text-primary)">
-          {mode === 'by_law' ? t('Select Laws') : t('Select Areas')}
-        </h2>
-      </div>
-
-      <p className="text-sm text-(--text-secondary) -mt-3">
-        {mode === 'by_law'
+    <div className="space-y-5 md:space-y-6">
+      <LearningSectionHeading
+        eyebrow={mode === 'by_law' ? t('By Law') : t('By Area')}
+        title={mode === 'by_law' ? t('Select Laws') : t('Select Areas')}
+        description={mode === 'by_law'
           ? t('Choose one or more FIFA laws to practise. Questions from all selected laws will appear.')
           : t('Choose one or more areas to practise. Questions from all selected areas will appear.')}
-      </p>
+        action={(
+          <Button variant="ghost" size="sm" leadingIcon={<ArrowLeft size={16} />} onClick={onBack}>
+            {t('Back')}
+          </Button>
+        )}
+      />
 
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 text-(--text-muted) animate-spin" />
-        </div>
+        <LearningLoading label={t('Loading questions…')} />
+      ) : loadError ? (
+        <LearningError
+          title={t('Failed to load questions')}
+          description={t('Please try again')}
+          retryLabel={t('Try Again')}
+          onRetry={() => void loadOptions()}
+        />
+      ) : optionsCount === 0 ? (
+        <LearningMessage
+          icon={mode === 'by_law' ? <Scale size={22} /> : <MapPin size={22} />}
+          title={t('No questions found for the selected filters.')}
+          action={(
+            <Button variant="secondary" leadingIcon={<ArrowLeft size={16} />} onClick={onBack}>
+              {t('Go Back')}
+            </Button>
+          )}
+        />
       ) : (
         <>
-          {/* Select All / Clear All helpers */}
-          <div className="flex gap-4 -mt-2">
-            <button
-              onClick={mode === 'by_law' ? selectAllLaws : selectAllAreas}
-              className="text-xs text-(--info) hover:underline"
-            >
-              {t('Select all')}
-            </button>
-            <button
-              onClick={mode === 'by_law' ? clearLaws : clearAreas}
-              className="text-xs text-(--text-muted) hover:underline"
-            >
-              {t('Clear')}
-            </button>
+          <Surface padding="sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Badge variant={selectedCount > 0 ? 'accent' : 'neutral'}>
+                {mode === 'by_law'
+                  ? `${selectedCount} ${t(selectedCount === 1 ? 'law selected' : 'laws selected')}`
+                  : `${selectedCount} ${t(selectedCount === 1 ? 'area selected' : 'areas selected')}`}
+              </Badge>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => mode === 'by_law' ? setSelectedLaws([...laws]) : setSelectedAreas([...areas])}
+                >
+                  {t('Select all')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => mode === 'by_law' ? setSelectedLaws([]) : setSelectedAreas([])}
+                  disabled={selectedCount === 0}
+                >
+                  {t('Clear')}
+                </Button>
+              </div>
+            </div>
+          </Surface>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {mode === 'by_law'
+              ? laws.map((law) => {
+                  const selected = selectedLaws.includes(law)
+                  return (
+                    <FilterOption
+                      key={law}
+                      selected={selected}
+                      icon={selected ? <Check size={17} /> : <Scale size={17} />}
+                      title={t('Law {{law}} — {{name}}', { law, name: t(LAW_NAMES[law] ?? `Law ${law}`) })}
+                      onClick={() => toggleLaw(law)}
+                    />
+                  )
+                })
+              : areas.map((area) => {
+                  const selected = selectedAreas.includes(area)
+                  return (
+                    <FilterOption
+                      key={area}
+                      selected={selected}
+                      icon={selected ? <Check size={17} /> : <MapPin size={17} />}
+                      title={area}
+                      onClick={() => toggleArea(area)}
+                    />
+                  )
+                })}
           </div>
 
-          {/* Chip grid */}
-          {mode === 'by_law' ? (
-            <div className="flex flex-wrap gap-2">
-              {laws.map(law => {
-                const name = LAW_NAMES[law] ?? `Law ${law}`
-                const isSelected = selectedLaws.includes(law)
-                return (
-                  <button
-                    key={law}
-                    onClick={() => toggleLaw(law)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
-                      isSelected
-                        ? 'border-(--info) bg-(--info)/10 text-(--info)'
-                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--info)/50 hover:bg-(--bg-surface-2)'
-                    }`}
-                  >
-                    {t('Law {{law}} — {{name}}', { law, name: t(name) })}
-                  </button>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {areas.map(area => {
-                const isSelected = selectedAreas.includes(area)
-                return (
-                  <button
-                    key={area}
-                    onClick={() => toggleArea(area)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-colors ${
-                      isSelected
-                        ? 'border-(--info) bg-(--info)/10 text-(--info)'
-                        : 'border-(--border-subtle) text-(--text-secondary) hover:border-(--info)/50 hover:bg-(--bg-surface-2)'
-                    }`}
-                  >
-                    {area}
-                  </button>
-                )
-              })}
+          <Button
+            size="lg"
+            fullWidth
+            disabled={!canStart || creating}
+            loading={creating}
+            onClick={() => onStart(selectedLaws, selectedAreas)}
+          >
+            {t('Start Session')}{selectedCount > 0 ? ` · ${selectedCount}` : ''}
+          </Button>
+          {createError && (
+            <div className="rounded-xl border border-(--mc-color-danger)/35 bg-(--mc-color-danger)/10 p-4 text-sm text-(--mc-color-danger)" role="alert">
+              {t('Failed to create attempt')} · {t('Please try again')}
             </div>
           )}
         </>
       )}
-
-      {/* Start CTA */}
-      <button
-        onClick={handleStart}
-        disabled={!canStart}
-        className="w-full py-4 bg-(--info) text-white rounded-2xl font-semibold text-lg hover:opacity-90 transition-opacity shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {t('Start Session')}
-        {mode === 'by_law' && selectedLaws.length > 0 && (
-          <span className="ml-2 text-sm font-normal opacity-80">
-            ({selectedLaws.length} {t(selectedLaws.length > 1 ? 'laws selected' : 'law selected')})
-          </span>
-        )}
-        {mode === 'by_area' && selectedAreas.length > 0 && (
-          <span className="ml-2 text-sm font-normal opacity-80">
-            ({selectedAreas.length} {t(selectedAreas.length > 1 ? 'areas selected' : 'area selected')})
-          </span>
-        )}
-      </button>
     </div>
+  )
+}
+
+function FilterOption({
+  selected,
+  icon,
+  title,
+  onClick,
+}: {
+  selected: boolean
+  icon: React.ReactNode
+  title: React.ReactNode
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className={`mc-focus-ring mc-interactive flex min-h-14 items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold ${
+        selected
+          ? 'border-(--mc-color-accent) bg-(--mc-color-accent)/10 text-(--mc-color-text)'
+          : 'border-(--mc-color-border) bg-(--mc-color-surface) text-(--mc-color-text-secondary) hover:border-(--mc-color-accent)/45 hover:bg-(--mc-color-surface-hover)'
+      }`}
+      aria-pressed={selected}
+      onClick={onClick}
+    >
+      <span className={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${
+        selected
+          ? 'border-(--mc-color-accent) bg-(--mc-color-accent) text-(--mc-color-canvas)'
+          : 'border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text-muted)'
+      }`} aria-hidden="true">
+        {icon}
+      </span>
+      <span>{title}</span>
+    </button>
   )
 }

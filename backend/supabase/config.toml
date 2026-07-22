@@ -1,0 +1,34 @@
+project_id = "reflab"
+
+# Stripe signs webhook payloads itself and therefore cannot send a Supabase JWT.
+[functions.stripe-webhook]
+verify_jwt = false
+
+# Every browser-facing function must pass the platform JWT gate and still
+# authorise the concrete user/resource inside the handler.
+[functions.delete-account]
+verify_jwt = true
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.create-portal-session]
+verify_jwt = true
+
+[functions.change-subscription-plan]
+verify_jwt = true
+
+[functions.cancel-subscription]
+verify_jwt = true
+
+[functions.list-invoices]
+verify_jwt = true
+
+[functions.sync-video-scenarios]
+verify_jwt = true
+
+[functions.get-learn-video-url]
+verify_jwt = true
+
+[functions.sync-learn-videos]
+verify_jwt = true

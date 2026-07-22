@@ -1,72 +1,57 @@
-import { Bell } from 'lucide-react'
-import { useNotifications } from '../hooks/useNotifications'
-import NotificationBanner, {
-  NotificationBannerSkeleton,
-} from './NotificationBanner'
+import { Bell, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import DocumentPage from '@/app/layouts/DocumentPage'
+import { EmptyState, Surface } from '@/components/ui'
+import { useNotifications } from '../hooks/useNotifications'
+import NotificationBanner, { NotificationBannerSkeleton } from './NotificationBanner'
 
-/**
- * NotificationsPage - Displays all user notifications with read/unread styling.
- *
- * Behavior:
- * - On page entry, all unread notifications are marked as read in the DB
- * - Newly-read notifications keep their "unread" visual styling for the session
- * - On next visit, all notifications appear as read
- *
- * Route: /app/notifications
- */
 export default function NotificationsPage() {
   const { t } = useTranslation()
-  const { notifications, loading, error, isVisuallyUnread } =
-    useNotifications()
+  const { notifications, loading, error, isVisuallyUnread } = useNotifications()
+  const unreadCount = notifications.filter((notification) => isVisuallyUnread(notification.id)).length
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Page header */}
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="text-xl font-bold text-(--text-primary)">
-          {t('Notifications')}
-        </h1>
-      </div>
-
-      {/* Loading skeleton */}
+    <DocumentPage
+      ariaLabel={t('Notifications')}
+      width="narrow"
+      eyebrow={t('Match Control')}
+      title={t('Notifications')}
+      description={t('Updates about your activity, community and RefLab account.')}
+      actions={unreadCount > 0 ? (
+        <span className="inline-flex min-h-8 items-center gap-2 rounded-(--mc-radius-pill) border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/10 px-3 text-xs font-bold text-(--mc-color-accent)">
+          <span className="size-2 rounded-full bg-(--mc-color-accent)" aria-hidden="true" />
+          {t('{{count}} new', { count: unreadCount })}
+        </span>
+      ) : undefined}
+    >
       {loading && (
-        <div className="divide-y divide-(--border-subtle)">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <NotificationBannerSkeleton key={i} />
-          ))}
+        <div className="space-y-3" role="status" aria-label={t('Loading notifications')}>
+          {Array.from({ length: 5 }).map((_, index) => <NotificationBannerSkeleton key={index} />)}
         </div>
       )}
 
-      {/* Error state */}
       {error && !loading && (
-        <div className="px-4 py-8 text-center">
-          <p className="text-(--text-muted) text-sm">{t(error)}</p>
-        </div>
+        <Surface padding="none">
+          <EmptyState
+            icon={<ShieldCheck className="size-6" />}
+            title={t('Unable to load notifications')}
+            description={t(error)}
+          />
+        </Surface>
       )}
 
-      {/* Empty state */}
       {!loading && !error && notifications.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-          <div className="w-16 h-16 rounded-full bg-(--bg-surface-2) flex items-center justify-center mb-4 border border-(--border-subtle)">
-            <Bell className="w-8 h-8 text-(--text-muted)" aria-hidden="true" />
-          </div>
-          <p className="text-(--text-muted) text-sm text-center">
-            {t('No notifications yet')}
-          </p>
-          <p className="text-(--text-muted) text-xs text-center mt-1">
-            {t("When someone interacts with your content, you'll see it here.")}
-          </p>
-        </div>
+        <Surface padding="none">
+          <EmptyState
+            icon={<Bell className="size-6" />}
+            title={t('No notifications yet')}
+            description={t("When someone interacts with your content, you'll see it here.")}
+          />
+        </Surface>
       )}
 
-      {/* Notification list */}
       {!loading && !error && notifications.length > 0 && (
-        <div
-          className="divide-y divide-(--border-subtle) pb-4"
-          role="list"
-          aria-label={t('Notifications list')}
-        >
+        <ul className="space-y-3" aria-label={t('Notifications list')}>
           {notifications.map((notification) => (
             <NotificationBanner
               key={notification.id}
@@ -74,8 +59,8 @@ export default function NotificationsPage() {
               isUnread={isVisuallyUnread(notification.id)}
             />
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </DocumentPage>
   )
 }

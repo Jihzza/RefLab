@@ -1,96 +1,45 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Menu, Search } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import logo from '@/assets/logos/RefLab-Logo-No-BG.svg';
+import { IconButton } from '@/components/ui';
 import { useAuth } from '@/features/auth/components/useAuth';
 import NotificationBell from '@/features/notifications/components/NotificationBell';
-import logo from '@/assets/logos/RefLab-Logo-No-BG.svg';
-import { useTranslation } from 'react-i18next';
-
-/**
- * Hamburger Menu Icon
- * Accepts onClick and onDoubleClick handlers.
- */
-const MenuIcon = ({
-  onClick,
-  onDoubleClick,
-  ariaLabel,
-}: {
-  onClick: () => void;
-  onDoubleClick: () => void;
-  ariaLabel: string;
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6 cursor-pointer text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    onClick={onClick}
-    onDoubleClick={onDoubleClick}
-    aria-label={ariaLabel}
-    role="button"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-
-/**
- * Search Icon
- */
-const SearchIcon = ({ onClick, ariaLabel }: { onClick: () => void; ariaLabel: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6 cursor-pointer text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    onClick={onClick}
-    aria-label={ariaLabel}
-    role="button"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
-
-/**
- * RefLab Logo
- */
-const RefLabLogo = ({ onClick }: { onClick: () => void }) => (
-  <RefLabLogoInner onClick={onClick} />
-);
-
-const RefLabLogoInner = ({ onClick }: { onClick: () => void }) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className="flex items-center gap-2 cursor-pointer"
-      onClick={onClick}
-      role="button"
-      aria-label={t('RefLab Home')}
-    >
-      <img src={logo} alt={t('RefLab Logo')} className="h-6 w-auto" />
-      <span className="text-xl font-bold text-(--text-primary)">RefLab</span>
-    </div>
-  );
-};
 
 interface HeaderProps {
   onMenuToggle: () => void;
   onMenuClose: () => void;
+  isMenuOpen?: boolean;
 }
 
-/**
- * Header Component
- * Layout: 20% Left (Menu) | 60% Center (Logo) | 20% Right (Search/Notifs)
- *
- * Sidebar state is managed by the parent (AppShell) via onMenuToggle/onMenuClose props.
- */
-export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => {
+const ROUTE_TITLES = [
+  { prefix: '/app/notifications', label: 'Notifications' },
+  { prefix: '/app/profile/edit', label: 'Edit Profile' },
+  { prefix: '/app/messages', label: 'Messages' },
+  { prefix: '/app/settings', label: 'Settings' },
+  { prefix: '/app/pricing', label: 'Pricing' },
+  { prefix: '/app/search', label: 'Search' },
+  { prefix: '/app/learn', label: 'Learn' },
+  { prefix: '/app/tests', label: 'Tests' },
+  { prefix: '/app/social', label: 'Social' },
+  { prefix: '/app/post', label: 'Social' },
+  { prefix: '/app/profile', label: 'Profile' },
+] as const;
+
+function getRouteTitle(pathname: string) {
+  return ROUTE_TITLES.find(({ prefix }) => (
+    pathname === prefix || pathname.startsWith(`${prefix}/`)
+  ))?.label ?? 'Dashboard';
+}
+
+/** Fixed Match Control header for the authenticated application shell. */
+export function Header({ onMenuToggle, isMenuOpen = false }: HeaderProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const routeTitle = t(getRouteTitle(location.pathname));
 
-  // --- Logo Logic ---
   const handleLogoClick = () => {
     if (user) {
       navigate('/app/dashboard');
@@ -104,33 +53,63 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, onMenuClose }) => 
     }
   };
 
-  // --- Search Logic ---
-  const handleSearchClick = () => {
-    navigate('/app/search');
-  };
-
   return (
-    <header className="fixed top-0 left-0 w-full h-16 bg-(--bg-surface) shadow-(--shadow-soft) z-50 flex items-center px-4 border-b border-(--border-subtle) transition-all">
+    <header className="fixed top-0 right-0 left-0 z-(--mc-z-header) h-[calc(var(--mc-header-height)+var(--mc-safe-top))] border-b border-(--mc-color-border) bg-(--mc-color-surface)/95 pt-[var(--mc-safe-top)] shadow-(--mc-shadow-soft) backdrop-blur-md md:left-20 xl:left-64">
+      <a
+        href="#app-content"
+        className="mc-focus-ring absolute left-3 top-[calc(var(--mc-safe-top)+0.5rem)] z-10 -translate-y-20 rounded-(--mc-radius-button) bg-(--mc-color-accent) px-3 py-2 text-sm font-bold text-(--mc-color-canvas) focus:translate-y-0"
+      >
+        {t('Skip to main content')}
+      </a>
 
-      {/* [HAMBURGUER MENU 20%] */}
-      <div className="w-[20%] flex justify-start items-center">
-        <MenuIcon
+      <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-6">
+        <IconButton
+          label={t('Open menu')}
+          size="md"
+          variant="ghost"
           onClick={onMenuToggle}
-          onDoubleClick={onMenuClose}
-          ariaLabel={t('Open menu')}
-        />
+          aria-controls="app-navigation-menu"
+          aria-expanded={isMenuOpen}
+          className="md:hidden"
+        >
+          <Menu className="size-5" />
+        </IconButton>
+
+        <button
+          type="button"
+          onClick={handleLogoClick}
+          className="mc-focus-ring flex min-h-11 shrink-0 items-center gap-2 rounded-(--mc-radius-button) px-1 md:hidden"
+          aria-label={t('RefLab Home')}
+        >
+          <img src={logo} alt="" className="h-7 w-auto" aria-hidden="true" />
+          <span className="text-lg font-bold tracking-tight text-(--mc-color-text)">RefLab</span>
+        </button>
+
+        <div className="hidden min-w-0 flex-1 md:block">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-(--mc-color-accent)">
+            Match Control
+          </p>
+          <h1 className="truncate text-base font-semibold text-(--mc-color-text)">
+            {routeTitle}
+          </h1>
+        </div>
+
+        <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
+          <IconButton
+            label={t('Search')}
+            size="md"
+            variant="ghost"
+            onClick={() => navigate('/app/search')}
+            className="hidden sm:inline-flex"
+          >
+            <Search className="size-5" />
+          </IconButton>
+          <NotificationBell />
+        </div>
       </div>
 
-      {/* [REFLAB LOGO 60%] */}
-      <div className="w-[60%] flex justify-center items-center">
-        <RefLabLogo onClick={handleLogoClick} />
-      </div>
-
-      {/* [SEARCH AND NOTIFICATIONS ICON 20%] */}
-      <div className="w-[20%] flex justify-end items-center gap-3 sm:gap-4">
-        <SearchIcon onClick={handleSearchClick} ariaLabel={t('Search')} />
-        <NotificationBell />
-      </div>
+      <span aria-hidden="true" className="absolute bottom-0 left-4 h-0.5 w-10 bg-(--mc-color-accent) md:left-6" />
+      <span aria-hidden="true" className="absolute bottom-0 left-14 h-0.5 w-3 bg-(--mc-color-danger) md:left-16" />
     </header>
   );
-};
+}

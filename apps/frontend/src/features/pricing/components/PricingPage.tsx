@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CreditCard } from 'lucide-react'
+import DocumentPage from '@/app/layouts/DocumentPage'
 import { useBilling } from '@/features/billing/components/useBilling'
 import PlansSection from './PlansSection'
 import SubscriptionCard from './SubscriptionCard'
 import InvoiceHistory from './InvoiceHistory'
 import CancelDialog from './CancelDialog'
-import ChangePlanDialog from './ChangePlanDialog'
 import { useTranslation } from 'react-i18next'
 
 export default function PricingPage() {
@@ -16,18 +16,16 @@ export default function PricingPage() {
 
   // Dialog state
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
-  const [changePlanDialogOpen, setChangePlanDialogOpen] = useState(false)
-  const [targetPlan, setTargetPlan] = useState<'pro' | 'plus'>('pro')
 
   // Checkout success banner
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false)
+  const [checkoutSuccess, setCheckoutSuccess] = useState(
+    () => searchParams.get('checkout') === 'success',
+  )
   const pollCountRef = useRef(0)
 
   // Handle ?checkout=success after returning from Stripe
   useEffect(() => {
     if (searchParams.get('checkout') !== 'success') return
-
-    setCheckoutSuccess(true)
 
     // Remove the query param from URL
     const newParams = new URLSearchParams(searchParams)
@@ -57,12 +55,6 @@ export default function PricingPage() {
     }
   }, [checkoutSuccess, subscription])
 
-  /** Open the change plan dialog with a target */
-  const handleChangePlan = (plan: 'pro' | 'plus') => {
-    setTargetPlan(plan)
-    setChangePlanDialogOpen(true)
-  }
-
   /** After a successful cancel or plan change, refresh billing data */
   const handleActionSuccess = async () => {
     await refreshBilling()
@@ -70,24 +62,34 @@ export default function PricingPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="text-(--text-muted)">{t('Loading...')}</div>
-      </div>
+      <DocumentPage ariaLabel={t('Pricing & Billing')} title={t('Pricing & Billing')} width="wide">
+        <div className="space-y-4" aria-label={t('Loading...')}>
+          <div className="h-36 animate-pulse rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface)" />
+          <div className="grid gap-4 md:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="h-96 animate-pulse rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface)" />
+            ))}
+          </div>
+        </div>
+      </DocumentPage>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 pb-20">
-      {/* Page header */}
-      <div className="flex items-center gap-2 mb-6">
-        <CreditCard className="w-5 h-5 text-(--text-muted)" aria-hidden="true" />
-        <h1 className="text-xl font-bold text-(--text-primary)">{t('Pricing & Billing')}</h1>
-      </div>
-
-      {/* Checkout success banner */}
+    <DocumentPage
+      ariaLabel={t('Pricing & Billing')}
+      eyebrow="Match Control"
+      title={t('Pricing & Billing')}
+      width="wide"
+      actions={(
+        <span className="flex size-11 items-center justify-center rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-accent)">
+          <CreditCard className="size-5" aria-hidden="true" />
+        </span>
+      )}
+    >
       {checkoutSuccess && (
         <div
-          className="bg-(--success)/10 border border-(--success)/20 text-(--success) px-4 py-3 rounded-lg mb-6 text-center text-sm font-medium"
+          className="mb-6 rounded-(--mc-radius-input) border border-(--mc-color-success)/30 bg-(--mc-color-success)/10 px-4 py-3 text-center text-sm font-semibold text-(--mc-color-success)"
           role="status"
         >
           {subscription
@@ -98,7 +100,6 @@ export default function PricingPage() {
         </div>
       )}
 
-      {/* Current subscription card (only shown for paid users) */}
       {subscription && ['active', 'trialing', 'past_due'].includes(subscription.status) && (
         <SubscriptionCard
           subscription={subscription}
@@ -107,10 +108,8 @@ export default function PricingPage() {
         />
       )}
 
-      {/* Plans comparison */}
-      <PlansSection onChangePlan={handleChangePlan} />
+      <PlansSection />
 
-      {/* Purchase history (only for users who have/had a subscription) */}
       {subscription && <InvoiceHistory />}
 
       {/* Cancel dialog */}
@@ -123,16 +122,6 @@ export default function PricingPage() {
         />
       )}
 
-      {/* Change plan dialog */}
-      {subscription && (
-        <ChangePlanDialog
-          isOpen={changePlanDialogOpen}
-          onClose={() => setChangePlanDialogOpen(false)}
-          subscription={subscription}
-          targetPlan={targetPlan}
-          onSuccess={handleActionSuccess}
-        />
-      )}
-    </div>
+    </DocumentPage>
   )
 }

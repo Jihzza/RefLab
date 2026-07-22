@@ -9,9 +9,8 @@
  * so it includes its own minimal header with a back-to-home link.
  */
 
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Cookie, ScrollText, ShieldCheck } from 'lucide-react';
 import PrivacyPolicyTab from './PrivacyPolicyTab';
 import TermsOfServiceTab from './TermsOfServiceTab';
 import CookiesPolicyTab from './CookiesPolicyTab';
@@ -23,44 +22,49 @@ interface PoliciesPageProps {
   defaultTab: PolicyTab;
 }
 
-/** Tab labels for display */
-const TAB_LABELS: Record<PolicyTab, string> = {
-  privacy: 'Privacy Policy',
-  terms: 'Terms of Service',
-  cookies: 'Cookies Policy',
-};
+const TABS: Array<{
+  id: PolicyTab;
+  label: string;
+  to: string;
+  icon: typeof ShieldCheck;
+}> = [
+  { id: 'privacy', label: 'Privacy Policy', to: '/privacy', icon: ShieldCheck },
+  { id: 'terms', label: 'Terms of Service', to: '/terms', icon: ScrollText },
+  { id: 'cookies', label: 'Cookies Policy', to: '/cookies', icon: Cookie },
+];
 
 /** Tab navigation bar — follows the LearnNav pattern */
 function PoliciesNav({
   activeTab,
-  setActiveTab,
 }: {
   activeTab: PolicyTab;
-  setActiveTab: (tab: PolicyTab) => void;
 }) {
   const { t } = useTranslation();
-  const tabs: PolicyTab[] = ['privacy', 'terms', 'cookies'];
 
   return (
     <nav
-      className="border-b border-(--border-subtle) mb-6 -mx-4 px-4"
+      className="no-scrollbar overflow-x-auto"
       aria-label={t('Policy sections')}
     >
-      <div className="flex overflow-x-auto no-scrollbar py-3 gap-4 md:justify-center">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`shrink-0 px-3 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${
-              activeTab === tab
-                ? 'border-(--text-primary) text-(--text-primary)'
-                : 'border-transparent text-(--text-muted) hover:text-(--text-secondary)'
+      <div className="flex min-w-max gap-2 rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface) p-1.5 sm:min-w-0">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          return (
+          <Link
+            key={tab.id}
+            to={tab.to}
+            className={`inline-flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-(--mc-radius-button) px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) ${
+              activeTab === tab.id
+                ? 'bg-(--mc-color-accent) text-(--mc-color-canvas) shadow-sm'
+                : 'text-(--mc-color-text-muted) hover:bg-(--mc-color-surface-hover) hover:text-(--mc-color-text)'
             }`}
-            aria-current={activeTab === tab ? 'page' : undefined}
+            aria-current={activeTab === tab.id ? 'page' : undefined}
           >
-            {t(TAB_LABELS[tab])}
-          </button>
-        ))}
+            <Icon className="size-4" aria-hidden="true" />
+            {t(tab.label)}
+          </Link>
+          );
+        })}
       </div>
     </nav>
   );
@@ -68,37 +72,42 @@ function PoliciesNav({
 
 export default function PoliciesPage({ defaultTab }: PoliciesPageProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<PolicyTab>(defaultTab);
 
   return (
-    <div className="min-h-screen bg-(--bg-primary) pb-24">
-      <div className="px-4 max-w-3xl mx-auto pt-6">
-        {/* Back to home link (since this page has no AppShell navigation) */}
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-(--text-muted) hover:text-(--text-primary) transition-colors mb-6"
-          aria-label={t('Back to Home')}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t('Back to Home')}
-        </Link>
+    <div className="min-h-dvh bg-(--mc-color-canvas) pb-16 text-(--mc-color-text)">
+      <header className="border-b border-(--mc-color-border) bg-(--mc-color-surface)">
+        <div className="mx-auto flex min-h-16 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
+          <Link
+            to="/"
+            className="inline-flex min-h-11 items-center gap-2 rounded-(--mc-radius-button) text-sm font-medium text-(--mc-color-text-secondary) transition-colors hover:text-(--mc-color-text) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
+            aria-label={t('Back to Home')}
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            {t('Back to Home')}
+          </Link>
+          <span className="inline-flex items-center gap-2 text-sm font-extrabold tracking-tight" aria-label="RefLab">
+            <span className="h-5 w-1.5 -skew-x-12 bg-(--mc-color-accent)" aria-hidden="true" />
+            <span className="h-5 w-1.5 -skew-x-12 bg-(--mc-color-danger)" aria-hidden="true" />
+            RefLab
+          </span>
+        </div>
+      </header>
 
-        {/* Page title */}
-        <h1 className="text-2xl font-bold text-(--text-primary) text-center mb-2">
-          {t('Legal')}
-        </h1>
-        <p className="text-sm text-(--text-muted) text-center mb-6">
-          {t('Review our policies and terms')}
-        </p>
+      <div className="mx-auto w-full max-w-3xl px-4 pt-8 sm:px-6 sm:pt-12">
+        <div className="mb-6">
+          <p className="mc-eyebrow mb-2">RefLab</p>
+          <h1 className="mc-page-title">{t('Legal')}</h1>
+          <p className="mt-2 text-sm leading-6 text-(--mc-color-text-muted)">
+            {t('Review our policies and terms')}
+          </p>
+        </div>
 
-        {/* Tab navigation */}
-        <PoliciesNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <PoliciesNav activeTab={defaultTab} />
 
-        {/* Tab content */}
-        <main>
-          {activeTab === 'privacy' && <PrivacyPolicyTab />}
-          {activeTab === 'terms' && <TermsOfServiceTab />}
-          {activeTab === 'cookies' && <CookiesPolicyTab />}
+        <main className="mt-6" tabIndex={-1}>
+          {defaultTab === 'privacy' && <PrivacyPolicyTab />}
+          {defaultTab === 'terms' && <TermsOfServiceTab />}
+          {defaultTab === 'cookies' && <CookiesPolicyTab />}
         </main>
       </div>
     </div>

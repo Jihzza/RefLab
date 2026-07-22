@@ -11,6 +11,7 @@ import type { DashboardStats, UseDashboardReturn } from '../types'
  */
 export function useDashboard(): UseDashboardReturn {
   const { user } = useAuth()
+  const userId = user?.id
   const location = useLocation()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -18,12 +19,12 @@ export function useDashboard(): UseDashboardReturn {
 
   // Fetch all dashboard stats
   const loadStats = useCallback(async () => {
-    if (!user?.id) return
+    if (!userId) return
 
     setLoading(true)
     setError(null)
 
-    const { data, error: fetchError } = await fetchDashboardStats(user.id)
+    const { data, error: fetchError } = await fetchDashboardStats(userId)
 
     if (fetchError) {
       setError(fetchError.message)
@@ -33,40 +34,44 @@ export function useDashboard(): UseDashboardReturn {
 
     setStats(data)
     setLoading(false)
-  }, [user?.id])
+  }, [userId])
 
   // Load on mount and whenever the user navigates to the dashboard
   useEffect(() => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
+    if (!userId) return
 
     let cancelled = false
+    const timer = window.setTimeout(() => {
+      setLoading(true)
+      setError(null)
 
-    setLoading(true)
-    setError(null)
+      void fetchDashboardStats(userId).then(({ data, error: fetchError }) => {
+        if (cancelled) return
 
-    fetchDashboardStats(user.id).then(({ data, error: fetchError }) => {
-      if (cancelled) return
-
-      if (fetchError) {
-        setError(fetchError.message)
-      } else {
-        setStats(data)
-      }
-      setLoading(false)
-    })
+        if (fetchError) {
+          setError(fetchError.message)
+        } else {
+          setStats(data)
+        }
+        setLoading(false)
+      })
+    }, 0)
 
     return () => {
       cancelled = true
+      window.clearTimeout(timer)
     }
-  }, [user?.id, location.pathname])
+  }, [userId, location.pathname])
 
   // Manual refresh
   const refresh = useCallback(async () => {
     await loadStats()
   }, [loadStats])
 
-  return { stats, loading, error, refresh }
+  return {
+    stats: userId ? stats : null,
+    loading: userId ? loading : false,
+    error: userId ? error : null,
+    refresh,
+  }
 }

@@ -1,47 +1,37 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Button, ProgressBar, Surface } from '@/components/ui'
 import {
-  getTestBySlug,
-  getQuestions,
-  getOrCreateAttempt,
   getAttemptAnswers,
+  getOrCreateAttempt,
+  getQuestions,
+  getTestBySlug,
   saveAnswer,
   submitAttempt,
 } from '../api/testsApi'
-import type { Test, TestQuestion, TestAttempt, TestAttemptAnswer, OptionLetter } from '../types'
+import type { OptionLetter, Test, TestAttempt, TestAttemptAnswer, TestQuestion } from '../types'
 import QuestionCard from './QuestionCard'
 import TestResults from './TestResults'
+import { LearningError, LearningLoading, LearningMessage, LearningSectionHeading } from './LearningUI'
 
-/**
- * TestPage - The main test-taking experience
- *
- * Features:
- * - Loads test and questions from Supabase
- * - Creates or resumes an attempt
- * - Allows navigation between questions
- * - Saves answers as you go
- * - Submit to see results
- */
 export default function TestPage() {
   const { t } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
-
-  // Data state
   const [test, setTest] = useState<Test | null>(null)
   const [questions, setQuestions] = useState<TestQuestion[]>([])
   const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [answers, setAnswers] = useState<Map<string, OptionLetter>>(new Map())
-
-  // UI state
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  // Load test data on mount
   useEffect(() => {
+    let cancelled = false
+
     async function loadTest() {
       if (!slug) {
         setError(t('No test specified'))
@@ -53,8 +43,8 @@ export default function TestPage() {
       setError(null)
 
       try {
-        // 1. Get the test
         const { data: testData, error: testError } = await getTestBySlug(slug)
+        if (cancelled) return
         if (testError || !testData) {
           setError(testError?.message || t('Test not found'))
           setLoading(false)
@@ -62,8 +52,8 @@ export default function TestPage() {
         }
         setTest(testData)
 
-        // 2. Get questions
         const { data: questionsData, error: questionsError } = await getQuestions(testData.id)
+        if (cancelled) return
         if (questionsError || !questionsData) {
           setError(questionsError?.message || t('Failed to load questions'))
           setLoading(false)
@@ -71,8 +61,8 @@ export default function TestPage() {
         }
         setQuestions(questionsData)
 
-        // 3. Get or create attempt
         const { data: attemptData, error: attemptError } = await getOrCreateAttempt(testData.id)
+        if (cancelled) return
         if (attemptError || !attemptData) {
           setError(attemptError?.message || t('Failed to create attempt'))
           setLoading(false)
@@ -80,8 +70,8 @@ export default function TestPage() {
         }
         setAttempt(attemptData)
 
-        // 4. Load existing answers (for resume)
         const { data: existingAnswers } = await getAttemptAnswers(attemptData.id)
+        if (cancelled) return
         if (existingAnswers) {
           const answersMap = new Map<string, OptionLetter>()
           existingAnswers.forEach((answer: TestAttemptAnswer) => {
@@ -89,198 +79,167 @@ export default function TestPage() {
           })
           setAnswers(answersMap)
         }
-
-        setLoading(false)
-      } catch (err) {
-        setError(t('An unexpected error occurred'))
-        setLoading(false)
+      } catch {
+        if (!cancelled) setError(t('An unexpected error occurred'))
+      } finally {
+        if (!cancelled) setLoading(false)
       }
     }
 
-    loadTest()
+    void loadTest()
+    return () => { cancelled = true }
   }, [slug, t])
 
-  // Handle selecting an option
   const handleSelectOption = async (option: OptionLetter) => {
     if (!attempt || !questions[currentIndex]) return
-
     const questionId = questions[currentIndex].id
-
-    // Update local state immediately for responsiveness
-    setAnswers((prev) => new Map(prev).set(questionId, option))
-
-    // Save to database
+    setAnswers((current) => new Map(current).set(questionId, option))
     await saveAnswer(attempt.id, questionId, option)
   }
 
-  // Navigate to next question
   const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1)
-    }
+    if (currentIndex < questions.length - 1) setCurrentIndex((current) => current + 1)
   }
 
-  // Navigate to previous question
   const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1)
-    }
+    if (currentIndex > 0) setCurrentIndex((current) => current - 1)
   }
 
-  // Submit the test
   const handleSubmit = async () => {
     if (!attempt) return
-
     setSubmitting(true)
     const { data: updatedAttempt, error: submitError } = await submitAttempt(attempt.id)
-
     if (submitError || !updatedAttempt) {
       setError(submitError?.message || t('Failed to submit test'))
       setSubmitting(false)
       return
     }
-
     setAttempt(updatedAttempt)
     setSubmitting(false)
   }
 
-  // Loading state
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-(--bg-surface-2) rounded w-1/3"></div>
-          <div className="h-64 bg-(--bg-surface-2) rounded"></div>
+      <section className="min-h-full bg-(--mc-color-canvas) pb-24 pt-4 md:pt-6">
+        <div className="mc-page mc-page--narrow">
+          <LearningLoading label={t('Loading...')} />
         </div>
-      </div>
+      </section>
     )
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-(--error)">{error}</p>
-          <button
-            onClick={() => navigate('/app/learn')}
-            className="mt-4 text-(--info) hover:underline"
-          >
-            {t('Back to Learn')}
-          </button>
+      <section className="min-h-full bg-(--mc-color-canvas) pb-24 pt-4 md:pt-6">
+        <div className="mc-page mc-page--narrow">
+          <LearningError
+            title={error}
+            description={t('Please try again')}
+            retryLabel={t('Back to Learn')}
+            onRetry={() => navigate('/app/learn')}
+          />
         </div>
-      </div>
+      </section>
     )
   }
 
-  // Show results if test is submitted
   if (attempt?.status === 'submitted') {
     return <TestResults attempt={attempt} testTitle={test?.title || t('Test')} />
   }
 
-  // Current question
+  if (questions.length === 0) {
+    return (
+      <section className="min-h-full bg-(--mc-color-canvas) pb-24 pt-4 md:pt-6">
+        <div className="mc-page mc-page--narrow">
+          <LearningMessage
+            icon={<BookOpen size={22} />}
+            title={t('No questions found for the selected filters.')}
+            action={<Button variant="secondary" onClick={() => navigate('/app/learn')}>{t('Back to Learn')}</Button>}
+          />
+        </div>
+      </section>
+    )
+  }
+
   const currentQuestion = questions[currentIndex]
-  const currentAnswer = currentQuestion ? answers.get(currentQuestion.id) || null : null
+  const currentAnswer = answers.get(currentQuestion.id) || null
   const answeredCount = answers.size
   const allAnswered = answeredCount === questions.length
 
   return (
-    <div className="min-h-full bg-(--bg-primary)">
-      {/* Header */}
-      <div className="bg-(--bg-surface) border-b border-(--border-subtle) px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <button
-              onClick={() => navigate('/app/learn')}
-              className="text-(--text-muted) hover:text-(--text-secondary) text-sm mb-1"
-            >
-              &larr; {t('Back to Learn')}
-            </button>
-            <h1 className="text-xl font-bold text-(--text-primary)">{test?.title}</h1>
-          </div>
-          <div className="text-sm text-(--text-muted)">
-            {t('{{answered}} / {{total}} answered', { answered: answeredCount, total: questions.length })}
-          </div>
-        </div>
-      </div>
+    <section className="min-h-full bg-(--mc-color-canvas) pb-24 pt-4 md:pt-6" aria-label={test?.title}>
+      <div className="mc-page mc-page--narrow space-y-4 md:space-y-5">
+        <LearningSectionHeading
+          eyebrow={test?.topic ?? t('Test')}
+          title={test?.title ?? t('Test')}
+          description={t('{{answered}} / {{total}} answered', { answered: answeredCount, total: questions.length })}
+          action={(
+            <Button variant="ghost" size="sm" leadingIcon={<ArrowLeft size={16} />} onClick={() => navigate('/app/learn')}>
+              {t('Back to Learn')}
+            </Button>
+          )}
+        />
 
-      {/* Question */}
-      <div className="p-6 max-w-2xl mx-auto">
-        {currentQuestion && (
-          <QuestionCard
-            question={currentQuestion}
-            questionNumber={currentIndex + 1}
-            totalQuestions={questions.length}
-            selectedOption={currentAnswer}
-            onSelectOption={handleSelectOption}
+        <Surface className="sticky top-2 z-10 backdrop-blur-xl" padding="sm" variant="raised">
+          <ProgressBar
+            value={answeredCount}
+            max={questions.length}
+            size="sm"
+            tone="accent"
+            label={t('Question {{current}} of {{total}}', { current: currentIndex + 1, total: questions.length })}
+            valueLabel={t('{{answered}} / {{total}} answered', { answered: answeredCount, total: questions.length })}
+            showValue
           />
-        )}
+        </Surface>
 
-        {/* Navigation */}
-        <div className="mt-6 flex items-center justify-between">
-          <button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            className={`
-              px-4 py-2 rounded-lg font-medium
-              ${currentIndex === 0
-                ? 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed'
-                : 'bg-(--bg-surface-2) text-(--text-secondary) hover:bg-(--bg-hover)'
-              }
-            `}
-          >
+        <QuestionCard
+          question={currentQuestion}
+          questionNumber={currentIndex + 1}
+          totalQuestions={questions.length}
+          selectedOption={currentAnswer}
+          onSelectOption={(option) => void handleSelectOption(option)}
+        />
+
+        <div className="no-scrollbar flex gap-2 overflow-x-auto py-1" aria-label={t('Learn navigation')}>
+          {questions.map((question, index) => {
+            const isCurrent = index === currentIndex
+            const isAnswered = answers.has(question.id)
+            return (
+              <button
+                key={question.id}
+                type="button"
+                onClick={() => setCurrentIndex(index)}
+                className={`mc-focus-ring flex size-9 shrink-0 items-center justify-center rounded-lg border text-xs font-bold ${
+                  isCurrent
+                    ? 'border-(--mc-color-accent) bg-(--mc-color-accent) text-(--mc-color-canvas)'
+                    : isAnswered
+                      ? 'border-(--mc-color-accent)/45 bg-(--mc-color-accent)/10 text-(--mc-color-accent)'
+                      : 'border-(--mc-color-border) bg-(--mc-color-surface) text-(--mc-color-text-muted)'
+                }`}
+                aria-current={isCurrent ? 'step' : undefined}
+                aria-label={t('Go to question {{number}}', { number: index + 1 })}
+              >
+                {index + 1}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="grid grid-cols-[auto_1fr] gap-3">
+          <Button variant="secondary" leadingIcon={<ChevronLeft size={17} />} onClick={handlePrev} disabled={currentIndex === 0}>
             {t('Previous')}
-          </button>
-
-          {/* Question dots */}
-          <div className="flex gap-2">
-            {questions.map((q, idx) => {
-              const isAnswered = answers.has(q.id)
-              const isCurrent = idx === currentIndex
-
-              return (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentIndex(idx)}
-                  className={`
-                    w-3 h-3 rounded-full transition-all
-                    ${isCurrent
-                      ? 'bg-(--info) scale-125'
-                      : isAnswered
-                        ? 'bg-(--info)/50'
-                        : 'bg-(--bg-surface-2)'
-                    }
-                  `}
-                  aria-label={t('Go to question {{number}}', { number: idx + 1 })}
-                />
-              )
-            })}
-          </div>
-
+          </Button>
           {currentIndex === questions.length - 1 ? (
-            <button
-              onClick={handleSubmit}
-              disabled={!allAnswered || submitting}
-              className={`
-                px-4 py-2 rounded-lg font-medium
-                ${allAnswered && !submitting
-                  ? 'bg-(--success) text-(--bg-primary) hover:bg-(--success)/80'
-                  : 'bg-(--bg-surface-2) text-(--text-muted) cursor-not-allowed'
-                }
-              `}
-            >
+            <Button fullWidth loading={submitting} disabled={!allAnswered} onClick={() => void handleSubmit()}>
               {submitting ? t('Submitting...') : t('Submit')}
-            </button>
+            </Button>
           ) : (
-            <button
-              onClick={handleNext}
-              className="px-4 py-2 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) font-medium hover:bg-(--brand-yellow-soft)"
-            >
+            <Button fullWidth trailingIcon={<ChevronRight size={17} />} onClick={handleNext}>
               {t('Next')}
-            </button>
+            </Button>
           )}
         </div>
       </div>
-    </div>
+    </section>
   )
 }

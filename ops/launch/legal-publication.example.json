@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "kind": "legal-publication",
+  "passed": true,
+  "capturedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+  "releaseCommit": "REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA",
+  "productionProjectRef": "iqebkyjcoqggwhausgje",
+  "approvedBy": "REPLACE_ME",
+  "approvalReference": "REPLACE_WITH_EXTERNAL_APPROVAL_REFERENCE",
+  "artifacts": [
+    {
+      "kind": "approved-legal-package",
+      "path": "REPLACE_WITH_ABSOLUTE_EXTERNAL_ARTIFACT_PATH",
+      "sha256": "REPLACE_WITH_SHA256"
+    }
+  ],
+  "checks": {
+    "privacyTextContainsNoPlaceholders": true,
+    "termsTextContainsNoPlaceholders": true,
+    "cookiesTextVerified": true,
+    "operatorIdentityPublished": true,
+    "privacyAndSupportContactsTested": true,
+    "processingInventoryMatchedImplementation": true,
+    "retentionAndDeletionTextPublished": true,
+    "ageAndMinorsPolicyPublished": true,
+    "userContentOwnershipAndLicenceCorrect": true,
+    "communityModerationTermsPublishedOrFeatureDisabled": true,
+    "approvedVersionsMatchPublicUrls": true,
+    "legalReviewerApproved": true
+  }
+}
