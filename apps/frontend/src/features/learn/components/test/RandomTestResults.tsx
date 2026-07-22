@@ -1,10 +1,24 @@
-import { useState, useEffect } from 'react'
-import { Trophy, TrendingUp, TrendingDown, Clock, CheckCircle2, XCircle, ChevronDown, ChevronUp, RotateCcw, Home } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Home,
+  RotateCcw,
+  Target,
+  TrendingDown,
+  TrendingUp,
+  Trophy,
+  XCircle,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, ProgressBar, Surface } from '@/components/ui'
 import { supabase } from '@/lib/supabaseClient'
 import { getAttemptTopicBreakdown, getAttemptAnswers } from '../../api/testsApi'
 import { formatTime } from '../../hooks/useTestTimer'
 import type { TestAttempt, TestQuestion, TopicPerformance } from '../../types'
+import { LearningError, LearningLoading, LearningSectionHeading, MatchAccent } from '../LearningUI'
 
 interface RandomTestResultsProps {
   attemptId: string
@@ -12,38 +26,36 @@ interface RandomTestResultsProps {
   onBackToTests: () => void
 }
 
-/**
- * RandomTestResults - Comprehensive results page after test submission
- *
- * Displays:
- * - Score (X/20, percentage)
- * - Time taken
- * - Strong points (topics >= 75% accuracy, min 2 questions)
- * - Weak points (topics < 50% accuracy)
- * - Corrections (all questions with answers)
- * - Restart and Back buttons
- */
+interface Correction {
+  question: TestQuestion
+  selectedOption: string
+  correctOption: string
+  isCorrect: boolean
+}
+
+function optionText(question: TestQuestion, letter: string) {
+  const options: Record<string, string> = {
+    A: question.option_a,
+    B: question.option_b,
+    C: question.option_c,
+    D: question.option_d,
+  }
+  return options[letter] ?? ''
+}
+
 export default function RandomTestResults({ attemptId, onRestart, onBackToTests }: RandomTestResultsProps) {
   const { t } = useTranslation()
   const [loading, setLoading] = useState(true)
   const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [strong, setStrong] = useState<TopicPerformance[]>([])
   const [weak, setWeak] = useState<TopicPerformance[]>([])
-  const [corrections, setCorrections] = useState<
-    Array<{
-      question: TestQuestion
-      selectedOption: string
-      correctOption: string
-      isCorrect: boolean
-    }>
-  >([])
+  const [corrections, setCorrections] = useState<Correction[]>([])
   const [showCorrections, setShowCorrections] = useState(false)
 
   useEffect(() => {
     let cancelled = false
 
     async function fetchResults() {
-      // Fetch attempt details
       const { data: attemptData, error: attemptError } = await supabase
         .from('test_attempts')
         .select('*')
@@ -51,7 +63,6 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
         .single()
 
       if (cancelled) return
-
       if (attemptError || !attemptData) {
         console.error('Failed to fetch attempt:', attemptError)
         setLoading(false)
@@ -60,221 +71,264 @@ export default function RandomTestResults({ attemptId, onRestart, onBackToTests 
 
       setAttempt(attemptData as TestAttempt)
 
-      // Fetch topic breakdown
       const { data: breakdownData } = await getAttemptTopicBreakdown(attemptId)
       if (breakdownData) {
         setStrong(breakdownData.strong || [])
         setWeak(breakdownData.weak || [])
       }
 
-      // Fetch corrections
       const { data: answersData } = await getAttemptAnswers(attemptId)
-      if (answersData) {
-        const questionIds = answersData.map((a) => a.question_id)
-
-        // Fetch all questions
+      if (answersData?.length) {
+        const questionIds = answersData.map((answer) => answer.question_id)
         const { data: questionsData } = await supabase
           .from('question_bank')
           .select('*')
           .in('id', questionIds)
 
         if (questionsData) {
-          const correctionsData = answersData.map((answer) => {
-            const question = questionsData.find((q) => q.id === answer.question_id)
-            return {
+          const correctionsData = answersData.flatMap((answer) => {
+            const question = questionsData.find((item) => item.id === answer.question_id)
+            if (!question) return []
+            return [{
               question: question as TestQuestion,
               selectedOption: answer.selected_option,
-              correctOption: question?.correct_option || '',
-              isCorrect: answer.is_correct || false,
-            }
+              correctOption: question.correct_option || '',
+              isCorrect: Boolean(answer.is_correct),
+            }]
           })
           setCorrections(correctionsData)
         }
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     }
 
-    fetchResults()
-
-    return () => {
-      cancelled = true
-    }
+    void fetchResults()
+    return () => { cancelled = true }
   }, [attemptId])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-(--info) mx-auto mb-4" />
-          <p className="text-sm text-(--text-secondary)">{t('Loading results...')}</p>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <LearningLoading label={t('Loading results...')} />
 
   if (!attempt) {
     return (
-      <div className="text-center py-20">
-        <p className="text-(--text-primary) font-semibold">{t('Failed to load results')}</p>
-        <button
-          onClick={onBackToTests}
-          className="mt-4 px-6 py-2 bg-(--info) text-white rounded-xl font-semibold hover:opacity-90"
-        >
-          {t('Back to Tests')}
-        </button>
-      </div>
+      <LearningError
+        title={t('Failed to load results')}
+        description={t('Please try again')}
+        retryLabel={t('Back to Tests')}
+        onRetry={onBackToTests}
+      />
     )
   }
 
-  const scorePercent = attempt.score_percent || 0
+  const scorePercent = attempt.score_percent ?? 0
   const isPassing = scorePercent >= 80
 
   return (
-    <div className="space-y-6">
-      {/* Score Card */}
-      <div className="p-6 bg-(--bg-surface) border border-(--border-subtle) rounded-2xl text-center">
-        <Trophy
-          size={48}
-          className={`mx-auto mb-4 ${isPassing ? 'text-(--success)' : 'text-(--warning)'}`}
-        />
-        <h2 className="text-3xl font-bold text-(--text-primary) mb-2">
-          {attempt.score_correct}/{attempt.score_total}
-        </h2>
-        <p className="text-lg text-(--text-secondary) mb-4">
-          {scorePercent}% {isPassing ? t('Pass') : t('Review Recommended')}
-        </p>
+    <div className="space-y-5 md:space-y-6">
+      <LearningSectionHeading
+        eyebrow={t('Test Completed')}
+        title={isPassing ? t('Excellent work!') : t('Review Recommended')}
+        description={t('{{correct}} out of {{total}} correct', {
+          correct: attempt.score_correct ?? 0,
+          total: attempt.score_total ?? 0,
+        })}
+      />
 
-        {attempt.time_elapsed_seconds !== null && (
-          <div className="flex items-center justify-center gap-2 text-sm text-(--text-secondary)">
-            <Clock size={16} />
-            <span>{t('Time')}: {formatTime(attempt.time_elapsed_seconds)}</span>
-            {attempt.auto_submitted && <span className="text-(--warning)">({t('Auto-submitted')})</span>}
+      <Surface className="relative overflow-hidden border-(--mc-color-accent)/35" padding="lg" variant="raised">
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-40 opacity-15" aria-hidden="true">
+          <span className="absolute right-0 top-0 h-full w-20 -skew-x-[18deg] bg-(--mc-color-accent)" />
+          <span className="absolute right-24 top-0 h-full w-8 -skew-x-[18deg] bg-(--mc-color-danger)" />
+        </div>
+        <div className="relative grid gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <div className="mb-4 flex items-center gap-3">
+              <MatchAccent />
+              <Badge variant={isPassing ? 'success' : 'warning'}>
+                {isPassing ? t('Pass') : t('Review Recommended')}
+              </Badge>
+            </div>
+            <p className={`mc-tabular text-6xl font-extrabold tracking-[-0.06em] ${
+              isPassing ? 'text-(--mc-color-success)' : 'text-(--mc-color-warning)'
+            }`}>
+              {scorePercent}%
+            </p>
+            <p className="mt-2 text-sm text-(--mc-color-text-secondary)">
+              {t('{{correct}} out of {{total}} correct', {
+                correct: attempt.score_correct ?? 0,
+                total: attempt.score_total ?? 0,
+              })}
+            </p>
           </div>
+          <div className="flex gap-3 sm:flex-col">
+            <ResultFact icon={<Trophy size={17} />} value={`${attempt.score_correct ?? 0}/${attempt.score_total ?? 0}`} />
+            {attempt.time_elapsed_seconds !== null && (
+              <ResultFact icon={<Clock size={17} />} value={formatTime(attempt.time_elapsed_seconds)} />
+            )}
+          </div>
+        </div>
+        {attempt.auto_submitted && (
+          <p className="relative mt-4 text-xs font-medium text-(--mc-color-warning)">{t('Auto-submitted')}</p>
         )}
-      </div>
+      </Surface>
 
-      {/* Strong Points */}
-      {strong.length > 0 && (
-        <div className="p-5 bg-(--success)/10 border border-(--success)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp size={20} className="text-(--success)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Strong Points')}</h3>
-          </div>
-          <div className="space-y-2">
-            {strong.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--success)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
-              </div>
-            ))}
-          </div>
+      {(strong.length > 0 || weak.length > 0) && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {strong.length > 0 && (
+            <PerformancePanel
+              icon={<TrendingUp size={19} />}
+              title={t('Strong Points')}
+              items={strong}
+              tone="success"
+            />
+          )}
+          {weak.length > 0 && (
+            <PerformancePanel
+              icon={<TrendingDown size={19} />}
+              title={t('Areas to Improve')}
+              items={weak}
+              tone="danger"
+            />
+          )}
         </div>
       )}
 
-      {/* Weak Points */}
-      {weak.length > 0 && (
-        <div className="p-5 bg-(--error)/10 border border-(--error)/30 rounded-xl">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingDown size={20} className="text-(--error)" />
-            <h3 className="font-semibold text-(--text-primary)">{t('Areas to Improve')}</h3>
-          </div>
-          <div className="space-y-2">
-            {weak.map((topic) => (
-              <div key={topic.topic} className="flex items-center justify-between text-sm">
-                <span className="text-(--text-primary)">{topic.topic}</span>
-                <span className="font-semibold text-(--error)">
-                  {topic.accuracy}% ({topic.correct}/{topic.total})
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Corrections Section */}
-      <div className="p-5 bg-(--bg-surface) border border-(--border-subtle) rounded-xl">
+      <Surface padding="none">
         <button
-          onClick={() => setShowCorrections(!showCorrections)}
-          className="w-full flex items-center justify-between"
+          type="button"
+          onClick={() => setShowCorrections((value) => !value)}
+          className="mc-focus-ring flex min-h-14 w-full items-center justify-between gap-3 rounded-(--mc-radius-card) px-4 py-3 text-left hover:bg-(--mc-color-surface-hover)"
+          aria-expanded={showCorrections}
         >
-          <h3 className="font-semibold text-(--text-primary)">{t('Review All Questions')}</h3>
-          {showCorrections ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <span className="flex items-center gap-2 font-semibold text-(--mc-color-text)">
+            <Target size={18} className="text-(--mc-color-accent)" aria-hidden="true" />
+            {t('Review All Questions')}
+          </span>
+          <span className="text-(--mc-color-text-muted)" aria-hidden="true">
+            {showCorrections ? <ChevronUp size={19} /> : <ChevronDown size={19} />}
+          </span>
         </button>
 
         {showCorrections && (
-          <div className="mt-4 space-y-4">
+          <div className="space-y-3 border-t border-(--mc-color-border) p-3 sm:p-4">
             {corrections.map((correction, index) => (
-              <div
+              <article
                 key={correction.question.id}
-                className={`
-                  p-4 rounded-xl border
-                  ${
-                    correction.isCorrect
-                      ? 'bg-(--success)/5 border-(--success)/30'
-                      : 'bg-(--error)/5 border-(--error)/30'
-                  }
-                `}
+                className={`rounded-xl border p-4 ${
+                  correction.isCorrect
+                    ? 'border-(--mc-color-success)/35 bg-(--mc-color-success)/5'
+                    : 'border-(--mc-color-danger)/35 bg-(--mc-color-danger)/5'
+                }`}
               >
-                <div className="flex items-start gap-2 mb-2">
+                <div className="flex items-start gap-3">
                   {correction.isCorrect ? (
-                    <CheckCircle2 size={20} className="text-(--success) shrink-0 mt-0.5" />
+                    <CheckCircle2 size={19} className="mt-0.5 shrink-0 text-(--mc-color-success)" aria-hidden="true" />
                   ) : (
-                    <XCircle size={20} className="text-(--error) shrink-0 mt-0.5" />
+                    <XCircle size={19} className="mt-0.5 shrink-0 text-(--mc-color-danger)" aria-hidden="true" />
                   )}
-                  <div className="flex-1">
-                    <p className="font-medium text-(--text-primary) text-sm mb-1">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-(--mc-color-text-muted)">
                       {t('Question {{number}}', { number: index + 1 })}
                     </p>
-                    <p className="text-sm text-(--text-primary) mb-3">
+                    <p className="mt-1 text-sm font-medium leading-6 text-(--mc-color-text)">
                       {correction.question.question_text}
                     </p>
-
-                    <div className="space-y-1 text-xs">
-                      <p>
-                        <span className="text-(--text-secondary)">{t('Your answer')}: </span>
-                        <span
-                          className={correction.isCorrect ? 'text-(--success)' : 'text-(--error)'}
-                        >
-                          {correction.selectedOption}
-                        </span>
-                      </p>
+                    <div className="mt-3 space-y-2 text-xs leading-5">
+                      <AnswerLine
+                        label={t('Your answer')}
+                        letter={correction.selectedOption}
+                        text={optionText(correction.question, correction.selectedOption)}
+                        correct={correction.isCorrect}
+                      />
                       {!correction.isCorrect && (
-                        <p>
-                          <span className="text-(--text-secondary)">{t('Correct answer')}: </span>
-                          <span className="text-(--success) font-semibold">
-                            {correction.correctOption}
-                          </span>
-                        </p>
+                        <AnswerLine
+                          label={t('Correct answer')}
+                          letter={correction.correctOption}
+                          text={optionText(correction.question, correction.correctOption)}
+                          correct
+                        />
                       )}
                     </div>
                   </div>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         )}
-      </div>
+      </Surface>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={onBackToTests}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) font-semibold hover:bg-(--bg-hover) transition-colors"
-        >
-          <Home size={18} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Button variant="secondary" fullWidth leadingIcon={<Home size={17} />} onClick={onBackToTests}>
           {t('Back to Tests')}
-        </button>
-        <button
-          onClick={onRestart}
-          className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-(--info) text-white font-semibold hover:opacity-90 transition-opacity"
-        >
-          <RotateCcw size={18} />
+        </Button>
+        <Button fullWidth leadingIcon={<RotateCcw size={17} />} onClick={onRestart}>
           {t('Take Another Test')}
-        </button>
+        </Button>
       </div>
     </div>
+  )
+}
+
+function ResultFact({ icon, value }: { icon: React.ReactNode; value: React.ReactNode }) {
+  return (
+    <div className="flex min-w-24 items-center gap-2 rounded-xl border border-(--mc-color-border) bg-(--mc-color-canvas)/80 px-3 py-2 text-sm font-bold text-(--mc-color-text)">
+      <span className="text-(--mc-color-accent)" aria-hidden="true">{icon}</span>
+      <span className="mc-tabular">{value}</span>
+    </div>
+  )
+}
+
+function PerformancePanel({
+  icon,
+  title,
+  items,
+  tone,
+}: {
+  icon: React.ReactNode
+  title: React.ReactNode
+  items: TopicPerformance[]
+  tone: 'success' | 'danger'
+}) {
+  const color = tone === 'success' ? 'text-(--mc-color-success)' : 'text-(--mc-color-danger)'
+  return (
+    <Surface padding="md">
+      <div className={`mb-4 flex items-center gap-2 ${color}`}>
+        {icon}
+        <h3 className="font-bold text-(--mc-color-text)">{title}</h3>
+      </div>
+      <div className="space-y-3">
+        {items.map((item) => (
+          <ProgressBar
+            key={item.topic}
+            value={item.accuracy}
+            label={item.topic}
+            valueLabel={`${item.accuracy}% · ${item.correct}/${item.total}`}
+            showValue
+            size="sm"
+            tone={tone}
+          />
+        ))}
+      </div>
+    </Surface>
+  )
+}
+
+function AnswerLine({
+  label,
+  letter,
+  text,
+  correct,
+}: {
+  label: React.ReactNode
+  letter: string
+  text: string
+  correct: boolean
+}) {
+  return (
+    <p className="grid grid-cols-[auto_1fr] gap-x-2">
+      <span className="text-(--mc-color-text-muted)">{label}:</span>
+      <span className={correct ? 'text-(--mc-color-success)' : 'text-(--mc-color-danger)'}>
+        <strong>{letter}</strong>{text ? ` · ${text}` : ''}
+      </span>
+    </p>
   )
 }

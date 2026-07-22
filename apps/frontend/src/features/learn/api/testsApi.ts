@@ -35,25 +35,18 @@ export async function getTestBySlug(slug: string) {
 /**
  * Fetch all questions for a test
  *
- * Queries the bridge table test_question_items to get the ordered
- * question_bank entries for the given test.
+ * Reads the ordered questions from the production test_questions table.
+ * The repository contains a later question-bank migration, but that migration
+ * has not been applied to the live RefLab project and must not be assumed.
  */
 export async function getQuestions(testId: string) {
   const { data, error } = await supabase
-    .from('test_question_items')
-    .select('order_index, question_bank!inner(*)')
+    .from('test_questions')
+    .select('*')
     .eq('test_id', testId)
     .order('order_index')
 
-  if (error || !data) {
-    return { data: null, error }
-  }
-
-  // Flatten: extract the nested question_bank object from each row
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const questions = data.map((row: any) => row.question_bank as TestQuestion)
-
-  return { data: questions, error: null }
+  return { data: data as TestQuestion[] | null, error }
 }
 
 /**
@@ -159,7 +152,8 @@ export async function saveAnswer(
  * 3. Mark each answer as correct/incorrect
  */
 export async function submitAttempt(attemptId: string) {
-  // Get all answers for this attempt with their questions from question_bank
+  // Answer FKs in production point at question_bank (legacy fixed-test IDs
+  // were copied there), so score through that relationship.
   const { data: answers, error: answersError } = await supabase
     .from('test_attempt_answers')
     .select(`
@@ -180,17 +174,28 @@ export async function submitAttempt(attemptId: string) {
   let correct = 0
   const total = answers.length
 
-  // Update each answer with is_correct
-  for (const answer of answers) {
+  const gradedAnswers = answers.map((answer) => {
     const question = answer.question_bank as unknown as { correct_option: string }
     const isCorrect = answer.selected_option === question.correct_option
 
     if (isCorrect) correct++
 
-    await supabase
+    return { id: answer.id, isCorrect }
+  })
+
+  const gradeResults = await Promise.all(
+    gradedAnswers.map(({ id, isCorrect }) => supabase
       .from('test_attempt_answers')
       .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
+      .eq('id', id)
+      .eq('attempt_id', attemptId)
+      .select('id')
+      .single()),
+  )
+
+  const gradeError = gradeResults.find((result) => result.error)?.error
+  if (gradeError) {
+    return { data: null, error: gradeError }
   }
 
   const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
@@ -255,7 +260,7 @@ export async function getUserCompletedAttempts() {
 }
 
 /**
- * Fetch all questions from the question bank (for practice mode)
+ * Fetch all questions from the question bank (for practice mode).
  */
 export async function getAllQuestions() {
   const { data, error } = await supabase
@@ -422,7 +427,7 @@ export async function submitRandomTest(
   timeElapsedSeconds: number,
   autoSubmitted: boolean
 ) {
-  // Get all answers with their questions from question_bank
+  // Get all answers with their question-bank records.
   const { data: answers, error: answersError } = await supabase
     .from('test_attempt_answers')
     .select(`
@@ -441,17 +446,28 @@ export async function submitRandomTest(
   let correct = 0
   const total = answers.length
 
-  // Update each answer with is_correct
-  for (const answer of answers) {
+  const gradedAnswers = answers.map((answer) => {
     const question = answer.question_bank as unknown as { correct_option: string }
     const isCorrect = answer.selected_option === question.correct_option
 
     if (isCorrect) correct++
 
-    await supabase
+    return { id: answer.id, isCorrect }
+  })
+
+  const gradeResults = await Promise.all(
+    gradedAnswers.map(({ id, isCorrect }) => supabase
       .from('test_attempt_answers')
       .update({ is_correct: isCorrect })
-      .eq('id', answer.id)
+      .eq('id', id)
+      .eq('attempt_id', attemptId)
+      .select('id')
+      .single()),
+  )
+
+  const gradeError = gradeResults.find((result) => result.error)?.error
+  if (gradeError) {
+    return { data: null, error: gradeError }
   }
 
   const scorePercent = total > 0 ? Math.round((correct / total) * 100) : 0
@@ -719,7 +735,7 @@ export async function getQuestionsByFilters(params: {
 }
 
 /**
- * Get the distinct FIFA law numbers present in question_bank
+ * Get the distinct FIFA law numbers present in question_bank.
  *
  * Used to populate the By Law filter chip list in QuestionsSetup.
  */
@@ -738,7 +754,7 @@ export async function getDistinctLaws() {
 }
 
 /**
- * Get the distinct area (topic) strings present in question_bank
+ * Get the distinct area (topic) strings present in question_bank.
  *
  * Used to populate the By Area filter chip list in QuestionsSetup.
  */

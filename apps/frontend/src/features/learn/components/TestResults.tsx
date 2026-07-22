@@ -1,78 +1,76 @@
+import { ArrowLeft, LayoutDashboard, Trophy } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, ProgressBar, Surface } from '@/components/ui'
 import type { TestAttempt } from '../types'
+import { LearningSectionHeading, MatchAccent } from './LearningUI'
 
 interface TestResultsProps {
   attempt: TestAttempt
   testTitle: string
 }
 
-/**
- * TestResults - Displays the score after a test is submitted
- *
- * Shows correct/total, percentage, and a button to go back.
- */
 export default function TestResults({ attempt, testTitle }: TestResultsProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-
   const scorePercent = attempt.score_percent ?? 0
   const scoreCorrect = attempt.score_correct ?? 0
   const scoreTotal = attempt.score_total ?? 0
-
-  // Determine result color based on score
-  const getScoreColor = () => {
-    if (scorePercent >= 80) return 'text-(--success)'
-    if (scorePercent >= 60) return 'text-(--warning)'
-    return 'text-(--error)'
-  }
-
-  const getScoreMessage = () => {
-    if (scorePercent >= 80) return t('Excellent work!')
-    if (scorePercent >= 60) return t('Good effort!')
-    return t('Keep practicing!')
-  }
+  const tone = scorePercent >= 80 ? 'success' : scorePercent >= 60 ? 'warning' : 'danger'
+  const scoreColor = tone === 'success'
+    ? 'text-(--mc-color-success)'
+    : tone === 'warning'
+      ? 'text-(--mc-color-warning)'
+      : 'text-(--mc-color-danger)'
+  const scoreMessage = scorePercent >= 80
+    ? t('Excellent work!')
+    : scorePercent >= 60
+      ? t('Good effort!')
+      : t('Keep practicing!')
 
   return (
-    <div className="min-h-full flex items-center justify-center p-6">
-      <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-8 max-w-md w-full text-center">
-        {/* Title */}
-        <h1 className="text-xl font-bold text-(--text-primary) mb-2">{testTitle}</h1>
-        <p className="text-(--text-muted) mb-6">{t('Test Completed')}</p>
+    <section className="min-h-full bg-(--mc-color-canvas) pb-24 pt-4 md:pt-6" aria-label={t('Test Completed')}>
+      <div className="mc-page mc-page--narrow space-y-5 md:space-y-6">
+        <LearningSectionHeading
+          eyebrow={t('Test Completed')}
+          title={testTitle}
+          description={scoreMessage}
+        />
 
-        {/* Score circle */}
-        <div className="mb-6">
-          <div className={`text-6xl font-bold ${getScoreColor()}`}>
-            {scorePercent}%
+        <Surface className="relative overflow-hidden border-(--mc-color-accent)/35" padding="lg" variant="raised">
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-36 opacity-15" aria-hidden="true">
+            <span className="absolute right-0 top-0 h-full w-16 -skew-x-[18deg] bg-(--mc-color-accent)" />
+            <span className="absolute right-20 top-0 h-full w-7 -skew-x-[18deg] bg-(--mc-color-danger)" />
           </div>
-          <p className="text-(--text-secondary) mt-2">
-            {t('{{correct}} out of {{total}} correct', { correct: scoreCorrect, total: scoreTotal })}
-          </p>
-        </div>
+          <div className="relative">
+            <div className="mb-5 flex items-center gap-3">
+              <MatchAccent />
+              <Badge variant={tone}>{scoreMessage}</Badge>
+            </div>
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className={`mc-tabular text-6xl font-extrabold tracking-[-0.06em] ${scoreColor}`}>{scorePercent}%</p>
+                <p className="mt-2 text-sm text-(--mc-color-text-secondary)">
+                  {t('{{correct}} out of {{total}} correct', { correct: scoreCorrect, total: scoreTotal })}
+                </p>
+              </div>
+              <span className={`hidden size-14 items-center justify-center rounded-xl border bg-(--mc-color-canvas)/75 sm:flex ${scoreColor}`}>
+                <Trophy size={27} aria-hidden="true" />
+              </span>
+            </div>
+            <ProgressBar className="mt-6" value={scorePercent} tone={tone} size="sm" />
+          </div>
+        </Surface>
 
-        {/* Message */}
-        <p className={`text-lg font-medium ${getScoreColor()} mb-8`}>
-          {getScoreMessage()}
-        </p>
-
-        {/* Actions */}
-        <div className="space-y-3">
-          <button
-            onClick={() => navigate('/app/dashboard')}
-            className="w-full py-3 px-4 bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            aria-label={t('View dashboard')}
-          >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Button fullWidth leadingIcon={<LayoutDashboard size={17} />} onClick={() => navigate('/app/dashboard')}>
             {t('View Dashboard')}
-          </button>
-          <button
-            onClick={() => navigate('/app/learn')}
-            className="w-full py-3 px-4 bg-(--bg-surface-2) text-(--text-secondary) rounded-(--radius-button) hover:bg-(--bg-hover) transition-colors border border-(--border-subtle)"
-            aria-label={t('Back to learn')}
-          >
+          </Button>
+          <Button variant="secondary" fullWidth leadingIcon={<ArrowLeft size={17} />} onClick={() => navigate('/app/learn')}>
             {t('Back to Learn')}
-          </button>
+          </Button>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

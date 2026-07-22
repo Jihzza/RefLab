@@ -22,6 +22,11 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+interface AuthIdentitySnapshot {
+  generation: number
+  userId: string
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   // Core auth state
   const [user, setUser] = useState<User | null>(null)
@@ -39,15 +44,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [recoveryMode, setRecoveryMode] = useState(false)
 
   // Refs to track state inside event listeners without causing re-renders/stale closures
-  const isManualSignOut = useRef(false)
+  const manualSignOutGenerationRef = useRef<number | null>(null)
   const previousUserRef = useRef<User | null>(null)
 
+  // Every authenticated identity transition invalidates work started by the
+  // previous identity. The generation is important when the same user signs
+  // out and signs back in while an older request is still in flight.
+  const authGenerationRef = useRef(0)
+  const activeUserIdRef = useRef<string | null>(null)
+
+  const transitionIdentity = useCallback((nextUserId: string | null) => {
+    if (activeUserIdRef.current === nextUserId) return false
+
+    activeUserIdRef.current = nextUserId
+    authGenerationRef.current += 1
+
+    // Never render profile data from the previous identity while the next
+    // profile is being loaded.
+    setProfile(null)
+    setProfileStatus('loading')
+    return true
+  }, [])
+
+  const captureIdentity = useCallback((userId: string): AuthIdentitySnapshot | null => {
+    if (activeUserIdRef.current !== userId) return null
+
+    return {
+      generation: authGenerationRef.current,
+      userId,
+    }
+  }, [])
+
+  const isCurrentIdentity = useCallback((snapshot: AuthIdentitySnapshot) => (
+    activeUserIdRef.current === snapshot.userId &&
+    authGenerationRef.current === snapshot.generation
+  ), [])
+
+  const clearLocalAuthState = useCallback(() => {
+    transitionIdentity(null)
+    setUser(null)
+    setSession(null)
+    setProfile(null)
+    setAuthStatus('unauthenticated')
+    setProfileStatus('loading')
+    setRecoveryMode(false)
+    previousUserRef.current = null
+  }, [transitionIdentity])
+
   // Fetch profile for a user — called from a separate effect, NOT from onAuthStateChange
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (identity: AuthIdentitySnapshot) => {
+    if (!isCurrentIdentity(identity)) return
+
     setProfileStatus('loading')
 
     try {
-      const { profile: fetchedProfile, error } = await getProfile(userId)
+      const { profile: fetchedProfile, error } = await getProfile(identity.userId)
+
+      if (!isCurrentIdentity(identity)) return
 
       if (error) {
         console.error('Failed to fetch profile:', error)
@@ -64,18 +117,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setProfileStatus('incomplete')
       }
     } catch (err) {
+      if (!isCurrentIdentity(identity)) return
+
       console.error('fetchProfile threw:', err)
       setProfile(null)
       setProfileStatus('incomplete')
     }
-  }, [])
+  }, [isCurrentIdentity])
 
   // Refresh profile (callable from outside)
   const refreshProfile = useCallback(async () => {
-    if (user && user.id) {
-      await fetchProfile(user.id)
-    }
-  }, [user, fetchProfile])
+    if (!user?.id) return
+
+    const identity = captureIdentity(user.id)
+    if (identity) await fetchProfile(identity)
+  }, [user, captureIdentity, fetchProfile])
 
   // Dismiss session expired modal
   const dismissSessionExpired = useCallback(() => {
@@ -85,36 +141,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Effect 1: Bootstrap session + subscribe to auth state changes
   // Only runs once on mount — no dependency on fetchProfile
   useEffect(() => {
-    // 1. Check for existing session on mount
-    getSession().then(({ session }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      previousUserRef.current = session?.user ?? null
+    let disposed = false
+    const bootstrapGeneration = authGenerationRef.current
 
-      if (session?.user) {
-        setAuthStatus('authenticated')
-      } else {
-        setAuthStatus('unauthenticated')
-        setProfileStatus('loading')
-      }
-    })
+    // 1. Check for existing session on mount
+    void getSession()
+      .then(({ session: initialSession, error }) => {
+        // An auth event may have already established a newer identity while
+        // getSession was resolving. Never let the bootstrap overwrite it.
+        if (disposed || authGenerationRef.current !== bootstrapGeneration) return
+
+        if (error) {
+          setAuthStatus('error')
+          return
+        }
+
+        const initialUser = initialSession?.user ?? null
+        transitionIdentity(initialUser?.id ?? null)
+        setSession(initialSession)
+        setUser(initialUser)
+        previousUserRef.current = initialUser
+        setAuthStatus(initialUser ? 'authenticated' : 'unauthenticated')
+      })
+      .catch((error: unknown) => {
+        if (disposed || authGenerationRef.current !== bootstrapGeneration) return
+        console.error('Failed to restore auth session:', error)
+        setAuthStatus('error')
+      })
 
     // 2. Subscribe to auth state changes
     // IMPORTANT: Do NOT make Supabase DB queries inside this callback —
     // it causes a deadlock because the client holds an internal lock during auth processing.
-    const unsubscribe = onAuthStateChange((event, session) => {
-      const currentUser = session?.user ?? null
+    const unsubscribe = onAuthStateChange((event, nextSession) => {
+      if (disposed) return
 
-      // Update core state
-      setSession(session)
+      const currentUser = nextSession?.user ?? null
+      const previousUser = previousUserRef.current
+      const eventGeneration = authGenerationRef.current
+      const wasManualSignOut = manualSignOutGenerationRef.current === eventGeneration
+
+      transitionIdentity(currentUser?.id ?? null)
+      setSession(nextSession)
       setUser(currentUser)
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        isManualSignOut.current = false
-
+      if (
+        event === 'INITIAL_SESSION' ||
+        event === 'SIGNED_IN' ||
+        event === 'TOKEN_REFRESHED' ||
+        event === 'USER_UPDATED'
+      ) {
         if (currentUser) {
           setAuthStatus('authenticated')
           previousUserRef.current = currentUser
+        } else if (event === 'INITIAL_SESSION') {
+          setAuthStatus('unauthenticated')
         }
       }
 
@@ -126,39 +206,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (event === 'SIGNED_OUT') {
-        if (previousUserRef.current && !isManualSignOut.current) {
+        if (wasManualSignOut) {
+          manualSignOutGenerationRef.current = null
+        }
+
+        if (previousUser && !wasManualSignOut) {
           setSessionExpired(true)
         }
 
-        setAuthStatus('unauthenticated')
-        setProfile(null)
-        setProfileStatus('loading')
-        setRecoveryMode(false)
-        previousUserRef.current = null
+        clearLocalAuthState()
       }
     })
 
     return () => {
+      disposed = true
+      authGenerationRef.current += 1
       unsubscribe()
     }
-  }, [])
+  }, [clearLocalAuthState, transitionIdentity])
 
   // Effect 2: Fetch profile whenever the user changes (separate from auth listener)
   // This avoids the Supabase deadlock by running the DB query outside onAuthStateChange.
-  const prevUserIdRef = useRef<string | null>(null)
+  const previousProfileIdentityRef = useRef<AuthIdentitySnapshot | null>(null)
   useEffect(() => {
     const userId = user?.id ?? null
 
-    if (userId && userId !== prevUserIdRef.current) {
-      prevUserIdRef.current = userId
-      fetchProfile(userId)
-      updateLastLogin(userId)
+    if (!userId) {
+      previousProfileIdentityRef.current = null
+      return
     }
 
-    if (!userId) {
-      prevUserIdRef.current = null
+    const identity = captureIdentity(userId)
+    if (!identity) return
+
+    const previousIdentity = previousProfileIdentityRef.current
+    if (
+      previousIdentity?.userId === identity.userId &&
+      previousIdentity.generation === identity.generation
+    ) {
+      return
     }
-  }, [user, fetchProfile])
+
+    previousProfileIdentityRef.current = identity
+    void fetchProfile(identity)
+    void updateLastLogin(userId)
+  }, [user, captureIdentity, fetchProfile])
 
   // Auth action wrappers
 
@@ -168,8 +260,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await signUpWithPassword(email, password)
-    return { error: error ? new Error(error.message) : null }
+    const { data, error } = await signUpWithPassword(email, password)
+    return {
+      error: error ? new Error(error.message) : null,
+      requiresEmailConfirmation: !error && data.session === null,
+    }
   }
 
   const signInWithGoogle = async () => {
@@ -178,23 +273,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   const signOut = async () => {
-    // 1. Flag this as a manual action so the listener doesn't trigger the modal
-    isManualSignOut.current = true
+    const expectedUserId = activeUserIdRef.current
+    const expectedGeneration = authGenerationRef.current
 
-    // 2. Optimistic UI update
-    setUser(null)
-    setSession(null)
-    setProfile(null)
-    setAuthStatus('unauthenticated')
-    previousUserRef.current = null
+    // Flag this as a manual action so a genuine SIGNED_OUT event from this
+    // request does not show the session-expired modal.
+    manualSignOutGenerationRef.current = expectedGeneration
 
-    // 3. Perform API call
-    const { error } = await signOutApi()
+    try {
+      const { error } = await signOutApi()
 
-    // 4. Reset flag after a delay (safety net)
-    setTimeout(() => { isManualSignOut.current = false }, 1000)
+      // Supabase normally emits SIGNED_OUT and the listener clears state. This
+      // guarded fallback covers implementations that resolve successfully
+      // without an event, while never clearing a newer user's session.
+      if (
+        !error &&
+        activeUserIdRef.current === expectedUserId &&
+        authGenerationRef.current === expectedGeneration
+      ) {
+        clearLocalAuthState()
+      }
 
-    return { error: error ? new Error(error.message) : null }
+      // Do not pretend the server-side revocation succeeded. If Supabase
+      // removed the local session while returning an error, SIGNED_OUT already
+      // reconciled the local state and the error is still returned to the UI.
+      return { error: error ? new Error(error.message) : null }
+    } catch (error) {
+      return {
+        error: error instanceof Error ? error : new Error('Failed to sign out'),
+      }
+    } finally {
+      if (manualSignOutGenerationRef.current === expectedGeneration) {
+        manualSignOutGenerationRef.current = null
+      }
+    }
   }
 
   const resetPassword = async (email: string) => {
@@ -211,8 +323,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user?.id) {
       return { error: new Error('No authenticated user to update.') }
     }
-    const { profile: updatedProfile, error } = await updateProfile(user.id, updates)
-    if (updatedProfile) {
+
+    const identity = captureIdentity(user.id)
+    if (!identity) {
+      return { error: new Error('Authenticated user changed before update.') }
+    }
+
+    const { profile: updatedProfile, error } = await updateProfile(identity.userId, updates)
+    if (updatedProfile && isCurrentIdentity(identity)) {
       setProfile(updatedProfile)
     }
     return { error: error ? new Error(error.message) : null }
@@ -222,45 +340,63 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!user) {
       return { error: new Error("No authenticated user to update metadata.") }
     }
+
+    const identity = captureIdentity(user.id)
+    if (!identity) {
+      return { error: new Error('Authenticated user changed before metadata update.') }
+    }
+
     const { user: updatedUser, error } = await updateUserMetadataApi(updates)
-    // Optimistically update the local user state
-    if (updatedUser) {
+    if (
+      updatedUser?.id === identity.userId &&
+      isCurrentIdentity(identity)
+    ) {
       setUser(updatedUser)
     }
     return { error: error ? new Error(error.message) : null }
   }
 
   const deleteAccount = async () => {
-    if (!session?.access_token) {
+    if (!session?.access_token || !user?.id || session.user.id !== user.id) {
       return { error: new Error('No active session') }
     }
 
-    // Flag as manual sign out to prevent session expiry modal
-    isManualSignOut.current = true
+    const identity = captureIdentity(user.id)
+    if (!identity) {
+      return { error: new Error('Authenticated user changed before deletion.') }
+    }
+
+    manualSignOutGenerationRef.current = identity.generation
 
     try {
       const { error: deleteError } = await deleteAccountRequest()
 
       if (deleteError) {
-        isManualSignOut.current = false
         return { error: new Error(deleteError.message || 'Failed to delete account') }
       }
 
-      // Clear local state (the user no longer exists)
-      setUser(null)
-      setSession(null)
-      setProfile(null)
-      setAuthStatus('unauthenticated')
-      setRecoveryMode(false)
-      previousUserRef.current = null
+      // The deletion belongs to an older identity if the user changed while
+      // the request was in flight. Never sign out or clear that newer session.
+      if (!isCurrentIdentity(identity)) {
+        return { error: null }
+      }
 
-      // Sign out locally to clear stored session
+      // The account no longer exists, so clear its persisted session. The auth
+      // listener normally performs the local transition; the guarded fallback
+      // handles a missing event without touching a newer identity.
       await signOutApi()
+
+      if (isCurrentIdentity(identity)) {
+        clearLocalAuthState()
+      }
 
       return { error: null }
     } catch (err) {
-      isManualSignOut.current = false
       return { error: err instanceof Error ? err : new Error('Failed to delete account') }
+    } finally {
+      if (manualSignOutGenerationRef.current === identity.generation) {
+        manualSignOutGenerationRef.current = null
+      }
     }
   }
 

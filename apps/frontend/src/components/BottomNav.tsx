@@ -26,8 +26,10 @@ const BottomNavItem: React.FC<BottomNavItemProps> = ({ title, icon, to, badge })
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
-          isActive ? 'text-(--brand-yellow)' : 'text-(--text-muted) hover:text-(--text-secondary)'
+        `mc-focus-ring relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 pt-2 transition-colors duration-150 ${
+          isActive
+            ? 'text-(--mc-color-accent) before:absolute before:top-0 before:h-0.5 before:w-8 before:rounded-full before:bg-(--mc-color-accent)'
+            : 'text-(--mc-color-text-muted) hover:text-(--mc-color-text-secondary)'
         }`
       }
       aria-label={title}
@@ -35,12 +37,12 @@ const BottomNavItem: React.FC<BottomNavItemProps> = ({ title, icon, to, badge })
       <div className="relative">
         {icon}
         {(badge ?? 0) > 0 && (
-          <span className="absolute -top-1 -right-3 min-w-5 h-5 px-1 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center">
+          <span aria-hidden="true" className="absolute -right-3 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--mc-color-danger) px-1 text-[9px] font-bold leading-none text-white">
             {displayBadge}
           </span>
         )}
       </div>
-      <span className="text-[10px] font-medium mt-1">{title}</span>
+      <span className="max-w-full truncate text-[10px] font-medium">{title}</span>
     </NavLink>
   );
 };
@@ -89,13 +91,16 @@ export const BottomNav: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const location = useLocation();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadSnapshot, setUnreadSnapshot] = useState<{
+    ownerId: string;
+    count: number;
+  }>({ ownerId: '', count: 0 });
+  const unreadCount = user?.id === unreadSnapshot.ownerId ? unreadSnapshot.count : 0;
 
   useEffect(() => {
     let cancelled = false;
 
     if (!user?.id) {
-      setUnreadCount(0);
       return;
     }
 
@@ -108,7 +113,7 @@ export const BottomNav: React.FC = () => {
         return;
       }
 
-      setUnreadCount(data);
+      setUnreadSnapshot({ ownerId: user.id, count: data });
     })();
 
     return () => {
@@ -117,8 +122,11 @@ export const BottomNav: React.FC = () => {
   }, [user?.id, location.pathname]);
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full h-16 bg-(--bg-surface) border-t border-(--border-subtle) flex justify-between items-center z-50 pb-safe">
-      <div className="w-full h-full grid grid-cols-5">
+    <nav
+      className="fixed right-0 bottom-0 left-0 z-(--mc-z-navigation) h-[calc(var(--mc-bottom-nav-height)+var(--mc-safe-bottom))] border-t border-(--mc-color-border) bg-(--mc-color-surface)/95 backdrop-blur-md md:hidden"
+      aria-label={t('Sidebar')}
+    >
+      <div className="grid h-full grid-cols-5 pb-[var(--mc-safe-bottom)]">
         <BottomNavItem
           title={t('Dashboard')}
           icon={<DashboardIcon />}

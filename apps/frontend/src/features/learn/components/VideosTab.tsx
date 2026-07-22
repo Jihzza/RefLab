@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { Video } from 'lucide-react'
+import { LearningMessage } from './LearningUI'
 
 /**
  * VideosTab - Placeholder for Videos feature
@@ -9,11 +11,10 @@ export default function VideosTab() {
   const { t } = useTranslation()
 
   return (
-    <div className="p-6">
-      <div className="text-center py-12">
-        <h2 className="text-xl font-semibold text-gray-900">{t('Videos')}</h2>
-        <p className="mt-2 text-gray-500">{t('Training videos coming soon.')}</p>
-      </div>
-    </div>
+    <LearningMessage
+      icon={<Video size={22} />}
+      title={t('Videos')}
+      description={t('Training videos coming soon.')}
+    />
   )
 }

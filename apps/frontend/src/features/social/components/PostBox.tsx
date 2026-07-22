@@ -1,4 +1,7 @@
-import React, { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
+import { Repeat2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Surface } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import PostHeader from './PostHeader'
 import PostBody from './PostBody'
@@ -22,7 +25,7 @@ interface PostBoxProps {
 }
 
 /** Single post card composing header, body, footer, and expandable comments. */
-const PostBox: React.FC<PostBoxProps> = ({
+const PostBox = ({
   post,
   onLike,
   onSave,
@@ -33,7 +36,8 @@ const PostBox: React.FC<PostBoxProps> = ({
   onBlock,
   onCommentCountChange,
   defaultShowComments = false,
-}) => {
+}: PostBoxProps) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [showComments, setShowComments] = useState(defaultShowComments)
   const [reportDialog, setReportDialog] = useState<{ type: 'post' | 'user'; targetId: string } | null>(null)
@@ -49,16 +53,12 @@ const PostBox: React.FC<PostBoxProps> = ({
   )
 
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4">
+    <Surface className="overflow-visible" padding="md" role="article">
       {/* Repost label */}
       {isRepost && (
-        <div className="flex items-center gap-1.5 text-xs text-(--text-muted) mb-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
-            />
-          </svg>
-          <span>{post.author.name || post.author.username} reposted</span>
+        <div className="mb-3 flex items-center gap-2 border-b border-(--mc-color-border) pb-2 text-xs font-medium text-(--mc-color-text-muted)">
+          <Repeat2 className="size-3.5 text-(--mc-color-success)" aria-hidden="true" />
+          <span>{t('{{name}} reposted', { name: post.author.name || post.author.username })}</span>
         </div>
       )}
 
@@ -117,7 +117,7 @@ const PostBox: React.FC<PostBoxProps> = ({
           onClose={() => setBlockDialog(null)}
         />
       )}
-    </div>
+    </Surface>
   )
 }
 

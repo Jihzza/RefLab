@@ -18,6 +18,7 @@
  */
 
 import type { PricingPlan } from "../types";
+import { PAID_PLANS_ENABLED } from "@/features/pricing/config";
 import { useTranslation } from "react-i18next";
 
 interface PricingCardProps {
@@ -30,6 +31,12 @@ interface PricingCardProps {
 export default function PricingCard({ plan, onSelect }: PricingCardProps) {
   const { t } = useTranslation();
   const { id, name, pricePerMonth, benefits, isHighlighted, buttonText } = plan;
+  const isPaidPlanUnavailable = pricePerMonth > 0 && !PAID_PLANS_ENABLED;
+
+  const handleSelect = () => {
+    if (isPaidPlanUnavailable) return;
+    onSelect(id);
+  };
 
   return (
     <div
@@ -92,10 +99,14 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
 
       {/* CTA button */}
       <button
-        onClick={() => onSelect(id)}
+        type="button"
+        onClick={handleSelect}
+        disabled={isPaidPlanUnavailable}
+        aria-label={`${isPaidPlanUnavailable ? t("Coming Soon") : t(buttonText)}: ${t(name)}`}
         className={`
           w-full py-2 px-4 rounded-(--radius-button) font-medium transition-colors
           focus:outline-none focus:ring-2 focus:ring-(--brand-yellow) focus:ring-offset-2
+          disabled:cursor-not-allowed disabled:opacity-60
           ${
             isHighlighted
               ? "bg-(--brand-yellow) text-(--bg-primary) hover:bg-(--brand-yellow-soft)"
@@ -103,7 +114,7 @@ export default function PricingCard({ plan, onSelect }: PricingCardProps) {
           }
         `}
       >
-        {t(buttonText)}
+        {isPaidPlanUnavailable ? t("Coming Soon") : t(buttonText)}
       </button>
     </div>
   );

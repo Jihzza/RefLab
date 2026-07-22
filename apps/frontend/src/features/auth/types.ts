@@ -44,7 +44,10 @@ export interface AuthContextType {
 
   // Auth actions
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string) => Promise<{
+    error: Error | null
+    requiresEmailConfirmation: boolean
+  }>
   signInWithGoogle: () => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
   resetPassword: (email: string) => Promise<{ error: Error | null }>

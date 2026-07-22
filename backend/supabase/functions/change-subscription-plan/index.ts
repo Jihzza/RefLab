@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@17?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
+import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,6 +25,13 @@ serve(async (req) => {
   }
 
   try {
+    if (Deno.env.get('PAID_PLANS_ENABLED') !== 'true') {
+      return new Response(JSON.stringify({ error: 'Paid plan changes are not available yet' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const stripeKey = Deno.env.get('STRIPE_SECRET_KEY')
     if (!stripeKey) {
       return new Response(JSON.stringify({ error: 'Missing STRIPE_SECRET_KEY' }), {

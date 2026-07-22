@@ -1,40 +1,37 @@
 /**
- * CookieConsentBanner — Global cookie consent popup.
+ * CookieConsentBanner — Essential browser-storage notice.
  *
  * Appears at the bottom of the viewport when the user has not yet
- * accepted cookies. Stores consent in localStorage so the banner
- * does not reappear after acceptance.
+ * acknowledged the notice. RefLab does not currently initialise optional
+ * analytics or advertising cookies, so this is an information notice rather
+ * than a misleading consent choice.
  *
  * Mounted in App.tsx outside all providers (only needs BrowserRouter).
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const STORAGE_KEY = 'cookie-consent';
+const STORAGE_KEY = 'essential-storage-notice-v1';
 
 export default function CookieConsentBanner() {
   const { t } = useTranslation();
-  const [visible, setVisible] = useState(false);
-
-  // Check localStorage on mount — only show if no consent recorded
-  useEffect(() => {
-    const consent = localStorage.getItem(STORAGE_KEY);
-    if (!consent) {
-      setVisible(true);
+  const [visible, setVisible] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY) === null;
+    } catch {
+      // If storage is unavailable, keep the choice visible for this visit.
+      return true;
     }
-  }, []);
+  });
 
-  /** Save consent to localStorage and hide the banner */
-  const handleAccept = () => {
-    localStorage.setItem(STORAGE_KEY, 'accepted');
-    setVisible(false);
-  };
-
-  /** Dismiss without saving — banner will reappear on next visit */
-  const handleDecline = () => {
-    localStorage.setItem(STORAGE_KEY, 'declined');
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem(STORAGE_KEY, 'dismissed');
+    } catch {
+      // The banner can still be dismissed when storage is unavailable.
+    }
     setVisible(false);
   };
 
@@ -42,17 +39,17 @@ export default function CookieConsentBanner() {
 
   return (
     <div
-      role="dialog"
-      aria-label={t('Cookie consent')}
+      role="region"
+      aria-label={t('Essential storage notice')}
       className="fixed bottom-0 left-0 right-0 z-50 p-4"
     >
       <div className="max-w-lg mx-auto bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 shadow-lg">
         {/* Message */}
         <p className="text-sm text-(--text-secondary) mb-4 leading-relaxed">
-          {t('We use cookies to improve your experience. By continuing to use RefLab, you agree to our')}{' '}
+          {t('RefLab uses essential browser storage to keep your session, language and preferences. We do not currently use analytics or advertising cookies. Read our')}{' '}
           <Link
             to="/cookies"
-            className="text-(--info) hover:underline"
+            className="font-medium text-(--info) underline underline-offset-4"
           >
             {t('Cookies Policy')}
           </Link>
@@ -62,18 +59,10 @@ export default function CookieConsentBanner() {
         {/* Actions */}
         <div className="flex gap-3">
           <button
-            onClick={handleAccept}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) transition-colors hover:opacity-90"
-            aria-label={t('Accept cookies')}
+            onClick={handleDismiss}
+            className="w-full py-2 rounded-(--radius-button) text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) transition-colors hover:opacity-90"
           >
-            {t('Accept')}
-          </button>
-          <button
-            onClick={handleDecline}
-            className="flex-1 py-2 rounded-(--radius-button) text-sm font-medium bg-(--bg-surface-2) border border-(--border-subtle) text-(--text-secondary) transition-colors hover:bg-(--bg-hover)"
-            aria-label={t('Decline cookies')}
-          >
-            {t('Decline')}
+            {t('Understood')}
           </button>
         </div>
       </div>

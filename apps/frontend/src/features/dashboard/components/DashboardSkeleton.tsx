@@ -1,46 +1,50 @@
 import { useTranslation } from 'react-i18next'
+import Skeleton from '@/components/ui/Skeleton'
+import Surface from '@/components/ui/Surface'
 
-/**
- * DashboardSkeleton — Loading placeholder that mirrors the dashboard layout.
- * Shows animated pulse blocks for each section while data loads.
- */
 export default function DashboardSkeleton() {
   const { t } = useTranslation()
 
   return (
-    <div className="space-y-6" aria-busy="true" aria-label={t('Loading dashboard')}>
-      {/* Performance section */}
-      <div className="space-y-4">
-        <div className="h-5 w-32 bg-(--bg-surface-2) rounded animate-pulse" />
-        {/* Overall Accuracy */}
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-32 animate-pulse" />
-        {/* Topic Accuracy */}
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-44 animate-pulse" />
-        {/* Match Sim + Pass Rate */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-        </div>
-      </div>
+    <div className="min-h-full bg-(--mc-color-canvas) pb-8 text-(--mc-color-text)">
+      <div
+        className="mx-auto w-full max-w-7xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7 xl:px-8"
+        aria-busy="true"
+        aria-label={t('Loading dashboard')}
+      >
+        <Skeleton variant="text" width="13rem" height="2rem" className="mb-4 sm:mb-5" />
 
-      {/* Progress section */}
-      <div className="space-y-4">
-        <div className="h-5 w-24 bg-(--bg-surface-2) rounded animate-pulse" />
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-        </div>
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-28 animate-pulse" />
-      </div>
+        <div className="space-y-4 sm:space-y-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.85fr)]">
+            <Surface padding="md" className="min-h-[190px] shadow-none">
+              <Skeleton variant="text" width="7rem" />
+              <Skeleton variant="text" width="9rem" height="4.25rem" className="mt-3" />
+              <Skeleton variant="text" width="8rem" className="mt-3" />
+            </Surface>
+            <Surface padding="md" className="min-h-[190px] shadow-none">
+              <Skeleton variant="text" width="8rem" />
+              <Skeleton variant="text" width="75%" height="1.75rem" className="mt-4" />
+              <Skeleton variant="text" width="55%" className="mt-2" />
+              <Skeleton variant="rectangular" height="3rem" className="mt-5" />
+            </Surface>
+          </div>
 
-      {/* Habits section */}
-      <div className="space-y-4">
-        <div className="h-5 w-20 bg-(--bg-surface-2) rounded animate-pulse" />
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-40 animate-pulse" />
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
-          <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-2xl h-24 animate-pulse" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <Skeleton variant="rectangular" height="6.75rem" />
+            <Skeleton variant="rectangular" height="6.75rem" />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.1fr)] xl:gap-5">
+            <Skeleton variant="rectangular" height="15rem" />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <Skeleton key={index} variant="rectangular" height="7rem" />
+                ))}
+              </div>
+              <Skeleton variant="rectangular" height="12rem" />
+            </div>
+          </div>
         </div>
       </div>
     </div>

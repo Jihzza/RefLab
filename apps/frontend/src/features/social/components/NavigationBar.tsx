@@ -1,17 +1,13 @@
-import React from 'react'
-import type { FeedFilter } from '../types'
 import { useTranslation } from 'react-i18next'
+import { SegmentedControl } from '@/components/ui'
+import type { FeedFilter } from '../types'
 
 interface NavigationBarProps {
   filter: FeedFilter
   onFilterChange: (filter: FeedFilter) => void
 }
 
-/** Horizontal filter tabs for the social feed. */
-const NavigationBar: React.FC<NavigationBarProps> = ({
-  filter,
-  onFilterChange,
-}) => {
+export default function NavigationBar({ filter, onFilterChange }: NavigationBarProps) {
   const { t } = useTranslation()
   const filters: { label: string; value: FeedFilter }[] = [
     { label: t('All'), value: 'all' },
@@ -22,31 +18,17 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
   ]
 
   return (
-    <nav
-      className="sticky top-0 z-10 bg-(--bg-surface) border-b border-(--border-subtle)"
-      aria-label={t('Feed filter')}
-    >
-      <div className="flex justify-center overflow-x-auto no-scrollbar">
-        {filters.map(({ label, value }) => {
-          const isActive = filter === value
-          return (
-            <button
-              key={value}
-              onClick={() => onFilterChange(value)}
-              className={`flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
-                isActive
-                  ? 'text-(--brand-yellow) border-(--brand-yellow)'
-                  : 'text-(--text-muted) border-transparent hover:text-(--text-secondary)'
-              }`}
-              aria-current={isActive ? 'page' : undefined}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-    </nav>
+    <div className="mx-auto max-w-[var(--mc-content-narrow)] overflow-x-auto px-3 sm:px-4">
+      <SegmentedControl
+        ariaLabel={t('Feed filter')}
+        value={filter}
+        onValueChange={(value) => onFilterChange(value as FeedFilter)}
+        options={filters}
+        size="sm"
+        fullWidth
+        className="min-w-[21rem] shadow-none"
+        optionClassName="min-h-10"
+      />
+    </div>
   )
 }
-
-export default NavigationBar

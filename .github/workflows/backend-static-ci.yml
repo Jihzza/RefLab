@@ -1,0 +1,52 @@
+name: Backend Static CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-static-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  edge-functions:
+    name: Check Supabase Edge Functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
+        with:
+          deno-version: v2.9.3
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.13"
+
+      - name: Type-check every Edge Function
+        run: deno check --node-modules-dir=none backend/supabase/functions/*/index.ts
+
+      - name: Lint Edge Functions
+        run: deno lint --rules-exclude=no-import-prefix backend/supabase/functions
+
+      - name: Verify migration files are non-empty and clean
+        shell: bash
+        run: |
+          test -s backend/supabase/migrations/20260722_0050_launch_security_hardening.sql
+          git diff --check
+
+      - name: Validate release configuration
+        run: python .github/scripts/check_release_config.py

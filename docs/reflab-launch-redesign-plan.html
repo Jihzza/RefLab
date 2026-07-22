@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="Plano vivo para o redesign conservador e lançamento seguro da aplicação RefLab existente."
+  />
+  <title>RefLab — Plano vivo de redesign e lançamento</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --canvas: #080b12;
+      --surface: #101318;
+      --surface-raised: #151922;
+      --surface-hover: #1b212b;
+      --border: #2d343d;
+      --border-strong: #414a55;
+      --text: #f4f5f7;
+      --text-secondary: #c2c6cc;
+      --text-muted: #9299a3;
+      --yellow: #f6b800;
+      --yellow-soft: #ffe078;
+      --red: #ff4d50;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --blue: #4da3ff;
+      --radius: 16px;
+      --radius-small: 10px;
+      --shadow: 0 18px 48px rgb(0 0 0 / 32%);
+      --content: 1180px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--canvas);
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 82% 8%, rgb(246 184 0 / 8%), transparent 25rem),
+        radial-gradient(circle at 12% 32%, rgb(77 163 255 / 5%), transparent 30rem),
+        var(--canvas);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    a {
+      color: var(--yellow-soft);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      color: var(--yellow);
+    }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--blue);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    code {
+      padding: 0.12rem 0.38rem;
+      color: var(--yellow-soft);
+      background: rgb(246 184 0 / 9%);
+      border: 1px solid rgb(246 184 0 / 18%);
+      border-radius: 6px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.88em;
+      overflow-wrap: anywhere;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 20;
+      top: 12px;
+      left: 12px;
+      padding: 10px 14px;
+      color: #080b12;
+      background: var(--yellow);
+      border-radius: 8px;
+      font-weight: 800;
+      transform: translateY(-160%);
+      transition: transform 120ms ease-out;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .page-shell {
+      width: min(100% - 32px, var(--content));
+      margin-inline: auto;
+      padding: 28px 0 80px;
+    }
+
+    .hero {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      padding: clamp(28px, 5vw, 58px);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 2%), transparent 48%),
+        var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: auto -8% -44% 42%;
+      height: 90%;
+      border: 1px solid rgb(146 153 163 / 20%);
+      transform: perspective(520px) rotateX(60deg) rotateZ(-8deg);
+      background:
+        linear-gradient(90deg, transparent 49.8%, rgb(146 153 163 / 18%) 50%, transparent 50.2%),
+        radial-gradient(circle at center, transparent 0 18%, rgb(146 153 163 / 18%) 18.3% 18.8%, transparent 19.1%);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .brand-mark {
+      display: grid;
+      grid-template-columns: repeat(3, 12px);
+      gap: 5px;
+      width: 48px;
+      height: 30px;
+      transform: skewX(-24deg);
+    }
+
+    .brand-mark span {
+      background: var(--yellow);
+      border-radius: 2px;
+    }
+
+    .brand-mark span:last-child {
+      background: var(--red);
+    }
+
+    .brand-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--yellow);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin-top: 0;
+      color: var(--text);
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+    }
+
+    h1 {
+      max-width: 820px;
+      margin-bottom: 18px;
+      font-size: clamp(2rem, 5vw, 4.2rem);
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: clamp(1.5rem, 3vw, 2.15rem);
+    }
+
+    h3 {
+      margin-bottom: 12px;
+      font-size: 1.15rem;
+    }
+
+    h4 {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    p {
+      margin-top: 0;
+    }
+
+    .hero-copy {
+      max-width: 780px;
+      margin-bottom: 26px;
+      color: var(--text-secondary);
+      font-size: clamp(1rem, 2vw, 1.2rem);
+    }
+
+    .meta-row,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta-item,
+    .chip,
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 30px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      background: rgb(8 11 18 / 64%);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+    }
+
+    .status--done {
+      color: var(--green);
+    }
+
+    .status--active {
+      color: var(--blue);
+    }
+
+    .status--blocked {
+      color: var(--red);
+    }
+
+    .status--pending {
+      color: var(--orange);
+    }
+
+    .launch-verdict {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 18px;
+      align-items: start;
+      margin-top: 28px;
+      padding: 18px;
+      background: rgb(255 77 80 / 8%);
+      border: 1px solid rgb(255 77 80 / 34%);
+      border-left: 5px solid var(--red);
+      border-radius: var(--radius-small);
+    }
+
+    .verdict-label {
+      padding: 5px 10px;
+      color: #080b12;
+      background: var(--red);
+      border-radius: 7px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
+    .launch-verdict p {
+      margin: 0;
+      color: var(--text-secondary);
+    }
+
+    .toc {
+      margin: 22px 0;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .toc ol {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px 20px;
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    .toc a {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      color: var(--yellow);
+    }
+
+    main > section {
+      scroll-margin-top: 18px;
+      margin-top: 22px;
+      padding: clamp(22px, 4vw, 36px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 30px rgb(0 0 0 / 18%);
+    }
+
+    .section-intro {
+      max-width: 820px;
+      margin-bottom: 24px;
+      color: var(--text-secondary);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid--three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 19px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+    }
+
+    .card--accent {
+      border-color: rgb(246 184 0 / 52%);
+      box-shadow: inset 4px 0 var(--yellow);
+    }
+
+    .card--danger {
+      border-color: rgb(255 77 80 / 48%);
+      box-shadow: inset 4px 0 var(--red);
+    }
+
+    .card p:last-child,
+    .card ul:last-child {
+      margin-bottom: 0;
+    }
+
+    .metric {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--yellow);
+      font-size: 2rem;
+      font-weight: 850;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    ul,
+    ol {
+      color: var(--text-secondary);
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    .clean-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .clean-list li {
+      position: relative;
+      padding-left: 22px;
+    }
+
+    .clean-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: 900;
+    }
+
+    .warning-list li::before {
+      content: "!";
+      display: grid;
+      place-items: center;
+      top: 0.25rem;
+      width: 14px;
+      height: 14px;
+      color: #080b12;
+      background: var(--red);
+      border-radius: 50%;
+      font-size: 0.66rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      background: var(--surface-raised);
+      font-size: 0.88rem;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--text);
+      background: var(--surface-hover);
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td {
+      color: var(--text-secondary);
+    }
+
+    td:first-child {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .route {
+      white-space: nowrap;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.82rem;
+    }
+
+    .callout {
+      margin: 20px 0;
+      padding: 18px 20px;
+      color: var(--text-secondary);
+      background: rgb(77 163 255 / 7%);
+      border: 1px solid rgb(77 163 255 / 30%);
+      border-left: 5px solid var(--blue);
+      border-radius: 10px;
+    }
+
+    .callout strong {
+      color: var(--text);
+    }
+
+    .prohibition {
+      margin: 24px 0;
+      padding: clamp(20px, 4vw, 30px);
+      background:
+        repeating-linear-gradient(-45deg, rgb(255 77 80 / 4%) 0 10px, transparent 10px 20px),
+        rgb(255 77 80 / 7%);
+      border: 2px solid var(--red);
+      border-radius: 14px;
+    }
+
+    .prohibition .label {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 4px 9px;
+      color: #080b12;
+      background: var(--red);
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .prohibition h3 {
+      margin-bottom: 10px;
+      font-size: 1.35rem;
+    }
+
+    .prohibition p:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline {
+      position: relative;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: phase;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 19px;
+      width: 2px;
+      background: var(--border-strong);
+    }
+
+    .timeline > li {
+      position: relative;
+      padding: 0 0 24px 60px;
+      counter-increment: phase;
+    }
+
+    .timeline > li::before {
+      content: counter(phase, decimal-leading-zero);
+      position: absolute;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      color: #080b12;
+      background: var(--yellow);
+      border: 4px solid var(--surface);
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 900;
+    }
+
+    .timeline > li:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline p {
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .sequence {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 22px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sequence li {
+      position: relative;
+      min-height: 150px;
+      padding: 16px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--yellow);
+      border-radius: 10px;
+    }
+
+    .sequence li:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      right: -19px;
+      color: var(--yellow);
+      font-size: 1.5rem;
+      font-weight: 900;
+      transform: translateY(-50%);
+    }
+
+    .sequence strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .sequence span {
+      color: var(--text-secondary);
+      font-size: 0.86rem;
+    }
+
+    details {
+      margin-top: 12px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    summary {
+      padding: 14px 16px;
+      color: var(--text);
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    details > div {
+      padding: 0 16px 16px;
+      color: var(--text-secondary);
+    }
+
+    .gate-pass,
+    .gate-stop {
+      font-weight: 850;
+    }
+
+    .gate-pass {
+      color: var(--green);
+    }
+
+    .gate-stop {
+      color: var(--red);
+    }
+
+    .footer {
+      margin-top: 24px;
+      padding: 24px;
+      color: var(--text-muted);
+      text-align: center;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 900px) {
+      .toc ol,
+      .grid--three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sequence {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .sequence li:nth-child(2)::after {
+        display: none;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .page-shell {
+        width: min(100% - 20px, var(--content));
+        padding-top: 10px;
+      }
+
+      .hero {
+        border-radius: 16px;
+      }
+
+      .launch-verdict,
+      .grid,
+      .grid--three,
+      .toc ol,
+      .sequence {
+        grid-template-columns: 1fr;
+      }
+
+      .sequence li {
+        min-height: 0;
+      }
+
+      .sequence li:not(:last-child)::after {
+        content: "↓";
+        top: auto;
+        right: 50%;
+        bottom: -25px;
+        transform: translateX(50%);
+      }
+
+      .launch-verdict {
+        gap: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media print {
+      :root {
+        color-scheme: light;
+      }
+
+      body {
+        color: #111;
+        background: #fff;
+        font-size: 10pt;
+      }
+
+      .page-shell {
+        width: 100%;
+        padding: 0;
+      }
+
+      .hero,
+      main > section,
+      .toc,
+      .card,
+      table,
+      details,
+      .sequence li {
+        color: #111;
+        background: #fff;
+        box-shadow: none;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      th,
+      td:first-child,
+      .sequence strong,
+      summary {
+        color: #111;
+      }
+
+      p,
+      li,
+      td,
+      .section-intro,
+      .hero-copy,
+      .sequence span {
+        color: #333;
+      }
+
+      .toc {
+        display: none;
+      }
+
+      main > section,
+      .card,
+      .table-wrap,
+      details,
+      .sequence li {
+        break-inside: avoid;
+        border-color: #aaa;
+      }
+
+      a {
+        color: #111;
+        text-decoration: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+
+  <div class="page-shell">
+    <header class="hero">
+      <div class="brand" aria-label="RefLab">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="brand-name">RefLab</span>
+      </div>
+
+      <p class="eyebrow">Plano vivo · Redesign conservador · Lançamento seguro</p>
+      <h1>A aplicação existente, mais clara, robusta e pronta para utilizadores reais.</h1>
+      <p class="hero-copy">
+        Este documento governa o redesign e o primeiro lançamento público do RefLab. A direção é
+        inequívoca: evoluir o produto que já existe, preservar a arquitetura, os contratos e os dados,
+        e só publicar quando cada gate objetivo tiver evidência verificável.
+      </p>
+
+      <div class="meta-row" aria-label="Metadados do documento">
+        <span class="meta-item">Versão 1.0</span>
+        <span class="meta-item">Atualizado em <time datetime="2026-07-22">22 de julho de 2026</time></span>
+        <span class="meta-item">Âmbito: aplicação web, Supabase e Netlify</span>
+        <span class="meta-item">Documento sem dados pessoais</span>
+      </div>
+
+      <div class="launch-verdict" role="status" aria-label="Decisão atual de lançamento">
+        <span class="verdict-label">NO-GO</span>
+        <p>
+          O código pode continuar a ser preparado e validado, mas merge e produção ficam bloqueados
+          até reconciliar o histórico remoto de migrações, provar backup e restauro, validar segurança
+          live, completar QA final e fechar os requisitos legais e operacionais.
+        </p>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="Índice do plano">
+      <ol>
+        <li><a href="#mandato">Mandato e princípios</a></li>
+        <li><a href="#estado">Estado atual conhecido</a></li>
+        <li><a href="#inventario">Inventário da aplicação</a></li>
+        <li><a href="#design">Sistema Match Control</a></li>
+        <li><a href="#execucao">Plano de execução</a></li>
+        <li><a href="#media">Media privado</a></li>
+        <li><a href="#seguranca">Segurança e dados</a></li>
+        <li><a href="#migracoes">Migrações Supabase</a></li>
+        <li><a href="#pagamentos">Pagamentos no lançamento</a></li>
+        <li><a href="#qa">QA e qualidade</a></li>
+        <li><a href="#release">PR, deploy e rollback</a></li>
+        <li><a href="#gates">Gates Go/No-Go</a></li>
+        <li><a href="#runbook">Runbook de lançamento</a></li>
+        <li><a href="#manutencao">Manutenção do plano</a></li>
+      </ol>
+    </nav>
+
+    <main id="conteudo">
+      <section id="mandato">
+        <p class="eyebrow">01 · Mandato</p>
+        <h2>Redesign sem reconstrução nem perda de contexto</h2>
+        <p class="section-intro">
+          O RefLab já é uma aplicação funcional, com utilizadores, dados e contratos reais. O trabalho
+          é uma evolução incremental do mesmo produto — não uma segunda aplicação, não uma nova base de
+          dados e não uma substituição silenciosa da arquitetura.
+        </p>
+
+        <div class="grid grid--three">
+          <article class="card card--accent">
+            <h3>Preservar</h3>
+            <ul class="clean-list">
+              <li>Identidades e sessões Supabase.</li>
+              <li>Dados, relações, histórico e ownership.</li>
+              <li>Rotas públicas e protegidas.</li>
+              <li>Contratos de API, RPC, Realtime e Storage.</li>
+              <li>Fluxos de billing dos subscritores existentes.</li>
+            </ul>
+          </article>
+
+          <article class="card card--accent">
+            <h3>Melhorar</h3>
+            <ul class="clean-list">
+              <li>Hierarquia visual e consistência.</li>
+              <li>Estados loading, vazio, erro e sucesso.</li>
+              <li>Navegação mobile e desktop.</li>
+              <li>Acessibilidade e desempenho.</li>
+              <li>Defesa em profundidade e observabilidade.</li>
+            </ul>
+          </article>
+
+          <article class="card card--danger">
+            <h3>Não fazer</h3>
+            <ul class="clean-list warning-list">
+              <li>Não criar uma app paralela.</li>
+              <li>Não apagar ou reseed de dados reais.</li>
+              <li>Não alterar contratos sem compatibilidade.</li>
+              <li>Não usar credenciais de produção em CI.</li>
+              <li>Não confundir build verde com autorização de launch.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Regra de conservação:</strong> qualquer mudança visual deve ser demonstravelmente
+          neutra para a leitura e escrita de dados. Se um redesign exigir alterar um contrato, essa
+          mudança passa a ser uma migração de produto separada, compatível e explicitamente aprovada.
+        </div>
+
+        <h3>Definition of Done por ecrã</h3>
+        <ol>
+          <li>Usa a mesma rota, fontes de dados e ações autorizadas do ecrã existente.</li>
+          <li>Preserva loading, vazio, erro, sucesso, dados longos e permissões insuficientes.</li>
+          <li>Funciona por teclado, leitor de ecrã e toque, sem depender apenas da cor.</li>
+          <li>Passa nos viewports de referência sem overflow, conteúdo cortado ou controlos encobertos.</li>
+          <li>Tem screenshot de comparação e checklist funcional ligados ao commit testado.</li>
+          <li>Não introduz chamadas duplicadas, flashes de dados de outra sessão ou logs com dados sensíveis.</li>
+        </ol>
+      </section>
+
+      <section id="estado">
+        <p class="eyebrow">02 · Snapshot</p>
+        <h2>Estado atual conhecido</h2>
+        <p class="section-intro">
+          Este é um snapshot de engenharia, não uma declaração de que produção está pronta. Não inclui
+          nomes, emails, identificadores de utilizador, conteúdo de mensagens ou quaisquer outros dados pessoais.
+        </p>
+
+        <div class="grid grid--three">
+          <article class="card">
+            <span class="status status--done">Confirmado no código</span>
+            <h3 style="margin-top: 14px;">Produto existente</h3>
+            <p>
+              Frontend React/TypeScript/Vite, Supabase para Auth, Postgres, RPC, Realtime, Storage e Edge
+              Functions, com publicação web configurada em Netlify.
+            </p>
+          </article>
+
+          <article class="card">
+            <span class="status status--active">Em integração</span>
+            <h3 style="margin-top: 14px;">Redesign Match Control</h3>
+            <p>
+              Fundações visuais, shell, autenticação, dashboard e hardening estão a ser integrados na
+              app existente. A validação final deve correr novamente sobre o commit candidato completo.
+            </p>
+          </article>
+
+          <article class="card">
+            <span class="status status--blocked">Bloqueio de dados</span>
+            <h3 style="margin-top: 14px;">Histórico remoto</h3>
+            <p>
+              O histórico remoto de migrações foi reportado vazio/não reconciliado. Existe uma migração
+              histórica 0035 destrutiva; por isso não é seguro reproduzir a cadeia local em produção.
+            </p>
+          </article>
+
+          <article class="card">
+            <span class="status status--active">Preparado no frontend</span>
+            <h3 style="margin-top: 14px;">Lançamento free-only</h3>
+            <p>
+              A compra e mudança para planos pagos usam o gate estrito
+              <code>VITE_PAID_PLANS_ENABLED === 'true'</code>. O valor de produção deve ficar ausente ou falso.
+            </p>
+          </article>
+
+          <article class="card">
+            <span class="status status--pending">Candidato, não aplicado</span>
+            <h3 style="margin-top: 14px;">Hardening 0050</h3>
+            <p>
+              Existe uma migração aditiva candidata para perfis, mensagens, Storage e RPC. Só pode ser
+              aplicada isoladamente depois do inventário live, reconciliação e ensaio de rollback.
+            </p>
+          </article>
+
+          <article class="card">
+            <span class="status status--blocked">Evidência em falta</span>
+            <h3 style="margin-top: 14px;">Produção</h3>
+            <p>
+              Ainda é necessário provar backup/restauro, rotação de segredos, políticas legais aprovadas,
+              QA multi-dispositivo, monitorização, suporte e smoke tests no ambiente final.
+            </p>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Leitura correta do estado:</strong> alterações locais, previews e checks executáveis são
+          evidência útil, mas não substituem verificação do ambiente Supabase real nem autorização explícita
+          dos gates de dados, segurança, legal e operação.
+        </div>
+      </section>
+
+      <section id="inventario">
+        <p class="eyebrow">03 · Inventário</p>
+        <h2>Áreas, rotas e contratos a preservar</h2>
+        <p class="section-intro">
+          O inventário abaixo é a superfície mínima de regressão. Uma rota só é considerada redesenhada
+          quando os seus estados e os contratos associados forem exercitados com dados sintéticos e contas de teste.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Área</th>
+                <th>Rota</th>
+                <th>Acesso</th>
+                <th>Comportamento que não pode regredir</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Landing e entrada</td>
+                <td class="route">/</td>
+                <td>Convidado</td>
+                <td>Proposta de valor, autenticação, pricing de referência e encaminhamento sem loops.</td>
+              </tr>
+              <tr>
+                <td>Recuperação de acesso</td>
+                <td class="route">/reset-password</td>
+                <td>Público</td>
+                <td>Pedido, validação do link, nova password, erros expirados e retorno seguro.</td>
+              </tr>
+              <tr>
+                <td>Callback de Auth</td>
+                <td class="route">/auth/callback</td>
+                <td>Público controlado</td>
+                <td>Troca PKCE/OAuth, sessão correta, erros legíveis e redirect sem fuga de tokens.</td>
+              </tr>
+              <tr>
+                <td>Políticas</td>
+                <td class="route">/privacy · /terms · /cookies</td>
+                <td>Público</td>
+                <td>Conteúdo aprovado, navegação acessível, versão/data e disponibilidade sem login.</td>
+              </tr>
+              <tr>
+                <td>Painel</td>
+                <td class="route">/app · /app/dashboard</td>
+                <td>Autenticado</td>
+                <td>Métricas reais, recomendações, progresso, calendário, estados sem atividade e retry.</td>
+              </tr>
+              <tr>
+                <td>Testes</td>
+                <td class="route">/app/tests</td>
+                <td>Autenticado</td>
+                <td>Lista real por slug, disponibilidade, loading/erro/vazio e entrada no teste correto.</td>
+              </tr>
+              <tr>
+                <td>Aprendizagem</td>
+                <td class="route">/app/learn</td>
+                <td>Autenticado</td>
+                <td>Conteúdo, filtros/tabs, cenários de vídeo, legislação e progresso existente.</td>
+              </tr>
+              <tr>
+                <td>Execução de teste</td>
+                <td class="route">/app/learn/test/:slug</td>
+                <td>Autenticado</td>
+                <td>Sessão, tempo, respostas, resultado, ownership da tentativa e persistência idempotente.</td>
+              </tr>
+              <tr>
+                <td>Notificações</td>
+                <td class="route">/app/notifications</td>
+                <td>Autenticado</td>
+                <td>Listagem, leitura, links de destino, preferências e ausência de referências órfãs.</td>
+              </tr>
+              <tr>
+                <td>Planos e faturação</td>
+                <td class="route">/app/pricing</td>
+                <td>Autenticado</td>
+                <td>Free-only no launch; gestão, faturas e cancelamento preservados para subscritores existentes.</td>
+              </tr>
+              <tr>
+                <td>Compatibilidade billing</td>
+                <td class="route">/app/billing · /app/billing/pricing</td>
+                <td>Autenticado</td>
+                <td>Redirect permanente dentro da app para <code>/app/pricing</code>, sem ecrã duplicado.</td>
+              </tr>
+              <tr>
+                <td>Comunidade</td>
+                <td class="route">/app/social</td>
+                <td>Autenticado</td>
+                <td>Feed, publicação, media, likes, comentários, paginação, reports e permissões.</td>
+              </tr>
+              <tr>
+                <td>Publicação</td>
+                <td class="route">/app/post/:postId</td>
+                <td>Autenticado</td>
+                <td>Leitura por ID, comentários, ações autorizadas, not-found e links de notificação.</td>
+              </tr>
+              <tr>
+                <td>Mensagens</td>
+                <td class="route">/app/messages</td>
+                <td>Autenticado</td>
+                <td>Conversas autorizadas, pesquisa/entrada, ordenação, unread e Realtime sem duplicados.</td>
+              </tr>
+              <tr>
+                <td>Conversa</td>
+                <td class="route">/app/messages/:conversationId</td>
+                <td>Participante</td>
+                <td>Texto/media, envio otimista, retry, assinatura privada e bloqueio a não participantes.</td>
+              </tr>
+              <tr>
+                <td>Pesquisa</td>
+                <td class="route">/app/search</td>
+                <td>Autenticado</td>
+                <td>Pesquisa de utilizadores, histórico, limites, resultados vazios e campos públicos mínimos.</td>
+              </tr>
+              <tr>
+                <td>Perfil próprio</td>
+                <td class="route">/app/profile · /app/profile/edit</td>
+                <td>Proprietário</td>
+                <td>Leitura/edição de campos permitidos, avatar, validação, username e isolamento entre sessões.</td>
+              </tr>
+              <tr>
+                <td>Definições</td>
+                <td class="route">/app/settings</td>
+                <td>Proprietário</td>
+                <td>Preferências, privacidade, notificações, logout e eliminação de conta segura.</td>
+              </tr>
+              <tr>
+                <td>Perfil público</td>
+                <td class="route">/app/profile/:username</td>
+                <td>Autenticado</td>
+                <td>Apenas campos públicos, relações sociais autorizadas, feed e username inexistente.</td>
+              </tr>
+              <tr>
+                <td>Fallback</td>
+                <td class="route">*</td>
+                <td>Público/protegido</td>
+                <td>404 clara, retorno seguro e nenhuma revelação de rotas ou dados internos.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 28px;">Mapa dos contratos de dados</h3>
+        <div class="grid">
+          <article class="card">
+            <h4>Identidade e perfil</h4>
+            <p>Supabase Auth, sessão, bootstrap de perfil, campos públicos mínimos, ownership e avatar.</p>
+          </article>
+          <article class="card">
+            <h4>Aprendizagem e painel</h4>
+            <p>Testes, perguntas, tentativas, respostas, sessões, vídeos, atividade e RPC de agregação.</p>
+          </article>
+          <article class="card">
+            <h4>Social e notificações</h4>
+            <p>Posts, comentários, reações, follows, reports, feeds paginados, triggers e referências.</p>
+          </article>
+          <article class="card">
+            <h4>Mensagens</h4>
+            <p>Conversas, participantes, mensagens, Realtime e objetos privados no bucket de media.</p>
+          </article>
+          <article class="card">
+            <h4>Definições e privacidade</h4>
+            <p>Preferências, consentimentos aplicáveis, notificações, exportação/eliminação e retenção.</p>
+          </article>
+          <article class="card">
+            <h4>Billing</h4>
+            <p>Customer, subscrição, transações, invoices, webhook Stripe e portal para clientes existentes.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="design">
+        <p class="eyebrow">04 · Direção visual</p>
+        <h2>Match Control: precisão de arbitragem, não decoração genérica</h2>
+        <p class="section-intro">
+          O sistema visual traduz o ambiente de controlo de jogo: escuro, técnico, disciplinado e legível.
+          A referência visual guia a implementação, mas nunca substitui conteúdo real nem cria métricas fictícias.
+        </p>
+
+        <div class="grid grid--three">
+          <article class="card">
+            <span class="metric">#080B12</span>
+            <h3>Canvas</h3>
+            <p>Base navy quase preta, superfícies #101318 e #151922, bordas discretas e elevação contida.</p>
+          </article>
+          <article class="card">
+            <span class="metric">#F6B800</span>
+            <h3>Ação primária</h3>
+            <p>Amarelo de arbitragem para métricas, foco visual e CTA principal; nunca para grandes blocos de texto.</p>
+          </article>
+          <article class="card">
+            <span class="metric">#FF4D50</span>
+            <h3>Ênfase disciplinar</h3>
+            <p>Vermelho como acento de marca, perigo ou erro. Não é usado como único sinal sem texto/ícone.</p>
+          </article>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Camada</th>
+                <th>Regra Match Control</th>
+                <th>Critério de aceitação</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Shell</td>
+                <td>Header estável, rail/sidebar desktop e navegação inferior mobile com safe areas.</td>
+                <td>Sem saltos entre rotas; item ativo correto; conteúdo nunca fica tapado pela navegação.</td>
+              </tr>
+              <tr>
+                <td>Tipografia</td>
+                <td>Escala curta, títulos fortes, labels compactas e números tabulares para métricas.</td>
+                <td>Zoom a 200% sem perda; texto de corpo com contraste AA e line-height legível.</td>
+              </tr>
+              <tr>
+                <td>Superfícies</td>
+                <td>Cards de 1 px, raios consistentes, elevação moderada e densidade informativa controlada.</td>
+                <td>Hierarquia percetível sem depender de sombra; nenhuma área clicável ambígua.</td>
+              </tr>
+              <tr>
+                <td>Componentes</td>
+                <td>Button, Input, Dialog, Sheet, Tabs, Badge, Skeleton, EmptyState e ProgressBar reutilizáveis.</td>
+                <td>Variantes e estados iguais em todas as features; sem forks visuais locais desnecessários.</td>
+              </tr>
+              <tr>
+                <td>Motivos de jogo</td>
+                <td>Linhas de campo, três faixas e cantos amarelo/vermelho apenas como decoração.</td>
+                <td><code>aria-hidden</code>, sem pointer events e removidos em forced colors quando necessário.</td>
+              </tr>
+              <tr>
+                <td>Movimento</td>
+                <td>Transições de 80–260 ms, funcionais e discretas.</td>
+                <td><code>prefers-reduced-motion</code> respeitado; nada bloqueia interação ou leitura.</td>
+              </tr>
+              <tr>
+                <td>Conteúdo</td>
+                <td>Dados reais, linguagem PT-PT coerente e rótulos orientados à ação.</td>
+                <td>Sem percentagens, sequências, planos ou recomendações inventadas como se fossem reais.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 28px;">Ordem de redesign por risco</h3>
+        <ol>
+          <li><strong>Fundações:</strong> tokens, tipografia, foco, superfícies e componentes primitivos.</li>
+          <li><strong>Shell:</strong> header, sidebar, bottom nav, safe areas, Suspense e 404.</li>
+          <li><strong>Entrada:</strong> landing, login, signup, OAuth, recuperação e políticas.</li>
+          <li><strong>Núcleo:</strong> dashboard, aprender, testes e resultados.</li>
+          <li><strong>Comunidade:</strong> social, posts, perfis, pesquisa e notificações.</li>
+          <li><strong>Tempo real:</strong> mensagens, anexos, estados otimistas e reconexão.</li>
+          <li><strong>Conta:</strong> perfil, definições, billing free-only e eliminação.</li>
+        </ol>
+      </section>
+
+      <section id="execucao">
+        <p class="eyebrow">05 · Execução</p>
+        <h2>Plano incremental, verificável e reversível</h2>
+        <p class="section-intro">
+          Cada fase termina com evidência e uma decisão. Trabalho paralelo é permitido apenas quando os
+          ficheiros e contratos não colidem; a integração final acontece num único candidato testável.
+        </p>
+
+        <ol class="timeline">
+          <li>
+            <h3>Congelar baseline e superfície de regressão</h3>
+            <p>Registar commit base, branch, origin, estado do worktree, rotas, contratos, build e screenshots atuais.</p>
+            <span class="chip">Saída: baseline reproduzível</span>
+          </li>
+          <li>
+            <h3>Separar mudança visual de mudança de dados</h3>
+            <p>Classificar cada diff como UI, contrato, segurança, migração ou operação; PRs perigosos não ficam escondidos em CSS.</p>
+            <span class="chip">Saída: mapa de risco por ficheiro</span>
+          </li>
+          <li>
+            <h3>Integrar o design system e o shell</h3>
+            <p>Aplicar tokens e componentes partilhados primeiro, preservando os aliases atuais durante a migração incremental.</p>
+            <span class="chip">Saída: navegação consistente</span>
+          </li>
+          <li>
+            <h3>Redesenhar por fluxo completo</h3>
+            <p>Trabalhar uma jornada de cada vez, incluindo estados, mutações, acessibilidade e regressão de dados.</p>
+            <span class="chip">Saída: matriz por rota</span>
+          </li>
+          <li>
+            <h3>Endurecer contratos e infraestrutura</h3>
+            <p>Auditar Auth, RLS, RPC, Storage e Edge Functions; qualquer mudança live segue rollout compatível e rollback ensaiado.</p>
+            <span class="chip">Saída: relatório de segurança</span>
+          </li>
+          <li>
+            <h3>Validar o candidato integrado</h3>
+            <p>Build, lint, testes, QA visual, mobile, a11y, desempenho, segurança e smoke tests com dados sintéticos.</p>
+            <span class="chip">Saída: release candidate imutável</span>
+          </li>
+          <li>
+            <h3>Promover com gates e monitorizar</h3>
+            <p>Backend compatível primeiro, frontend depois, enforcement final coordenado e observação intensiva com rollback disponível.</p>
+            <span class="chip">Saída: decisão Go/No-Go registada</span>
+          </li>
+        </ol>
+      </section>
+
+      <section id="media">
+        <p class="eyebrow">06 · Rollout coordenado</p>
+        <h2>Media de mensagens privado, sem janela de incompatibilidade</h2>
+        <p class="section-intro">
+          O objetivo é que apenas participantes da conversa possam ler anexos. A privacidade não deve
+          ser ativada antes de os contratos de path, políticas e leitores compatíveis estarem comprovados.
+        </p>
+
+        <ol class="sequence" aria-label="Sequência de rollout de media privado">
+          <li>
+            <strong>1 · Backend compatível</strong>
+            <span>Auditar paths existentes, MIME/limites e ownership; adicionar capacidade autenticada de leitura assinada sem remover ainda a compatibilidade antiga.</span>
+          </li>
+          <li>
+            <strong>2 · Cliente compatível</strong>
+            <span>Publicar leitor que trata preview <code>blob:</code> e path persistido, resolve URL assinada curta, renova expiração e mostra erro recuperável.</span>
+          </li>
+          <li>
+            <strong>3 · Enforcement privado</strong>
+            <span>Em janela controlada, tornar o bucket privado e remover leitura pública; permitir SELECT apenas aos participantes da conversa.</span>
+          </li>
+          <li>
+            <strong>4 · Prova live</strong>
+            <span>Validar participante A/B, utilizador externo e anónimo; observar 403 esperados, erros de media, Realtime e latência antes de fechar a janela.</span>
+          </li>
+        </ol>
+
+        <div class="callout">
+          <strong>Backend-first significa capacidade primeiro, enforcement coordenado depois.</strong>
+          Primeiro fica disponível e verificado o contrato seguro de backend/Storage; o cliente compatível
+          é promovido antes de retirar a leitura pública. Assim evita-se quebrar anexos durante o rollout.
+        </div>
+
+        <div class="grid">
+          <article class="card">
+            <h3>Pré-condições</h3>
+            <ul>
+              <li><code>messages.media_url</code> contém o nome/path do objeto, não um URL público permanente.</li>
+              <li>Paths legados são inventariados e normalizados de forma aditiva.</li>
+              <li>Upload valida utilizador, prefixo, extensão, MIME e tamanho.</li>
+              <li>A política cruza objeto, mensagem, conversa e participantes.</li>
+              <li>URL assinada tem TTL curto e não é persistida na base de dados.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Testes de autorização</h3>
+            <ul>
+              <li>Remetente e destinatário conseguem abrir o objeto.</li>
+              <li>Um terceiro autenticado recebe 403/sem dados.</li>
+              <li>Uma sessão anónima não consegue listar nem ler objetos.</li>
+              <li>Trocar manualmente o path não contorna ownership.</li>
+              <li>Mensagem eliminada ou conta eliminada limpa objetos órfãos conforme política.</li>
+            </ul>
+          </article>
+        </div>
+
+        <p class="gate-stop" style="margin-top: 20px;">
+          NO-GO imediato se qualquer utilizador não participante conseguir resolver, listar ou reutilizar um anexo privado.
+        </p>
+      </section>
+
+      <section id="seguranca">
+        <p class="eyebrow">07 · Segurança</p>
+        <h2>Auth, Storage, RLS, RPC e Edge Functions</h2>
+        <p class="section-intro">
+          A interface nunca é a fronteira de autorização. Todas as leituras e mutações sensíveis devem
+          ser recusadas no servidor quando a identidade, ownership ou papel não forem válidos.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Superfície</th>
+                <th>Controlo obrigatório</th>
+                <th>Prova mínima antes de Go</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Auth e sessão</td>
+                <td>PKCE/OAuth, refresh, logout confirmado, expiração, isolamento entre contas e ausência de dados stale.</td>
+                <td>Login/logout/login com duas contas; sessão expirada; reset usado/expirado; callback inválido.</td>
+              </tr>
+              <tr>
+                <td>Perfis</td>
+                <td>Utilizador só altera campos de apresentação próprios; role, email e identidade nunca vêm do browser.</td>
+                <td>Tentar atualizar outro ID e campos privilegiados falha; leitura pública expõe apenas colunas aprovadas.</td>
+              </tr>
+              <tr>
+                <td>RLS</td>
+                <td>Deny-by-default, <code>auth.uid()</code> como fonte de verdade, policies separadas por operação.</td>
+                <td>Matriz anónimo/A/B/admin em todas as tabelas com dados privados e mutações críticas.</td>
+              </tr>
+              <tr>
+                <td>RPC</td>
+                <td>Não confiar em UUID enviado pelo cliente; SECURITY DEFINER com <code>search_path</code> fixo; revogar public/anon.</td>
+                <td>Alterar parâmetros de utilizador/tentativa/post não devolve dados de terceiros; grants enumerados.</td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>Buckets privados quando o conteúdo é privado, paths validados, policies por ownership e URLs assinadas curtas.</td>
+                <td>List/read/write/delete testados por papel; URLs expiradas e paths manipulados recusados.</td>
+              </tr>
+              <tr>
+                <td>Edge Functions</td>
+                <td>JWT gate nas funções de browser, validação interna do recurso, CORS restrito, input limitado e logs redigidos.</td>
+                <td>401 sem token, 403 sem ownership, payload inválido 4xx, idempotência e nenhum segredo em resposta/log.</td>
+              </tr>
+              <tr>
+                <td>Webhook Stripe</td>
+                <td>Sem JWT apenas porque usa assinatura Stripe; verificar assinatura, timestamp, evento e idempotência.</td>
+                <td>Assinatura inválida falha; replay não duplica efeitos; eventos fora de ordem convergem corretamente.</td>
+              </tr>
+              <tr>
+                <td>Eliminação de conta</td>
+                <td>Reautenticação recente, ownership, tratamento de subscrição e limpeza coordenada de objetos/dados.</td>
+                <td>Fluxos free, subscrição ativa, erro parcial e retry idempotente ensaiados em staging.</td>
+              </tr>
+              <tr>
+                <td>Segredos</td>
+                <td>Separação staging/produção, menor privilégio, rotação e nenhum segredo no Git, frontend ou artefactos.</td>
+                <td>Inventário assinado, rotação concluída e scan do histórico/candidato sem credenciais.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details>
+          <summary>Checklist específico das Edge Functions</summary>
+          <div>
+            <ul>
+              <li><strong>create-checkout-session:</strong> bloqueada no free-only também no servidor; price IDs vêm de secrets/config aprovada.</li>
+              <li><strong>change-subscription-plan:</strong> confirma customer/subscription do utilizador e estado elegível.</li>
+              <li><strong>cancel-subscription:</strong> confirma ownership, é idempotente e preserva acesso até ao fim do período.</li>
+              <li><strong>create-portal-session/list-invoices:</strong> nunca aceitam customer ID arbitrário do cliente.</li>
+              <li><strong>stripe-webhook:</strong> assinatura e idempotência obrigatórias; sem PII desnecessária nos logs.</li>
+              <li><strong>delete-account:</strong> sessão recente, transação/compensação, Storage e billing tratados.</li>
+              <li><strong>sync-video-scenarios:</strong> acesso administrativo/servidor, input e origem restritos.</li>
+            </ul>
+          </div>
+        </details>
+
+        <details>
+          <summary>Proteções web e abuso</summary>
+          <div>
+            <ul>
+              <li>CSP, HSTS, frame-ancestors, nosniff, referrer policy e permissions policy verificados no domínio final.</li>
+              <li>Rate limiting/quotas para auth, pesquisa, posts, comentários, mensagens, reports e funções de maior custo.</li>
+              <li>Limites server-side de texto, tamanho e tipo de ficheiro; nomes de ficheiro não são confiados.</li>
+              <li>Erros públicos genéricos; IDs internos, SQL, tokens, stack traces e conteúdo privado não são expostos.</li>
+              <li>Logs e alertas úteis sem conteúdo de mensagens, passwords, tokens, emails completos ou URLs assinadas.</li>
+            </ul>
+          </div>
+        </details>
+      </section>
+
+      <section id="migracoes">
+        <p class="eyebrow">08 · Dados</p>
+        <h2>Migrações aditivas, reconciliadas e ensaiadas</h2>
+        <p class="section-intro">
+          A base de dados existente é a fonte de verdade. O repositório local não tem autoridade para
+          reconstruir produção e uma cadeia de ficheiros não reconciliada não deve ser aplicada automaticamente.
+        </p>
+
+        <div class="prohibition" role="alert">
+          <span class="label">Proibido</span>
+          <h3>Não executar <code>supabase db push</code> no projeto ligado.</h3>
+          <p>
+            O histórico remoto foi reportado vazio/não reconciliado e a migração
+            <code>20260213_0035_fresh_rebuild_all.sql</code> contém uma fase “DROP EVERYTHING” e remoção de
+            tabelas com <code>CASCADE</code>. Reproduzir a cadeia local pode destruir dados reais.
+          </p>
+          <p>
+            Também não usar <code>db reset</code> num projeto remoto, nem marcar migrações como aplicadas com
+            <code>migration repair</code> sem um mapeamento exato, revisto e sustentado por evidência do schema live.
+          </p>
+        </div>
+
+        <h3>Procedimento obrigatório de reconciliação</h3>
+        <ol>
+          <li>Confirmar projeto e ambiente ligados sem imprimir segredos.</li>
+          <li>Exportar inventário read-only do schema, extensões, funções, grants, policies, buckets e histórico remoto.</li>
+          <li>Confirmar backup/PITR atual e executar um restauro completo para ambiente isolado.</li>
+          <li>Comparar o schema restaurado com cada migração local e construir uma tabela “presente/ausente/divergente”.</li>
+          <li>Quarentenar 0035 da sequência de produção; manter o ficheiro apenas como evidência histórica se necessário.</li>
+          <li>Preparar uma baseline segura do estado real e registar checksums e decisão de reconciliação.</li>
+          <li>Ensaiar a migração nova numa cópia representativa, medir locks/tempo e executar os testes RLS/RPC.</li>
+          <li>Aplicar apenas a migração aprovada, isoladamente, em janela controlada, com observação e rollback preparado.</li>
+        </ol>
+
+        <div class="grid">
+          <article class="card">
+            <h3>Permitido</h3>
+            <ul class="clean-list">
+              <li><code>CREATE</code> aditivo com nomes novos.</li>
+              <li><code>ALTER ... ADD</code> compatível e avaliado.</li>
+              <li>Constraints <code>NOT VALID</code> seguidas de validação controlada.</li>
+              <li>Novas policies/grants com matriz de testes.</li>
+              <li>Índices concorrentes quando aplicável e suportado.</li>
+            </ul>
+          </article>
+          <article class="card card--danger">
+            <h3>Bloqueado sem plano específico</h3>
+            <ul class="clean-list warning-list">
+              <li><code>DROP</code>, <code>TRUNCATE</code> ou <code>CASCADE</code>.</li>
+              <li>Renomear/remover coluna consumida pelo frontend.</li>
+              <li>Reescrever tabelas grandes sem medir locks.</li>
+              <li>Seed sobre dados reais.</li>
+              <li>Policy que abre acesso para anon/public.</li>
+            </ul>
+          </article>
+        </div>
+
+        <h3 style="margin-top: 28px;">Tratamento da migração 0050</h3>
+        <p>
+          <code>20260722_0050_launch_security_hardening.sql</code> é um candidato local, não prova de aplicação.
+          Antes do Go deve ser revista contra as assinaturas reais das funções, políticas existentes, conteúdo de
+          <code>messages.media_url</code>, grants e volume das tabelas. O rollout de Storage pode ser dividido em
+          etapas compatíveis para cumprir a sequência de media privado sem interrupção.
+        </p>
+
+        <p class="gate-pass">
+          PASS apenas quando backup restaurável, baseline reconciliada, dry-run, testes de autorização e rollback tiverem evidência datada.
+        </p>
+      </section>
+
+      <section id="pagamentos">
+        <p class="eyebrow">09 · Modelo de lançamento</p>
+        <h2>Primeiro lançamento em modo gratuito</h2>
+        <p class="section-intro">
+          Os planos pagos podem permanecer visíveis como referência de roadmap, mas nenhuma nova compra ou
+          mudança de plano deve ocorrer até estarem concluídos os requisitos comerciais, fiscais, legais e de suporte.
+        </p>
+
+        <div class="grid">
+          <article class="card card--accent">
+            <h3>Frontend</h3>
+            <ul>
+              <li>Gate único e estrito: <code>VITE_PAID_PLANS_ENABLED === 'true'</code>.</li>
+              <li>Em produção, a variável fica ausente ou com valor diferente de <code>true</code>.</li>
+              <li>Preços e benefícios continuam visíveis como pré-visualização.</li>
+              <li>CTAs Pro/Plus estão disabled e anunciam “Brevemente”.</li>
+              <li>Handlers e diálogo impedem chamadas a checkout/change-plan em profundidade.</li>
+            </ul>
+          </article>
+          <article class="card card--accent">
+            <h3>Subscritores existentes</h3>
+            <ul>
+              <li>Plano e estado continuam visíveis.</li>
+              <li>Portal Stripe e histórico de faturas continuam acessíveis.</li>
+              <li>Cancelamento continua disponível e idempotente.</li>
+              <li>Não há downgrade ou alteração automática no lançamento.</li>
+              <li>Past-due e cancelamento pendente mantêm mensagens corretas.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Defesa no servidor:</strong> esconder/desativar o botão não é controlo de segurança. As Edge
+          Functions de checkout e mudança de plano também devem recusar novas operações enquanto o modo pago
+          não estiver explicitamente autorizado no ambiente servidor.
+        </div>
+
+        <h3>Gate para ativar pagamentos no futuro</h3>
+        <ul>
+          <li>Produtos, preços, moeda, impostos, reembolsos e faturas confirmados.</li>
+          <li>Termos, privacidade, cookies e informação pré-contratual aprovados.</li>
+          <li>Webhook idempotente, portal, cancelamento e recuperação de falhas testados live.</li>
+          <li>Suporte, SLA, reconciliação financeira e monitorização operacionais.</li>
+          <li>Feature flag ativada separadamente, com smoke test e rollback imediato.</li>
+        </ul>
+      </section>
+
+      <section id="qa">
+        <p class="eyebrow">10 · Qualidade</p>
+        <h2>QA funcional, visual, mobile, acessível e performante</h2>
+        <p class="section-intro">
+          O candidato só avança quando a mesma revisão de commit passa em todos os eixos. “Parece bem no meu
+          ecrã” não substitui a matriz de dispositivos, estados e permissões.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Eixo</th>
+                <th>Cobertura obrigatória</th>
+                <th>Critério objetivo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Build e estática</td>
+                <td>TypeScript, build de produção, lint total, diff check e scan de secrets.</td>
+                <td>Zero erros; warnings novos justificados; artefacto ligado ao SHA do candidato.</td>
+              </tr>
+              <tr>
+                <td>Funcional</td>
+                <td>Todas as rotas, auth, CRUD autorizado, Realtime, billing existente e eliminação.</td>
+                <td>100% dos casos P0/P1 passam; zero defeitos P0/P1 abertos.</td>
+              </tr>
+              <tr>
+                <td>Estados</td>
+                <td>Loading, vazio, parcial, erro, retry, offline/slow, sessão expirada, 401/403/404/429/500.</td>
+                <td>Nenhum dead-end, dados fictícios ou erro técnico exposto ao utilizador.</td>
+              </tr>
+              <tr>
+                <td>Visual</td>
+                <td>Screenshots por rota/estado comparados com Match Control e referência aprovada.</td>
+                <td>Sem overflow, sobreposição, conteúdo cortado ou regressão visual não aprovada.</td>
+              </tr>
+              <tr>
+                <td>Mobile</td>
+                <td>360×800, 390×844, 412×915, 768×1024 e orientação landscape.</td>
+                <td>Touch targets ≥44 px, safe areas corretas, teclado não tapa ações e scroll previsível.</td>
+              </tr>
+              <tr>
+                <td>Desktop</td>
+                <td>1024×768, 1440×900 e 1920×1080; sidebar compacta/expandida quando aplicável.</td>
+                <td>Comprimento de linha e largura de conteúdo controlados; navegação e foco consistentes.</td>
+              </tr>
+              <tr>
+                <td>Acessibilidade</td>
+                <td>Teclado, foco, headings, landmarks, nomes acessíveis, dialogs, contraste e reduced motion.</td>
+                <td>WCAG 2.2 AA no âmbito; zero violações críticas/sérias no scan e jornada manual completa.</td>
+              </tr>
+              <tr>
+                <td>Desempenho</td>
+                <td>Build, waterfall, lazy routes, imagens/media, cache, listas e Realtime.</td>
+                <td>LCP ≤2,5 s, INP ≤200 ms e CLS ≤0,1 no alvo p75; sem regressão relevante do baseline.</td>
+              </tr>
+              <tr>
+                <td>Segurança</td>
+                <td>Matriz RLS/RPC/Storage/Functions, manipulação de IDs, tokens e upload hostil.</td>
+                <td>Zero acesso cross-user, zero bypass crítico/alto e evidência revista.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 28px;">Matriz mínima de dados de teste</h3>
+        <div class="grid grid--three">
+          <article class="card">
+            <h4>Conta A</h4>
+            <p>Nova, plano gratuito, sem atividade; valida onboarding, empty states e primeiro teste.</p>
+          </article>
+          <article class="card">
+            <h4>Conta B</h4>
+            <p>Gratuita com atividade, posts, notificações e conversa; valida dados longos e paginação.</p>
+          </article>
+          <article class="card">
+            <h4>Conta C</h4>
+            <p>Subscritor existente sintético; valida gestão, invoice, cancelamento e paid-disabled.</p>
+          </article>
+        </div>
+
+        <p style="margin-top: 18px;">
+          As contas e conteúdos usados em preview/CI são sintéticos e exclusivos do ambiente de teste.
+          Nenhum dump de produção, token real ou dado pessoal entra nos artefactos de QA.
+        </p>
+
+        <details>
+          <summary>Jornadas P0 que têm de passar</summary>
+          <div>
+            <ol>
+              <li>Criar conta → confirmar sessão → perfil → dashboard vazio → logout.</li>
+              <li>Login → iniciar teste por slug → responder → concluir → métricas atualizadas.</li>
+              <li>Criar post → comentar/reagir → receber notificação → abrir destino.</li>
+              <li>Iniciar conversa → enviar texto e media → receber em Realtime → recarregar e voltar a abrir.</li>
+              <li>Editar perfil/definições → trocar de conta → provar ausência de dados da sessão anterior.</li>
+              <li>Abrir pricing free-only → provar zero chamada paga → gerir/cancelar subscrição existente.</li>
+              <li>Eliminar conta com reautenticação e confirmar comportamento idempotente/limpeza em staging.</li>
+            </ol>
+          </div>
+        </details>
+      </section>
+
+      <section id="release">
+        <p class="eyebrow">11 · Entrega</p>
+        <h2>Preview, PR, merge, deploy e rollback</h2>
+        <p class="section-intro">
+          A promoção é feita a partir de um commit imutável. Não se corrige produção com alterações não
+          revistas nem se mistura uma migração de dados de alto risco com um merge visual automático.
+        </p>
+
+        <div class="grid">
+          <article class="card">
+            <h3>Preview e PR</h3>
+            <ol>
+              <li>Rebase/integração controlada e resolução explícita de conflitos.</li>
+              <li>PR draft com mapa de ficheiros, contratos e riscos.</li>
+              <li>CI com credenciais sintéticas/não operacionais.</li>
+              <li>Preview ligado a staging, nunca a dados de produção.</li>
+              <li>Screenshots e matriz de QA anexos ao mesmo SHA.</li>
+              <li>Revisão de produto, acessibilidade, segurança e dados.</li>
+            </ol>
+          </article>
+          <article class="card">
+            <h3>Merge e deploy</h3>
+            <ol>
+              <li>Congelar o release candidate depois do Go formal.</li>
+              <li>Aplicar primeiro a capacidade backend compatível e verificar live.</li>
+              <li>Promover o frontend exatamente testado.</li>
+              <li>Ativar enforcement final de media privado na janela aprovada.</li>
+              <li>Executar smoke tests anónimo/A/B/subscritor.</li>
+              <li>Observar métricas antes de declarar launch concluído.</li>
+            </ol>
+          </article>
+        </div>
+
+        <h3 style="margin-top: 28px;">Plano de rollback</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Camada</th>
+                <th>Ação de rollback</th>
+                <th>Limite/precaução</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Frontend Netlify</td>
+                <td>Promover o deploy anterior conhecido e repetir smoke tests.</td>
+                <td>O frontend anterior deve continuar compatível com o backend durante a janela.</td>
+              </tr>
+              <tr>
+                <td>Edge Functions</td>
+                <td>Voltar à versão anterior versionada, mantendo auth e secrets corretos.</td>
+                <td>Nunca desativar verificação de autorização como forma de recuperação.</td>
+              </tr>
+              <tr>
+                <td>Feature flags</td>
+                <td>Manter pagos false; desligar uma feature problemática sem apagar dados.</td>
+                <td>Alteração auditada e seguida de novo deploy/smoke quando a flag é build-time.</td>
+              </tr>
+              <tr>
+                <td>Storage privado</td>
+                <td>Usar script de reversão previamente revisto apenas se não reabrir acesso indevido.</td>
+                <td>Privacidade prevalece sobre disponibilidade; não tornar objetos públicos por conveniência.</td>
+              </tr>
+              <tr>
+                <td>Base de dados</td>
+                <td>Preferir forward-fix aditivo; usar reversão preparada apenas quando comprovadamente segura.</td>
+                <td>Não restaurar toda a base sem decisão de incidente, avaliação de perda e plano de reconciliação.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 28px;">Triggers de rollback/incidente</h3>
+        <ul>
+          <li>Qualquer leitura ou mutação cross-user: parar rollout imediatamente, preservar evidência e conter acesso.</li>
+          <li>Erro P0 em login, testes, mensagens ou eliminação: rollback do componente afetado.</li>
+          <li>Taxa de erro 5xx acima de 2% durante 5 minutos em ação crítica: pausar e investigar.</li>
+          <li>Falha de media acima de 5% depois do enforcement privado: pausar; nunca reabrir o bucket sem revisão.</li>
+          <li>Perda, duplicação ou corrupção de dados: congelar writes afetados e executar plano de incidente.</li>
+        </ul>
+      </section>
+
+      <section id="gates">
+        <p class="eyebrow">12 · Decisão</p>
+        <h2>Gates objetivos de Go/No-Go</h2>
+        <p class="section-intro">
+          Todos os gates são cumulativos. Um único “Não” mantém o estado NO-GO, independentemente de prazo,
+          qualidade visual ou número de checks verdes noutras áreas.
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Gate</th>
+                <th>Critério de PASS</th>
+                <th>Estado conhecido</th>
+                <th>Evidência exigida</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>G-01</td>
+                <td>Arquitetura e contratos</td>
+                <td>Mesma app, rotas preservadas e alterações de contrato compatíveis/aprovadas.</td>
+                <td><span class="status status--active">Em integração</span></td>
+                <td>Diff final, mapa de rotas e revisão de contrato.</td>
+              </tr>
+              <tr>
+                <td>G-02</td>
+                <td>Segurança dos dados</td>
+                <td>Backup restaurado, histórico reconciliado, dry-run e zero operação destrutiva.</td>
+                <td><span class="status status--blocked">Bloqueado</span></td>
+                <td>Relatório de restauro, baseline e plano SQL aprovado.</td>
+              </tr>
+              <tr>
+                <td>G-03</td>
+                <td>RLS/RPC/Storage</td>
+                <td>Matriz anónimo/A/B passa; media privada; zero bypass crítico/alto.</td>
+                <td><span class="status status--pending">Pendente live</span></td>
+                <td>Resultados reproduzíveis e revisão de segurança.</td>
+              </tr>
+              <tr>
+                <td>G-04</td>
+                <td>Auth</td>
+                <td>Signup, login, OAuth, reset, refresh, logout e multi-conta sem fuga de estado.</td>
+                <td><span class="status status--active">Em validação</span></td>
+                <td>Jornadas automatizadas/manuais no candidato.</td>
+              </tr>
+              <tr>
+                <td>G-05</td>
+                <td>Funcional</td>
+                <td>Todas as jornadas P0/P1 passam; zero defeitos P0/P1.</td>
+                <td><span class="status status--pending">Pendente final</span></td>
+                <td>Matriz de regressão ligada ao SHA.</td>
+              </tr>
+              <tr>
+                <td>G-06</td>
+                <td>Visual e mobile</td>
+                <td>Rotas/estados aprovados nos viewports; sem overflow ou conteúdo fictício.</td>
+                <td><span class="status status--pending">Pendente final</span></td>
+                <td>Conjunto de screenshots e aprovação de produto.</td>
+              </tr>
+              <tr>
+                <td>G-07</td>
+                <td>Acessibilidade</td>
+                <td>WCAG 2.2 AA no âmbito; zero violações críticas/sérias e jornada por teclado.</td>
+                <td><span class="status status--pending">Pendente</span></td>
+                <td>Scan e checklist manual.</td>
+              </tr>
+              <tr>
+                <td>G-08</td>
+                <td>Desempenho</td>
+                <td>Budgets Core Web Vitals e baseline cumpridos em build/preview de produção.</td>
+                <td><span class="status status--pending">Pendente</span></td>
+                <td>Relatório de laboratório e plano de field monitoring.</td>
+              </tr>
+              <tr>
+                <td>G-09</td>
+                <td>Pagamentos</td>
+                <td>Flag paga false em produção; zero chamada de compra/mudança; gestão atual preservada.</td>
+                <td><span class="status status--active">Preparado no código</span></td>
+                <td>Config do ambiente e network trace do smoke test.</td>
+              </tr>
+              <tr>
+                <td>G-10</td>
+                <td>Legal e privacidade</td>
+                <td>Conteúdos e processos de direitos/eliminação aprovados para o mercado de lançamento.</td>
+                <td><span class="status status--blocked">Não comprovado</span></td>
+                <td>Aprovação datada e versões publicadas.</td>
+              </tr>
+              <tr>
+                <td>G-11</td>
+                <td>Operação</td>
+                <td>Alertas, dashboards, runbook, suporte, ownership e rollback ensaiados.</td>
+                <td><span class="status status--blocked">Não comprovado</span></td>
+                <td>Runbook, contactos por função e exercício de rollback.</td>
+              </tr>
+              <tr>
+                <td>G-12</td>
+                <td>Release</td>
+                <td>PR aprovado, CI verde, preview aceite e commit final imutável.</td>
+                <td><span class="status status--pending">Pendente</span></td>
+                <td>PR/checks/preview ligados ao mesmo SHA.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="launch-verdict">
+          <span class="verdict-label">REGRA</span>
+          <p>
+            A decisão muda para GO apenas quando G-01 a G-12 estiverem em PASS com evidência atual. “Aceitar o
+            risco” sem backup restaurável ou com possibilidade de acesso cross-user não é uma exceção válida.
+          </p>
+        </div>
+      </section>
+
+      <section id="runbook">
+        <p class="eyebrow">13 · Operação</p>
+        <h2>Runbook do lançamento</h2>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Janela</th>
+                <th>Ações</th>
+                <th>Saída obrigatória</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>T−7 a T−3 dias</td>
+                <td>Fechar scope, reconciliar dados, restaurar backup, completar segurança, legal e QA principal.</td>
+                <td>Sem bloqueios estruturais; rollback ensaiado.</td>
+              </tr>
+              <tr>
+                <td>T−48 horas</td>
+                <td>Congelar candidato, CI total, preview final, screenshots, performance e aprovação dos gates.</td>
+                <td>SHA candidato e decisão preliminar documentados.</td>
+              </tr>
+              <tr>
+                <td>T−2 horas</td>
+                <td>Confirmar backup/PITR, saúde Supabase/Netlify, secrets, flags, alertas e responsáveis por função.</td>
+                <td>Checklist assinada; pagamentos continuam false.</td>
+              </tr>
+              <tr>
+                <td>T0</td>
+                <td>Backend compatível, smoke; frontend, smoke; enforcement privado, matriz A/B/anónimo.</td>
+                <td>Todos os passos verdes ou rollback imediato.</td>
+              </tr>
+              <tr>
+                <td>T+30 minutos</td>
+                <td>Rever auth, 4xx/5xx, latência, Storage, Realtime, logs e jornada P0.</td>
+                <td>Sem trigger de rollback; launch tecnicamente estável.</td>
+              </tr>
+              <tr>
+                <td>T+24 horas</td>
+                <td>Rever erros, feedback, abuso, capacidade, custos e dados anómalos; priorizar hotfixes não destrutivos.</td>
+                <td>Relatório de primeira operação e backlog triado.</td>
+              </tr>
+              <tr>
+                <td>T+7 dias</td>
+                <td>Retro, métricas reais, acessibilidade, performance p75, segurança e decisão sobre próximo rollout.</td>
+                <td>Plano atualizado; sem ativar pagos automaticamente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top: 28px;">Monitorização mínima</h3>
+        <div class="grid grid--three">
+          <article class="card">
+            <h4>Produto</h4>
+            <p>Signup concluído, login, primeiro teste, conclusão de teste, posts, mensagens e retenção — sempre agregados.</p>
+          </article>
+          <article class="card">
+            <h4>Fiabilidade</h4>
+            <p>4xx/5xx, latência, falhas de Auth, erros de RPC/Storage, Realtime disconnects e jobs/webhooks.</p>
+          </article>
+          <article class="card">
+            <h4>Segurança/abuso</h4>
+            <p>403 anómalos, tentativas cross-user, uploads rejeitados, reports, rate limits e eventos privilegiados.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="manutencao">
+        <p class="eyebrow">14 · Governação</p>
+        <h2>Como manter este plano vivo</h2>
+        <p class="section-intro">
+          O documento acompanha o release candidate. Deve ser atualizado quando surgir nova evidência, quando
+          um risco mudar ou quando uma decisão alterar o rollout — nunca para apagar histórico inconveniente.
+        </p>
+
+        <div class="grid">
+          <article class="card">
+            <h3>Em cada atualização</h3>
+            <ul>
+              <li>Alterar versão e data no topo.</li>
+              <li>Atualizar apenas estados suportados por evidência.</li>
+              <li>Registar o SHA/PR/ambiente do candidato fora de dados pessoais.</li>
+              <li>Ligar resultados de QA, segurança, restauro e screenshots.</li>
+              <li>Manter bloqueios até o critério objetivo estar cumprido.</li>
+            </ul>
+          </article>
+          <article class="card">
+            <h3>Registo de decisão mínimo</h3>
+            <ul>
+              <li>Data e assunto.</li>
+              <li>Opções consideradas.</li>
+              <li>Decisão e fundamento técnico/produto.</li>
+              <li>Risco residual e responsável por função.</li>
+              <li>Evidência e condição de revisão.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout">
+          <strong>Fonte de verdade:</strong> o código e o ambiente live dizem o que existe; este plano diz o que
+          é necessário provar antes de lançar. Em caso de divergência, parar, voltar a inventariar e atualizar a
+          decisão — nunca preencher a lacuna com uma suposição.
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      RefLab · Plano de lançamento e redesign conservador · Versão 1.0 · 22-07-2026
+    </footer>
+  </div>
+</body>
+</html>

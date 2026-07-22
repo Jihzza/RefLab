@@ -27,22 +27,22 @@ const ptPT = {
   'Log In': 'Iniciar sessão',
   Sidebar: 'Menu lateral',
   'Open menu': 'Abrir menu',
+  'Skip to main content': 'Saltar para o conteúdo principal',
 
   // Cookie banner
-  'Cookie consent': 'Consentimento de cookies',
-  'We use cookies to improve your experience. By continuing to use RefLab, you agree to our':
-    'Utilizamos cookies para melhorar a tua experiência. Ao continuares a usar o RefLab, concordas com a nossa',
+  'Essential storage notice': 'Aviso de armazenamento essencial',
+  'RefLab uses essential browser storage to keep your session, language and preferences. We do not currently use analytics or advertising cookies. Read our':
+    'O RefLab usa armazenamento essencial do navegador para manter a tua sessão, idioma e preferências. Atualmente não usamos cookies de análise nem publicidade. Consulta a nossa',
   'Cookies Policy': 'Política de Cookies',
-  Accept: 'Aceitar',
-  Decline: 'Recusar',
-  'Accept cookies': 'Aceitar cookies',
-  'Decline cookies': 'Recusar cookies',
+  Understood: 'Entendido',
 
   // Landing
   'Your Referee Training Laboratory': 'O teu laboratório de treino de arbitragem',
   'RefLab - Referee Training Laboratory': 'RefLab - Laboratório de Treino de Arbitragem',
   'A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Master your craft with authoritative knowledge, deliberate practice, and AI-powered guidance.':
     'Um espaço dedicado aos árbitros de futebol para estudar, praticar e manter-se alinhados com as Leis do Jogo. Desenvolve a tua competência com conhecimento fiável, prática deliberada e orientação com IA.',
+  'A dedicated hub for football referees to study, rehearse, and stay aligned with the Laws of the Game. Train with tests, decision scenarios and clear progress feedback.':
+    'Um espaço dedicado aos árbitros de futebol para estudar, praticar e manter-se alinhados com as Leis do Jogo. Treina com testes, cenários de decisão e uma visão clara do teu progresso.',
   'Sign up': 'Criar conta',
   Legal: 'Legal',
   'Privacy Policy': 'Política de Privacidade',
@@ -63,6 +63,8 @@ const ptPT = {
   'Passwords do not match': 'As palavras-passe não coincidem.',
   'Account created! Please check your email to confirm your account.':
     'Conta criada! Verifica o teu email para confirmar a conta.',
+  'Account created! You can start using RefLab now.':
+    'Conta criada! Já podes começar a usar o RefLab.',
   Email: 'Email',
   Password: 'Palavra-passe',
   'Confirm Password': 'Confirmar palavra-passe',
@@ -114,10 +116,15 @@ const ptPT = {
   'Eliminar Cuenta': 'Eliminar conta',
   'Esta accion es permanente y no se puede deshacer. Todos tus datos, incluyendo tu perfil y progreso, seran eliminados permanentemente.':
     'Esta ação é permanente e não pode ser desfeita. Todos os teus dados, incluindo perfil e progresso, serão eliminados permanentemente.',
+  'Any active subscription will be cancelled immediately before deletion.':
+    'Qualquer subscrição ativa será cancelada imediatamente antes da eliminação.',
   Cancelar: 'Cancelar',
   'Eliminando...': 'A eliminar...',
 
   // Dashboard
+  'Good morning': 'Bom dia',
+  'Good afternoon': 'Boa tarde',
+  'Good evening': 'Boa noite',
   'Failed to load dashboard data. Please try again later.':
     'Não foi possível carregar os dados do painel. Tenta novamente mais tarde.',
   Performance: 'Desempenho',
@@ -125,6 +132,12 @@ const ptPT = {
   Habits: 'Hábitos',
   'Overall Accuracy': 'Precisão global',
   'Complete your first test to see accuracy': 'Conclui o teu primeiro teste para ver a precisão',
+  'Updating dashboard': 'A atualizar painel',
+  'Recommended training': 'Treino recomendado',
+  'Complete a test to receive a personalised recommendation.':
+    'Conclui um teste para receberes uma recomendação personalizada.',
+  'of accuracy': 'de precisão',
+  'Training metrics': 'Métricas de treino',
   'Match Simulation': 'Simulação de jogo',
   'No video data yet': 'Ainda não existem dados de vídeo',
   'Pass Rate': 'Taxa de aprovação',
@@ -148,9 +161,13 @@ const ptPT = {
   'Accuracy by Topic': 'Precisão por tema',
   'Complete tests to see topic breakdown': 'Conclui testes para ver o detalhe por tema',
   'Training habits': 'Hábitos de treino',
+  Best: 'Melhor',
+  'this week': 'esta semana',
+  Current: 'Atual',
   'Current streak': 'Sequência atual',
   'Longest streak': 'Maior sequência',
   'Active days this week': 'Dias ativos esta semana',
+  'Active days in the last 7 days': 'Dias ativos nos últimos 7 dias',
   'day streak': 'dia de sequência',
   'days streak': 'dias de sequência',
   'best streak': 'melhor sequência',
@@ -193,6 +210,13 @@ const ptPT = {
   'Attach media': 'Anexar multimédia',
   'Remove attachment': 'Remover anexo',
   'Open {{name}} profile': 'Abrir perfil de {{name}}',
+  'Deleted account': 'Conta eliminada',
+  'This account no longer exists.': 'Esta conta já não existe.',
+  'You cannot send messages because the other account was deleted.':
+    'Não podes enviar mensagens porque a outra conta foi eliminada.',
+  'You can no longer send messages in this conversation.':
+    'Já não podes enviar mensagens nesta conversa.',
+  'Loading conversation details...': 'A carregar os detalhes da conversa...',
 
   // Search
   'Search users...': 'Pesquisar utilizadores...',
@@ -456,10 +480,24 @@ const ptPT = {
   'Canceling...': 'A cancelar...',
   'Your subscription will remain active until {{date}}. After that, you\'ll be downgraded to the Free plan and lose access to premium features.':
     'A tua subscrição mantém-se ativa até {{date}}. Depois disso, passas para o plano Gratuito e perdes acesso às funcionalidades premium.',
+  'Your subscription will remain active until {{date}}. After that, billing will stop and your account will continue on the Free plan.':
+    'A tua subscrição mantém-se ativa até {{date}}. Depois disso, a faturação termina e a tua conta continua no plano Gratuito.',
   'Your plan will be updated to {{plan}} at {{price}}. The new price will apply starting from your next billing cycle. No proration charges will be applied.':
     'O teu plano será atualizado para {{plan}} por {{price}}. O novo preço aplica-se no próximo ciclo de faturação. Não será cobrada qualquer proporcionalidade.',
   'Upgrade to unlock advanced training tools and AI-powered feedback.':
     'Faz upgrade para desbloquear ferramentas de treino avançadas e feedback com IA.',
+  'RefLab is launching with the Free plan. Pro and Plus remain visible as a preview and will be available soon.':
+    'O RefLab será lançado com o plano Gratuito. Os planos Pro e Plus continuam visíveis como pré-visualização e estarão disponíveis brevemente.',
+  'RefLab is launching free. Paid subscriptions are currently unavailable.':
+    'O RefLab é lançado gratuitamente. As subscrições pagas não estão disponíveis neste momento.',
+  'All currently available training and community features are included in the launch plan.':
+    'Todas as funcionalidades de treino e comunidade atualmente disponíveis estão incluídas no plano de lançamento.',
+  'All available referee tests': 'Todos os testes de arbitragem disponíveis',
+  'Practice questions by law and topic': 'Perguntas de treino por lei e por tema',
+  'Video decision scenarios': 'Cenários de decisão em vídeo',
+  'Progress dashboard': 'Painel de progresso',
+  'Community and direct messages': 'Comunidade e mensagens diretas',
+  'Coming Soon': 'Brevemente',
   Recommended: 'Recomendado',
   'Free Forever': 'Gratuito para sempre',
   'Cancellation Pending': 'Cancelamento pendente',
@@ -485,6 +523,7 @@ const ptPT = {
   'Policy sections': 'Secções legais',
   'Review our policies and terms': 'Consulta as nossas políticas e termos',
   'Last updated: February 2026': 'Última atualização: fevereiro de 2026',
+  'Last updated: July 2026': 'Última atualização: julho de 2026',
   '1. Information We Collect': '1. Informações que recolhemos',
   'We collect information you provide directly, such as your name, email address, and profile details when you create an account. We also collect usage data automatically, including pages visited, features used, and interaction patterns to improve our services.':
     'Recolhemos informações que nos forneces diretamente, como o teu nome, endereço de email e dados de perfil quando crias uma conta. Também recolhemos automaticamente dados de utilização, incluindo páginas visitadas, funcionalidades usadas e padrões de interação, para melhorar os nossos serviços.',
@@ -515,27 +554,27 @@ const ptPT = {
   '5. Limitation of Liability': '5. Limitação de responsabilidade',
   'RefLab shall not be liable for any indirect, incidental, special, or consequential damages resulting from your use or inability to use the service. Our total liability for any claims arising from or related to the service shall not exceed the amount you have paid us in the twelve months preceding the claim.':
     'O RefLab não será responsável por quaisquer danos indiretos, incidentais, especiais ou consequenciais resultantes da tua utilização ou incapacidade de utilização do serviço. A nossa responsabilidade total por quaisquer reclamações resultantes de ou relacionadas com o serviço não excederá o montante que nos tenhas pago nos doze meses anteriores à reclamação.',
-  '1. What Are Cookies': '1. O que são cookies',
-  'Cookies are small text files that are stored on your device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the site owners. Cookies help us remember your preferences and improve your browsing experience.':
-    'Cookies são pequenos ficheiros de texto armazenados no teu dispositivo quando visitas um website. São amplamente utilizados para tornar os websites mais eficientes e para fornecer informações aos proprietários dos sites. Os cookies ajudam-nos a recordar as tuas preferências e a melhorar a tua experiência de navegação.',
-  '2. Cookies We Use': '2. Cookies que usamos',
-  'We use the following types of cookies on RefLab:':
-    'Usamos os seguintes tipos de cookies no RefLab:',
-  'Essential cookies:': 'Cookies essenciais:',
-  'Required for the platform to function, including authentication and session management.':
-    'Necessários para o funcionamento da plataforma, incluindo autenticação e gestão de sessão.',
-  'Preference cookies:': 'Cookies de preferência:',
-  'Remember your settings and preferences to provide a personalized experience.':
-    'Recordam as tuas definições e preferências para proporcionar uma experiência personalizada.',
-  'Analytics cookies:': 'Cookies de análise:',
-  'Help us understand how visitors interact with the platform so we can improve our services.':
-    'Ajudam-nos a perceber como os visitantes interagem com a plataforma, para que possamos melhorar os nossos serviços.',
-  '3. Managing Cookies': '3. Gestão de cookies',
-  'You can manage your cookie preferences through the cookie consent banner that appears when you first visit RefLab. You can also control cookies through your browser settings. Please note that disabling essential cookies may affect the functionality of the platform.':
-    'Podes gerir as tuas preferências de cookies através do banner de consentimento que aparece quando visitas o RefLab pela primeira vez. Também podes controlar os cookies através das definições do teu navegador. Tem em atenção que desativar cookies essenciais pode afetar o funcionamento da plataforma.',
-  '4. Third-Party Cookies': '4. Cookies de terceiros',
-  "Some cookies on our platform are set by third-party services that appear on our pages. We do not control these cookies. Third-party providers include analytics and authentication services. Please refer to each provider's privacy policy for more information on how they use cookies.":
-    'Alguns cookies na nossa plataforma são definidos por serviços de terceiros que aparecem nas nossas páginas. Não controlamos esses cookies. Os fornecedores terceiros incluem serviços de análise e autenticação. Consulta a política de privacidade de cada fornecedor para mais informações sobre a forma como usam cookies.',
+  '1. Browser Storage': '1. Armazenamento do navegador',
+  'RefLab uses browser storage that is necessary to keep you signed in, protect the authentication flow, remember your language and retain essential interface preferences.':
+    'O RefLab usa armazenamento do navegador necessário para manter a sessão iniciada, proteger o fluxo de autenticação, recordar o idioma e guardar preferências essenciais da interface.',
+  '2. What We Use at Launch': '2. O que usamos no lançamento',
+  'At launch, RefLab uses only storage required to operate the service:':
+    'No lançamento, o RefLab usa apenas o armazenamento necessário para operar o serviço:',
+  'Authentication and security:': 'Autenticação e segurança:',
+  'Session tokens and related state used to sign you in securely and restore your session.':
+    'Tokens de sessão e estado relacionado, usados para iniciar sessão com segurança e restaurar a sessão.',
+  'Essential preferences:': 'Preferências essenciais:',
+  'Language, interface choices and acknowledgement of the storage notice.':
+    'Idioma, escolhas da interface e confirmação de leitura do aviso de armazenamento.',
+  'No optional tracking:': 'Sem rastreamento opcional:',
+  'RefLab does not currently initialise analytics or advertising cookies.':
+    'Atualmente, o RefLab não inicia cookies de análise nem de publicidade.',
+  '3. Managing Browser Storage': '3. Gestão do armazenamento do navegador',
+  'You can clear RefLab browser storage through your browser settings. Doing so signs you out and resets local preferences. Essential authentication storage cannot be disabled inside RefLab while you are signed in.':
+    'Podes limpar o armazenamento do RefLab nas definições do navegador. Isso termina a sessão e repõe as preferências locais. O armazenamento essencial de autenticação não pode ser desativado dentro do RefLab enquanto tens sessão iniciada.',
+  '4. External Authentication': '4. Autenticação externa',
+  'If you choose Google sign-in, Google may use its own cookies or storage on its service during authentication. Its own privacy and cookie terms apply to that external step. RefLab will request consent before introducing optional tracking in the future.':
+    'Se escolheres iniciar sessão com o Google, o Google poderá usar os seus próprios cookies ou armazenamento durante a autenticação. Os respetivos termos de privacidade e cookies aplicam-se a esse passo externo. O RefLab pedirá consentimento antes de introduzir rastreamento opcional no futuro.',
 
   // Profile/Social generic
   All: 'Todos',
@@ -631,6 +670,12 @@ const ptPT = {
   'Manage subscription via Stripe': 'Gerir subscrição via Stripe',
   Message: 'Mensagem',
   'Message media': 'Multimédia da mensagem',
+  'Loading media': 'A carregar multimédia',
+  'Media unavailable': 'Multimédia indisponível',
+  'Page not found': 'Página não encontrada',
+  'The page you are looking for does not exist or has moved.':
+    'A página que procuras não existe ou foi movida.',
+  'Back to RefLab': 'Voltar ao RefLab',
   'Missing username.': 'Falta o nome de utilizador.',
   Name: 'Nome',
   'New content is available. Check it out!': 'Há novo conteúdo disponível. Consulta-o!',
@@ -710,6 +755,92 @@ const ptPT = {
   'sent you a message': 'enviou-te uma mensagem',
   'started following you': 'começou a seguir-te',
   username: 'nomeutilizador',
+
+  // Match Control: comunidade, mensagens, pesquisa e notificações
+  'Image attachment': 'Anexo de imagem',
+  'Video attachment': 'Anexo de vídeo',
+  'Audio attachment': 'Anexo de áudio',
+  'Open conversation with {{name}}': 'Abrir conversa com {{name}}',
+  You: 'Tu',
+  'Conversation unavailable': 'Conversa indisponível',
+  'Conversation with {{name}}': 'Conversa com {{name}}',
+  'Loading messages': 'A carregar mensagens',
+  'Loading earlier messages': 'A carregar mensagens anteriores',
+  'Send the first message to start this conversation.':
+    'Envia a primeira mensagem para iniciar esta conversa.',
+  'This file type is not supported. Choose an image, video or audio file.':
+    'Este tipo de ficheiro não é suportado. Escolhe uma imagem, um vídeo ou um ficheiro de áudio.',
+  'The attachment must be 50 MB or smaller.': 'O anexo não pode exceder 50 MB.',
+  'Failed to send. Please try again.': 'Não foi possível enviar. Tenta novamente.',
+  'Write a message...': 'Escreve uma mensagem...',
+  'Attachments up to 50 MB': 'Anexos até 50 MB',
+  '{{count}} characters remaining': '{{count}} caracteres restantes',
+  'Direct communication': 'Comunicação direta',
+  'Find a referee and start a private conversation.':
+    'Encontra um árbitro e inicia uma conversa privada.',
+  'Loading conversations': 'A carregar conversas',
+  'Unable to load conversations': 'Não foi possível carregar as conversas',
+  Conversations: 'Conversas',
+  'Find someone': 'Encontrar alguém',
+  'Search users': 'Pesquisar utilizadores',
+  'Search results': 'Resultados da pesquisa',
+  'Unable to search users. Please try again.':
+    'Não foi possível pesquisar utilizadores. Tenta novamente.',
+  'Match Control': 'Match Control',
+  'Updates about your activity, community and RefLab account.':
+    'Atualizações sobre a tua atividade, comunidade e conta RefLab.',
+  '{{count}} new': '{{count}} por ler',
+  'Loading notifications': 'A carregar notificações',
+  'Unable to load notifications': 'Não foi possível carregar as notificações',
+  'Search the community': 'Pesquisar na comunidade',
+  'Profiles you visit will appear here for quick access.':
+    'Os perfis que visitares vão aparecer aqui para acesso rápido.',
+  'Recent searches': 'Pesquisas recentes',
+  'RefLab community': 'Comunidade RefLab',
+  'Find referees by name or username.':
+    'Encontra árbitros pelo nome ou nome de utilizador.',
+  'Unable to search users': 'Não foi possível pesquisar utilizadores',
+  'Please check your connection and try again.':
+    'Verifica a tua ligação e tenta novamente.',
+  '{{count}} results': '{{count}} resultados',
+  'You can unblock this person later from your profile settings.':
+    'Podes desbloquear esta pessoa mais tarde nas definições do teu perfil.',
+  'Close comment options': 'Fechar opções do comentário',
+  'Cancel reply': 'Cancelar resposta',
+  'Posting...': 'A publicar...',
+  'Loading comments': 'A carregar comentários',
+  'No comments yet': 'Ainda não há comentários',
+  'Be the first to join the conversation.': 'Sê a primeira pessoa a participar na conversa.',
+  'Share an update with the RefLab community.':
+    'Partilha uma atualização com a comunidade RefLab.',
+  'Replace media': 'Substituir multimédia',
+  'Images, video or audio · maximum 50 MB':
+    'Imagens, vídeo ou áudio · máximo de 50 MB',
+  'Mention a user': 'Mencionar um utilizador',
+  'Type a username to mention someone':
+    'Escreve um nome de utilizador para mencionar alguém',
+  '{{name}} reposted': '{{name}} republicou',
+  'Loading post': 'A carregar publicação',
+  'Post unavailable': 'Publicação indisponível',
+  'Close post options': 'Fechar opções da publicação',
+  'Close profile options': 'Fechar opções do perfil',
+  'Public profile': 'Perfil público',
+  'Loading profile': 'A carregar perfil',
+  'Unable to load this profile': 'Não foi possível carregar este perfil',
+  'Unfollowing...': 'A deixar de seguir...',
+  'Following...': 'A seguir...',
+  Activity: 'Atividade',
+  Posts: 'Publicações',
+  'Refreshing feed': 'A atualizar o feed',
+  'Loading profile posts': 'A carregar publicações do perfil',
+  'Unable to load posts': 'Não foi possível carregar as publicações',
+  'Loading more posts': 'A carregar mais publicações',
+  'Reports are reviewed to help keep the RefLab community safe.':
+    'As denúncias são analisadas para ajudar a manter a comunidade RefLab segura.',
+  'Other reason': 'Outro motivo',
+  'Social feed': 'Feed social',
+  'Loading feed': 'A carregar o feed',
+  'Unable to load the feed': 'Não foi possível carregar o feed',
 
   // Fallback / misc
   'Tests Disponibles': 'Testes disponíveis',

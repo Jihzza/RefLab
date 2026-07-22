@@ -1,25 +1,35 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
+import { MessageCircle, Send, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Button, EmptyState, Skeleton, TextArea } from '@/components/ui'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useComments } from '../hooks/useComments'
+import { COMMENT_MAX_CHARACTERS } from '../validation'
 import CommentBox from './CommentBox'
 import MentionDropdown from './MentionDropdown'
-import { useTranslation } from 'react-i18next'
 
 interface CommentSectionProps {
   postId: string
   onCommentCountChange?: (delta: number) => void
 }
 
-/** Inline comment section that appears below a post. */
-const CommentSection: React.FC<CommentSectionProps> = ({
+export default function CommentSection({
   postId,
   onCommentCountChange,
-}) => {
+}: CommentSectionProps) {
   const { t } = useTranslation()
   const { user } = useAuth()
   const {
     comments,
     isLoading,
+    error,
     fetchComments,
     addComment,
     toggleLike,
@@ -30,199 +40,219 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   const [newComment, setNewComment] = useState('')
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Mention state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  // Fetch comments on mount
   useEffect(() => {
-    fetchComments()
+    void fetchComments()
   }, [fetchComments])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const submitComment = async () => {
     const text = newComment.trim()
     if (!text || isSubmitting) return
 
     setIsSubmitting(true)
-    await addComment(text, replyingTo || undefined)
-    setNewComment('')
-    setReplyingTo(null)
-    setIsSubmitting(false)
-    onCommentCountChange?.(1)
+    try {
+      await addComment(text, replyingTo || undefined)
+      setNewComment('')
+      setReplyingTo(null)
+      setMentionQuery(null)
+      onCommentCountChange?.(1)
+    } catch {
+      inputRef.current?.focus()
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault()
+    void submitComment()
   }
 
   const handleDelete = async (commentId: string) => {
-    await deleteComment(commentId)
-    onCommentCountChange?.(-1)
+    try {
+      await deleteComment(commentId)
+      onCommentCountChange?.(-1)
+    } catch {
+      // useComments restores the server state and exposes the failure inline.
+    }
   }
 
   const handleReply = (parentCommentId: string) => {
     setReplyingTo(parentCommentId)
+    inputRef.current?.focus()
   }
 
-  // Detect @mention: scan backwards from cursor to find an @ preceded by space or start
-  const detectMention = (value: string, cursorPos: number) => {
-    const textBeforeCursor = value.slice(0, cursorPos)
+  const detectMention = (value: string, cursorPosition: number) => {
+    const textBeforeCursor = value.slice(0, cursorPosition)
     const atIndex = textBeforeCursor.lastIndexOf('@')
 
-    if (atIndex === -1) {
-      setMentionQuery(null)
-      return
-    }
-
-    // @ must be at position 0 or preceded by a space/newline
-    if (atIndex > 0 && textBeforeCursor[atIndex - 1] !== ' ') {
+    if (atIndex === -1 || (atIndex > 0 && !/\s/.test(textBeforeCursor[atIndex - 1]))) {
       setMentionQuery(null)
       return
     }
 
     const queryText = textBeforeCursor.slice(atIndex + 1)
-
-    // If the query contains a space, the mention is complete
-    if (queryText.includes(' ')) {
-      setMentionQuery(null)
-      return
-    }
-
-    setMentionQuery(queryText)
+    setMentionQuery(/\s/.test(queryText) ? null : queryText)
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
+  const handleInputChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const value = event.target.value
     setNewComment(value)
-    detectMention(value, e.target.selectionStart ?? value.length)
+    detectMention(value, event.target.selectionStart ?? value.length)
   }
 
-  // Insert selected username, replacing the @query text
   const handleMentionSelect = useCallback(
     (username: string) => {
       const input = inputRef.current
       if (!input) return
 
-      const cursorPos = input.selectionStart ?? newComment.length
-      const textBeforeCursor = newComment.slice(0, cursorPos)
+      const cursorPosition = input.selectionStart ?? newComment.length
+      const textBeforeCursor = newComment.slice(0, cursorPosition)
       const atIndex = textBeforeCursor.lastIndexOf('@')
-
       if (atIndex === -1) return
 
-      const before = newComment.slice(0, atIndex)
-      const after = newComment.slice(cursorPos)
-      const updated = `${before}@${username} ${after}`
-
-      setNewComment(updated)
+      const updated = `${newComment.slice(0, atIndex)}@${username} ${newComment.slice(cursorPosition)}`
+      setNewComment(updated.slice(0, COMMENT_MAX_CHARACTERS))
       setMentionQuery(null)
 
-      // Restore focus and cursor position after the inserted mention
       requestAnimationFrame(() => {
         input.focus()
-        const pos = atIndex + username.length + 2 // @username + space
-        input.setSelectionRange(pos, pos)
+        const nextPosition = Math.min(atIndex + username.length + 2, COMMENT_MAX_CHARACTERS)
+        input.setSelectionRange(nextPosition, nextPosition)
       })
     },
     [newComment],
   )
 
-  const handleMentionClose = useCallback(() => {
-    setMentionQuery(null)
-  }, [])
-
   if (!user) return null
 
+  const charactersRemaining = COMMENT_MAX_CHARACTERS - newComment.length
+
   return (
-    <div className="border-t border-(--border-subtle) mt-3 pt-3">
-      {/* Comment input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
-        <div className="flex-1 relative">
-          {replyingTo && (
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[11px] text-(--text-muted)">
-                {t('Replying to comment')}
-              </span>
-              <button
-                type="button"
-                onClick={() => setReplyingTo(null)}
-                className="text-[11px] text-(--info) hover:underline"
-              >
-                {t('Cancel')}
-              </button>
-            </div>
-          )}
-          <input
+    <section className="mt-4 border-t border-(--mc-color-border) pt-4" aria-label={t('Comments')}>
+      <form onSubmit={handleSubmit} className="mb-5 space-y-2">
+        {replyingTo && (
+          <div className="flex items-center gap-2 rounded-(--mc-radius-input) bg-(--mc-color-info)/10 px-3 py-2 text-xs text-(--mc-color-info)">
+            <span className="flex-1">{t('Replying to comment')}</span>
+            <button
+              type="button"
+              onClick={() => setReplyingTo(null)}
+              className="mc-focus-ring inline-flex size-8 items-center justify-center rounded-(--mc-radius-button) hover:bg-(--mc-color-info)/10"
+              aria-label={t('Cancel reply')}
+            >
+              <X className="size-4" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/35 bg-(--mc-color-danger)/10 px-3 py-2 text-xs text-(--mc-color-danger)" role="alert">
+            {error}
+          </div>
+        )}
+
+        <div className="relative">
+          <TextArea
             ref={inputRef}
-            type="text"
             value={newComment}
             onChange={handleInputChange}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault()
+                void submitComment()
+              }
+            }}
+            maxLength={COMMENT_MAX_CHARACTERS}
             placeholder={replyingTo ? t('Write a reply...') : t('Add a comment...')}
-            className="w-full px-3 py-2 text-sm bg-(--bg-surface-2) border border-(--border-subtle) rounded-(--radius-input) text-(--text-primary) placeholder-(--text-muted) focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
+            rows={2}
+            resize="none"
+            className="min-h-20 pr-12"
+            aria-describedby="comment-character-count"
           />
           {mentionQuery !== null && (
             <MentionDropdown
               query={mentionQuery}
               onSelect={handleMentionSelect}
-              onClose={handleMentionClose}
+              onClose={() => setMentionQuery(null)}
             />
           )}
         </div>
-        <button
-          type="submit"
-          disabled={!newComment.trim() || isSubmitting}
-          className="px-3 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-40"
-        >
-          {t('Post')}
-        </button>
+
+        <div className="flex items-center justify-between gap-3">
+          <span id="comment-character-count" className="mc-tabular text-xs text-(--mc-color-text-muted)">
+            {t('{{count}} characters remaining', { count: charactersRemaining })}
+          </span>
+          <Button
+            type="submit"
+            size="sm"
+            loading={isSubmitting}
+            loadingText={t('Posting...')}
+            disabled={!newComment.trim()}
+            trailingIcon={<Send className="size-4" />}
+          >
+            {t('Post')}
+          </Button>
+        </div>
       </form>
 
-      {/* Loading state */}
       {isLoading && (
-        <div className="flex justify-center py-4">
-          <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+        <div className="space-y-4 py-2" role="status" aria-label={t('Loading comments')}>
+          {Array.from({ length: 2 }).map((_, index) => (
+            <div key={index} className="flex gap-3">
+              <Skeleton variant="circular" width="2rem" />
+              <div className="flex-1 space-y-2">
+                <Skeleton variant="text" width="7rem" />
+                <Skeleton variant="text" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Comments list */}
-      <div className="space-y-3">
-        {comments.map(comment => (
-          <div key={comment.id}>
-            <CommentBox
-              comment={comment}
-              currentUserId={user.id}
-              depth={0}
-              onLike={toggleLike}
-              onReply={() => handleReply(comment.id)}
-              onDelete={handleDelete}
-              onReport={reportComment}
-            />
-            {/* Nested replies */}
-            {comment.replies.length > 0 && (
-              <div className="space-y-3 mt-3">
-                {comment.replies.map(reply => (
-                  <CommentBox
-                    key={reply.id}
-                    comment={reply}
-                    currentUserId={user.id}
-                    depth={1}
-                    onLike={toggleLike}
-                    onReply={() => handleReply(comment.id)}
-                    onDelete={handleDelete}
-                    onReport={reportComment}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Empty state */}
-      {!isLoading && comments.length === 0 && (
-        <p className="text-center text-(--text-muted) text-xs py-2">
-          {t('No comments yet. Be the first!')}
-        </p>
+      {!isLoading && comments.length > 0 && (
+        <div className="space-y-4">
+          {comments.map((comment) => (
+            <div key={comment.id}>
+              <CommentBox
+                comment={comment}
+                currentUserId={user.id}
+                depth={0}
+                onLike={toggleLike}
+                onReply={() => handleReply(comment.id)}
+                onDelete={handleDelete}
+                onReport={reportComment}
+              />
+              {comment.replies.length > 0 && (
+                <div className="mt-3 space-y-3 border-l border-(--mc-color-border) pl-3 sm:pl-4">
+                  {comment.replies.map((reply) => (
+                    <CommentBox
+                      key={reply.id}
+                      comment={reply}
+                      currentUserId={user.id}
+                      depth={1}
+                      onLike={toggleLike}
+                      onReply={() => handleReply(comment.id)}
+                      onDelete={handleDelete}
+                      onReport={reportComment}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
-    </div>
+
+      {!isLoading && comments.length === 0 && !error && (
+        <EmptyState
+          compact
+          icon={<MessageCircle className="size-5" />}
+          title={t('No comments yet')}
+          description={t('Be the first to join the conversation.')}
+        />
+      )}
+    </section>
   )
 }
-
-export default CommentSection

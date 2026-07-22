@@ -1,5 +1,7 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { Flag } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Button, Dialog, TextArea } from '@/components/ui'
 
 const PRESET_REASONS = ['Spam or scam', 'Harassment or bullying', 'Inappropriate content']
 
@@ -9,106 +11,70 @@ interface ReportDialogProps {
   onClose: () => void
 }
 
-/** Dialog for reporting a post or user with preset or custom reasons. */
-const ReportDialog: React.FC<ReportDialogProps> = ({ type, onSubmit, onClose }) => {
+export default function ReportDialog({ type, onSubmit, onClose }: ReportDialogProps) {
   const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null)
   const [customReason, setCustomReason] = useState('')
-
   const reason = customReason.trim() || selectedPreset || ''
-  const canSubmit = reason.length > 0
-
-  const handleSubmit = () => {
-    if (!canSubmit) return
-    onSubmit(reason)
-  }
-
   const title = type === 'post' ? t('Report Post') : t('Report User')
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-(--bg-primary)/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Dialog */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-sm bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl pointer-events-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-(--border-subtle)">
-            <h2 className="text-lg font-semibold text-(--text-primary)">{title}</h2>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+      title={title}
+      description={t('Reports are reviewed to help keep the RefLab community safe.')}
+      size="sm"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>{t('Cancel')}</Button>
+          <Button
+            variant="danger"
+            leadingIcon={<Flag className="size-4" />}
+            disabled={!reason}
+            onClick={() => onSubmit(reason)}
+          >
+            {t('Submit Report')}
+          </Button>
+        </>
+      }
+    >
+      <fieldset className="space-y-2">
+        <legend className="mb-3 text-sm font-semibold text-(--mc-color-text-secondary)">
+          {t('Why are you reporting this {{type}}?', { type })}
+        </legend>
+        {PRESET_REASONS.map((preset) => {
+          const selected = selectedPreset === preset
+          return (
             <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-(--text-muted) hover:bg-(--bg-hover) hover:text-(--text-primary) transition-colors"
-              aria-label={t('Close')}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Body */}
-          <div className="px-5 py-4 space-y-3">
-            <p className="text-sm text-(--text-muted)">
-              {t('Why are you reporting this {{type}}?', { type })}
-            </p>
-
-            {/* Preset reasons */}
-            <div className="space-y-2">
-              {PRESET_REASONS.map(preset => (
-                <button
-                  key={preset}
-                  onClick={() => {
-                    setSelectedPreset(selectedPreset === preset ? null : preset)
-                    setCustomReason('')
-                  }}
-                  className={`w-full text-left px-4 py-2.5 text-sm rounded-(--radius-button) border transition-colors ${
-                    selectedPreset === preset
-                      ? 'border-(--brand-yellow) bg-(--brand-yellow)/10 text-(--text-primary)'
-                      : 'border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover)'
-                  }`}
-                >
-                  {t(preset)}
-                </button>
-              ))}
-            </div>
-
-            {/* Custom reason */}
-            <textarea
-              value={customReason}
-              onChange={e => {
-                setCustomReason(e.target.value)
-                if (e.target.value.trim()) setSelectedPreset(null)
+              key={preset}
+              type="button"
+              onClick={() => {
+                setSelectedPreset(selected ? null : preset)
+                setCustomReason('')
               }}
-              placeholder={t('Describe the issue...')}
-              rows={3}
-              className="w-full bg-(--bg-surface-2) text-(--text-primary) text-sm placeholder-(--text-muted) rounded-(--radius-input) border border-(--border-subtle) px-4 py-3 resize-none focus:outline-none focus:ring-1 focus:ring-(--brand-yellow)"
-            />
-          </div>
+              className={`mc-focus-ring min-h-11 w-full rounded-(--mc-radius-button) border px-4 py-2.5 text-left text-sm font-medium transition-colors ${selected ? 'border-(--mc-color-danger)/60 bg-(--mc-color-danger)/10 text-(--mc-color-text)' : 'border-(--mc-color-border) text-(--mc-color-text-secondary) hover:border-(--mc-color-border-strong) hover:bg-(--mc-color-surface-hover)'}`}
+              aria-pressed={selected}
+            >
+              {t(preset)}
+            </button>
+          )
+        })}
+      </fieldset>
 
-          {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-(--border-subtle)">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-(--text-secondary) hover:text-(--text-primary) transition-colors"
-            >
-              {t('Cancel')}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className="px-5 py-2 text-sm font-semibold bg-(--error) text-white rounded-(--radius-button) hover:opacity-90 transition-opacity disabled:opacity-40"
-            >
-              {t('Submit Report')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
+      <TextArea
+        label={t('Other reason')}
+        value={customReason}
+        onChange={(event) => {
+          setCustomReason(event.target.value)
+          if (event.target.value.trim()) setSelectedPreset(null)
+        }}
+        placeholder={t('Describe the issue...')}
+        rows={3}
+        className="mt-4"
+      />
+    </Dialog>
   )
 }
-
-export default ReportDialog

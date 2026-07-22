@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import Button from '@/components/ui/Button'
 
 interface BlockedUserRowProps {
   username: string
@@ -23,17 +24,17 @@ export default function BlockedUserRow({
   const { t } = useTranslation()
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div className="flex items-center gap-3 px-3 py-3">
       {/* Avatar */}
-      <div className="w-9 h-9 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden shrink-0">
+      <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-(--mc-color-border-strong) bg-(--mc-color-canvas)">
         {photoUrl ? (
           <img
             src={photoUrl}
-            alt={`${username}'s avatar`}
-            className="w-full h-full object-cover"
+            alt=""
+            className="size-full object-cover"
           />
         ) : (
-          <span className="text-xs font-semibold text-(--text-primary)">
+          <span className="text-xs font-semibold text-(--mc-color-text)">
             {getInitials(name, username)}
           </span>
         )}
@@ -42,24 +43,22 @@ export default function BlockedUserRow({
       {/* Name & username */}
       <div className="flex-1 min-w-0">
         {name && (
-          <p className="text-sm text-(--text-primary) truncate">{name}</p>
+          <p className="truncate text-sm font-medium text-(--mc-color-text)">{name}</p>
         )}
-        <p className="text-xs text-(--text-muted) truncate">@{username}</p>
+        <p className="truncate text-xs text-(--mc-color-text-muted)">@{username}</p>
       </div>
 
       {/* Unblock button */}
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        size="sm"
         onClick={onUnblock}
         disabled={loading}
-        className="text-xs font-medium px-3 py-1.5 rounded-(--radius-button)
-          border border-(--border-subtle) text-(--text-secondary)
-          hover:bg-(--bg-hover) transition-colors
-          disabled:opacity-50 disabled:cursor-not-allowed"
+        loading={loading}
         aria-label={`${t('Unblock')} ${username}`}
       >
         {loading ? t('Unblocking...') : t('Unblock')}
-      </button>
+      </Button>
     </div>
   )
 }

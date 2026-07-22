@@ -26,11 +26,12 @@ export function usePostActions({
   addPost,
 }: UsePostActionsParams) {
   const { user, profile } = useAuth()
+  const userId = user?.id
   const [pendingAction, setPendingAction] = useState<string | null>(null)
 
   const handleLike = useCallback(
     async (post: Post) => {
-      if (!user?.id) return
+      if (!userId) return
       const wasLiked = post.is_liked
 
       // Optimistic update
@@ -39,7 +40,7 @@ export function usePostActions({
         like_count: post.like_count + (wasLiked ? -1 : 1),
       })
 
-      const { error } = await togglePostLike(user.id, post.id, wasLiked)
+      const { error } = await togglePostLike(userId, post.id, wasLiked)
       if (error) {
         // Rollback
         updatePost(post.id, {
@@ -48,12 +49,12 @@ export function usePostActions({
         })
       }
     },
-    [user?.id, updatePost]
+    [userId, updatePost]
   )
 
   const handleSave = useCallback(
     async (post: Post) => {
-      if (!user?.id) return
+      if (!userId) return
       const wasSaved = post.is_saved
 
       updatePost(post.id, {
@@ -61,7 +62,7 @@ export function usePostActions({
         save_count: post.save_count + (wasSaved ? -1 : 1),
       })
 
-      const { error } = await togglePostSave(user.id, post.id, wasSaved)
+      const { error } = await togglePostSave(userId, post.id, wasSaved)
       if (error) {
         updatePost(post.id, {
           is_saved: wasSaved,
@@ -69,12 +70,12 @@ export function usePostActions({
         })
       }
     },
-    [user?.id, updatePost]
+    [userId, updatePost]
   )
 
   const handleRepost = useCallback(
     async (post: Post) => {
-      if (!user?.id || !profile) return
+      if (!userId || !profile) return
       const wasReposted = post.is_reposted
 
       if (wasReposted) {
@@ -84,7 +85,7 @@ export function usePostActions({
           repost_count: Math.max(post.repost_count - 1, 0),
         })
 
-        const { error } = await removeRepost(user.id, post.id)
+        const { error } = await removeRepost(userId, post.id)
         if (error) {
           updatePost(post.id, {
             is_reposted: true,
@@ -98,7 +99,7 @@ export function usePostActions({
           repost_count: post.repost_count + 1,
         })
 
-        const { error, post: repostData } = await createRepost(user.id, post.id)
+        const { error, post: repostData } = await createRepost(userId, post.id)
         if (error) {
           updatePost(post.id, {
             is_reposted: false,
@@ -136,7 +137,7 @@ export function usePostActions({
         }
       }
     },
-    [user?.id, profile, updatePost, addPost]
+    [userId, profile, updatePost, addPost]
   )
 
   const handleShare = useCallback(async (post: Post) => {
@@ -169,30 +170,30 @@ export function usePostActions({
 
   const handleReport = useCallback(
     async (type: 'post' | 'user', targetId: string, reason?: string) => {
-      if (!user?.id) return
+      if (!userId) return
 
       if (type === 'post') {
-        await reportPost(user.id, targetId, reason)
+        await reportPost(userId, targetId, reason)
       } else {
-        await reportUser(user.id, targetId, reason)
+        await reportUser(userId, targetId, reason)
       }
     },
-    [user?.id]
+    [userId]
   )
 
   const handleBlock = useCallback(
     async (blockedUserId: string) => {
-      if (!user?.id) return
+      if (!userId) return
 
       // Immediately hide all posts from blocked user
       removePostsByUser(blockedUserId)
 
-      const { error } = await blockUser(user.id, blockedUserId)
+      const { error } = await blockUser(userId, blockedUserId)
       if (error) {
         // Feed refresh will restore if block failed
       }
     },
-    [user?.id, removePostsByUser]
+    [userId, removePostsByUser]
   )
 
   return {

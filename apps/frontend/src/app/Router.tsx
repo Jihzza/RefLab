@@ -1,32 +1,44 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import LandingPage from "@/features/landing/components/LandingPage";
-import ResetPassword from "@/features/auth/components/ResetPassword";
-import OAuthCallbackPage from "@/features/auth/components/OAuthCallbackPage";
-import DashboardPage from "@/features/dashboard/components/DashboardPage";
-import TestsList from "@/features/tests/components/TestsList";
-import LearnPage from "@/features/learn/components/LearnPage";
-import TestPage from "@/features/learn/components/TestPage";
-import NotificationsPage from "@/features/notifications/components/NotificationsPage";
-import ProfilePage from "@/features/profile/components/ProfilePage";
-import EditProfilePage from "../features/profile/components/EditProfilePage";
-import SettingsPage from "@/features/settings/components/SettingsPage";
-import PublicProfilePage from "@/features/social/components/PublicProfilePage";
-import PricingPage from "@/features/pricing/components/PricingPage";
-import SocialPage from "@/features/social/components/SocialPage";
-import PostDetailPage from "@/features/social/components/PostDetailPage";
-import MessagesPage from "@/features/messages/components/MessagesPage";
-import ConversationPage from "@/features/messages/components/ConversationPage";
-import SearchPage from "@/features/search/components/SearchPage";
-import PoliciesPage from "@/features/policies/components/PoliciesPage";
 import RequireAuth from "./RequireAuth";
 import RequireGuest from "./RequireGuest";
 import AppShell from "./AppShell";
+import NotFoundPage from "./NotFoundPage";
+
+const LandingPage = lazy(() => import("@/features/landing/components/LandingPage"));
+const ResetPassword = lazy(() => import("@/features/auth/components/ResetPassword"));
+const OAuthCallbackPage = lazy(() => import("@/features/auth/components/OAuthCallbackPage"));
+const DashboardPage = lazy(() => import("@/features/dashboard/components/DashboardPage"));
+const TestsList = lazy(() => import("@/features/tests/components/TestsList"));
+const LearnPage = lazy(() => import("@/features/learn/components/LearnPage"));
+const TestPage = lazy(() => import("@/features/learn/components/TestPage"));
+const NotificationsPage = lazy(() => import("@/features/notifications/components/NotificationsPage"));
+const ProfilePage = lazy(() => import("@/features/profile/components/ProfilePage"));
+const EditProfilePage = lazy(() => import("@/features/profile/components/EditProfilePage"));
+const SettingsPage = lazy(() => import("@/features/settings/components/SettingsPage"));
+const PublicProfilePage = lazy(() => import("@/features/social/components/PublicProfilePage"));
+const PricingPage = lazy(() => import("@/features/pricing/components/PricingPage"));
+const SocialPage = lazy(() => import("@/features/social/components/SocialPage"));
+const PostDetailPage = lazy(() => import("@/features/social/components/PostDetailPage"));
+const MessagesPage = lazy(() => import("@/features/messages/components/MessagesPage"));
+const ConversationPage = lazy(() => import("@/features/messages/components/ConversationPage"));
+const SearchPage = lazy(() => import("@/features/search/components/SearchPage"));
+const PoliciesPage = lazy(() => import("@/features/policies/components/PoliciesPage"));
+
+function RouteFallback() {
+  return (
+    <div className="min-h-[40vh] grid place-items-center" role="status" aria-label="Loading">
+      <div className="size-8 animate-spin rounded-full border-2 border-(--border-strong) border-t-(--brand-yellow)" />
+    </div>
+  );
+}
 
 export default function Router() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        <Route element={<Layout />}>
         {/* Public routes - landing page only for non-authenticated users */}
         <Route path="/" element={<RequireGuest><LandingPage /></RequireGuest>} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -82,8 +94,11 @@ export default function Router() {
           <Route path="settings" element={<SettingsPage />} />
           {/* /app/profile/:username shows another user's public profile */}
           <Route path="profile/:username" element={<PublicProfilePage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-      </Route>
-    </Routes>
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }

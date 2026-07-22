@@ -1,32 +1,30 @@
 import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+import ProgressBar, { type ProgressBarTone } from '@/components/ui/ProgressBar'
+import Surface from '@/components/ui/Surface'
 
 interface StatCardProps {
-  /** Card title displayed as uppercase label */
   label: string
-  /** The main metric value (null triggers empty state) */
   value: number | string | null
-  /** Text appended after value (e.g. "%", "days") */
   suffix?: string
-  /** Small description text below the value */
   subtext?: string
-  /** Whether to render a progress bar below the value */
   showBar?: boolean
-  /** 0-100 percent for the progress bar fill */
   barPercent?: number
-  /** Message shown when value is null */
   emptyText?: string
-  /** Optional icon for the empty state */
-  emptyIcon?: ReactNode
-  /** Optional color class for the value (defaults to brand-yellow) */
-  valueColor?: string
-  /** Additional CSS classes for the container */
+  icon?: ReactNode
+  tone?: ProgressBarTone
   className?: string
 }
 
-/**
- * StatCard — Reusable metric card with big number, optional progress bar,
- * and empty state handling. Used across all dashboard sections.
- */
+const valueToneClasses: Record<ProgressBarTone, string> = {
+  accent: 'text-(--mc-color-accent)',
+  success: 'text-(--mc-color-success)',
+  warning: 'text-(--mc-color-warning)',
+  danger: 'text-(--mc-color-danger)',
+  info: 'text-(--mc-color-info)',
+  muted: 'text-(--mc-color-text)',
+}
+
 export default function StatCard({
   label,
   value,
@@ -35,72 +33,51 @@ export default function StatCard({
   showBar = false,
   barPercent = 0,
   emptyText = 'No data yet',
-  emptyIcon,
-  valueColor = 'text-(--brand-yellow)',
+  icon,
+  tone = 'muted',
   className = '',
 }: StatCardProps) {
+  const { i18n } = useTranslation()
   const hasValue = value !== null
 
   return (
-    <div
-      className={`bg-(--bg-surface) rounded-2xl p-4 shadow-sm border border-(--border-subtle) flex flex-col ${className}`}
-      role="region"
-      aria-label={label}
+    <Surface
+      padding="sm"
+      className={`flex min-h-[112px] flex-col border-(--mc-color-border-strong) shadow-none ${className}`}
     >
-      {/* Label */}
-      <h3 className="text-[11px] font-bold text-(--text-secondary) uppercase tracking-wider mb-2">
-        {label}
-      </h3>
+      <div className="flex min-w-0 items-start gap-2 text-(--mc-color-text-muted)">
+        {icon && <span className="mt-0.5 shrink-0 text-(--mc-color-accent)" aria-hidden="true">{icon}</span>}
+        <h3 className="line-clamp-2 text-[10px] font-bold uppercase leading-4 tracking-[0.08em] text-(--mc-color-text-secondary)">
+          {label}
+        </h3>
+      </div>
 
       {hasValue ? (
-        <>
-          {/* Value */}
-          <div className="flex-1 flex items-center justify-center py-1">
-            <span className={`text-3xl font-extrabold tracking-tight ${valueColor}`}>
-              {value}
-            </span>
-            {suffix && (
-              <span className="text-lg font-medium text-(--text-muted) ml-0.5">
-                {suffix}
-              </span>
-            )}
-          </div>
+        <div className="mt-auto pt-2">
+          <p className={`text-2xl font-extrabold leading-none tracking-[-0.035em] tabular-nums ${valueToneClasses[tone]}`}>
+            {typeof value === 'number' ? formatNumber(value, i18n.resolvedLanguage) : value}
+            {suffix && <span className="ml-0.5 text-sm font-semibold text-(--mc-color-text-muted)">{suffix}</span>}
+          </p>
 
-          {/* Progress bar */}
           {showBar && (
-            <div
-              className="w-full bg-(--bg-surface-2) h-1.5 rounded-full mt-2 overflow-hidden"
-              role="progressbar"
-              aria-valuenow={barPercent}
-              aria-valuemin={0}
-              aria-valuemax={100}
+            <ProgressBar
+              value={barPercent}
+              tone={tone}
+              size="sm"
+              className="mt-2"
               aria-label={`${label}: ${barPercent}%`}
-            >
-              <div
-                className="bg-(--brand-yellow) h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(barPercent, 100)}%` }}
-              />
-            </div>
+            />
           )}
 
-          {/* Subtext */}
-          {subtext && (
-            <p className="text-[10px] text-(--text-muted) mt-2 text-center">
-              {subtext}
-            </p>
-          )}
-        </>
-      ) : (
-        /* Empty state */
-        <div className="flex-1 flex flex-col items-center justify-center py-3 text-center">
-          {emptyIcon && (
-            <span className="text-(--text-muted) mb-1.5" aria-hidden="true">
-              {emptyIcon}
-            </span>
-          )}
-          <p className="text-xs text-(--text-muted)">{emptyText}</p>
+          {subtext && <p className="mt-1.5 truncate text-[10px] text-(--mc-color-text-muted)">{subtext}</p>}
         </div>
+      ) : (
+        <p className="mt-auto pt-3 text-xs leading-4 text-(--mc-color-text-muted)">{emptyText}</p>
       )}
-    </div>
+    </Surface>
   )
+}
+
+function formatNumber(value: number, locale?: string): string {
+  return new Intl.NumberFormat(locale ?? 'pt-PT', { maximumFractionDigits: 1 }).format(value)
 }

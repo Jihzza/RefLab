@@ -1,6 +1,9 @@
-import type { Conversation } from '../types'
-import { useAuth } from '@/features/auth/components/useAuth'
+import { ChevronRight, Image, Mic, UserRound, Video } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Surface } from '@/components/ui'
+import { useAuth } from '@/features/auth/components/useAuth'
+import { isDeletedConversationPeer } from '../conversationPeer'
+import type { Conversation } from '../types'
 
 interface ConversationItemProps {
   conversation: Conversation
@@ -8,10 +11,7 @@ interface ConversationItemProps {
 }
 
 function formatRelativeTime(dateString: string, nowLabel: string): string {
-  const now = Date.now()
-  const date = new Date(dateString).getTime()
-  const seconds = Math.floor((now - date) / 1000)
-
+  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
   if (seconds < 60) return nowLabel
   const minutes = Math.floor(seconds / 60)
   if (minutes < 60) return `${minutes}m`
@@ -24,85 +24,68 @@ function formatRelativeTime(dateString: string, nowLabel: string): string {
   return `${Math.floor(months / 12)}y`
 }
 
-function getLastMessagePreview(
-  conversation: Conversation,
-  currentUserId?: string,
-  t?: (key: string) => string
-): string {
-  const translate = t ?? ((key: string) => key)
-  const last = conversation.last_message
-  if (!last) return translate('No messages yet.')
-
-  const text = last.content?.trim()
-  let preview = text ?? ''
-
-  if (!preview) {
-    if (last.media_type === 'image') preview = '[Imagem]'
-    else if (last.media_type === 'video') preview = '[Vídeo]'
-    else if (last.media_type === 'audio') preview = '[Áudio]'
-    else preview = translate('No messages yet.')
-  }
-
-  if (currentUserId && last.sender_id === currentUserId) {
-    return `Tu: ${preview}`
-  }
-
-  return preview
-}
-
 export default function ConversationItem({ conversation, onClick }: ConversationItemProps) {
   const { t } = useTranslation()
-  const { user: authUser } = useAuth()
+  const { user } = useAuth()
   const otherUser = conversation.other_user
-  const displayName = otherUser.name || otherUser.username
+  const isDeletedPeer = isDeletedConversationPeer(otherUser)
+  const displayName = isDeletedPeer
+    ? t('Deleted account')
+    : otherUser.name || otherUser.username
   const initials = displayName.slice(0, 2).toUpperCase()
-
-  const preview = getLastMessagePreview(conversation, authUser?.id, t)
-  const timestamp = formatRelativeTime(
-    conversation.last_message?.created_at ?? conversation.updated_at,
-    t('now'),
-  )
+  const lastMessage = conversation.last_message
+  const isOwnLastMessage = lastMessage?.sender_id === user?.id
+  const messageText = lastMessage?.content?.trim()
+  const mediaLabel = lastMessage?.media_type === 'image'
+    ? t('Image attachment')
+    : lastMessage?.media_type === 'video'
+      ? t('Video attachment')
+      : lastMessage?.media_type === 'audio'
+        ? t('Audio attachment')
+        : null
+  const preview = messageText || mediaLabel || t('No messages yet.')
+  const timestamp = formatRelativeTime(lastMessage?.created_at ?? conversation.updated_at, t('now'))
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 flex items-center gap-3 hover:bg-(--bg-hover) transition-colors"
-    >
-      {/* Avatar */}
-      {otherUser.photo_url ? (
-        <img
-          src={otherUser.photo_url}
-          alt={displayName}
-          className="w-11 h-11 rounded-full object-cover flex-shrink-0"
-        />
-      ) : (
-        <div className="w-11 h-11 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-(--bg-primary)">
-            {initials}
-          </span>
-        </div>
-      )}
-
-      {/* Middle */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-(--text-primary) truncate">
-          {displayName}
-        </div>
-        <div className="text-xs text-(--text-muted) truncate">
-          {preview}
-        </div>
-      </div>
-
-      {/* Right */}
-      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-        <span className="text-[10px] text-(--text-muted)">{timestamp}</span>
-        {conversation.unread_count > 0 && (
-          <span className="min-w-5 h-5 px-1 rounded-full bg-(--brand-yellow) text-(--bg-primary) text-[10px] font-bold flex items-center justify-center">
-            {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+    <Surface padding="none" selected={conversation.unread_count > 0} role="listitem">
+      <button
+        type="button"
+        onClick={onClick}
+        className="mc-focus-ring flex min-h-[4.75rem] w-full items-center gap-3 rounded-(--mc-radius-card) px-3 py-3 text-left transition-colors hover:bg-(--mc-color-surface-hover) sm:px-4"
+        aria-label={t('Open conversation with {{name}}', { name: displayName })}
+      >
+        {!isDeletedPeer && otherUser.photo_url ? (
+          <img src={otherUser.photo_url} alt="" className="size-12 shrink-0 rounded-full border border-(--mc-color-border-strong) object-cover" />
+        ) : (
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-full border border-(--mc-color-accent)/35 bg-(--mc-color-accent)/15 text-sm font-bold text-(--mc-color-accent)">
+            {isDeletedPeer ? <UserRound className="size-5" aria-hidden="true" /> : initials}
           </span>
         )}
-      </div>
-    </button>
+
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center justify-between gap-3">
+            <span className={`truncate text-sm text-(--mc-color-text) ${conversation.unread_count > 0 ? 'font-bold' : 'font-semibold'}`}>
+              {displayName}
+            </span>
+            <span className="mc-tabular shrink-0 text-[10px] text-(--mc-color-text-muted)">{timestamp}</span>
+          </span>
+          <span className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-(--mc-color-text-muted)">
+            {lastMessage?.media_type === 'image' && !messageText && <Image className="size-3.5 shrink-0" aria-hidden="true" />}
+            {lastMessage?.media_type === 'video' && !messageText && <Video className="size-3.5 shrink-0" aria-hidden="true" />}
+            {lastMessage?.media_type === 'audio' && !messageText && <Mic className="size-3.5 shrink-0" aria-hidden="true" />}
+            <span className="truncate">{isOwnLastMessage ? `${t('You')}: ${preview}` : preview}</span>
+          </span>
+        </span>
+
+        <span className="flex shrink-0 items-center gap-1">
+          {conversation.unread_count > 0 && (
+            <Badge variant="accent" size="sm">
+              {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
+            </Badge>
+          )}
+          <ChevronRight className="size-4 text-(--mc-color-text-muted)" aria-hidden="true" />
+        </span>
+      </button>
+    </Surface>
   )
 }

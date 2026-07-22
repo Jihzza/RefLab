@@ -1,52 +1,37 @@
-import { useState } from "react";
-import { useAuth } from "./useAuth";
-import { useTranslation } from "react-i18next";
+import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Button, Input } from '@/components/ui';
+import { useAuth } from './useAuth';
 
 interface ForgotPasswordProps {
   onBackToLogin: () => void;
 }
 
-/**
- * ForgotPassword - Form to request a password reset email
- *
- * Flow:
- * 1. User enters their email
- * 2. We call Supabase resetPassword
- * 3. Supabase sends an email with a reset link
- * 4. User clicks link → goes to /reset-password page (Step 2.5)
- */
 export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   const { t } = useTranslation();
   const { resetPassword } = useAuth();
-
-  // Form state
-  const [email, setEmail] = useState("");
-
-  // UI state
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setError('');
+    setSuccessMessage('');
 
-    // Clear previous state
-    setError("");
-    setSuccessMessage("");
-
-    // Basic validation
     if (!email) {
-      setError(t("Email is required"));
+      setError(t('Email is required'));
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError(t("Please enter a valid email"));
+      setError(t('Please enter a valid email'));
       return;
     }
 
     setLoading(true);
-
     const { error: resetError } = await resetPassword(email);
 
     if (resetError) {
@@ -55,81 +40,68 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
       return;
     }
 
-    // Success - show message
-    // Note: Supabase doesn't reveal if email exists for security reasons
-    setSuccessMessage(
-      t("If an account exists with this email, you will receive a password reset link.")
-    );
+    setSuccessMessage(t('If an account exists with this email, you will receive a password reset link.'));
     setLoading(false);
   };
 
   return (
     <div>
-      {/* Back to login link */}
       <button
         type="button"
         onClick={onBackToLogin}
-        className="mb-4 text-sm text-(--brand-yellow) hover:text-(--brand-yellow-soft) hover:underline flex items-center gap-1"
+        disabled={loading}
+        className="mc-focus-ring mb-5 inline-flex min-h-10 items-center gap-2 rounded-lg px-1 text-sm font-semibold text-(--mc-color-accent) hover:text-(--mc-color-accent-soft) disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span>&larr;</span> {t("Back to login")}
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {t('Back to login')}
       </button>
 
-      <h2 className="text-xl font-bold text-(--text-primary) mb-2">{t("Reset your password")}</h2>
-      <p className="text-(--text-secondary) text-sm mb-4">
-        {t("Enter your email address and we'll send you a link to reset your password.")}
-      </p>
+      <div className="mb-6">
+        <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-(--mc-color-accent)">
+          Match Control
+        </p>
+        <h2 className="text-2xl font-extrabold tracking-[-0.025em] text-(--mc-color-text)">
+          {t('Reset your password')}
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-(--mc-color-text-secondary)">
+          {t("Enter your email address and we'll send you a link to reset your password.")}
+        </p>
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Success message */}
         {successMessage && (
-          <div className="p-3 rounded-(--radius-input) bg-(--success)/10 border border-(--success)/20 text-(--success) text-sm">
+          <div role="status" className="rounded-(--mc-radius-input) border border-(--mc-color-success)/45 bg-(--mc-color-success)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-success)">
             {successMessage}
           </div>
         )}
 
-        {/* Error message */}
         {error && (
-          <div className="p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm text-center">{error}</div>
+          <div role="alert" className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/45 bg-(--mc-color-danger)/10 px-3 py-2.5 text-sm leading-5 text-(--mc-color-danger)">
+            {error}
+          </div>
         )}
 
-        {/* Email field */}
-        <div className="space-y-2">
-          <label htmlFor="forgot-email" className="block text-sm font-medium text-(--text-secondary)">
-            {t("Email")}
-          </label>
-          <input
-            id="forgot-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={loading}
-            className="w-full px-4 py-3 outline-none transition-all
-              bg-(--bg-surface-2) 
-              border border-(--border-subtle) 
-              rounded-(--radius-input) 
-              text-(--text-primary) 
-              placeholder-(--text-muted)
-              focus:border-(--brand-yellow) 
-              focus:ring-1 focus:ring-(--brand-yellow)
-              disabled:opacity-50 disabled:cursor-not-allowed"
-            placeholder="tu@exemplo.com"
-          />
-        </div>
-
-        {/* Submit button */}
-        <button
-          type="submit"
+        <Input
+          id="forgot-email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
           disabled={loading}
-          className="w-full py-3.5 px-4 font-bold transition-all transform active:scale-[0.98]
-            bg-(--brand-yellow) 
-            text-(--bg-primary) 
-            rounded-(--radius-button)
-            hover:bg-(--brand-yellow-soft) 
-            hover:shadow-[0_0_15px_rgb(var(--brand-yellow)/0.3)]
-            disabled:opacity-50 disabled:cursor-not-allowed"
+          label={t('Email')}
+          placeholder="tu@exemplo.com"
+        />
+
+        <Button
+          type="submit"
+          size="lg"
+          fullWidth
+          loading={loading}
+          loadingText={t('Sending...')}
         >
-          {loading ? t("Sending...") : t("Send reset link")}
-        </button>
+          {t('Send reset link')}
+        </Button>
       </form>
     </div>
   );

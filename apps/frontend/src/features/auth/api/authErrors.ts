@@ -39,6 +39,22 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
     }
   }
 
+  if (context === 'delete-account') {
+    if (msg.includes('ACCOUNT_DELETION_ALREADY_IN_PROGRESS')) {
+      return {
+        message: 'A eliminação da conta já está em curso. Aguarda um momento e tenta novamente.',
+      }
+    }
+    if (
+      msg.includes('REAUTHENTICATION_REQUIRED') ||
+      msg.includes('Please sign in again before deleting your account')
+    ) {
+      return {
+        message: 'Por segurança, termina sessão, volta a iniciar sessão e repete a eliminação da conta nos 15 minutos seguintes.',
+      }
+    }
+  }
+
   // Generic mappings (apply to any context)
   if (msg.includes('Auth session missing')) {
     return { message: 'A tua sessão expirou. Inicia sessão novamente.' }

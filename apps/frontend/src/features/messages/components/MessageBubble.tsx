@@ -1,4 +1,5 @@
-import { getMessageMediaPublicUrl } from '../api/messagesApi'
+import { useEffect, useState } from 'react'
+import { getMessageMediaSignedUrl } from '../api/messagesApi'
 import type { Message } from '../types'
 import { useTranslation } from 'react-i18next'
 
@@ -18,17 +19,36 @@ function formatTimestamp(dateString: string): string {
   return `${hh}:${mm}:${ss} ${DD}-${MM}-${YYYY}`
 }
 
-function resolveMediaUrl(pathOrUrl: string): string {
-  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) return pathOrUrl
-  if (pathOrUrl.startsWith('blob:')) return pathOrUrl
-  return getMessageMediaPublicUrl(pathOrUrl)
-}
-
 export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
   const { t } = useTranslation()
   const hasText = !!message.content?.trim()
   const hasMedia = !!message.media_url
-  const mediaSrc = message.media_url ? resolveMediaUrl(message.media_url) : null
+  const mediaSource = message.media_url
+  const directMediaSrc = mediaSource?.startsWith('blob:') ? mediaSource : null
+  const [resolvedMedia, setResolvedMedia] = useState<{
+    source: string
+    url: string | null
+    failed: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    if (!mediaSource || directMediaSrc) return
+
+    let active = true
+
+    void getMessageMediaSignedUrl(mediaSource).then(({ data, error }) => {
+      if (!active) return
+      setResolvedMedia({ source: mediaSource, url: data, failed: !!error })
+    })
+
+    return () => {
+      active = false
+    }
+  }, [directMediaSrc, mediaSource])
+
+  const mediaSrc = directMediaSrc
+    ?? (resolvedMedia?.source === mediaSource ? resolvedMedia.url : null)
+  const mediaFailed = resolvedMedia?.source === mediaSource && resolvedMedia.failed
 
   return (
     <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
@@ -40,6 +60,20 @@ export default function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             : 'bg-(--bg-surface-2) text-(--text-primary) rounded-2xl rounded-bl-md',
         ].join(' ')}
       >
+        {hasMedia && !mediaSrc && !mediaFailed && (
+          <div
+            className="mb-2 h-24 animate-pulse rounded-lg bg-black/15"
+            role="status"
+            aria-label={t('Loading media')}
+          />
+        )}
+
+        {hasMedia && mediaFailed && (
+          <p className="mb-2 text-xs opacity-70" role="status">
+            {t('Media unavailable')}
+          </p>
+        )}
+
         {hasMedia && mediaSrc && (
           <div className="mb-2">
             {message.media_type === 'image' && (

@@ -11,6 +11,10 @@ import {
 } from '@/features/auth/api/profilesApi'
 import { useAuth } from '@/features/auth/components/useAuth'
 import { useTranslation } from 'react-i18next'
+import { AtSign, Camera, UserRound } from 'lucide-react'
+import DocumentPage from '@/app/layouts/DocumentPage'
+import Button from '@/components/ui/Button'
+import Input from '@/components/ui/Input'
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -337,62 +341,68 @@ function EditProfileForm({
     usernameAvailability === 'checking'
 
   return (
-    <section className="p-4 pb-20">
+    <DocumentPage
+      ariaLabel={t('Edit Profile')}
+      eyebrow="Match Control"
+      title={t('Edit Profile')}
+      description={t('Update your profile details and avatar.')}
+      width="narrow"
+    >
       <form
         onSubmit={handleSubmit}
-        className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-4 sm:p-6"
+        className="overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface) shadow-(--mc-shadow-soft)"
       >
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-1 text-sm text-(--text-muted)">
-            {t('Update your profile details and avatar.')}
-          </p>
-        </div>
+        <div className="grid md:grid-cols-[13rem_minmax(0,1fr)]">
+          <aside className="relative overflow-hidden border-b border-(--mc-color-border) bg-(--mc-color-surface-raised) p-6 md:border-b-0 md:border-r">
+            <div className="pointer-events-none absolute -right-12 -top-12 size-36 rounded-full border border-(--mc-color-border)" aria-hidden="true" />
+            <div className="relative flex flex-col items-center text-center">
+              <button
+                type="button"
+                aria-label={t('Upload profile image')}
+                onClick={handleAvatarClick}
+                className="group relative flex size-28 items-center justify-center overflow-hidden rounded-full border-2 border-(--mc-color-accent)/70 bg-(--mc-color-canvas) shadow-(--mc-shadow-soft) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-(--mc-color-surface-raised)"
+              >
+                {displayAvatar ? (
+                  <img
+                    src={displayAvatar}
+                    alt={t('Profile avatar preview')}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xl font-extrabold text-(--mc-color-text)">
+                    {displayInitials}
+                  </span>
+                )}
+                <span className="absolute inset-x-0 bottom-0 flex h-9 items-center justify-center bg-black/65 text-white opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100">
+                  <Camera className="size-4" aria-hidden="true" />
+                </span>
+              </button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleAvatarClick}
+                leadingIcon={<Camera className="size-4" />}
+                className="mt-3 text-(--mc-color-accent)"
+              >
+                {t('Change profile image')}
+              </Button>
+              <p className="mt-1 text-xs leading-5 text-(--mc-color-text-muted)">
+                {t('JPG, PNG, WEBP, or GIF. Max size 5MB.')}
+              </p>
+              {avatarError && (
+                <p className="mt-2 text-xs text-(--mc-color-danger)" role="alert" aria-live="polite">
+                  {avatarError}
+                </p>
+              )}
+            </div>
+          </aside>
 
-        <div className="mb-6 flex flex-col items-center">
-          <button
-            type="button"
-            aria-label={t('Upload profile image')}
-            onClick={handleAvatarClick}
-            className="w-24 h-24 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) flex items-center justify-center overflow-hidden"
-          >
-            {displayAvatar ? (
-              <img
-                src={displayAvatar}
-                alt={t('Profile avatar preview')}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-lg font-semibold text-(--text-primary)">
-                {displayInitials}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleAvatarClick}
-            className="mt-3 text-sm font-medium text-(--brand-yellow) hover:text-(--brand-yellow-soft)"
-          >
-            {t('Change profile image')}
-          </button>
-          <p className="mt-1 text-xs text-(--text-muted)">
-            {t('JPG, PNG, WEBP, or GIF. Max size 5MB.')}
-          </p>
-          {avatarError && (
-            <p className="mt-2 text-xs text-(--error)" role="alert" aria-live="polite">
-              {avatarError}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="edit-name" className="block text-sm font-medium text-(--text-secondary)">
-              {t('Name')}
-            </label>
-            <input
+          <div className="space-y-5 p-5 sm:p-6">
+            <Input
               id="edit-name"
               type="text"
+              label={t('Name')}
               value={name}
               onChange={event => {
                 setName(event.target.value)
@@ -400,130 +410,100 @@ function EditProfileForm({
               }}
               disabled={isSaving}
               placeholder={t('Your name')}
-              className="w-full px-4 py-3 outline-none transition-all
-                bg-(--bg-surface-2)
-                border border-(--border-subtle)
-                rounded-(--radius-input)
-                text-(--text-primary)
-                placeholder-(--text-muted)
-                focus:border-(--brand-yellow)
-                focus:ring-1 focus:ring-(--brand-yellow)
-                disabled:opacity-60 disabled:cursor-not-allowed"
+              startAdornment={<UserRound className="size-4" />}
             />
-          </div>
 
-          <div className="space-y-2">
-            <label htmlFor="edit-username" className="block text-sm font-medium text-(--text-secondary)">
-              {t('Username')}
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-(--text-muted) text-sm">
-                @
-              </span>
-              <input
-                id="edit-username"
-                type="text"
-                value={username}
-                onChange={event => {
-                  const nextUsername = normalizeUsername(event.target.value)
-                  const nextFormatError = nextUsername
-                    ? isValidUsernameFormat(nextUsername)
-                      ? null
+            <div>
+              <Input
+                  id="edit-username"
+                  type="text"
+                  label={t('Username')}
+                  value={username}
+                  onChange={event => {
+                    const nextUsername = normalizeUsername(event.target.value)
+                    const nextFormatError = nextUsername
+                      ? isValidUsernameFormat(nextUsername)
+                        ? null
+                        : 'invalid'
                       : 'invalid'
-                    : 'invalid'
 
-                  setUsername(nextUsername)
-                  setUsernameTouched(true)
-                  setFormError(null)
+                    setUsername(nextUsername)
+                    setUsernameTouched(true)
+                    setFormError(null)
 
-                  if (
-                    !nextUsername ||
-                    nextFormatError ||
-                    nextUsername === initialSnapshot.username
-                  ) {
-                    setUsernameAvailability('idle')
-                  } else {
-                    setUsernameAvailability('checking')
-                  }
-                }}
-                onBlur={() => setUsernameTouched(true)}
-                disabled={isSaving}
-                placeholder={t('username')}
-                autoComplete="off"
-                className="w-full pl-8 pr-4 py-3 outline-none transition-all
-                  bg-(--bg-surface-2)
-                  border border-(--border-subtle)
-                  rounded-(--radius-input)
-                  text-(--text-primary)
-                  placeholder-(--text-muted)
-                  focus:border-(--brand-yellow)
-                  focus:ring-1 focus:ring-(--brand-yellow)
-                  disabled:opacity-60 disabled:cursor-not-allowed"
-              />
-            </div>
-
-            <p className="text-xs text-(--text-muted)">
-              {t('3-30 characters. Lowercase letters, numbers, dots, and underscores.')}
-            </p>
-
-            {usernameTouched && usernameFormatError && (
-              <p className="text-xs text-(--error)" role="alert" aria-live="polite">
-                {usernameFormatError}
-              </p>
-            )}
+                    if (
+                      !nextUsername ||
+                      nextFormatError ||
+                      nextUsername === initialSnapshot.username
+                    ) {
+                      setUsernameAvailability('idle')
+                    } else {
+                      setUsernameAvailability('checking')
+                    }
+                  }}
+                  onBlur={() => setUsernameTouched(true)}
+                  disabled={isSaving}
+                  placeholder={t('username')}
+                  autoComplete="off"
+                  startAdornment={<AtSign className="size-4" />}
+                  hint={t('3-30 characters. Lowercase letters, numbers, dots, and underscores.')}
+                  error={usernameTouched ? usernameFormatError : undefined}
+                />
 
             {showUsernameStatus && usernameAvailability === 'checking' && (
-              <p className="text-xs text-(--text-muted)" aria-live="polite">
+              <p className="mt-2 text-xs text-(--mc-color-text-muted)" aria-live="polite">
                 {t('Checking username availability...')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'available' && (
-              <p className="text-xs text-(--success)" aria-live="polite">
+              <p className="mt-2 text-xs text-(--mc-color-success)" aria-live="polite">
                 {t('Username is available.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'taken' && (
-              <p className="text-xs text-(--error)" role="alert" aria-live="polite">
+              <p className="mt-2 text-xs text-(--mc-color-danger)" role="alert" aria-live="polite">
                 {t('That username is already taken.')}
               </p>
             )}
 
             {showUsernameStatus && usernameAvailability === 'error' && (
-              <p className="text-xs text-(--warning)" aria-live="polite">
+              <p className="mt-2 text-xs text-(--mc-color-warning)" aria-live="polite">
                 {t('Could not verify username right now. We will check again on save.')}
               </p>
+            )}
+            </div>
+
+            {formError && (
+              <div
+                className="rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-3 text-sm text-(--mc-color-danger)"
+                role="alert"
+                aria-live="polite"
+              >
+                {formError}
+              </div>
             )}
           </div>
         </div>
 
-        {formError && (
-          <div
-            className="mt-5 p-3 rounded-(--radius-input) bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm"
-            role="alert"
-            aria-live="polite"
-          >
-            {formError}
-          </div>
-        )}
-
-        <div className="mt-6 flex items-center gap-3">
-          <button
+        <div className="flex items-center justify-end gap-3 border-t border-(--mc-color-border) bg-(--mc-color-surface-raised) px-5 py-4 sm:px-6">
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleCancel}
             disabled={isSaving}
-            className="flex-1 py-3 px-4 font-medium border border-(--border-subtle) text-(--text-primary) rounded-(--radius-button) bg-(--bg-surface-2) hover:bg-(--bg-hover) transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {t('Cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
             disabled={saveDisabled}
-            className="flex-1 py-3 px-4 font-semibold bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            loading={isSaving}
+            loadingText={t('Saving...')}
           >
-            {isSaving ? t('Saving...') : t('Save changes')}
-          </button>
+            {t('Save changes')}
+          </Button>
         </div>
       </form>
 
@@ -534,7 +514,7 @@ function EditProfileForm({
         onChange={handleAvatarChange}
         className="hidden"
       />
-    </section>
+    </DocumentPage>
   )
 }
 
@@ -544,25 +524,25 @@ export default function EditProfilePage() {
 
   if (!user) {
     return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-2 text-sm text-(--error)">
+      <DocumentPage ariaLabel={t('Edit Profile')} title={t('Edit Profile')} width="narrow">
+        <div className="rounded-(--mc-radius-card) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 p-5">
+          <p className="text-sm text-(--mc-color-danger)">
             {t('You must be signed in to edit your profile.')}
           </p>
         </div>
-      </section>
+      </DocumentPage>
     )
   }
 
   if (!profile) {
     return (
-      <section className="p-4 pb-20">
-        <div className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-6">
-          <h1 className="text-xl font-semibold text-(--text-primary)">{t('Edit Profile')}</h1>
-          <p className="mt-2 text-sm text-(--text-muted)">{t('Loading profile...')}</p>
+      <DocumentPage ariaLabel={t('Edit Profile')} title={t('Edit Profile')} width="narrow">
+        <div className="animate-pulse rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface) p-6" aria-label={t('Loading profile...')}>
+          <div className="mx-auto size-24 rounded-full bg-(--mc-color-surface-raised)" />
+          <div className="mt-6 h-11 rounded-(--mc-radius-input) bg-(--mc-color-surface-raised)" />
+          <div className="mt-4 h-11 rounded-(--mc-radius-input) bg-(--mc-color-surface-raised)" />
         </div>
-      </section>
+      </DocumentPage>
     )
   }
 

@@ -36,7 +36,7 @@ export default function OAuthCallbackPage() {
     }, 5000)
 
     return () => clearTimeout(timeout)
-  }, [authStatus, navigate])
+  }, [authStatus, navigate, t])
 
   if (error) {
     return (

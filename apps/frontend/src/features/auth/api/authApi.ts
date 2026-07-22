@@ -185,7 +185,9 @@ export async function deleteAccountRequest() {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}))
-    return { error: new Error(body.error || `Failed to delete account (${response.status})`) }
+    const detail = body.error || `Failed to delete account (${response.status})`
+    const message = body.code ? `${body.code}: ${detail}` : detail
+    return { error: new Error(message) }
   }
 
   return { error: null }

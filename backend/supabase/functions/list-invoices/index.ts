@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@17?target=deno'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.110.8'
+import Stripe from 'https://esm.sh/stripe@17.7.0?target=deno'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -55,11 +55,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data: customer } = await supabaseAdmin
+    const { data: customer, error: customerError } = await supabaseAdmin
       .from('stripe_customers')
       .select('stripe_customer_id')
       .eq('user_id', user.id)
       .maybeSingle()
+
+    if (customerError) {
+      throw new Error(`Failed to load Stripe customer: ${customerError.message}`)
+    }
 
     // No Stripe customer means no invoices
     if (!customer?.stripe_customer_id) {
@@ -70,7 +74,17 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => null)
-    const limit = Math.min(body?.limit ?? 10, 50)
+    const requestedLimit = body?.limit
+    if (
+      requestedLimit !== undefined
+      && (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 50)
+    ) {
+      return new Response(JSON.stringify({ error: 'limit must be an integer between 1 and 50' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const limit = requestedLimit ?? 10
 
     // Fetch invoices from Stripe (use fetch client to avoid Deno Node compat issues)
     const stripe = new Stripe(stripeKey, {
@@ -83,7 +97,7 @@ serve(async (req) => {
     })
 
     // Map to simplified objects
-    const invoices = invoiceList.data.map((inv) => ({
+    const invoices = invoiceList.data.map((inv: Stripe.Invoice) => ({
       id: inv.id,
       number: inv.number,
       amount_paid: inv.amount_paid,

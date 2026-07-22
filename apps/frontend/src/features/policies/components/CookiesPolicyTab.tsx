@@ -1,7 +1,7 @@
 /**
  * CookiesPolicyTab — Cookies policy content section.
  *
- * Renders placeholder cookies policy text organized into semantic sections.
+ * Renders the current technical browser-storage notice.
  * Styled with the app's design tokens for consistency.
  */
 
@@ -11,80 +11,81 @@ export default function CookiesPolicyTab() {
   const { t } = useTranslation();
 
   return (
-    <article className="space-y-4">
+    <article className="overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface) shadow-(--mc-shadow-soft)">
       {/* Header */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h2 className="text-lg font-semibold text-(--text-primary) mb-1">
+      <section className="relative overflow-hidden border-b border-(--mc-color-border) bg-(--mc-color-surface-raised) p-5 sm:p-6">
+        <div className="absolute inset-y-0 left-0 w-1 bg-(--mc-color-accent)" aria-hidden="true" />
+        <h2 className="text-xl font-bold text-(--mc-color-text)">
           {t('Cookies Policy')}
         </h2>
-        <p className="text-xs text-(--text-muted)">{t('Last updated: February 2026')}</p>
+        <p className="mt-1 text-xs font-medium text-(--mc-color-text-muted)">{t('Last updated: July 2026')}</p>
       </section>
 
       {/* What Are Cookies */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('1. What Are Cookies')}
+      <section className="border-b border-(--mc-color-border) p-5 last:border-b-0 sm:p-6">
+        <h3 className="mb-2 text-base font-semibold text-(--mc-color-text)">
+          {t('1. Browser Storage')}
         </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+        <p className="text-sm leading-7 text-(--mc-color-text-secondary)">
           {t(
-            'Cookies are small text files that are stored on your device when you visit a website. They are widely used to make websites work more efficiently and to provide information to the site owners. Cookies help us remember your preferences and improve your browsing experience.'
+            'RefLab uses browser storage that is necessary to keep you signed in, protect the authentication flow, remember your language and retain essential interface preferences.'
           )}
         </p>
       </section>
 
       {/* Cookies We Use */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('2. Cookies We Use')}
+      <section className="border-b border-(--mc-color-border) p-5 last:border-b-0 sm:p-6">
+        <h3 className="mb-2 text-base font-semibold text-(--mc-color-text)">
+          {t('2. What We Use at Launch')}
         </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed mb-3">
-          {t('We use the following types of cookies on RefLab:')}
+        <p className="mb-3 text-sm leading-7 text-(--mc-color-text-secondary)">
+          {t('At launch, RefLab uses only storage required to operate the service:')}
         </p>
-        <ul className="space-y-2 text-sm text-(--text-secondary) leading-relaxed">
+        <ul className="space-y-3 text-sm leading-7 text-(--mc-color-text-secondary)">
           <li className="flex gap-2">
-            <span className="text-(--text-muted) shrink-0">&bull;</span>
+            <span className="shrink-0 text-(--mc-color-accent)">&bull;</span>
             <span>
-              <strong className="text-(--text-primary)">{t('Essential cookies:')}</strong>{' '}
-              {t('Required for the platform to function, including authentication and session management.')}
+              <strong className="text-(--mc-color-text)">{t('Authentication and security:')}</strong>{' '}
+              {t('Session tokens and related state used to sign you in securely and restore your session.')}
             </span>
           </li>
           <li className="flex gap-2">
-            <span className="text-(--text-muted) shrink-0">&bull;</span>
+            <span className="shrink-0 text-(--mc-color-accent)">&bull;</span>
             <span>
-              <strong className="text-(--text-primary)">{t('Preference cookies:')}</strong>{' '}
-              {t('Remember your settings and preferences to provide a personalized experience.')}
+              <strong className="text-(--mc-color-text)">{t('Essential preferences:')}</strong>{' '}
+              {t('Language, interface choices and acknowledgement of the storage notice.')}
             </span>
           </li>
           <li className="flex gap-2">
-            <span className="text-(--text-muted) shrink-0">&bull;</span>
+            <span className="shrink-0 text-(--mc-color-accent)">&bull;</span>
             <span>
-              <strong className="text-(--text-primary)">{t('Analytics cookies:')}</strong>{' '}
-              {t('Help us understand how visitors interact with the platform so we can improve our services.')}
+              <strong className="text-(--mc-color-text)">{t('No optional tracking:')}</strong>{' '}
+              {t('RefLab does not currently initialise analytics or advertising cookies.')}
             </span>
           </li>
         </ul>
       </section>
 
       {/* Managing Cookies */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('3. Managing Cookies')}
+      <section className="border-b border-(--mc-color-border) p-5 last:border-b-0 sm:p-6">
+        <h3 className="mb-2 text-base font-semibold text-(--mc-color-text)">
+          {t('3. Managing Browser Storage')}
         </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+        <p className="text-sm leading-7 text-(--mc-color-text-secondary)">
           {t(
-            'You can manage your cookie preferences through the cookie consent banner that appears when you first visit RefLab. You can also control cookies through your browser settings. Please note that disabling essential cookies may affect the functionality of the platform.'
+            'You can clear RefLab browser storage through your browser settings. Doing so signs you out and resets local preferences. Essential authentication storage cannot be disabled inside RefLab while you are signed in.'
           )}
         </p>
       </section>
 
       {/* Third-Party Cookies */}
-      <section className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5">
-        <h3 className="text-base font-medium text-(--text-primary) mb-2">
-          {t('4. Third-Party Cookies')}
+      <section className="border-b border-(--mc-color-border) p-5 last:border-b-0 sm:p-6">
+        <h3 className="mb-2 text-base font-semibold text-(--mc-color-text)">
+          {t('4. External Authentication')}
         </h3>
-        <p className="text-sm text-(--text-secondary) leading-relaxed">
+        <p className="text-sm leading-7 text-(--mc-color-text-secondary)">
           {t(
-            "Some cookies on our platform are set by third-party services that appear on our pages. We do not control these cookies. Third-party providers include analytics and authentication services. Please refer to each provider's privacy policy for more information on how they use cookies."
+            'If you choose Google sign-in, Google may use its own cookies or storage on its service during authentication. Its own privacy and cookie terms apply to that external step. RefLab will request consent before introducing optional tracking in the future.'
           )}
         </p>
       </section>

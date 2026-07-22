@@ -1,4 +1,3 @@
-import React from 'react'
 import MediaDisplay from './MediaDisplay'
 import RepostBox from './RepostBox'
 import type { Post } from '../types'
@@ -8,14 +7,14 @@ interface PostBodyProps {
 }
 
 /** Post content area: text + media, or embedded repost. */
-const PostBody: React.FC<PostBodyProps> = ({ post }) => {
+const PostBody = ({ post }: PostBodyProps) => {
   const isRepost = post.original_post_id !== null
 
   return (
-    <div className="mt-3">
+    <div className="mt-4">
       {/* Text content */}
       {post.content && (
-        <p className="text-(--text-primary) text-sm whitespace-pre-wrap break-words">
+        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-(--mc-color-text)">
           {post.content}
         </p>
       )}
@@ -33,7 +32,7 @@ const PostBody: React.FC<PostBodyProps> = ({ post }) => {
       {isRepost && post.original_post ? (
         <RepostBox originalPost={post.original_post} />
       ) : isRepost && !post.original_post ? (
-        <div className="mt-3 p-3 bg-(--bg-surface-2) rounded-lg border border-(--border-subtle) text-(--text-muted) text-sm italic">
+        <div className="mt-3 rounded-(--mc-radius-input) border border-(--mc-color-border) bg-(--mc-color-canvas) p-4 text-sm italic text-(--mc-color-text-muted)">
           Original post was deleted
         </div>
       ) : null}

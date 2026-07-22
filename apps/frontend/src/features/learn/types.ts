@@ -13,7 +13,7 @@ export interface Test {
   updated_at: string
 }
 
-// A question from the question_bank table
+// A question from question_bank (legacy test IDs are preserved there)
 export interface TestQuestion {
   id: string
   question_text: string

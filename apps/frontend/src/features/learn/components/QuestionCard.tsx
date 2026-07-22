@@ -1,5 +1,8 @@
-import type { TestQuestion, OptionLetter } from '../types'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Surface } from '@/components/ui'
+import type { OptionLetter, TestQuestion } from '../types'
+import { LearningChoice } from './LearningUI'
 
 interface QuestionCardProps {
   question: TestQuestion
@@ -7,15 +10,9 @@ interface QuestionCardProps {
   totalQuestions: number
   selectedOption: OptionLetter | null
   onSelectOption: (option: OptionLetter) => void
-  isLocked?: boolean // When answer is already submitted
+  isLocked?: boolean
 }
 
-/**
- * QuestionCard - Displays a single question with 4 options
- *
- * Shows question text and clickable option buttons.
- * Selected option is highlighted in blue.
- */
 export default function QuestionCard({
   question,
   questionNumber,
@@ -33,44 +30,37 @@ export default function QuestionCard({
   ]
 
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-6">
-      {/* Question header */}
-      <div className="mb-4">
-        <span className="text-sm text-(--text-muted)">
-          {t('Question {{current}} of {{total}}', { current: questionNumber, total: totalQuestions })}
-        </span>
+    <Surface padding="none" variant="raised">
+      <div className="border-b border-(--mc-color-border) px-4 py-4 sm:px-6">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Badge variant="accent">
+            {t('Question {{current}} of {{total}}', { current: questionNumber, total: totalQuestions })}
+          </Badge>
+          {question.law !== null && <Badge>L{question.law}</Badge>}
+          {question.topic && <Badge>{question.topic}</Badge>}
+        </div>
+        <h2 className="text-base font-semibold leading-7 text-(--mc-color-text) sm:text-lg">
+          {question.question_text}
+        </h2>
       </div>
 
-      {/* Question text */}
-      <h2 className="text-lg font-medium text-gray-900 mb-6">
-        {question.question_text}
-      </h2>
-
-      {/* Options */}
-      <div className="space-y-3">
+      <div className="space-y-2.5 p-4 sm:p-6">
         {options.map((option) => {
           const isSelected = selectedOption === option.letter
-
           return (
-            <button
+            <LearningChoice
               key={option.letter}
-              onClick={() => !isLocked && onSelectOption(option.letter)}
+              marker={isSelected ? <Check size={15} /> : option.letter}
+              state={isSelected ? 'selected' : 'default'}
+              onClick={() => onSelectOption(option.letter)}
               disabled={isLocked}
-              className={`
-                w-full text-left p-4 rounded-lg border-2 transition-all
-                ${isSelected
-                  ? 'border-(--info) bg-(--info)/10 text-(--text-primary)'
-                  : 'border-(--border-subtle) hover:border-(--border-strong) hover:bg-(--bg-hover)'
-                }
-                ${isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}
-              `}
+              aria-pressed={isSelected}
             >
-              <span className="font-medium mr-3">{option.letter}.</span>
               {option.text}
-            </button>
+            </LearningChoice>
           )
         })}
       </div>
-    </div>
+    </Surface>
   )
 }

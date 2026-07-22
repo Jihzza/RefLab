@@ -7,25 +7,29 @@ import { usePostActions } from '@/features/social/hooks/usePostActions'
 import { useProfileFeed } from '../hooks/useProfileFeed'
 import type { Post } from '@/features/social/types'
 import { useTranslation } from 'react-i18next'
+import { FileText, MoreHorizontal, Pencil, Settings as SettingsIcon } from 'lucide-react'
+import ViewportPage from '@/app/layouts/ViewportPage'
+import Button from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
 
 function PostSkeleton() {
   return (
-    <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 animate-pulse">
+    <div className="animate-pulse rounded-(--mc-radius-card) border border-(--mc-color-border) bg-(--mc-color-surface) p-4">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-(--bg-surface-2)" />
+        <div className="size-10 rounded-full bg-(--mc-color-surface-raised)" />
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-24 bg-(--bg-surface-2) rounded" />
-          <div className="h-2 w-16 bg-(--bg-surface-2) rounded" />
+          <div className="h-3 w-24 rounded bg-(--mc-color-surface-raised)" />
+          <div className="h-2 w-16 rounded bg-(--mc-color-surface-raised)" />
         </div>
       </div>
       <div className="mt-3 space-y-2">
-        <div className="h-3 bg-(--bg-surface-2) rounded w-full" />
-        <div className="h-3 bg-(--bg-surface-2) rounded w-3/4" />
+        <div className="h-3 w-full rounded bg-(--mc-color-surface-raised)" />
+        <div className="h-3 w-3/4 rounded bg-(--mc-color-surface-raised)" />
       </div>
       <div className="mt-3 flex gap-8">
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
-        <div className="h-3 w-8 bg-(--bg-surface-2) rounded" />
+        <div className="h-3 w-8 rounded bg-(--mc-color-surface-raised)" />
+        <div className="h-3 w-8 rounded bg-(--mc-color-surface-raised)" />
+        <div className="h-3 w-8 rounded bg-(--mc-color-surface-raised)" />
       </div>
     </div>
   )
@@ -169,43 +173,47 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="flex flex-col h-full">
-      <section className="px-4 pt-4 pb-3">
-        <div className="bg-(--bg-surface) rounded-(--radius-card) border border-(--border-subtle) p-4 relative">
-          <div className="flex items-center gap-3">
+    <ViewportPage ariaLabel={t('Profile')} width="standard" scroll="managed">
+      <div className="flex h-full min-h-0 flex-col">
+      <section className="px-4 pb-3 pt-4">
+        <div className="relative isolate overflow-visible rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface) p-4 shadow-(--mc-shadow-soft) sm:p-5">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-(--mc-radius-card)" aria-hidden="true">
+            <div className="absolute -right-12 -top-16 size-40 rounded-full border border-(--mc-color-border)" />
+            <div className="absolute -right-3 top-0 h-full w-1 bg-(--mc-color-accent)" />
+          </div>
+          <div className="relative flex items-center gap-4">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={displayName}
-                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                className="size-16 shrink-0 rounded-full border-2 border-(--mc-color-accent)/70 object-cover shadow-(--mc-shadow-soft) sm:size-20"
               />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-(--brand-yellow) flex items-center justify-center flex-shrink-0">
-                <span className="text-base font-semibold text-(--bg-primary)">
+              <div className="flex size-16 shrink-0 items-center justify-center rounded-full border-2 border-(--mc-color-accent-soft) bg-(--mc-color-accent) shadow-(--mc-shadow-soft) sm:size-20">
+                <span className="text-lg font-extrabold text-(--mc-color-canvas)">
                   {initials}
                 </span>
               </div>
             )}
 
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-semibold text-(--text-primary) truncate">
+              <p className="mc-eyebrow mb-1">RefLab</p>
+              <h1 className="truncate text-xl font-extrabold tracking-tight text-(--mc-color-text) sm:text-2xl">
                 {displayName}
               </h1>
-              <p className="text-sm text-(--text-muted) truncate">@{username}</p>
+              <p className="mt-1 truncate text-sm text-(--mc-color-text-muted)">@{username}</p>
             </div>
 
             <button
               ref={menuButtonRef}
               type="button"
-              className="w-9 h-9 rounded-full border border-(--border-subtle) bg-(--bg-surface-2) text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--bg-hover) transition-colors flex items-center justify-center"
+              className="flex size-11 items-center justify-center rounded-(--mc-radius-button) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) text-(--mc-color-text-secondary) transition-colors hover:border-(--mc-color-accent)/50 hover:text-(--mc-color-accent) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus)"
               aria-label={t('Profile actions')}
               aria-haspopup="menu"
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen(prev => !prev)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 12.75a.75.75 0 100-1.5.75.75 0 000 1.5zM12 18.75a.75.75 0 100-1.5.75.75 0 000 1.5z" />
-              </svg>
+              <MoreHorizontal className="size-5" aria-hidden="true" />
             </button>
           </div>
 
@@ -214,28 +222,30 @@ export default function ProfilePage() {
               ref={menuRef}
               role="menu"
               aria-label={t('Profile menu')}
-              className="absolute right-4 top-14 z-20 min-w-44 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl py-1"
+              className="absolute right-4 top-16 z-(--mc-z-popover) min-w-48 overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) py-1 shadow-(--mc-shadow-raised) sm:top-20"
             >
               <button
                 type="button"
                 role="menuitem"
-                className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
+                className="flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-(--mc-color-text) hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--mc-color-focus)"
                 onClick={() => {
                   setIsMenuOpen(false)
                   navigate('/app/profile/edit')
                 }}
               >
+                <Pencil className="size-4 text-(--mc-color-accent)" aria-hidden="true" />
                 {t('Edit Profile')}
               </button>
               <button
                 type="button"
                 role="menuitem"
-                className="w-full text-left px-4 py-2.5 text-sm text-(--text-primary) hover:bg-(--bg-hover)"
+                className="flex min-h-11 w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-(--mc-color-text) hover:bg-(--mc-color-surface-hover) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--mc-color-focus)"
                 onClick={() => {
                   setIsMenuOpen(false)
                   navigate('/app/settings')
                 }}
               >
+                <SettingsIcon className="size-4 text-(--mc-color-text-muted)" aria-hidden="true" />
                 {t('Settings')}
               </button>
             </div>
@@ -251,7 +261,7 @@ export default function ProfilePage() {
           style={{ height: pullDistance }}
         >
           <div
-            className={`w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full ${
+            className={`size-5 rounded-full border-2 border-(--mc-color-accent) border-t-transparent ${
               pullDistance > 50 ? 'animate-spin' : ''
             }`}
             style={{ transform: `rotate(${pullDistance * 3}deg)` }}
@@ -261,13 +271,13 @@ export default function ProfilePage() {
 
       {isRefreshing && (
         <div className="flex justify-center py-2">
-          <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+          <div className="size-5 animate-spin rounded-full border-2 border-(--mc-color-accent) border-t-transparent motion-reduce:animate-none" />
         </div>
       )}
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 space-y-4 py-4 pb-20"
+        className="mc-scroll-region flex-1 space-y-4 px-4 py-4"
         onScroll={handleScroll}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -282,16 +292,12 @@ export default function ProfilePage() {
         )}
 
         {error && !isLoading && (
-          <div className="text-center py-12">
-            <p className="text-(--text-muted) text-sm mb-3">
-              {t('Something went wrong loading your posts.')}
-            </p>
-            <button
-              onClick={refresh}
-              className="px-4 py-2 text-sm font-medium bg-(--brand-yellow) text-(--bg-primary) rounded-(--radius-button) hover:bg-(--brand-yellow-soft) transition-colors"
-            >
-              {t('Try Again')}
-            </button>
+          <div className="rounded-(--mc-radius-card) border border-(--mc-color-danger)/30 bg-(--mc-color-surface)">
+            <EmptyState
+              title={t('Something went wrong loading your posts.')}
+              icon={<FileText className="size-5" />}
+              action={<Button onClick={refresh}>{t('Try Again')}</Button>}
+            />
           </div>
         )}
 
@@ -314,38 +320,33 @@ export default function ProfilePage() {
 
         {isLoadingMore && (
           <div className="flex justify-center py-4">
-            <div className="w-5 h-5 border-2 border-(--brand-yellow) border-t-transparent rounded-full animate-spin" />
+            <div className="size-5 animate-spin rounded-full border-2 border-(--mc-color-accent) border-t-transparent motion-reduce:animate-none" />
           </div>
         )}
 
         {!isLoading && !hasMore && posts.length > 0 && (
-          <p className="text-center text-(--text-muted) text-xs py-4">
+          <p className="py-4 text-center text-xs text-(--mc-color-text-muted)">
             {t("You're all caught up!")}
           </p>
         )}
 
         {!isLoading && !error && posts.length === 0 && hasInitiallyLoaded && (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-(--bg-surface-2) flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-(--text-muted)" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 017.5 5.25h9A2.25 2.25 0 0118.75 7.5v9a2.25 2.25 0 01-2.25 2.25h-9A2.25 2.25 0 015.25 16.5v-9z" />
-              </svg>
-            </div>
-            <h2 className="text-base font-medium text-(--text-primary) mb-1">
-              {t('No posts yet')}
-            </h2>
-            <p className="text-sm text-(--text-muted)">
-              {t('Your posts and reposts will appear here.')}
-            </p>
+          <div className="rounded-(--mc-radius-card) border border-dashed border-(--mc-color-border-strong) bg-(--mc-color-surface)">
+            <EmptyState
+              title={t('No posts yet')}
+              description={t('Your posts and reposts will appear here.')}
+              icon={<FileText className="size-5" />}
+            />
           </div>
         )}
       </div>
 
       {copiedToast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) shadow-xl text-sm text-(--text-primary)">
+        <div className="fixed bottom-24 left-1/2 z-(--mc-z-toast) -translate-x-1/2 rounded-(--mc-radius-pill) border border-(--mc-color-border-strong) bg-(--mc-color-surface-raised) px-4 py-2 text-sm font-medium text-(--mc-color-text) shadow-(--mc-shadow-raised)" role="status">
           {t('Link copied to clipboard')}
         </div>
       )}
-    </div>
+      </div>
+    </ViewportPage>
   )
 }

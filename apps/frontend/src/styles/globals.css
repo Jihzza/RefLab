@@ -2,53 +2,15 @@
    RefLab design tokens + Tailwind v4 entrypoint
 */
 
-/* 1) Font (Inter) - @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+/* 1) Self-hosted variable font - @import must precede all other statements */
+@import "@fontsource-variable/inter";
 
 /* 2) Tailwind v4 import */
 @import "tailwindcss";
 
-/* 3) Design tokens (Dark mode default) */
-:root {
-  /* Base surfaces */
-  --bg-primary: #14192c;
-  --bg-surface: #181f32;
-  --bg-surface-2: #18223a;
-  --border-subtle: #24304a;
-  --border-strong: #2f3c5c;
-
-  /* Text */
-  --text-primary: #f5f7fa;
-  --text-secondary: #b8c0d4;
-  --text-muted: #8a93a8;
-
-  /* Brand */
-  --brand-yellow: #f6c21c;
-  --brand-yellow-soft: #ffe58a;
-  --brand-red: #e53935;
-
-  /* Semantic */
-  --success: #3ddc97;
-  --warning: #f6a821;
-  --error: #e53935;
-  --info: #4da3ff;
-
-  /* Interaction */
-  --bg-hover: #1e2842;
-  --focus-ring: var(--info);
-
-  /* Shadows */
-  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.25);
-
-  /* Radius */
-  --radius-card: 16px;
-  --radius-button: 14px;
-  --radius-input: 12px;
-  --radius-pill: 999px;
-
-  /* Typography */
-  --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-}
+/* 3) Match Control tokens and opt-in visual helpers */
+@import "./tokens.css";
+@import "./match-control.css";
 
 /* 4) Base app defaults */
 html,
@@ -68,21 +30,12 @@ body {
 /* Root container safety */
 #root {
   min-height: 100%;
-}
-
-/* Links */
-a {
-  color: inherit;
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  min-height: 100dvh;
 }
 
 /* Text selection */
 ::selection {
-  background: rgba(246, 194, 28, 0.25);
+  background: var(--mc-color-selection);
 }
 
 /* Accessible focus ring */

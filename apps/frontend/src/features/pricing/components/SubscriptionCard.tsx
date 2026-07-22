@@ -4,6 +4,9 @@ import { createPortalSession } from '@/features/billing/api/billingApi'
 import type { Subscription } from '@/features/billing/types'
 import type { PlanId } from '@/features/billing/types'
 import { useTranslation } from 'react-i18next'
+import { AlertCircle, CalendarDays, ExternalLink } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 
 interface SubscriptionCardProps {
   subscription: Subscription
@@ -40,87 +43,94 @@ export default function SubscriptionCard({ subscription, planId, onCancel }: Sub
     window.location.href = url
   }
 
-  /** Color for subscription status */
-  const statusColor =
+  const statusVariant =
     subscription.status === 'active'
-      ? 'text-(--success)'
+      ? 'success'
       : subscription.status === 'past_due'
-        ? 'text-(--warning)'
-        : 'text-(--text-muted)'
+        ? 'warning'
+        : 'neutral'
 
   return (
     <section
-      className="bg-(--bg-surface) border border-(--border-subtle) rounded-(--radius-card) p-5 mb-6"
+      className="relative mb-8 overflow-hidden rounded-(--mc-radius-card) border border-(--mc-color-border-strong) bg-(--mc-color-surface) p-5 shadow-(--mc-shadow-soft) sm:p-6"
       aria-label={t('Current Plan')}
     >
-      {/* Plan name and badge */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-sm text-(--text-muted) mb-1">{t('Current Plan')}</h2>
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-(--text-primary) capitalize">{planId}</span>
+      <div className="absolute inset-y-0 left-0 w-1 bg-(--mc-color-accent)" aria-hidden="true" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="mc-eyebrow">{t('Current Plan')}</h2>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="text-2xl font-extrabold capitalize tracking-tight text-(--mc-color-text)">{planId}</span>
             <PlanBadge planId={planId} />
           </div>
         </div>
-      </div>
 
-      {/* Subscription details */}
-      <div className="space-y-2 text-sm">
-        <div className="flex justify-between text-(--text-secondary)">
-          <span>{t('Status')}</span>
-          <span className={`font-medium capitalize ${statusColor}`}>
+        <div className="grid min-w-56 gap-2 text-sm">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-(--mc-color-text-muted)">{t('Status')}</span>
+            <Badge variant={statusVariant} dot className="capitalize">
             {subscription.status.replace('_', ' ')}
-          </span>
-        </div>
-
-        {subscription.current_period_end && (
-          <div className="flex justify-between text-(--text-secondary)">
-            <span>{isCancelPending ? t('Active until') : t('Next renewal')}</span>
-            <span>{formatDate(subscription.current_period_end)}</span>
+            </Badge>
           </div>
-        )}
+
+          {subscription.current_period_end && (
+            <div className="flex items-center justify-between gap-4 text-(--mc-color-text-secondary)">
+              <span className="inline-flex items-center gap-1.5 text-(--mc-color-text-muted)">
+                <CalendarDays className="size-3.5" aria-hidden="true" />
+                {isCancelPending ? t('Active until') : t('Next renewal')}
+              </span>
+              <span className="mc-tabular font-medium">{formatDate(subscription.current_period_end)}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Cancel pending warning */}
       {isCancelPending && (
         <div
-          className="bg-(--warning)/10 border border-(--warning)/20 text-(--warning) text-sm px-3 py-2 rounded-lg mt-3"
+          className="mt-4 flex items-start gap-2 rounded-(--mc-radius-input) border border-(--mc-color-warning)/30 bg-(--mc-color-warning)/10 px-3 py-2.5 text-sm text-(--mc-color-warning)"
           role="alert"
         >
-          {t('Your subscription will be canceled at the end of the current billing period.')}
+          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{t('Your subscription will be canceled at the end of the current billing period.')}</span>
         </div>
       )}
 
       {/* Past due warning */}
       {subscription.status === 'past_due' && (
         <div
-          className="bg-(--error)/10 border border-(--error)/20 text-(--error) text-sm px-3 py-2 rounded-lg mt-3"
+          className="mt-4 flex items-start gap-2 rounded-(--mc-radius-input) border border-(--mc-color-danger)/30 bg-(--mc-color-danger)/10 px-3 py-2.5 text-sm text-(--mc-color-danger)"
           role="alert"
         >
-          {t('Your last payment failed. Please update your payment method to keep your subscription.')}
+          <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <span>{t('Your last payment failed. Please update your payment method to keep your subscription.')}</span>
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="flex gap-3 mt-5">
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
         {!isCancelPending && (
-          <button
+          <Button
+            variant="secondary"
             onClick={onCancel}
             aria-label={t('Cancel subscription')}
-            className="flex-1 py-2.5 rounded-(--radius-button) text-sm font-medium border border-(--border-subtle) text-(--text-secondary) hover:bg-(--bg-hover) transition-colors"
+            className="sm:min-w-44"
           >
             {t('Cancel Subscription')}
-          </button>
+          </Button>
         )}
 
-        <button
-            onClick={handleManageSubscription}
-            disabled={portalLoading}
-            aria-label={t('Manage subscription via Stripe')}
-            className="flex-1 py-2.5 bg-(--bg-surface-2) text-(--text-primary) rounded-(--radius-button) text-sm font-medium hover:bg-(--bg-surface-2)/80 border border-(--border-subtle) transition-colors disabled:opacity-50"
-          >
-          {portalLoading ? t('Opening...') : t('Manage via Stripe')}
-        </button>
+        <Button
+          variant="primary"
+          onClick={handleManageSubscription}
+          disabled={portalLoading}
+          loading={portalLoading}
+          loadingText={t('Opening...')}
+          trailingIcon={<ExternalLink className="size-4" />}
+          aria-label={t('Manage subscription via Stripe')}
+          className="sm:min-w-44"
+        >
+          {t('Manage via Stripe')}
+        </Button>
       </div>
     </section>
   )
