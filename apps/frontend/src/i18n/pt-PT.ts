@@ -642,6 +642,7 @@ const ptPT = {
   'Accuracy change': 'Variação de precisão',
   'Avatar must be 5MB or smaller.': 'O avatar deve ter 5 MB ou menos.',
   'Avatar must be JPG, PNG, WEBP, or GIF.': 'O avatar deve ser JPG, PNG, WEBP ou GIF.',
+  'Avatar must be a valid image file.': 'O avatar deve ser um ficheiro de imagem válido.',
   'Back to Feed': 'Voltar ao feed',
   'Block User': 'Bloquear utilizador',
   'Cancel subscription': 'Cancelar subscrição',

@@ -15,6 +15,7 @@ import { AtSign, Camera, UserRound } from 'lucide-react'
 import DocumentPage from '@/app/layouts/DocumentPage'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import { getSafeRemoteAvatarUrl } from '../avatarUrl'
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024
 const ALLOWED_AVATAR_MIME_TYPES = new Set([
@@ -84,7 +85,6 @@ function EditProfileForm({
   const [name, setName] = useState(initialSnapshot.name)
   const [username, setUsername] = useState(initialSnapshot.username)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [usernameTouched, setUsernameTouched] = useState(false)
@@ -94,6 +94,7 @@ function EditProfileForm({
 
   const usernameRequestIdRef = useRef(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const avatarCanvasRef = useRef<HTMLCanvasElement>(null)
 
   const normalizedUsername = useMemo(() => normalizeUsername(username), [username])
   const normalizedName = useMemo(() => name.trim(), [name])
@@ -111,12 +112,12 @@ function EditProfileForm({
   const hasAvatarChanged = avatarFile !== null
   const hasChanges = hasNameChanged || hasUsernameChanged || hasAvatarChanged
 
-  const displayAvatar =
-    avatarPreviewUrl ??
+  const displayAvatar = getSafeRemoteAvatarUrl(
     profile.photo_url ??
     (typeof user.user_metadata?.avatar_url === 'string'
       ? user.user_metadata.avatar_url
       : null)
+  )
 
   const displayInitials = getInitials(normalizedName, normalizedUsername)
 
@@ -129,12 +130,60 @@ function EditProfileForm({
   }, [navigate])
 
   useEffect(() => {
-    return () => {
-      if (avatarPreviewUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(avatarPreviewUrl)
+    if (!avatarFile) return
+
+    let cancelled = false
+
+    const renderSafePreview = async () => {
+      try {
+        const bitmap = await createImageBitmap(avatarFile)
+
+        if (cancelled) {
+          bitmap.close()
+          return
+        }
+
+        const canvas = avatarCanvasRef.current
+        const context = canvas?.getContext('2d')
+        if (!canvas || !context) {
+          bitmap.close()
+          throw new Error('Avatar preview canvas is unavailable.')
+        }
+
+        const previewSize = 256
+        const cropSize = Math.min(bitmap.width, bitmap.height)
+        const sourceX = (bitmap.width - cropSize) / 2
+        const sourceY = (bitmap.height - cropSize) / 2
+
+        canvas.width = previewSize
+        canvas.height = previewSize
+        context.clearRect(0, 0, previewSize, previewSize)
+        context.drawImage(
+          bitmap,
+          sourceX,
+          sourceY,
+          cropSize,
+          cropSize,
+          0,
+          0,
+          previewSize,
+          previewSize
+        )
+        bitmap.close()
+      } catch {
+        if (!cancelled) {
+          setAvatarFile(null)
+          setAvatarError(t('Avatar must be a valid image file.'))
+        }
       }
     }
-  }, [avatarPreviewUrl])
+
+    void renderSafePreview()
+
+    return () => {
+      cancelled = true
+    }
+  }, [avatarFile, t])
 
   useEffect(() => {
     const requestId = ++usernameRequestIdRef.current
@@ -186,13 +235,8 @@ function EditProfileForm({
       return
     }
 
-    if (avatarPreviewUrl?.startsWith('blob:')) {
-      URL.revokeObjectURL(avatarPreviewUrl)
-    }
-
     setAvatarError(null)
     setAvatarFile(file)
-    setAvatarPreviewUrl(URL.createObjectURL(file))
   }
 
   const handleCancel = () => {
@@ -362,7 +406,14 @@ function EditProfileForm({
                 onClick={handleAvatarClick}
                 className="group relative flex size-28 items-center justify-center overflow-hidden rounded-full border-2 border-(--mc-color-accent)/70 bg-(--mc-color-canvas) shadow-(--mc-shadow-soft) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--mc-color-focus) focus-visible:ring-offset-2 focus-visible:ring-offset-(--mc-color-surface-raised)"
               >
-                {displayAvatar ? (
+                {avatarFile ? (
+                  <canvas
+                    ref={avatarCanvasRef}
+                    role="img"
+                    aria-label={t('Profile avatar preview')}
+                    className="size-full object-cover"
+                  />
+                ) : displayAvatar ? (
                   <img
                     src={displayAvatar}
                     alt={t('Profile avatar preview')}
