@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@/components/ui';
 import { mapAuthError } from '../api/authErrors';
+import { meetsPasswordPolicy, PASSWORD_REQUIREMENT_KEY } from '../passwordPolicy';
 import PublicAuthFrame from './PublicAuthFrame';
 import { useAuth } from './useAuth';
 
@@ -41,8 +42,8 @@ export default function ResetPassword() {
       return false;
     }
 
-    if (password.length < 6) {
-      setError(t('Password must be at least 6 characters'));
+    if (!meetsPasswordPolicy(password)) {
+      setError(t(PASSWORD_REQUIREMENT_KEY));
       return false;
     }
 
@@ -128,18 +129,20 @@ export default function ResetPassword() {
           id="new-password"
           type="password"
           autoComplete="new-password"
+          required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           disabled={loading || !user}
           label={t('New Password')}
           placeholder="••••••••"
-          hint={t('Minimum 6 characters')}
+          hint={t(PASSWORD_REQUIREMENT_KEY)}
         />
 
         <Input
           id="confirm-new-password"
           type="password"
           autoComplete="new-password"
+          required
           value={confirmPassword}
           onChange={(event) => setConfirmPassword(event.target.value)}
           disabled={loading || !user}

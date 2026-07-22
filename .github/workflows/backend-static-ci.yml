@@ -20,6 +20,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    services:
+      postgres:
+        image: postgres:17.10-bookworm@sha256:4f736ae292687621d4dbe0d499ffd024a36bd2ee7d8ca6f2ccd4c800f047b394
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -36,6 +51,13 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: .github/package-lock.json
+
       - name: Type-check every Edge Function
         run: deno check --node-modules-dir=none backend/supabase/functions/*/index.ts
 
@@ -46,7 +68,33 @@ jobs:
         shell: bash
         run: |
           test -s backend/supabase/migrations/20260722_0050_launch_security_hardening.sql
+          test -s backend/supabase/migrations/20260723000000_launch_abuse_controls.sql
+          test "$(printf '%s\n' \
+            '20260722_0050_launch_security_hardening.sql' \
+            '20260723000000_launch_abuse_controls.sql' | LC_ALL=C sort | head -n 1)" = \
+            '20260722_0050_launch_security_hardening.sql'
           git diff --check
+
+      - name: Install database-test dependencies
+        run: |
+          npm ci --prefix .github --ignore-scripts
+
+      - name: Test launch migration on PostgreSQL 17/PGlite
+        run: |
+          node .github/scripts/test_abuse_controls.mjs
+
+      - name: Test atomic counters on real PostgreSQL 17
+        env:
+          ABUSE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+        run: node .github/scripts/test_abuse_controls_concurrency.mjs
+
+      - name: Audit database-test dependencies
+        run: |
+          npm audit --prefix .github --audit-level=high
 
       - name: Validate release configuration
         run: python .github/scripts/check_release_config.py
+
+      - name: Validate fail-closed launch tooling
+        shell: pwsh
+        run: ./scripts/launch/Test-LaunchTooling.ps1

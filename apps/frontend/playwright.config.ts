@@ -43,6 +43,8 @@ export default defineConfig({
       VITE_SUPABASE_URL: "https://ci-backend-disabled.invalid",
       VITE_SUPABASE_ANON_KEY: "ci-backend-disabled",
       VITE_PAID_PLANS_ENABLED: "false",
+      VITE_GOOGLE_OAUTH_ENABLED: "false",
+      VITE_CAPTCHA_ENABLED: "false",
     },
   },
 });

@@ -43,14 +43,14 @@ export interface AuthContextType {
   refreshProfile: () => Promise<void>
 
   // Auth actions
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string) => Promise<{
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string, captchaToken?: string) => Promise<{
     error: Error | null
     requiresEmailConfirmation: boolean
   }>
   signInWithGoogle: () => Promise<{ error: Error | null }>
   signOut: () => Promise<{ error: Error | null }>
-  resetPassword: (email: string) => Promise<{ error: Error | null }>
+  resetPassword: (email: string, captchaToken?: string) => Promise<{ error: Error | null }>
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>
   updateUser: (updates: Partial<Pick<Profile, 'username' | 'name' | 'photo_url'>>) => Promise<{ error: Error | null }>
   updateUserMetadata: (updates: Partial<User["user_metadata"]>) => Promise<{ error: Error | null }>

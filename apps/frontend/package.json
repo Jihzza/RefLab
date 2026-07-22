@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.2.8",
+    "@hcaptcha/react-hcaptcha": "2.0.2",
     "@supabase/supabase-js": "^2.110.8",
     "@tailwindcss/vite": "^4.1.18",
     "i18next": "^25.8.13",

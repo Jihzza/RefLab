@@ -31,3 +31,14 @@ test("unknown routes render a useful not-found state", async ({ page }) => {
   await page.goto("/this-route-does-not-exist");
   await expect(page.getByRole("heading")).toBeVisible();
 });
+
+test("launch signup exposes legal notice and keeps disabled integrations out of the UI", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("#auth-signup-tab").click();
+
+  const authPanel = page.locator("#auth-panel");
+  await expect(authPanel.locator('a[href="/terms"]')).toBeVisible();
+  await expect(authPanel.locator('a[href="/privacy"]')).toBeVisible();
+  await expect(authPanel.getByRole("button", { name: /google/i })).toHaveCount(0);
+  await expect(authPanel.getByLabel("Verificação de segurança")).toHaveCount(0);
+});

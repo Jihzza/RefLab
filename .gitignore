@@ -23,6 +23,10 @@ backend/supabase/.temp/
 **/supabase/.temp/
 backend/supabase/supabase/.temp/
 
+# Launch evidence can contain operator names, local paths or production metadata.
+ops/launch/launch-inputs.json
+ops/launch/evidence/
+
 # Environment variables
 .env
 .env.*

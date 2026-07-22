@@ -59,8 +59,16 @@ const ptPT = {
   'Please enter a valid email': 'Introduz um email válido.',
   'Password is required': 'A palavra-passe é obrigatória.',
   'Password must be at least 6 characters': 'A palavra-passe deve ter pelo menos 6 caracteres.',
+  'Password must be at least 10 characters and include a letter and a number':
+    'A palavra-passe deve ter pelo menos 10 caracteres, uma letra e um número.',
   'Please confirm your password': 'Confirma a tua palavra-passe.',
   'Passwords do not match': 'As palavras-passe não coincidem.',
+  'By creating an account, you agree to the': 'Ao criares uma conta, concordas com os',
+  'and confirm that you have read the': 'e confirmas que leste a',
+  'Security check': 'Verificação de segurança',
+  'Complete the security check.': 'Conclui a verificação de segurança.',
+  'Security check unavailable. Please try again later.': 'A verificação de segurança está indisponível. Tenta novamente mais tarde.',
+  'Protected by hCaptcha.': 'Protegido pelo hCaptcha.',
   'Account created! Please check your email to confirm your account.':
     'Conta criada! Verifica o teu email para confirmar a conta.',
   'Account created! You can start using RefLab now.':

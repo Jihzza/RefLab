@@ -254,13 +254,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Auth action wrappers
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await signInWithPassword(email, password)
+  const signIn = async (email: string, password: string, captchaToken?: string) => {
+    const { error } = await signInWithPassword(email, password, captchaToken)
     return { error: error ? new Error(error.message) : null }
   }
 
-  const signUp = async (email: string, password: string) => {
-    const { data, error } = await signUpWithPassword(email, password)
+  const signUp = async (email: string, password: string, captchaToken?: string) => {
+    const { data, error } = await signUpWithPassword(email, password, captchaToken)
     return {
       error: error ? new Error(error.message) : null,
       requiresEmailConfirmation: !error && data.session === null,
@@ -309,8 +309,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  const resetPassword = async (email: string) => {
-    const { error } = await resetPasswordForEmail(email)
+  const resetPassword = async (email: string, captchaToken?: string) => {
+    const { error } = await resetPasswordForEmail(email, captchaToken)
     return { error: error ? new Error(error.message) : null }
   }
 
@@ -361,6 +361,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { error: new Error('No active session') }
     }
 
+    // Bind this destructive request to the exact identity snapshot checked
+    // above. Re-reading the global Supabase session after an await could send a
+    // newer user's bearer token if another tab changes the session mid-flight.
+    const accessToken = session.access_token
     const identity = captureIdentity(user.id)
     if (!identity) {
       return { error: new Error('Authenticated user changed before deletion.') }
@@ -369,7 +373,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     manualSignOutGenerationRef.current = identity.generation
 
     try {
-      const { error: deleteError } = await deleteAccountRequest()
+      const { error: deleteError } = await deleteAccountRequest(accessToken)
 
       if (deleteError) {
         return { error: new Error(deleteError.message || 'Failed to delete account') }

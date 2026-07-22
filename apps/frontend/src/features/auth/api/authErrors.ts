@@ -5,6 +5,16 @@ export interface MappedAuthError {
   message: string
 }
 
+const PASSWORD_POLICY_MESSAGE =
+  'A palavra-passe deve ter pelo menos 10 caracteres, uma letra e um número.'
+
+function isWeakPasswordError(message: string): boolean {
+  const normalized = message.toLowerCase()
+  return normalized.includes('weak password')
+    || normalized.includes('password should be at least')
+    || normalized.includes('password must be at least')
+}
+
 /**
  * Maps raw Supabase auth errors to user-friendly messages.
  *
@@ -28,6 +38,9 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
     if (msg.includes('User already registered')) {
       return { field: 'email', message: 'Já existe uma conta com este email.' }
     }
+    if (isWeakPasswordError(msg)) {
+      return { field: 'password', message: PASSWORD_POLICY_MESSAGE }
+    }
     if (msg.includes('Password')) {
       return { field: 'password', message: msg }
     }
@@ -36,6 +49,9 @@ export function mapAuthError(error: Error, context?: AuthErrorContext): MappedAu
   if (context === 'update-password') {
     if (msg.includes('New password should be different')) {
       return { message: 'A nova palavra-passe deve ser diferente da atual.' }
+    }
+    if (isWeakPasswordError(msg)) {
+      return { message: PASSWORD_POLICY_MESSAGE }
     }
   }
 

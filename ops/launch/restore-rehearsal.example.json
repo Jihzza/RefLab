@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "kind": "restore-rehearsal",
+  "passed": true,
+  "capturedAtUtc": "REPLACE_WITH_UTC_TIMESTAMP",
+  "releaseCommit": "REPLACE_WITH_FULL_40_CHARACTER_COMMIT_SHA",
+  "sourceProjectRef": "iqebkyjcoqggwhausgje",
+  "targetProjectRef": "REPLACE_WITH_NON_PRODUCTION_PROJECT_REF",
+  "backupManifestSha256": "REPLACE_WITH_SHA256",
+  "migration0050Sha256": "REPLACE_WITH_SHA256",
+  "abuseControlsMigrationSha256": "REPLACE_WITH_SHA256",
+  "approvedBy": "REPLACE_ME",
+  "approvalReference": "REPLACE_WITH_EXTERNAL_APPROVAL_REFERENCE",
+  "artifacts": [
+    {
+      "kind": "restore-rehearsal-report",
+      "path": "REPLACE_WITH_ABSOLUTE_EXTERNAL_ARTIFACT_PATH",
+      "sha256": "REPLACE_WITH_SHA256"
+    }
+  ],
+  "checks": {
+    "rolesRestored": true,
+    "schemaRestored": true,
+    "dataRestored": true,
+    "authCountsMatched": true,
+    "storageMetadataMatched": true,
+    "storageObjectsMatched": true,
+    "criticalRowCountsMatched": true,
+    "migration0050Applied": true,
+    "abuseControlsMigrationAppliedAfter0050": true,
+    "rlsRpcStorageMatrixPassed": true,
+    "newForwardFixMigrationRehearsed": true,
+    "productionUntouched": true
+  }
+}

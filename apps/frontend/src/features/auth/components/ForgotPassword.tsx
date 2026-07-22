@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Input } from '@/components/ui';
+import { CAPTCHA_CONFIGURED, isCaptchaSubmissionReady } from '../config';
+import CaptchaChallenge from './CaptchaChallenge';
 import { useAuth } from './useAuth';
 
 interface ForgotPasswordProps {
@@ -15,6 +17,13 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  const resetCaptchaChallenge = () => {
+    setCaptchaToken(null);
+    setCaptchaResetKey((current) => current + 1);
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -31,8 +40,19 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
       return;
     }
 
+    if (!CAPTCHA_CONFIGURED) {
+      setError(t('Security check unavailable. Please try again later.'));
+      return;
+    }
+
+    if (!isCaptchaSubmissionReady(captchaToken)) {
+      setError(t('Complete the security check.'));
+      return;
+    }
+
     setLoading(true);
-    const { error: resetError } = await resetPassword(email);
+    const { error: resetError } = await resetPassword(email, captchaToken ?? undefined);
+    resetCaptchaChallenge();
 
     if (resetError) {
       setError(resetError.message);
@@ -86,11 +106,18 @@ export default function ForgotPassword({ onBackToLogin }: ForgotPasswordProps) {
           type="email"
           inputMode="email"
           autoComplete="email"
+          required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           disabled={loading}
           label={t('Email')}
           placeholder="tu@exemplo.com"
+        />
+
+        <CaptchaChallenge
+          key={captchaResetKey}
+          onTokenChange={setCaptchaToken}
+          onError={() => setError(t('Security check unavailable. Please try again later.'))}
         />
 
         <Button

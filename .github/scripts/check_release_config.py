@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
+import sys
 import tomllib
 from pathlib import Path
 
@@ -52,6 +54,13 @@ def validate_netlify() -> None:
         fail("fonts must be self-hosted")
     if re.search(r"(?:img-src|media-src)[^;]*\shttps:\s", csp):
         fail("image and media CSP sources must be host-scoped")
+    for directive in ("script-src", "style-src", "connect-src", "frame-src"):
+        match = re.search(rf"(?:^|;)\s*{directive}\s+([^;]+)", csp)
+        if not match:
+            fail(f"hCaptcha CSP directive is missing: {directive}")
+        for hcaptcha_origin in ("https://hcaptcha.com", "https://*.hcaptcha.com"):
+            if hcaptcha_origin not in match.group(1).split():
+                fail(f"{directive} is missing hCaptcha origin: {hcaptcha_origin}")
     if headers.get("/assets/*", {}).get("Cache-Control") != "public, max-age=31536000, immutable":
         fail("fingerprinted assets must use immutable caching")
 
@@ -84,6 +93,19 @@ def validate_frontend() -> None:
     pricing = (frontend / "src" / "features" / "pricing" / "config.ts").read_text(encoding="utf-8")
     if "VITE_PAID_PLANS_ENABLED === 'true'" not in pricing:
         fail("paid plans must remain strict opt-in")
+    auth_config = (frontend / "src" / "features" / "auth" / "config.ts").read_text(encoding="utf-8")
+    if "VITE_GOOGLE_OAUTH_ENABLED === 'true'" not in auth_config:
+        fail("Google OAuth must remain strict opt-in")
+    for fragment in (
+        "import.meta.env.VITE_CAPTCHA_ENABLED",
+        "import.meta.env.VITE_HCAPTCHA_SITE_KEY",
+        "enabledValue === 'true'",
+        "configured: !enabled || siteKey.length > 0",
+    ):
+        if fragment not in auth_config:
+            fail(f"hCaptcha strict opt-in configuration is missing {fragment!r}")
+    if package.get("dependencies", {}).get("@hcaptcha/react-hcaptcha") != "2.0.2":
+        fail("@hcaptcha/react-hcaptcha must be pinned exactly to 2.0.2")
     profiles = (frontend / "src" / "features" / "auth" / "api" / "profilesApi.ts").read_text(encoding="utf-8")
     if ".select('*')" in profiles or '.select("*")' in profiles:
         fail("profile reads must use an explicit safe column list")
@@ -173,6 +195,61 @@ def validate_supabase() -> None:
         if required_fragment not in migration:
             fail(f"launch migration is missing {required_fragment!r}")
 
+    security_migration_name = "20260722_0050_launch_security_hardening.sql"
+    abuse_migration_name = "20260723000000_launch_abuse_controls.sql"
+    if not security_migration_name < abuse_migration_name:
+        fail("0050 must sort before the dependent abuse-controls migration")
+    security_version = int(security_migration_name.split("_", maxsplit=1)[0])
+    abuse_version = int(abuse_migration_name.split("_", maxsplit=1)[0])
+    if not security_version < abuse_version:
+        fail("abuse-controls migration must use a unique, monotonic Supabase version")
+
+    abuse_migration = (
+        ROOT / "backend" / "supabase" / "migrations" / abuse_migration_name
+    ).read_text(encoding="utf-8")
+    abuse_destructive_lines = [
+        " ".join(line.strip().lower().split())
+        for line in abuse_migration.splitlines()
+        if re.match(r"(?i)^\s*(drop\s+table|truncate|delete\s+from|update\s+public\.|update\s+storage\.)\b", line)
+    ]
+    if abuse_destructive_lines:
+        fail(
+            "the abuse-controls migration must not rewrite or remove existing data: "
+            f"{abuse_destructive_lines!r}"
+        )
+    if not abuse_migration.lstrip().lower().startswith("-- reflab launch abuse controls"):
+        fail("the abuse-controls migration header is missing")
+    if "apply only after 20260722_0050_launch_security_hardening.sql" not in abuse_migration.lower():
+        fail("the abuse-controls migration does not pin its dependency on 0050")
+    for required_fragment in (
+        "alter table public.question_bank enable row level security",
+        "revoke all on table public.question_bank from public, anon, authenticated",
+        "revoke_unused_public_rpcs",
+        "reflab_private.current_user_has_deletion_job()",
+        "create table reflab_private.abuse_rate_limits",
+        "enforce_social_write_rate_limit",
+        "create trigger enforce_posts_launch_rate_limit",
+        "create trigger enforce_post_comments_launch_rate_limit",
+        "create trigger enforce_messages_launch_rate_limit",
+        "create trigger enforce_post_likes_launch_rate_limit",
+        "create trigger enforce_comment_likes_launch_rate_limit",
+        "create trigger enforce_user_follows_launch_rate_limit",
+        "create trigger enforce_post_saves_launch_rate_limit",
+        "create trigger enforce_user_blocks_launch_rate_limit",
+    ):
+        if required_fragment not in abuse_migration:
+            fail(f"abuse-controls migration is missing {required_fragment!r}")
+    for forbidden_fragment in (
+        "storage.objects",
+        "enforce_user_media_upload_limits",
+        "reflab_storage_objects_bucket_owner_idx",
+    ):
+        if forbidden_fragment in abuse_migration:
+            fail(
+                "abuse-controls migration modifies unsupported Storage internals: "
+                f"{forbidden_fragment!r}"
+            )
+
 
 def validate_workflows() -> None:
     workflow_dir = ROOT / ".github" / "workflows"
@@ -192,16 +269,87 @@ def validate_workflows() -> None:
         "VITE_SUPABASE_URL: https://ci-backend-disabled.invalid",
         "VITE_SUPABASE_ANON_KEY: ci-backend-disabled",
         'VITE_PAID_PLANS_ENABLED: "false"',
+        'VITE_GOOGLE_OAUTH_ENABLED: "false"',
+        'VITE_CAPTCHA_ENABLED: "false"',
     ):
         if fragment not in frontend_ci:
             fail(f"frontend CI is missing fail-closed value {fragment!r}")
 
+    playwright_config = (ROOT / "apps" / "frontend" / "playwright.config.ts").read_text(
+        encoding="utf-8"
+    )
+    for fragment in (
+        'VITE_GOOGLE_OAUTH_ENABLED: "false"',
+        'VITE_CAPTCHA_ENABLED: "false"',
+    ):
+        if fragment not in playwright_config:
+            fail(f"Playwright is missing fail-closed value {fragment!r}")
+
+    backend_ci = (workflow_dir / "backend-static-ci.yml").read_text(encoding="utf-8")
+    for fragment in (
+        "node .github/scripts/test_abuse_controls.mjs",
+        "node .github/scripts/test_abuse_controls_concurrency.mjs",
+        "postgres:17.10-bookworm@sha256:",
+        "./scripts/launch/Test-LaunchTooling.ps1",
+    ):
+        if fragment not in backend_ci:
+            fail(f"backend CI is missing launch gate {fragment!r}")
+
+
+def inspect_launch_content() -> dict[str, object]:
+    """Return mechanical launch blockers without failing ordinary CI."""
+
+    frontend_source = ROOT / "apps" / "frontend" / "src"
+    policy_files = (
+        frontend_source / "features" / "policies" / "components" / "PrivacyPolicyTab.tsx",
+        frontend_source / "features" / "policies" / "components" / "TermsOfServiceTab.tsx",
+    )
+    policy_text = "\n".join(path.read_text(encoding="utf-8") for path in policy_files)
+    source_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(frontend_source.rglob("*"))
+        if path.suffix in {".ts", ".tsx"}
+    )
+    signup = (
+        frontend_source / "features" / "auth" / "components" / "SignupForm.tsx"
+    ).read_text(encoding="utf-8")
+
+    checks = {
+        "policyTextContainsNoPlaceholderMarker": not bool(
+            re.search(r"(?i)\bplaceholder\b", policy_text)
+        ),
+        "temporaryPrivacyAddressAbsent": "privacy@reflab.com" not in source_text.lower(),
+        "signupTermsLinkPresent": bool(
+            re.search(r"<(?:Link|a)\b[^>]*(?:to|href)\s*=\s*[\"']/terms[\"']", signup)
+        ),
+        "signupPrivacyLinkPresent": bool(
+            re.search(r"<(?:Link|a)\b[^>]*(?:to|href)\s*=\s*[\"']/privacy[\"']", signup)
+        ),
+    }
+    findings = [name for name, passed in checks.items() if not passed]
+    return {"schemaVersion": 1, "passed": not findings, "checks": checks, "findings": findings}
+
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--launch-content-json", action="store_true")
+    args = parser.parse_args()
+
+    launch_content = inspect_launch_content()
+    if args.launch_content_json:
+        print(json.dumps(launch_content, sort_keys=True))
+        return
+
     validate_netlify()
     validate_frontend()
     validate_supabase()
     validate_workflows()
+    if not launch_content["passed"]:
+        print(
+            "Launch-only content blockers (preflight remains NO-GO): "
+            + ", ".join(launch_content["findings"]),
+            file=sys.stderr,
+        )
     print("Release configuration, isolation, headers and dependency pins are valid.")
 
 
