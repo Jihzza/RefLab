@@ -3,21 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RefLab: a super maquete do que existe hoje</title>
+<title>RefLab · o que existe hoje</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* A «super maquete» do RefLab: o mapa de todas as partes da app como existe hoje (ramo main) e, ao lado (ou por cima,
-   no telemóvel), a app. Mesma mecânica da super maquete da Tertúlia; as cores e a letra são as do próprio RefLab
-   (apps/frontend/src/styles/globals.css). Cada página é uma fotografia da app verdadeira com dados de exemplo. */
+/* A «super maquete»: um mapa de todas as páginas decididas e, ao lado (ou por cima, no telemóvel), a app a funcionar.
+   As páginas são as maquetes finais desta pasta, tal como estão: aqui só se juntam. Mesmas cores e letras. */
 :root{
   color-scheme:dark;
-  --bg:#14192c;--surface:#181f32;--block:#1e2842;--text:#f5f7fa;--muted:#b8c0d4;
-  --border:#24304a;--border-strong:#2f3c5c;--accent:#f6c21c;--on-accent:#14192c;
-  --stage:#0d1120;--bezel:#090c17;--ok:#3ddc97;--warn:#f6a821;--err:#e53935;
-  --font-display:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --bg:#0A1436;--surface:#1C2E6E;--block:#1B2A62;--text:#F3F6FE;--muted:#AEB9DB;
+  --border:#2C3E7E;--border-strong:#6F82B8;--accent:#9DB4FA;--on-accent:#0A1436;
+  --stage:#060C24;--bezel:#050A1E;
+  --font-display:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --ease:cubic-bezier(.2,.7,.2,1);
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -72,19 +71,12 @@ a.row .t::after{content:"\00a0\00a0\203A";color:var(--muted);font-weight:500}   
 .row[aria-current="true"] .t{color:var(--accent)}
 div.row{cursor:default}
 .tag{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
-.tag.existe{background:var(--ok);color:var(--on-accent)}
-.tag.problemas{background:var(--accent);color:var(--on-accent)}
-.tag.ameio{border-color:var(--warn);color:var(--warn)}
-.tag.codigo{border:1px dashed var(--border-strong);color:var(--text)}
-.tag.naovi{border-color:var(--border);color:var(--muted)}
-.know{display:grid;gap:3px;font-size:12.5px;line-height:1.35;color:var(--muted)}
-.know b{color:var(--text);font-weight:600}
-.know code{font-size:11.5px;color:var(--text);word-break:break-all}
-.know .bug b{color:var(--err)}
-details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600;min-height:32px;display:flex;align-items:center}
-.frames{display:flex;gap:6px;margin-top:12px}
-.frames button{min-height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:999px;font-size:13px;font-weight:600;color:var(--muted)}
-.frames button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.tag.naapp{background:var(--accent);color:var(--on-accent)}
+.tag.nova{background:var(--text);color:var(--on-accent)}
+.tag.construir{border-color:var(--accent);color:var(--accent)}
+.tag.aberta{border:1px dashed var(--border-strong);color:var(--text)}
+.tag.sem{border-color:var(--border);color:var(--muted)}
+.tag.filme{border:1px dashed var(--accent);color:var(--text)}
 /* por baixo de uma linha: quem constrói, a imagem aprovada, as opções por escolher */
 .more{padding:0 0 12px;display:grid;gap:8px}
 .more.sub{padding-left:14px}
@@ -134,9 +126,9 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
 .device{box-sizing:content-box;width:var(--fw);height:var(--fh);padding:10px;border:1px solid var(--border-strong);border-radius:56px;background:var(--bezel);transform-origin:0 0;transform:scale(var(--s,1))}
 .device iframe{display:block;width:100%;height:100%;border:0;border-radius:46px;background:var(--bg)}
 .app{--fw:390px;--fh:844px}
-.app.pc{--fw:1280px;--fh:800px}
-.app.pc .device{border-radius:18px;padding:8px}
-.app.pc .device iframe{border-radius:10px}
+.app.deitado{--fw:844px;--fh:390px}
+.app.deitado .device{border-radius:44px}
+.app.deitado .device iframe{border-radius:34px}
 .back{display:none}
 
 /* ---------- no telemóvel: o mapa é a página; a app abre por cima, em ecrã inteiro ---------- */
@@ -148,7 +140,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   .app.ver .map{visibility:hidden}
   .slot{width:100%;height:calc(100% - 52px - env(safe-area-inset-bottom))}   /* a faixa de baixo é do botão «Mapa»: nunca tapa a app */
   .device{width:100%;height:100%;padding:0;border:0;border-radius:0;transform:none;box-sizing:border-box}
-  .device iframe,.app.pc .device iframe{border-radius:0}
+  .device iframe,.app.deitado .device iframe{border-radius:0}
   .back{display:inline-flex;position:fixed;left:10px;bottom:calc(4px + env(safe-area-inset-bottom));z-index:6;min-height:44px;padding:0 14px;border:1px dashed var(--border-strong);border-radius:999px;background:var(--bg);font-size:13px;font-weight:600;color:var(--muted);align-items:center;gap:7px}
   .back svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   .app:not(.ver) .back{display:none}
@@ -157,17 +149,51 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
 @media (min-width:901px){.open{display:none}.ops{margin:0;padding-left:0;padding-right:0}}
 @media (min-width:600px) and (max-width:900px){.counts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ---------- acrescentos da super maquete do RefLab: o mesmo aspeto, uma só cor de destaque ---------- */
+.tag.existe{background:var(--accent);color:var(--on-accent)}
+.tag.problemas{border-color:var(--accent);color:var(--accent)}
+.tag.ameio{border:1px dashed var(--accent);color:var(--text)}
+.tag.codigo{border:1px dashed var(--border-strong);color:var(--muted)}
+.tag.naovi{border-color:var(--border);color:var(--muted)}
+.counts .prob{grid-column:1/-1}
+.row .p{grid-column:1;font-size:13.5px;line-height:1.3;color:var(--text)}
+.row .p::before{content:"Problema: ";color:var(--accent);font-weight:600}
+details.ficha>summary{list-style:none;cursor:pointer;min-height:32px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--accent);border-radius:8px}
+details.ficha>summary::-webkit-details-marker{display:none}
+details.ficha>summary::after{content:"\203A";transition:transform .2s var(--ease)}
+details.ficha[open]>summary::after{transform:rotate(90deg)}
+.know{display:grid;gap:4px;padding:2px 0 6px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.know b{color:var(--text);font-weight:600}
+.know code{font-size:11.5px;color:var(--text);word-break:break-word}
+details.semecra{margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+details.semecra>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+details.semecra>summary::-webkit-details-marker{display:none}
+details.semecra>summary span{font-weight:500;font-size:13px}
+details.semecra>summary::after{content:"\203A";font-size:18px;transition:transform .2s var(--ease)}
+details.semecra[open]>summary::after{transform:rotate(90deg)}
+.frames{display:flex;gap:6px}
+.frames button{min-height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.frames button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--block)}
+.frames.no-mapa{margin-top:10px}
+.frames.no-palco{position:absolute;top:16px;right:16px;z-index:3}
+@media (min-width:901px){.frames.no-mapa{display:none}}
+@media (max-width:900px){.frames.no-palco{display:none}}
+.app.pc{--fw:1280px;--fh:800px}
+.app.pc .device{border-radius:18px;padding:8px}
+.app.pc .device iframe{border-radius:10px}
+@media (max-width:900px){.device iframe,.app.pc .device iframe{border-radius:0}}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <main class="map" id="map">
     <div class="map-in">
-      <p class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 19L9 5h3.5L6.5 19z" fill="#f6c21c"/><path d="M8.5 19l6-14H18l-6 14z" fill="#f6c21c"/><path d="M14 19l6-14h3.5l-6 14z" fill="#e53935"/></svg></span>RefLab · a super maquete</p>
-      <h1>O RefLab, como existe hoje</h1>
-      <p class="lede">Todas as partes da app, uma por linha, com o que se sabe de cada uma. Cada ecrã é a <b>app verdadeira</b> (ramo <b>main</b>) desenhada com dados de exemplo. Toca numa linha com seta para a abrir; «O que se sabe» abre a ficha.</p>
-      <div class="frames" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
+      <p class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle class="o-line" cx="12" cy="12" r="10.500"/><path class="o-fill" d="M12 12C8.800 9.200 8.800 5.200 12 2.500c3.200 2.700 3.200 6.700 0 9.500zm0 0c2.800-3.200 6.800-3.200 9.500 0-2.700 3.200-6.700 3.200-9.500 0zm0 0c3.200 2.800 3.200 6.800 0 9.500-3.200-2.700-3.200-6.700 0-9.500zm0 0c-2.800 3.200-6.800 3.200-9.500 0 2.700-3.200 6.700-3.200 9.500 0z"/></svg></span>RefLab · o que existe hoje</p>
+      <h1>O RefLab, como está hoje</h1>
+      <p class="lede">Todas as partes da app de treino para árbitros, uma por linha: o que <b>funciona</b>, o que <b>funciona com problemas</b>, o que está <b>a meio</b> e o que <b>só existe no código</b>. Cada ecrã é a app verdadeira com dados de exemplo. Toca numa linha com seta para a abrir.</p>
       <button class="open" type="button" id="open">Abrir a app no Painel<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="frames no-mapa" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
       <div class="counts" id="counts" role="group" aria-label="Mostrar"></div>
       <div id="secs"></div>
       <p class="foot" id="foot"></p>
@@ -175,18 +201,10 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   </main>
 
   <section class="view" id="view" aria-label="A app">
+    <div class="frames no-palco" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
     <div class="slot"><div class="device"><iframe id="frame" title="A app" src="about:blank"></iframe></div></div>
     <button class="back" type="button" id="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Mapa</button>
   </section>
-</div>
-
-<div class="box" id="box" role="dialog" aria-modal="true" aria-labelledby="box-title">
-  <div class="box-head">
-    <div><h2 id="box-title"></h2><p id="box-sub"></p></div>
-    <button class="box-x" type="button" id="box-x" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="box-pic" id="box-pic"><button class="box-zoom" type="button" id="box-zoom" aria-label="Aumentar ou diminuir a imagem"><img id="box-img" alt=""></button></div>
-  <div class="box-foot"><p class="answer">Toca na imagem para a aumentar.</p></div>
 </div>
 
 <script>
@@ -194,21 +212,21 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
   const TAG = { existe: 'Existe', problemas: 'Existe, com problemas', ameio: 'A meio', codigo: 'Só no código', naovi: 'Não consegui ver' };
-  const WHAT = { existe: 'Funciona, tanto quanto se vê.', problemas: 'Funciona, mas com falhas.', ameio: 'Começado, não usável.', codigo: 'Existe no código; ninguém lá chega.', naovi: 'Fica descrito, sem ecrã.' };
+  const WHAT = { existe: 'Funciona, tanto quanto se vê.', problemas: 'Funciona, mas com falhas.', ameio: 'Começado, não usável.', codigo: 'Ninguém lá chega.', naovi: 'Descrito, sem ecrã.' };
 
-  /* O mapa. u = página que abre na moldura; sem u = não há ecrã. sub = um estado da página de cima.
-     d = para que serve. k = o que se sabe: onde (ficheiros), dados (lê e escreve), decisoes, problemas, perguntas.
-     shots = imagens para ver em grande. */
-  const FOOT = /*RODAPE*/"Feito a 19 nov 2026 a partir do ramo main (último código a 24 fev 2026). Cada ecrã é a app verdadeira a correr com uma base de dados falsa: pessoas, publicações, mensagens e números são de exemplo; as perguntas e o vídeo são os das migrações do próprio RefLab. Não vi o site ao vivo (bloqueado neste ambiente)."/*FIMRODAPE*/;
+  /* O mapa. u = página que abre na moldura, no seu estado; sem u = vai para «Sem ecrã», fechado no fim da secção.
+     d = o que se vê (para o Daniel). p = o problema, na primeira linha. k = «O que se sabe» (ficheiros, dados, ...). */
+  const FOOT = /*RODAPE*/"Feito a 19 nov 2026 a partir do ramo main (último código a 24 fev 2026), revisto depois da revisão 1. Cada ecrã é a app verdadeira com uma base de dados de exemplo: pessoas, publicações, mensagens e números são inventados; as perguntas e o vídeo são os do próprio RefLab. Não vi o site ao vivo."/*FIMRODAPE*/;
   const MAP = /*MAPA*/[
  {
   "t": "Entrada",
-  "how": "O que vê quem ainda não entrou: a página inicial em reflab.netlify.app.",
+  "how": "O que vê quem ainda não entrou.",
   "rows": [
    {
     "t": "Página inicial",
     "tag": "problemas",
-    "d": "A marca, a frase, «Iniciar sessão» / «Criar conta», os planos em carrossel e o rodapé legal.",
+    "p": "Os botões dos planos não fazem nada a quem ainda não entrou.",
+    "d": "A marca, a frase «O teu laboratório de treino de arbitragem», entrar ou criar conta, os planos e o rodapé.",
     "u": "inicio.html",
     "k": {
      "onde": [
@@ -217,41 +235,50 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "AuthSection.tsx",
       "PricingSection.tsx",
       "PricingCard.tsx",
-      "FooterSection.tsx"
+      "FooterSection.tsx",
+      "apps/frontend/index.html"
      ],
      "dados": [
-      "Não lê nada da base de dados: os planos e os preços estão escritos no código."
+      "Nada da base de dados: os planos e preços estão escritos no código."
      ],
      "problemas": [
-      "Os botões dos planos («Começar», «Subscrever») levam a /app/pricing, que manda quem não entrou de volta a esta página: não fazem nada à vista.",
-      "Os planos prometem coisas que não existem (fórum, newsletter, feedback com IA).",
+      "«Começar» e «Subscrever» levam a /app/pricing, que devolve quem não entrou a esta página.",
+      "Os planos prometem fórum, newsletter e feedback com IA, que não existem.",
       "Preços em formato inglês («€4.99»); no plano grátis, «Gratuito» aparece como título e como preço.",
-      "O separador do navegador diz «reflab», com o ícone do Vite e lang=\"en\"."
+      "O separador do navegador diz «reflab», com o ícone do Vite, e as páginas declaram-se em inglês ao navegador (lang=\"en\") embora o texto seja português."
      ]
     }
    },
    {
+    "t": "Os planos na página inicial",
+    "tag": "problemas",
+    "p": "Prometem coisas que o produto não tem (IA, fórum, newsletter).",
+    "d": "Gratuito, Pro e Plus num carrossel.",
+    "u": "planos-inicio.html",
+    "sub": 1
+   },
+   {
     "t": "Iniciar sessão",
     "tag": "existe",
-    "d": "Email e palavra-passe, «Esqueceste-te da palavra-passe?», Google.",
-    "u": "inicio.html#entrar",
-    "sub": 1,
+    "d": "Email e palavra-passe, «Esqueceste-te da palavra-passe?» e o botão do Google.",
+    "u": "entrar.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/auth/components/LoginForm.tsx"
      ],
      "dados": [
-      "Supabase Auth: signInWithPassword, signInWithOAuth(google). Depois de entrar vai sempre para /app/dashboard."
+      "Supabase Auth: signInWithPassword, signInWithOAuth(google). Depois de entrar vai sempre para o Painel."
      ],
      "problemas": [
-      "O cartão do login tem título e moldura; o de criar conta e o de recuperar não têm: as três vistas parecem de produtos diferentes.",
-      "Erros do servidor que não estão mapeados aparecem em inglês."
+      "O cartão de entrar tem título e moldura; o de criar conta e o de recuperar não têm.",
+      "Erros do servidor não mapeados aparecem em inglês."
      ]
     }
    },
    {
-    "t": "Campos em falta",
+    "t": "Campos por preencher",
     "tag": "existe",
+    "d": "O aviso por baixo de cada campo.",
     "u": "entrar-erros.html",
     "sub": 1,
     "k": {
@@ -263,6 +290,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Email ou palavra-passe errados",
     "tag": "existe",
+    "d": "A faixa vermelha no cartão.",
     "u": "entrar-errado.html",
     "sub": 1,
     "k": {
@@ -273,62 +301,66 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    },
    {
     "t": "Criar conta",
-    "tag": "existe",
-    "d": "Email, palavra-passe (mínimo 6), confirmar, «Continuar com Google».",
+    "tag": "problemas",
+    "p": "Não há escolha de nome nem boas-vindas: a pessoa entra com um nome inventado (por exemplo «SharpWhistle4821»).",
+    "d": "Email, palavra-passe (mínimo 6), confirmar, e «Continuar com Google».",
     "u": "criar-conta.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/auth/components/SignupForm.tsx"
      ],
      "dados": [
-      "Supabase Auth signUp. Um gatilho na base de dados cria o perfil com um nome aleatório (ex. «SharpWhistle4821»), as definições e um aviso «Completa o teu perfil»."
+      "Supabase Auth signUp. Um gatilho cria o perfil com um nome aleatório, as definições e o aviso «Completa o teu perfil»."
      ],
      "problemas": [
-      "Não há escolha de nome de utilizador nem boas-vindas: a pessoa cai no Painel com um nome inventado.",
-      "Não há link para Termos e Privacidade no registo."
+      "Não há ligação para Termos e Privacidade no registo."
      ],
      "perguntas": [
-      "A confirmação por email está ligada no Supabase? Não se vê no repositório."
+      "A confirmação por email está ligada? Não se vê no repositório."
      ]
     }
    },
    {
     "t": "Erros ao criar conta",
     "tag": "existe",
+    "d": "Email inválido, palavra-passe curta, palavras-passe diferentes.",
     "u": "criar-conta-erros.html",
     "sub": 1
    },
    {
-    "t": "Conta criada: verifica o email",
+    "t": "Conta criada",
     "tag": "existe",
+    "d": "«Conta criada! Verifica o teu email para confirmar a conta.»",
     "u": "criar-conta-feito.html",
-    "sub": 1,
-    "nota": "Manda o email de confirmação do Supabase (o texto do email está configurado no Supabase, não no repositório)."
+    "sub": 1
    },
    {
     "t": "Esqueci-me da palavra-passe",
-    "tag": "existe",
-    "d": "Pede o email e envia uma ligação.",
+    "tag": "problemas",
+    "p": "Se o servidor der erro, a mensagem aparece em inglês.",
+    "d": "Pede o email para enviar uma ligação.",
     "u": "esqueci.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/auth/components/ForgotPassword.tsx"
      ],
      "problemas": [
-      "Os erros do servidor aparecem em inglês, crus (não passam pelo tradutor de erros)."
+      "Os erros não passam pelo tradutor de erros."
      ]
     }
    },
    {
     "t": "Ligação enviada",
     "tag": "existe",
+    "d": "A confirmação a verde.",
     "u": "esqueci-enviado.html",
     "sub": 1
    },
    {
     "t": "Definir nova palavra-passe",
     "tag": "problemas",
-    "d": "Aonde leva a ligação do email.",
+    "p": "Quem já tem sessão aberta pode mudar a palavra-passe aqui sem saber a antiga.",
+    "d": "A página a que leva a ligação do email.",
     "u": "nova-passe.html",
     "k": {
      "onde": [
@@ -336,13 +368,14 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "rota /reset-password"
      ],
      "problemas": [
-      "Não confirma que se chegou pela ligação do email: qualquer pessoa com sessão aberta pode mudar a palavra-passe aqui sem saber a antiga."
+      "Não confirma que se chegou pela ligação do email (recoveryMode não é verificado)."
      ]
     }
    },
    {
     "t": "Erros",
     "tag": "existe",
+    "d": "Palavra-passe curta, palavras-passe diferentes.",
     "u": "nova-passe-erros.html",
     "sub": 1
    },
@@ -354,42 +387,32 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     "sub": 1
    },
    {
-    "t": "Sem sessão de recuperação",
+    "t": "Sem a ligação do email",
     "tag": "problemas",
-    "d": "Sem sessão: o botão fica apagado.",
+    "p": "Devia dizer «Ligação inválida ou expirada»; na captura não apareceu.",
+    "d": "O botão fica apagado.",
     "u": "nova-passe-invalida.html",
-    "sub": 1,
-    "nota": "O código prevê a mensagem «Ligação inválida ou expirada» ao fim de uns segundos; na captura ficou só o botão apagado."
+    "sub": 1
    },
    {
-    "t": "A entrar (regresso do Google ou do email)",
+    "t": "A entrar",
     "tag": "existe",
-    "d": "Roda e «A iniciar sessão...».",
+    "d": "A roda e «A iniciar sessão...», ao voltar do Google ou do email de confirmação.",
     "u": "regresso.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx"
      ],
      "problemas": [
-      "Uma ligação de confirmação aberta noutro aparelho deve dar «A autenticação falhou…» (o método PKCE exige o mesmo navegador)."
-     ]
-    }
-   },
-   {
-    "t": "Falhou a entrada",
-    "tag": "naovi",
-    "d": "Cartão «A autenticação falhou. Tenta iniciar sessão novamente.» e «Voltar ao início de sessão».",
-    "nota": "Não consegui provocar este estado com a base de dados falsa: a captura fica presa em «A iniciar sessão...». Descrito a partir do código.",
-    "k": {
-     "onde": [
-      "apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx:34"
+      "Uma ligação de confirmação aberta noutro aparelho deve falhar (o método PKCE exige o mesmo navegador)."
      ]
     }
    },
    {
     "t": "Aviso de cookies",
     "tag": "problemas",
-    "d": "Faixa em baixo: «Aceitar» e «Recusar».",
+    "p": "Aceitar ou recusar não muda nada.",
+    "d": "Faixa em baixo com «Aceitar» e «Recusar».",
     "u": "inicio-cookies.html",
     "k": {
      "onde": [
@@ -399,22 +422,23 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "Guarda «cookie-consent» no navegador."
      ],
      "problemas": [
-      "Nada lê a escolha: aceitar ou recusar não muda nada.",
-      "Dentro da app tapa a barra de baixo até se responder.",
+      "Nada lê a escolha.",
       "A política de cookies promete gerir preferências, o que não existe."
      ]
     }
    },
    {
-    "t": "Dentro da app",
+    "t": "O aviso dentro da app",
     "tag": "problemas",
+    "p": "Não se consegue mudar de secção até responder.",
+    "d": "Tapa a barra de baixo.",
     "u": "cookies-na-app.html",
     "sub": 1
    },
    {
-    "t": "Páginas legais: Privacidade",
+    "t": "Privacidade",
     "tag": "existe",
-    "d": "Uma página com três separadores; texto já em português.",
+    "d": "Página com três separadores, já em português.",
     "u": "legal-privacidade.html",
     "k": {
      "onde": [
@@ -432,23 +456,36 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Termos de Serviço",
     "tag": "existe",
+    "d": "O segundo separador.",
     "u": "legal-termos.html",
     "sub": 1
    },
    {
     "t": "Política de Cookies",
     "tag": "existe",
+    "d": "O terceiro separador.",
     "u": "legal-cookies.html",
     "sub": 1
    },
    {
+    "t": "Falhou a entrada",
+    "tag": "naovi",
+    "d": "Devia mostrar «A autenticação falhou» e «Voltar ao início de sessão».",
+    "nota": "Não consegui provocar este estado com os dados de exemplo.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx:34"
+     ]
+    }
+   },
+   {
     "t": "Emails",
     "tag": "naovi",
-    "d": "Só dois, ambos do Supabase: confirmar o registo e redefinir a palavra-passe.",
-    "nota": "Os modelos, o remetente e a língua estão no painel do Supabase, não no repositório. Não os vi.",
+    "d": "Dois, enviados pelo Supabase: confirmar o registo e redefinir a palavra-passe.",
+    "nota": "O texto, o remetente e a língua estão no painel do Supabase; não os vi.",
     "k": {
      "perguntas": [
-      "Os emails estão em português ou nos modelos ingleses do Supabase? Há SMTP próprio?"
+      "Os emails estão em português? Há um serviço de email próprio?"
      ]
     }
    }
@@ -459,52 +496,26 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   "how": "Em todas as páginas depois de entrar.",
   "rows": [
    {
-    "t": "A carregar a sessão",
-    "tag": "existe",
-    "d": "«A carregar...» ao centro, numa página vazia.",
-    "u": "a-carregar.html",
-    "k": {
-     "onde": [
-      "apps/frontend/src/app/RequireAuth.tsx"
-     ]
-    }
-   },
-   {
     "t": "Barra de cima",
-    "tag": "existe",
-    "d": "Menu, a marca RefLab, a lupa e o sino com o número de avisos por ler.",
-    "u": "painel.html#cima",
+    "tag": "problemas",
+    "p": "O número do sino só muda quando se muda de página.",
+    "d": "Menu, a marca, a lupa e o sino com o número de avisos por ler (aqui «9+»).",
+    "u": "barra-cima.html",
     "k": {
      "onde": [
       "apps/frontend/src/components/Header.tsx"
      ],
      "problemas": [
-      "Os ícones são desenhos com «role=button» sem foco de teclado: não se usam com teclado.",
-      "O número do sino só atualiza quando se muda de página."
-     ]
-    }
-   },
-   {
-    "t": "Menu lateral",
-    "tag": "problemas",
-    "d": "Dez entradas, o nome e email da pessoa, «Terminar sessão».",
-    "u": "menu.html",
-    "k": {
-     "onde": [
-      "apps/frontend/src/components/Sidebar.tsx"
-     ],
-     "problemas": [
-      "Não marca a página onde se está.",
-      "O nome vem da conta, não do perfil: quem entrou com email vê o email duas vezes.",
-      "É a única porta para «Testes», «Pesquisar», «Notificações», «Planos» e «Definições»."
+      "Os ícones não se usam com o teclado (são desenhos com role=button, sem foco)."
      ]
     }
    },
    {
     "t": "Barra de baixo",
-    "tag": "existe",
-    "d": "Painel, Aprender, Comunidade, Mensagens (com o número por ler), Perfil.",
-    "u": "painel.html#baixo",
+    "tag": "problemas",
+    "p": "O número das mensagens só muda quando se muda de página.",
+    "d": "Painel, Aprender, Comunidade, Mensagens (aqui com «99+» por ler), Perfil.",
+    "u": "barra-baixo.html",
     "k": {
      "onde": [
       "apps/frontend/src/components/BottomNav.tsx"
@@ -515,49 +526,66 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     }
    },
    {
-    "t": "Página que não existe",
+    "t": "Menu lateral",
     "tag": "problemas",
-    "d": "Um endereço desconhecido mostra uma página escura vazia.",
+    "p": "É o único caminho para Testes, Pesquisar, Notificações, Planos e Definições, e não marca onde estás.",
+    "d": "Dez entradas, o nome e o email, e «Terminar sessão».",
+    "u": "menu.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/Sidebar.tsx"
+     ],
+     "problemas": [
+      "O nome vem da conta, não do perfil: quem entrou com email vê o email duas vezes."
+     ]
+    }
+   },
+   {
+    "t": "Endereço que não existe",
+    "tag": "problemas",
+    "p": "Não há página «não encontrado».",
+    "d": "Uma página escura vazia.",
     "u": "pagina-inexistente.html",
     "k": {
      "onde": [
       "apps/frontend/src/app/Router.tsx"
-     ],
-     "problemas": [
-      "Não há página 404."
      ]
     }
    },
    {
     "t": "Sessão expirada",
     "tag": "naovi",
-    "d": "Janela «Sessão expirada», «A tua sessão expirou…», «Iniciar sessão».",
-    "nota": "Não consegui provocá-la nas capturas. Descrita a partir do código.",
+    "d": "Uma janela «Sessão expirada» com «Iniciar sessão».",
+    "nota": "Não consegui provocá-la com os dados de exemplo. No código, o texto está quase ilegível e não há forma de fechar.",
     "k": {
      "onde": [
       "apps/frontend/src/features/auth/components/SessionExpiredModal.tsx"
      ],
      "problemas": [
-      "O texto está a cinzento escuro sobre fundo escuro: quase ilegível.",
-      "Não tem botão para fechar."
+      "Texto text-gray-600 sobre fundo escuro.",
+      "Sem botão de fechar."
      ]
     }
    },
    {
     "t": "Cabeçalho e menu antigos",
     "tag": "codigo",
-    "d": "Uma versão branca anterior, com emojis e uma ligação para /app/chat que não existe.",
-    "nota": "Nenhum ficheiro os usa.",
+    "d": "Uma versão branca anterior, com emojis.",
+    "nota": "Ninguém os usa.",
     "k": {
      "onde": [
       "apps/frontend/src/components/layout/Header.tsx, Sidebar.tsx"
+     ],
+     "problemas": [
+      "Têm uma ligação para /app/chat, que não existe."
      ]
     }
    },
    {
     "t": "Botão e campo partilhados",
     "tag": "codigo",
-    "nota": "Ficheiros vazios.",
+    "d": "Peças de desenho comuns.",
+    "nota": "Os ficheiros estão vazios.",
     "k": {
      "onde": [
       "apps/frontend/src/components/ui/Button.tsx, Input.tsx"
@@ -568,12 +596,13 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Painel",
-  "how": "A primeira página depois de entrar. Barra de baixo: Painel.",
+  "how": "A primeira página depois de entrar.",
   "rows": [
    {
     "t": "Painel",
-    "tag": "existe",
-    "d": "Desempenho (precisão global e por tema, simulação de jogo, aprovação), Progresso e Hábitos (calendário de 30 dias, sequências).",
+    "tag": "problemas",
+    "p": "Os dias da semana do calendário estão em inglês e os decimais usam ponto.",
+    "d": "Desempenho (precisão geral e por tema), Progresso e Hábitos (calendário de 30 dias, sequências).",
     "u": "painel.html",
     "k": {
      "onde": [
@@ -586,11 +615,9 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "TopicAccuracyCard.tsx"
      ],
      "dados": [
-      "Uma só função na base de dados: get_dashboard_stats (testes, perguntas de prática e vídeos). Os dias de treino vêm de user_activity_days, preenchida por gatilhos."
+      "Função get_dashboard_stats (testes, perguntas de prática e vídeos); dias de treino em user_activity_days, preenchida por gatilhos."
      ],
      "problemas": [
-      "As letras do calendário estão em inglês («S M T W T F S»).",
-      "Os decimais usam ponto («72.5%»).",
       "«Iniciar novo teste» é azul (--info), a única ação principal azul num produto amarelo.",
       "Abrir uma sessão de perguntas sem responder já conta como dia de treino.",
       "As respostas em vídeo contam como «perguntas respondidas»."
@@ -598,26 +625,25 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     }
    },
    {
-    "t": "Sem dados (pessoa nova)",
+    "t": "Pessoa nova",
     "tag": "problemas",
+    "p": "Os cartões de tempo mostram um «—» grande em vez da frase prevista.",
+    "d": "Os cartões vazios.",
     "u": "painel-vazio.html",
-    "sub": 1,
-    "k": {
-     "problemas": [
-      "Os cartões de tempo mostram «—» grande em vez da frase prevista para o vazio."
-     ]
-    }
+    "sub": 1
    },
    {
     "t": "A carregar",
     "tag": "existe",
+    "d": "As silhuetas cinzentas.",
     "u": "painel-a-carregar.html",
     "sub": 1
    },
    {
     "t": "Erro",
     "tag": "problemas",
-    "d": "Faixa vermelha, sem botão para tentar de novo.",
+    "p": "Não há botão para tentar de novo.",
+    "d": "A faixa vermelha.",
     "u": "painel-erro.html",
     "sub": 1
    }
@@ -625,12 +651,13 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Aprender",
-  "how": "Barra de baixo: Aprender. Cinco separadores numa só página.",
+  "how": "Cinco separadores: Teste, Perguntas, Vídeos, Cursos, Recursos.",
   "rows": [
    {
-    "t": "Teste (início)",
-    "tag": "existe",
-    "d": "«Teste de Conhecimento de Arbitragem»: 20 perguntas aleatórias, 40 minutos, quatro números e «Iniciar teste».",
+    "t": "Teste",
+    "tag": "problemas",
+    "p": "«Testes esta semana» conta também a semana anterior.",
+    "d": "«Teste de Conhecimento de Arbitragem»: 20 perguntas ao acaso, 40 minutos, e os teus números.",
     "u": "aprender.html",
     "k": {
      "onde": [
@@ -638,33 +665,35 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "test/RandomTestLanding.tsx"
      ],
      "dados": [
-      "test_attempts (contagens da semana, média, melhor, tempo)."
+      "test_attempts."
      ],
      "problemas": [
-      "«Testes esta semana» conta desde a segunda-feira da semana anterior.",
-      "Os ficheiros LearnTabs, TestsTab, QuestionsTab, VideosTab, CourseTab e ResourcesTab não são usados: tudo vive em LearnPage.tsx."
+      "LearnTabs, TestsTab, QuestionsTab, VideosTab, CourseTab e ResourcesTab não são usados: tudo vive em LearnPage.tsx."
      ],
      "perguntas": [
-      "O banco de perguntas real (com leis e temas) não está no repositório: foi preenchido à mão na produção. Quantas perguntas há, e em que língua?"
+      "O banco de perguntas verdadeiro não está no repositório (foi preenchido à mão). Quantas perguntas há, de que leis, em que língua?"
      ]
     }
    },
    {
     "t": "Histórico de testes",
     "tag": "existe",
+    "d": "Data, certas, tempo e nota de cada teste.",
     "u": "aprender-historico.html",
     "sub": 1
    },
    {
-    "t": "A gerar o teste",
+    "t": "A preparar o teste",
     "tag": "existe",
+    "d": "«A gerar o teu teste...»",
     "u": "teste-a-gerar.html",
     "sub": 1
    },
    {
     "t": "A responder",
-    "tag": "existe",
-    "d": "Relógio, «Pergunta 1 de 20», quatro opções, «Voltar» / «Seguinte».",
+    "tag": "problemas",
+    "p": "As perguntas estão em inglês num produto em português.",
+    "d": "Relógio, «Pergunta 1 de 20», quatro opções.",
     "u": "teste-pergunta.html",
     "sub": 1,
     "k": {
@@ -672,31 +701,33 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "apps/frontend/src/features/learn/components/test/RandomTestRunner.tsx"
      ],
      "dados": [
-      "get_random_questions; cada resposta grava em test_attempt_answers."
+      "get_random_questions; respostas em test_attempt_answers."
      ],
      "problemas": [
-      "A resposta fica bloqueada ao primeiro toque, sem confirmar.",
-      "As perguntas estão em inglês (vêm da base de dados).",
-      "A correção é feita no navegador, que recebe a resposta certa: vê-se no tráfego da página."
+      "A correção é feita no navegador, que recebe a resposta certa."
      ]
     }
    },
    {
-    "t": "Resposta bloqueada",
-    "tag": "existe",
+    "t": "Resposta escolhida",
+    "tag": "problemas",
+    "p": "Fica bloqueada ao primeiro toque, sem confirmar.",
+    "d": "A opção fica marcada e bloqueada.",
     "u": "teste-respondida.html",
     "sub": 1
    },
    {
-    "t": "Última pergunta: «Submeter teste»",
+    "t": "A última pergunta",
     "tag": "existe",
+    "d": "Aparece «Submeter teste».",
     "u": "teste-ultima.html",
     "sub": 1
    },
    {
-    "t": "Resultado (aprovado)",
-    "tag": "existe",
-    "d": "Nota, pontos fortes e áreas a melhorar por tema, rever todas as perguntas.",
+    "t": "Resultado: aprovado",
+    "tag": "problemas",
+    "p": "Não explica as respostas: não há IA nenhuma no produto.",
+    "d": "16/20, pontos fortes e áreas a melhorar por tema.",
     "u": "teste-resultado.html",
     "sub": 1,
     "k": {
@@ -704,29 +735,26 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "apps/frontend/src/features/learn/components/test/RandomTestResults.tsx"
      ],
      "dados": [
-      "get_attempt_topic_breakdown"
+      "get_attempt_topic_breakdown."
      ],
      "problemas": [
-      "Não há explicação das respostas: a coluna ai_explanation existe mas nada a escreve ou lê; não há IA no produto.",
+      "A coluna ai_explanation existe mas nada a escreve.",
       "A função de resultados não confirma que a tentativa é de quem pede."
      ]
     }
    },
    {
-    "t": "Resultado (reprovado, tempo esgotado)",
+    "t": "Resultado: reprovado com o tempo esgotado",
     "tag": "problemas",
+    "p": "Quando o tempo acaba, só conta as perguntas respondidas e grava a duração errada.",
+    "d": "9/20 e «Submetido automaticamente».",
     "u": "teste-resultado-baixo.html",
-    "sub": 1,
-    "k": {
-     "problemas": [
-      "Quando o tempo acaba, grava quase zero segundos de duração e só conta as perguntas respondidas."
-     ]
-    }
+    "sub": 1
    },
    {
-    "t": "Perguntas (início)",
+    "t": "Perguntas",
     "tag": "existe",
-    "d": "«Perguntas de prática»: sem limite de tempo; rápidas, por lei, por área.",
+    "d": "«Perguntas de prática», sem limite de tempo: rápidas, por lei ou por área.",
     "u": "perguntas.html",
     "k": {
      "onde": [
@@ -740,7 +768,8 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Escolher leis",
     "tag": "problemas",
-    "d": "Leis 11 a 14 com nomes em português.",
+    "p": "Uma pergunta sem lei aparece como «Lei — Law null».",
+    "d": "As leis 11 a 14 com nome em português.",
     "u": "perguntas-por-lei.html",
     "sub": 1,
     "k": {
@@ -748,20 +777,23 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "apps/frontend/src/features/learn/components/questions/QuestionsSetup.tsx"
      ],
      "problemas": [
-      "Leis fora de 11–14 aparecem como «Law N» em inglês; uma pergunta sem lei aparece como «Lei — Law null» (como se vê aqui)."
+      "Leis fora de 11–14 aparecem como «Law N».",
+      "O botão para começar diz «Iniciar sessão», as mesmas palavras de entrar na conta."
      ]
     }
    },
    {
     "t": "Escolher áreas",
     "tag": "problemas",
-    "d": "Os nomes das áreas aparecem como estão na base de dados, em inglês.",
+    "p": "Os nomes das áreas aparecem em inglês.",
+    "d": "As áreas para praticar.",
     "u": "perguntas-por-area.html",
     "sub": 1
    },
    {
     "t": "A responder",
     "tag": "existe",
+    "d": "Relógio, certas até agora, «Terminar sessão».",
     "u": "perguntas-sessao.html",
     "sub": 1,
     "k": {
@@ -773,24 +805,28 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Resposta certa",
     "tag": "existe",
+    "d": "A opção fica verde.",
     "u": "perguntas-certa.html",
     "sub": 1
    },
    {
     "t": "Resposta errada",
     "tag": "existe",
+    "d": "A tua a vermelho, a certa a verde.",
     "u": "perguntas-errada.html",
     "sub": 1
    },
    {
-    "t": "Terminar sessão?",
+    "t": "Terminar a sessão?",
     "tag": "existe",
+    "d": "A janela de confirmação.",
     "u": "perguntas-terminar.html",
     "sub": 1
    },
    {
     "t": "Sessão concluída",
     "tag": "existe",
+    "d": "Certas, tempo, precisão, e as respostas para rever.",
     "u": "perguntas-revisao.html",
     "sub": 1,
     "k": {
@@ -805,52 +841,56 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Vídeos",
     "tag": "problemas",
-    "d": "Um vídeo, depois «Que ação deve o árbitro tomar?» e «Que sanção…?».",
+    "p": "Só há um vídeo, e quando não carrega a mensagem é técnica e dirigida à equipa.",
+    "d": "Um lance em vídeo, depois «Que ação deve o árbitro tomar?» e a sanção.",
     "u": "videos.html",
-    "nota": "Não consegui ver o vídeo a tocar (o site e o R2 estão fora do alcance deste ambiente); o erro mostrado é o que a app mostra quando o vídeo não carrega.",
+    "nota": "Não vi o vídeo a tocar: o armazenamento dos vídeos está fora do alcance deste ambiente.",
     "k": {
      "onde": [
       "apps/frontend/src/features/learn/components/LearnPage.tsx:297-664"
      ],
      "dados": [
-      "video_scenarios, video_attempts. Os vídeos vêm de um endereço Cloudflare R2 escrito no código."
+      "video_scenarios, video_attempts; vídeos num endereço Cloudflare R2 escrito no código."
      ],
      "problemas": [
-      "Só há um cenário ativo («Offside Analysis 1»): o contador diz sempre «1 / 1».",
-      "Quando o vídeo falha, a mensagem fala a quem usa a app de um «bucket learn-videos no Supabase Storage».",
-      "O nome do ficheiro não bate certo com a forma como o R2 guarda os clips: o vídeo provavelmente não carrega."
+      "O contador diz sempre «1 / 1» («Offside Analysis 1»).",
+      "O nome do ficheiro não bate certo com o R2: o vídeo provavelmente não carrega."
      ]
     }
    },
    {
     "t": "A escolher a sanção",
     "tag": "existe",
+    "d": "Sem cartão, amarelo ou vermelho.",
     "u": "videos-sancao.html",
     "sub": 1
    },
    {
     "t": "Resultado do vídeo",
     "tag": "existe",
-    "d": "«Parcialmente correta», ação e sanção.",
+    "d": "«Parcialmente correta», com a ação e a sanção certas.",
     "u": "videos-resultado.html",
     "sub": 1
    },
    {
     "t": "Sem vídeos",
     "tag": "existe",
+    "d": "«Ainda não há cenários de vídeo disponíveis.»",
     "u": "videos-vazio.html",
     "sub": 1
    },
    {
     "t": "Cursos",
     "tag": "ameio",
-    "d": "«Brevemente.»",
+    "p": "Não há cursos.",
+    "d": "Só a palavra «Brevemente.»",
     "u": "cursos.html"
    },
    {
     "t": "Recursos",
     "tag": "ameio",
-    "d": "Cinco ficheiros de exemplo («Leis do Jogo 2024/25»…) com «Transferir» que não faz nada.",
+    "p": "Os ficheiros não existem e «Transferir» não faz nada.",
+    "d": "Cinco ficheiros («Leis do Jogo 2024/25»…) com «Transferir».",
     "u": "recursos.html",
     "k": {
      "onde": [
@@ -861,38 +901,34 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Testes disponíveis",
     "tag": "problemas",
-    "d": "Três questionários de programação de exemplo («React Basics»…) com «Iniciar teste».",
+    "p": "São exemplos de programação («React Basics»), e os títulos quase não se veem.",
+    "d": "Três questionários com «Iniciar teste», pelo menu lateral.",
     "u": "testes-lista.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/tests/components/TestsList.tsx"
-     ],
-     "problemas": [
-      "Lista escrita no código, nada a ver com arbitragem.",
-      "Os títulos estão escuros sobre fundo escuro: quase invisíveis.",
-      "Chega-se aqui pelo menu «Testes» e pelos avisos de conteúdo novo."
      ]
     }
    },
    {
-    "t": "Teste por endereço",
+    "t": "Abrir um desses testes",
     "tag": "problemas",
-    "d": "Só mostra o erro: os testes da lista não existem.",
+    "p": "Os testes da lista não existem: mostra um erro técnico em inglês.",
+    "d": "Uma caixa rosa com um erro.",
     "u": "teste-endereco.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/learn/components/TestPage.tsx"
      ],
      "problemas": [
-      "A caixa de erro é rosa-clara, de outro desenho, com a mensagem crua em inglês.",
-      "O fluxo antigo de testes fixos (9 testes semeados) só é alcançável por aqui, na prática nunca."
+      "O fluxo antigo de testes fixos (9 testes semeados) só é alcançável por aqui."
      ]
     }
    },
    {
     "t": "Notícias",
     "tag": "codigo",
-    "d": "Duas tabelas e três artigos de exemplo na base de dados, sem nenhum ecrã.",
+    "d": "Três artigos de exemplo guardados, sem página para os ler.",
     "k": {
      "onde": [
       "backend/supabase/migrations/20260222_0048_news_feature.sql, 0049_seed_news.sql"
@@ -906,12 +942,13 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Comunidade",
-  "how": "Barra de baixo: Comunidade. Um feed de toda a gente (não só de quem se segue).",
+  "how": "Um feed de toda a gente, não só de quem segues.",
   "rows": [
    {
     "t": "Feed",
     "tag": "problemas",
-    "d": "Filtros Todos, Texto, Imagem, Vídeo, Áudio; cartões com gosto, comentários, republicar, guardar, partilhar; botão amarelo «+».",
+    "p": "Republicar mostra «reposted» em inglês, e guardar não leva a lado nenhum.",
+    "d": "Filtros por tipo, cartões com gosto, comentários, republicar, guardar e partilhar; o «+» amarelo para publicar.",
     "u": "comunidade.html",
     "k": {
      "onde": [
@@ -928,42 +965,46 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "get_social_feed (20 de cada vez), posts, post_likes, post_saves. Sem tempo real."
      ],
      "problemas": [
-      "«João Silva reposted» e o tempo «now» estão em inglês.",
-      "Guardar só sobe um contador: não há página de guardados.",
-      "Republicações ficam sempre em «Texto», mesmo de uma imagem.",
-      "Provável: a página não carrega mais de 20 publicações (a área com scroll não tem altura fixa).",
-      "Apagar a original deixa as republicações como cartões vazios."
+      "O tempo «now» também está em inglês.",
+      "Republicações ficam sempre em «Texto».",
+      "Provável: não carrega mais de 20 publicações (a lista não tem altura fixa).",
+      "Apagar a original deixa as republicações vazias."
      ]
     }
    },
    {
     "t": "A carregar",
     "tag": "existe",
+    "d": "As silhuetas.",
     "u": "comunidade-a-carregar.html",
     "sub": 1
    },
    {
-    "t": "Vazio",
+    "t": "Ainda sem publicações",
     "tag": "existe",
+    "d": "«Ainda não há publicações».",
     "u": "comunidade-vazia.html",
     "sub": 1
    },
    {
     "t": "Erro",
     "tag": "existe",
+    "d": "«Ocorreu um erro ao carregar o feed.» e «Tentar novamente».",
     "u": "comunidade-erro.html",
     "sub": 1
    },
    {
     "t": "Só imagens",
     "tag": "existe",
+    "d": "O filtro «Imagem».",
     "u": "comunidade-imagens.html",
     "sub": 1
    },
    {
     "t": "Comentários",
     "tag": "problemas",
-    "d": "Abrem dentro do cartão; respostas num segundo nível; @menções a amarelo.",
+    "p": "Se um comentário falhar, ninguém avisa e o contador sobe na mesma.",
+    "d": "Abrem dentro do cartão, com respostas e @menções a amarelo.",
     "u": "comunidade-comentarios.html",
     "sub": 1,
     "k": {
@@ -971,29 +1012,23 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "apps/frontend/src/features/social/components/CommentSection.tsx, CommentBox.tsx"
      ],
      "problemas": [
-      "Um erro ao comentar não aparece, e o contador sobe na mesma.",
-      "Denunciar um comentário envia logo, sem janela nem aviso.",
+      "Denunciar um comentário envia logo, sem janela.",
       "Apagar não pede confirmação."
      ]
     }
    },
    {
-    "t": "Mencionar alguém (@)",
+    "t": "Mencionar alguém",
     "tag": "problemas",
+    "p": "Sem resultados diz «No users found», em inglês.",
+    "d": "Ao escrever «@an» aparece a lista de pessoas.",
     "u": "comunidade-mencao.html",
-    "sub": 1,
-    "k": {
-     "onde": [
-      "apps/frontend/src/features/social/components/MentionDropdown.tsx"
-     ],
-     "problemas": [
-      "Sem resultados diz «No users found», em inglês."
-     ]
-    }
+    "sub": 1
    },
    {
-    "t": "Menu de uma publicação de outra pessoa",
+    "t": "Menu numa publicação de outra pessoa",
     "tag": "existe",
+    "d": "Denunciar a publicação, denunciar a pessoa, bloquear.",
     "u": "comunidade-menu-outro.html",
     "sub": 1,
     "k": {
@@ -1003,24 +1038,23 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     }
    },
    {
-    "t": "Menu de uma publicação minha",
+    "t": "Menu numa publicação minha",
     "tag": "problemas",
-    "d": "«Eliminar publicação», sem confirmação.",
+    "p": "Elimina sem pedir confirmação.",
+    "d": "«Eliminar publicação».",
     "u": "comunidade-menu-meu.html",
     "sub": 1
    },
    {
     "t": "Denunciar",
     "tag": "problemas",
+    "p": "Diz «este post» e «este user», e depois de enviar não confirma nada.",
+    "d": "Três motivos e uma caixa para descrever.",
     "u": "comunidade-denunciar.html",
     "sub": 1,
     "k": {
      "onde": [
       "apps/frontend/src/features/social/components/ReportDialog.tsx"
-     ],
-     "problemas": [
-      "«Porque estás a denunciar este post?» / «este user?»: mistura de inglês.",
-      "No feed, depois de enviar, não aparece confirmação nenhuma."
      ],
      "perguntas": [
       "Quem lê as denúncias? Não há ecrã de moderação."
@@ -1030,6 +1064,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Bloquear",
     "tag": "existe",
+    "d": "«Bloquear @anacosta?»",
     "u": "comunidade-bloquear.html",
     "sub": 1,
     "k": {
@@ -1041,7 +1076,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Nova publicação",
     "tag": "existe",
-    "d": "Texto e um ficheiro (imagem, vídeo ou áudio até 50 MB).",
+    "d": "Texto e um ficheiro: imagem, vídeo ou áudio.",
     "u": "comunidade-publicar.html",
     "sub": 1,
     "k": {
@@ -1049,57 +1084,58 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "apps/frontend/src/features/social/components/CreatePostModal.tsx"
      ],
      "dados": [
-      "Storage post-media, tabela posts."
+      "Storage post-media (50 MB), tabela posts."
      ]
     }
    },
    {
-    "t": "Publicar vazio",
+    "t": "Publicar sem nada escrito",
     "tag": "existe",
+    "d": "«Escreve algo ou anexa multimédia.»",
     "u": "comunidade-publicar-erro.html",
     "sub": 1
    },
    {
-    "t": "Partilhar (janela)",
-    "tag": "codigo",
-    "d": "WhatsApp, X, Facebook, Telegram, Email e «Copiar».",
-    "nota": "Nenhum ficheiro a usa: «Partilhar» usa a partilha do telemóvel ou copia a ligação.",
-    "k": {
-     "onde": [
-      "apps/frontend/src/features/social/components/ShareDialog.tsx"
-     ]
-    }
-   },
-   {
     "t": "Publicação aberta",
     "tag": "problemas",
+    "p": "O título diz «Publicar» em vez de «Publicação».",
     "d": "A publicação com os comentários abertos.",
     "u": "publicacao.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/social/components/PostDetailPage.tsx"
-     ],
-     "problemas": [
-      "O título diz «Publicar» (o verbo) em vez de «Publicação»."
      ]
     }
    },
    {
-    "t": "Publicação que não existe",
+    "t": "Publicação que já não existe",
     "tag": "existe",
+    "d": "«Publicação não encontrada ou já eliminada.»",
     "u": "publicacao-inexistente.html",
     "sub": 1
+   },
+   {
+    "t": "Janela de partilha",
+    "tag": "codigo",
+    "d": "WhatsApp, X, Facebook, Telegram, Email e «Copiar».",
+    "nota": "Ninguém a usa: «Partilhar» copia a ligação.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/ShareDialog.tsx"
+     ]
+    }
    }
   ]
  },
  {
   "t": "Perfil",
-  "how": "Barra de baixo: Perfil.",
+  "how": "Pelo último separador da barra de baixo.",
   "rows": [
    {
     "t": "O meu perfil",
     "tag": "problemas",
-    "d": "Foto ou iniciais, nome, @utilizador e as minhas publicações com os mesmos filtros.",
+    "p": "Não mostra nada do treino nem quem me segue.",
+    "d": "Iniciais ou foto, nome, @utilizador, e as minhas publicações.",
     "u": "perfil.html",
     "k": {
      "onde": [
@@ -1109,35 +1145,36 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "profiles; get_profile_feed."
      ],
      "problemas": [
-      "Não mostra seguidores, a seguir, nível nem nada do treino: o perfil não liga ao Aprender.",
-      "A tabela de perfis não tem biografia, XP nem nível."
+      "A tabela de perfis não tem biografia, nível nem pontos."
      ]
     }
    },
    {
     "t": "Sem publicações",
     "tag": "existe",
+    "d": "Só o cartão do perfil.",
     "u": "perfil-vazio.html",
     "sub": 1
    },
    {
     "t": "Editar perfil",
     "tag": "existe",
-    "d": "Foto, nome e nome de utilizador (com verificação de disponibilidade).",
+    "d": "Foto, nome e nome de utilizador, com verificação se está livre.",
     "u": "perfil-editar.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/profile/components/EditProfilePage.tsx"
      ],
      "dados": [
-      "Storage profile-media (5 MB), profiles, public_profiles."
+      "Storage profile-media (5 MB), profiles."
      ]
     }
    },
    {
     "t": "Perfil de outra pessoa",
     "tag": "problemas",
-    "d": "«Seguir» e «Mensagem».",
+    "p": "Seguir pode estar a falhar sempre, e não se vê quem se segue.",
+    "d": "«Seguir» e «Mensagem», e as publicações dela.",
     "u": "perfil-outro.html",
     "k": {
      "onde": [
@@ -1147,8 +1184,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "get_public_profile_view, get_public_profile_feed, user_follows."
      ],
      "problemas": [
-      "Seguir pode falhar sempre: o gatilho do aviso «novo seguidor» chama uma função que ficou ambígua (verificar na base de dados real).",
-      "Seguir não se vê em lado nenhum: não há contagens nem listas.",
+      "O gatilho do aviso «novo seguidor» chama uma função ambígua (create_notification com 5 argumentos): verificar na base real.",
       "«Try Again» e «Link copied to clipboard» em inglês."
      ]
     }
@@ -1156,6 +1192,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Menu do perfil",
     "tag": "existe",
+    "d": "Denunciar ou bloquear a pessoa.",
     "u": "perfil-outro-menu.html",
     "sub": 1,
     "k": {
@@ -1165,27 +1202,31 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     }
    },
    {
-    "t": "Bloqueado por mim",
+    "t": "Pessoa que bloqueei",
     "tag": "existe",
+    "d": "O perfil com «Desbloquear».",
     "u": "perfil-outro-bloqueado.html",
     "sub": 1
    },
    {
-    "t": "Bloqueou-me",
+    "t": "Pessoa que me bloqueou",
     "tag": "existe",
+    "d": "O perfil sem publicações.",
     "u": "perfil-outro-bloqueou-te.html",
     "sub": 1
    },
    {
-    "t": "Utilizador que não existe",
+    "t": "Pessoa que não existe",
     "tag": "existe",
+    "d": "O aviso de perfil não encontrado.",
     "u": "perfil-outro-inexistente.html",
     "sub": 1
    },
    {
     "t": "Perfil público antigo",
     "tag": "codigo",
-    "nota": "Uma segunda versão, não usada.",
+    "d": "Uma segunda versão do perfil de outra pessoa.",
+    "nota": "Ninguém a usa.",
     "k": {
      "onde": [
       "apps/frontend/src/features/profile/components/PublicProfilePage.tsx, api/publicProfilesApi.ts"
@@ -1196,12 +1237,13 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Mensagens",
-  "how": "Barra de baixo: Mensagens.",
+  "how": "Pela barra de baixo.",
   "rows": [
    {
     "t": "Conversas",
     "tag": "problemas",
-    "d": "Procurar, e a lista com a última mensagem e o número por ler.",
+    "p": "A lista não se atualiza sozinha.",
+    "d": "Procurar alguém, e cada conversa com a última mensagem e quantas faltam ler.",
     "u": "mensagens.html",
     "k": {
      "onde": [
@@ -1209,22 +1251,20 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
      ],
      "dados": [
       "get_conversations; search_users."
-     ],
-     "problemas": [
-      "A lista não se atualiza sozinha.",
-      "O número na barra de baixo só muda quando se muda de página."
      ]
     }
    },
    {
     "t": "Sem conversas",
     "tag": "existe",
+    "d": "A lista vazia.",
     "u": "mensagens-vazia.html",
     "sub": 1
    },
    {
-    "t": "Procurar pessoa para conversar",
+    "t": "Procurar pessoa",
     "tag": "existe",
+    "d": "Ao escrever «ru» aparecem as pessoas.",
     "u": "mensagens-procurar.html",
     "sub": 1,
     "k": {
@@ -1236,31 +1276,33 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Conversa",
     "tag": "problemas",
-    "d": "Balões, data e hora, anexar e «Enviar». Chega em tempo real.",
+    "p": "Os anexos ficam num sítio público: quem tiver a ligação vê.",
+    "d": "Balões, data e hora, anexar e «Enviar». As mensagens chegam na hora.",
     "u": "conversa.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/messages/components/ConversationPage.tsx, MessageBubble.tsx, MessageInput.tsx"
      ],
      "dados": [
-      "get_messages; messages (tempo real); Storage message-media."
+      "get_messages; messages (tempo real); Storage message-media (público)."
      ],
      "problemas": [
-      "Os anexos ficam num local público: quem tiver a ligação vê.",
-      "Se um envio falha (por ex. a pessoa só aceita mensagens de quem segue), a conversa desaparece até ao envio seguinte, e o erro vem em inglês.",
-      "A hora mostra os segundos («09:21:08 19-11-2026»)."
+      "Se um envio falhar (a pessoa só aceita mensagens de quem segue), a conversa desaparece até ao envio seguinte e o erro vem em inglês.",
+      "A hora mostra os segundos."
      ]
     }
    },
    {
-    "t": "Conversa vazia",
+    "t": "Conversa nova",
     "tag": "existe",
+    "d": "Ainda sem mensagens.",
     "u": "conversa-vazia.html",
     "sub": 1
    },
    {
     "t": "A escrever",
     "tag": "existe",
+    "d": "A mensagem na caixa, antes de enviar.",
     "u": "conversa-a-escrever.html",
     "sub": 1
    }
@@ -1268,42 +1310,44 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Pesquisa",
-  "how": "Pela lupa na barra de cima, ou pelo menu.",
+  "how": "Pela lupa na barra de cima.",
   "rows": [
    {
     "t": "Pesquisar pessoas",
     "tag": "problemas",
-    "d": "Campo, «Recentes» e «Limpar tudo».",
+    "p": "Só procura pessoas, e as recentes são as de todas as contas do mesmo telemóvel.",
+    "d": "O campo, as pesquisas recentes e «Limpar tudo».",
     "u": "pesquisa.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/search/components/SearchPage.tsx, SearchHistory.tsx"
      ],
      "dados": [
-      "search_users (procura aproximada); histórico guardado no navegador."
+      "search_users; histórico «search_history» no navegador."
      ],
      "problemas": [
-      "O histórico é partilhado por todas as contas no mesmo navegador.",
-      "Só procura pessoas, não publicações nem perguntas.",
-      "Vários ficheiros da pesquisa não são usados (SearchInput, SearchHistoryItem, UserListItem, useSearch, searchApi)."
+      "SearchInput, SearchHistoryItem, UserListItem, useSearch e searchApi não são usados."
      ]
     }
    },
    {
-    "t": "Sem histórico",
+    "t": "Primeira vez",
     "tag": "existe",
+    "d": "Sem pesquisas recentes.",
     "u": "pesquisa-vazia.html",
     "sub": 1
    },
    {
     "t": "Resultados",
     "tag": "existe",
+    "d": "Ao escrever «ana».",
     "u": "pesquisa-resultados.html",
     "sub": 1
    },
    {
     "t": "Sem resultados",
     "tag": "existe",
+    "d": "Nenhuma pessoa encontrada.",
     "u": "pesquisa-sem-resultados.html",
     "sub": 1
    }
@@ -1316,18 +1360,18 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Notificações",
     "tag": "problemas",
-    "d": "A lista: gostos, comentários, menções, seguidores, republicações, avisos do plano, completar o perfil.",
+    "p": "«Completa o teu perfil» nunca desaparece, mesmo depois de completo.",
+    "d": "Gostos, comentários, menções, novos seguidores, republicações, avisos do plano.",
     "u": "notificacoes.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/notifications/components/NotificationsPage.tsx, NotificationBanner.tsx, NotificationBell.tsx"
      ],
      "dados": [
-      "notifications (criadas por gatilhos na base de dados). Sem tempo real."
+      "notifications, criadas por gatilhos. Sem tempo real."
      ],
      "problemas": [
       "O sino não abre uma lista: leva a esta página.",
-      "«Completa o teu perfil» nunca desaparece, mesmo depois de completo.",
       "«Lembrar mais tarde» e «dispensar» existem no código, sem botão."
      ]
     }
@@ -1335,31 +1379,35 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Sem notificações",
     "tag": "existe",
+    "d": "A página vazia.",
     "u": "notificacoes-vazia.html",
     "sub": 1
    },
    {
     "t": "Avisos que nunca chegam",
     "tag": "codigo",
-    "d": "«Nova mensagem», «lembrete de sequência», «perdeste a sequência», «sequência» e «conteúdo novo».",
-    "nota": "Têm interruptor nas Definições mas nada os cria: os gatilhos de dois deles foram apagados pela migração 0035 e nunca recriados.",
+    "d": "Nova mensagem, sequências e conteúdo novo.",
+    "nota": "Têm interruptor nas Definições, mas nada os envia.",
     "k": {
      "onde": [
       "backend/supabase/migrations/20260213_0035_fresh_rebuild_all.sql"
+     ],
+     "problemas": [
+      "Os gatilhos de dois deles foram apagados pela migração 0035 e nunca recriados; três nunca tiveram gatilho."
      ]
     }
    },
    {
-    "t": "Lembrete de fim de plano",
+    "t": "Lembrete do fim do plano",
     "tag": "problemas",
-    "d": "Trabalho de hora a hora no servidor.",
+    "p": "Avisa quem renova que o plano «vai expirar», e cada aviso só sai uma vez na vida.",
+    "d": "Um aviso automático antes do fim do plano.",
     "k": {
      "onde": [
       "backend/supabase/migrations/20260213_0023_plan_expiration_reminders.sql"
      ],
-     "problemas": [
-      "Avisa toda a gente que renova que o plano «vai expirar».",
-      "Cada um dos três avisos só é enviado uma vez na vida de cada pessoa."
+     "dados": [
+      "Trabalho pg_cron de hora a hora."
      ]
     }
    }
@@ -1367,12 +1415,13 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Conta",
-  "how": "Pelo menu lateral: Planos e Definições.",
+  "how": "Pelo menu lateral: Definições e Planos.",
   "rows": [
    {
     "t": "Definições",
     "tag": "problemas",
-    "d": "Perfil, Conta e segurança, Notificações (11 interruptores), Privacidade (quem me pode escrever), Bloqueados, Aprendizagem, Legal.",
+    "p": "5 dos 11 interruptores não fazem nada.",
+    "d": "Perfil, conta, 11 interruptores de avisos, quem te pode escrever, bloqueados, aprendizagem, legal.",
     "u": "definicoes.html",
     "k": {
      "onde": [
@@ -1382,14 +1431,14 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "get_user_settings_all, notification_preferences, user_settings, get_blocked_users."
      ],
      "problemas": [
-      "5 dos 11 interruptores não fazem nada (os avisos não existem).",
-      "Se gravar uma preferência falhar, nada avisa; a escolha falhada fica à vista."
+      "Se gravar uma preferência falhar, nada avisa."
      ]
     }
    },
    {
     "t": "Eliminar conta",
-    "tag": "existe",
+    "tag": "problemas",
+    "p": "Cancela logo o plano pago, sem reembolso.",
     "d": "Escrever DELETE para confirmar.",
     "u": "definicoes-apagar.html",
     "sub": 1,
@@ -1399,58 +1448,48 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
       "backend/supabase/functions/delete-account"
      ],
      "problemas": [
-      "Cancela logo a assinatura Stripe, sem reembolso, e deixa o cliente na Stripe.",
-      "Erros da função aparecem em inglês."
+      "Deixa o cliente na Stripe; erros em inglês."
      ]
     }
    },
    {
-    "t": "Limpar histórico de aprendizagem",
+    "t": "Limpar o histórico de aprendizagem",
     "tag": "existe",
+    "d": "A janela de confirmação.",
     "u": "definicoes-limpar.html",
     "sub": 1,
     "k": {
      "dados": [
-      "clear_learning_history"
+      "clear_learning_history."
      ]
     }
    },
    {
-    "t": "Eliminar conta (janela antiga)",
-    "tag": "codigo",
-    "nota": "Não usada: as Definições têm a sua.",
-    "k": {
-     "onde": [
-      "apps/frontend/src/features/auth/components/DeleteAccountDialog.tsx"
-     ]
-    }
-   },
-   {
-    "t": "Planos e faturação (grátis)",
+    "t": "Planos e faturação",
     "tag": "problemas",
-    "d": "Gratuito, Pro €4.99 (Recomendado), Plus €9.99.",
+    "p": "Pagar não muda nada no produto: tudo o que é «premium» é grátis.",
+    "d": "Gratuito, Pro a €4.99 (Recomendado) e Plus a €9.99.",
     "u": "planos.html",
     "k": {
      "onde": [
       "apps/frontend/src/features/pricing/components/PricingPage.tsx, PlansSection.tsx"
      ],
      "dados": [
-      "stripe_subscriptions; funções create-checkout-session, create-portal-session."
+      "stripe_subscriptions; funções create-checkout-session e create-portal-session."
      ],
      "problemas": [
-      "Nada no produto muda com o plano: tudo o que é «premium» é grátis.",
-      "Os preços, «/ month», «Active», «Past Due» estão em inglês."
+      "Preços, «/ month», «Active» e «Past Due» em inglês."
      ],
      "perguntas": [
-      "Os planos pagos são para ligar já? O PR #22 deixa-os desligados até haver testes à Stripe.",
+      "Os planos pagos são para ligar? O PR #22 deixa-os desligados.",
       "O que deve ficar só para Pro e Plus?"
      ]
     }
    },
    {
-    "t": "Com Pro",
+    "t": "Com o plano Pro",
     "tag": "existe",
-    "d": "O plano atual, estado, renovação, «Cancelar subscrição», «Gerir na Stripe», histórico de compras.",
+    "d": "O plano, o estado, a renovação, cancelar, gerir na Stripe, histórico de compras.",
     "u": "planos-pro.html",
     "sub": 1,
     "k": {
@@ -1462,20 +1501,20 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Mudar para Plus",
     "tag": "problemas",
+    "p": "Diz que muda no próximo ciclo, mas muda logo.",
+    "d": "A janela de confirmação.",
     "u": "planos-pro-mudar.html",
     "sub": 1,
     "k": {
      "onde": [
       "apps/frontend/src/features/pricing/components/ChangePlanDialog.tsx"
-     ],
-     "problemas": [
-      "Diz que muda no próximo ciclo; na Stripe muda logo, sem acerto de preço."
      ]
     }
    },
    {
-    "t": "Cancelar",
+    "t": "Cancelar o plano",
     "tag": "existe",
+    "d": "A janela de confirmação.",
     "u": "planos-pro-cancelar.html",
     "sub": 1,
     "k": {
@@ -1487,42 +1526,48 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Cancelamento pendente",
     "tag": "problemas",
+    "p": "Não se pode voltar atrás dentro da app.",
+    "d": "«A tua subscrição será cancelada no fim do período».",
     "u": "planos-a-cancelar.html",
-    "sub": 1,
-    "k": {
-     "problemas": [
-      "Não há forma de voltar atrás dentro da app: só pela Stripe."
-     ]
-    }
+    "sub": 1
    },
    {
     "t": "Pagamento falhou",
     "tag": "existe",
+    "d": "O aviso vermelho para atualizar o cartão.",
     "u": "planos-pagamento-falhou.html",
     "sub": 1
    },
    {
-    "t": "Regresso da Stripe",
+    "t": "Regresso do pagamento",
     "tag": "problemas",
+    "p": "Pode ficar assim até se recarregar a página.",
     "d": "«A processar a tua subscrição…»",
     "u": "planos-checkout-feito.html",
-    "sub": 1,
-    "k": {
-     "problemas": [
-      "A verificação automática nunca corre: a faixa pode ficar até se recarregar a página."
-     ]
-    }
+    "sub": 1
    },
    {
-    "t": "Pagar na Stripe",
+    "t": "Pagar",
     "tag": "naovi",
     "d": "A página de pagamento e o portal são da Stripe.",
     "nota": "Fora da app; não vi."
    },
    {
+    "t": "Janela antiga de eliminar conta",
+    "tag": "codigo",
+    "d": "Uma segunda janela de eliminar conta.",
+    "nota": "Ninguém a usa.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/DeleteAccountDialog.tsx"
+     ]
+    }
+   },
+   {
     "t": "Reportar um problema",
     "tag": "codigo",
-    "nota": "O componente devolve nada e ninguém o usa.",
+    "d": "Uma janela prevista para reportar problemas.",
+    "nota": "Está vazia e ninguém a usa.",
     "k": {
      "onde": [
       "apps/frontend/src/features/feedback/components/ReportIssueModal.tsx"
@@ -1530,9 +1575,10 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     }
    },
    {
-    "t": "Assistente (chatbot)",
+    "t": "Assistente",
     "tag": "codigo",
-    "nota": "Pastas vazias. O README chama-lhe «básico», mas não há nada.",
+    "d": "O «chatbot» do README.",
+    "nota": "Não há nada: pastas vazias.",
     "k": {
      "onde": [
       "apps/frontend/src/features/chatbot/"
@@ -1543,18 +1589,19 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
  },
  {
   "t": "Por trás",
-  "how": "O que corre no servidor e não tem ecrã.",
+  "how": "O que corre no servidor.",
   "rows": [
    {
     "t": "Funções no servidor",
     "tag": "problemas",
-    "d": "Oito: pagamento, portal, cancelar, mudar plano, faturas, webhook da Stripe, apagar conta, sincronizar vídeos.",
+    "p": "Uma delas aceita pedidos de qualquer pessoa.",
+    "d": "Oito: pagamento, portal, cancelar, mudar de plano, faturas, avisos da Stripe, apagar conta, sincronizar vídeos.",
     "k": {
      "onde": [
       "backend/supabase/functions/*"
      ],
      "problemas": [
-      "«sync-video-scenarios» não verifica quem a chama e escreve com a chave de serviço; procura um armazenamento que já não se usa.",
+      "sync-video-scenarios não verifica quem a chama e escreve com a chave de serviço.",
       "Não há config.toml: não se sabe como estão publicadas."
      ]
     }
@@ -1562,20 +1609,21 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
    {
     "t": "Base de dados",
     "tag": "problemas",
-    "d": "49 migrações; 38 tabelas.",
+    "p": "Qualquer pessoa pode tornar-se administradora e ler o email de toda a gente.",
+    "d": "49 migrações e 38 tabelas.",
     "k": {
      "onde": [
       "backend/supabase/migrations"
      ],
      "problemas": [
-      "Qualquer pessoa pode mudar o seu próprio papel para «admin».",
-      "Qualquer pessoa com sessão lê o email e o papel de toda a gente.",
-      "A migração 0047 falha numa base nova (copia colunas que nunca existiram).",
-      "Tabelas antigas de faturação continuam lá sem uso.",
-      "A pasta supabase/.temp (ligação ao projeto) está no repositório."
+      "A regra de atualização do perfil não limita colunas (role).",
+      "A migração 0019 deixa ler todas as colunas dos perfis.",
+      "A migração 0047 falha numa base nova.",
+      "Tabelas antigas de faturação sem uso.",
+      "A pasta supabase/.temp está no repositório."
      ],
      "perguntas": [
-      "As migrações aplicadas na base real são estas? Não consegui ver a base de dados."
+      "As migrações aplicadas na base real são estas? Não vi a base."
      ]
     }
    }
@@ -1585,41 +1633,41 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
 
   let filter = 'tudo';
   const all = MAP.flatMap(s => s.rows);
+  const match = r => filter === 'tudo' || r.tag === filter || (filter === 'falhas' && (r.tag === 'problemas' || r.tag === 'ameio'));
   function drawCounts() {
     const n = k => all.filter(r => r.tag === k).length;
     $('#counts').innerHTML = Object.keys(TAG).map(k =>
       '<button type="button" data-f="' + k + '" aria-pressed="' + (filter === k) + '"><span class="n">' + n(k) + '</span><span class="l">' + TAG[k] + '</span><span class="w">' + WHAT[k] + '</span></button>').join('') +
-      '<button class="all" type="button" data-f="tudo" aria-pressed="' + (filter === 'tudo') + '"><span class="n">' + all.length + '</span><span class="l">Tudo</span><span class="w"></span></button>';
+      '<button class="all" type="button" data-f="tudo" aria-pressed="' + (filter === 'tudo') + '"><span class="n">' + all.length + '</span><span class="l">Tudo</span><span class="w"></span></button>' +
+      '<button class="prob" type="button" data-f="falhas" aria-pressed="' + (filter === 'falhas') + '"><span class="n">' + (n('problemas') + n('ameio')) + '</span><span class="l">Só o que tem problemas ou está a meio</span><span class="w">Cada linha diz o problema logo por baixo do nome.</span></button>';
   }
-  const KN = [['onde', 'Onde vive'], ['dados', 'Dados'], ['decisoes', 'Decisões nos documentos'], ['problemas', 'Problemas conhecidos'], ['perguntas', 'Perguntas']];
+  const KN = [['onde', 'Onde vive no código'], ['dados', 'Dados que lê e escreve'], ['decisoes', 'Decisões nos documentos'], ['problemas', 'Problemas, em pormenor'], ['perguntas', 'Perguntas']];
   let current = null;
-  const shots = [];
+  function rowHtml(r) {
+    const inner = '<span class="t">' + esc(r.t) + '</span>' + (r.p ? '<span class="p">' + esc(r.p) + '</span>' : '') + (r.d ? '<span class="d">' + esc(r.d) + '</span>' : '') + '<span class="tag ' + r.tag + '">' + TAG[r.tag] + '</span>';
+    const cls = 'row' + (r.sub ? ' sub' : '');
+    let more = '';
+    if (r.nota) more += '<p class="quem">' + esc(r.nota) + '</p>';
+    if (r.k) {
+      const parts = KN.filter(([key]) => r.k[key] && r.k[key].length).map(([key, label]) =>
+        '<p><b>' + label + ':</b> ' + [].concat(r.k[key]).map(x => key === 'onde' ? '<code>' + esc(x) + '</code>' : esc(x)).join(key === 'onde' ? ' · ' : ' — ') + '</p>');
+      if (parts.length) more += '<details class="ficha"><summary>O que se sabe</summary><div class="know">' + parts.join('') + '</div></details>';
+    }
+    return '<li>' + (r.u
+      ? '<a class="' + cls + '" href="' + esc(r.u) + '" data-u="' + esc(r.u) + '"' + (r.u === current ? ' aria-current="true"' : '') + '>' + inner + '</a>'
+      : '<div class="' + cls + '">' + inner + '</div>') + (more ? '<div class="more' + (r.sub ? ' sub' : '') + '">' + more + '</div>' : '') + '</li>';
+  }
   function drawMap() {
-    shots.length = 0;
     $('#secs').innerHTML = MAP.map(s => {
-      const rows = s.rows.filter(r => filter === 'tudo' || r.tag === filter);
+      const rows = s.rows.filter(match);
       if (!rows.length) return '';
-      return '<section class="sec"><h2>' + esc(s.t) + '</h2>' + (s.how ? '<p class="how">' + esc(s.how) + '</p>' : '') + '<ul class="rows">' + rows.map(r => {
-        const inner = '<span class="t">' + esc(r.t) + '</span>' + (r.d ? '<span class="d">' + esc(r.d) + '</span>' : '') + '<span class="tag ' + r.tag + '">' + TAG[r.tag] + '</span>';
-        const cls = 'row' + (r.sub ? ' sub' : '');
-        let more = '';
-        if (r.nota) more += '<p class="quem">' + esc(r.nota) + '</p>';
-        if (r.k) {
-          const parts = KN.filter(([key]) => r.k[key] && r.k[key].length).map(([key, label]) =>
-            '<p class="' + (key === 'problemas' ? 'bug' : '') + '"><b>' + label + ':</b> ' + [].concat(r.k[key]).map(x => key === 'onde' ? '<code>' + esc(x) + '</code>' : esc(x)).join(key === 'onde' ? ' · ' : ' — ') + '</p>');
-          if (parts.length) more += '<details class="ficha"><summary>O que se sabe</summary><div class="know">' + parts.join('') + '</div></details>';
-        }
-        return '<li>' + (r.u
-          ? '<a class="' + cls + '" href="' + esc(r.u) + '" data-u="' + esc(r.u) + '"' + (r.u === current ? ' aria-current="true"' : '') + '>' + inner + '</a>'
-          : '<div class="' + cls + '">' + inner + '</div>') + (more ? '<div class="more' + (r.sub ? ' sub' : '') + '">' + more + '</div>' : '') + '</li>';
-      }).join('') + '</ul></section>';
+      const seen = rows.filter(r => r.u), none = rows.filter(r => !r.u);
+      return '<section class="sec"><h2>' + esc(s.t) + '</h2>' + (s.how ? '<p class="how">' + esc(s.how) + '</p>' : '') +
+        (seen.length ? '<ul class="rows">' + seen.map(rowHtml).join('') + '</ul>' : '') +
+        (none.length ? '<details class="semecra"' + (filter !== 'tudo' && !seen.length ? ' open' : '') + '><summary>Sem ecrã <span>' + none.length + (none.length === 1 ? ' parte' : ' partes') + '</span></summary><ul class="rows">' + none.map(rowHtml).join('') + '</ul></details>' : '') +
+        '</section>';
     }).join('');
   }
-
-  const box = $('#box'); let boxOpener = null;
-  function closeShot() { if (!box.classList.contains('aberta')) return false; box.classList.remove('aberta'); app.inert = false; if (boxOpener) boxOpener.focus({ preventScroll: true }); return true; }
-  $('#box-x').addEventListener('click', closeShot);
-  $('#box-zoom').addEventListener('click', () => { const b = $('#box-pic'); b.classList.toggle('zoom'); b.scrollTop = 0; b.scrollLeft = 0; });
 
   const app = $('#app'), frame = $('#frame'), small = matchMedia('(max-width:900px)');
   let pc = false;
@@ -1634,7 +1682,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     if (small.matches) { document.documentElement.style.removeProperty('--s'); return; }
     const v = $('#view'), big = app.classList.contains('pc');
     const fw = (big ? 1280 : 390) + 22, fh = (big ? 800 : 844) + 22;
-    const s = Math.min(1, (v.clientHeight - 32) / fh, (v.clientWidth - 32) / fw);
+    const s = Math.min(1, (v.clientHeight - 88) / fh, (v.clientWidth - 32) / fw);
     document.documentElement.style.setProperty('--s', Math.max(.3, s).toFixed(4));
   }
   function mark(u) {
@@ -1667,7 +1715,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   document.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => setFrame(b.dataset.frame === 'pc')));
   $('#open').addEventListener('click', () => show('painel.html'));
   $('#back').addEventListener('click', backToMap);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!closeShot() && app.classList.contains('ver')) backToMap(); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && app.classList.contains('ver')) backToMap(); });
 
   /* As páginas dizem onde estão (quando se anda lá dentro): o mapa acompanha. */
   addEventListener('message', e => {

@@ -5,14 +5,42 @@
 
 **Abrir:** `design/super-maquete/index.html` (mapa à esquerda, a app à direita, com botão Telemóvel/Computador) ou, no
 telemóvel, o ficheiro único `design/super-maquete/super-maquete-reflab.html` (3 MB, funciona sem internet, só as letras
-vêm do Google).
+vêm do Google). Também entregue em `Saikan-Corporation/saikan-mockup`, ramo `entrega/reflab`.
+
+## Revisão 1 (19 nov, depois da revisão do coordenador): o que mudou
+
+O coordenador comparou as cinco super maquetes com o mapa da Tertúlia (`docs/SUPER-MAQUETES-REVISAO-1.md` no estúdio).
+Para o RefLab corrigi:
+
+1. **Cada linha abre o seu próprio ecrã, no seu estado.** Antes, em 15 linhas apareciam 3 ecrãs diferentes. Agora, 97 linhas abrem 97 ecrãs diferentes (verificado: nenhum se repete).
+   - «Iniciar sessão» abre o formulário de entrar, já à vista.
+   - «Criar conta», os erros e «Esqueci-me da palavra-passe» abrem cada um o seu formulário, sem a página inicial por cima.
+   - «Os planos na página inicial» abre os planos.
+   - «Barra de cima» e «Barra de baixo» abrem cada uma o seu ecrã, com os números por ler à vista.
+   - Saiu a linha «A carregar», que mostrava o mesmo ecrã que «Painel · A carregar».
+   - Recapturei «Vídeos»: mostrava dados de exemplo antigos.
+2. **As partes sem ecrã** (16: tarefas do servidor, código que ninguém usa, o que não consegui provocar) estão no fim de cada secção, num grupo «Sem ecrã» fechado.
+3. **Palavras de programador fora das linhas.** Cada linha diz o que se vê e, se houver, o problema, em português simples. Ficheiros, tabelas, variáveis e números de migração estão na ficha «O que se sabe», fechada.
+4. **Uma só ficha**, «O que se sabe», fechada por defeito, em todas as linhas.
+5. **O mapa voltou ao aspeto do estúdio**: azul-noite, uma só cor de destaque, títulos com serifa, linhas finas. As cores do RefLab (amarelo e azul-marinho) ficam só dentro da moldura.
+   - Cabeçalho comum: a marca e «RefLab · o que existe hoje», o título, o parágrafo, o botão e os contadores.
+   - «Telemóvel / Computador» fica no canto de cima, à direita do palco, no computador, e por baixo do botão no telemóvel.
+6. **Os problemas encontram-se.** Há um contador «Só o que tem problemas ou está a meio» (48 partes), e cada uma dessas linhas diz o problema logo por baixo do nome.
+7. **`lang="en"`:** as páginas do RefLab dizem ao navegador que estão em inglês. É um problema real do produto e está na linha «Página inicial». O mapa em si está em `pt-PT`.
+
+**Verificação (ponto 7):** abri o ficheiro único a 390×844 e a 1440×900 e toquei em 20 linhas espalhadas pelo mapa, em cada tamanho, duas vezes: 80 toques em 40 linhas diferentes. Olhei para cada resultado.
+- Nenhuma moldura vazia, nenhum ecrã repetido, nenhum texto cortado pelo canto da moldura, nenhum erro.
+- Na primeira volta encontrei e corrigi dois defeitos: o «Vídeos» antigo e o «A carregar» repetido.
+- Não verifiquei com leitor de ecrã nem num iPhone verdadeiro.
+
+**Continua sem ecrã, por não o conseguir provocar com dados de exemplo:** «Sessão expirada» e «Falhou a entrada». Estão em «Sem ecrã», marcadas «Não consegui ver».
 
 ## Em resumo
 
 - O RefLab de hoje é o ramo `main`: último código a **24 fev 2026**. É uma app web (telemóvel primeiro) para árbitros:
   **Painel**, **Aprender** (teste de 20 perguntas, perguntas de prática, vídeos de decisão), **Comunidade** (feed, comentários,
   perfis, seguir, bloquear), **Mensagens** em tempo real, **Avisos**, **Definições** e **Planos** pagos com a Stripe.
-- **113 partes** no mapa: 63 «Existe», 35 «Existe, com problemas», 2 «A meio», 9 «Só no código», 4 «Não consegui ver».
+- **113 partes** no mapa: 52 «Existe», 46 «Existe, com problemas», 2 «A meio», 9 «Só no código», 4 «Não consegui ver». 97 abrem o seu próprio ecrã; as 16 sem ecrã estão no fim de cada secção, em «Sem ecrã».
 - O que funciona bem: entrar e criar conta, o teste aleatório com resultado por tema, as perguntas de prática, o feed,
   as mensagens, as definições. Quase tudo está em português.
 - O que não está: **nada muda com o plano pago** (o «premium» é grátis); **não há IA** (nem explicações, nem chatbot);
@@ -38,121 +66,122 @@ vêm do Google).
 Cada linha tem no mapa a ficha «O que se sabe»: ficheiros, dados que lê e escreve, problemas e perguntas.
 As imagens estão em `design/super-maquete/imagens/`.
 
-| Secção | Parte | Etiqueta | Ecrã | Problemas conhecidos |
+| Secção | Parte | Etiqueta | Ecrã | O que se vê / o problema |
 |---|---|---|---|---|
-| Entrada | Página inicial | Existe, com problemas | [inicio.html](../design/super-maquete/imagens/inicio.jpg) | Os botões dos planos («Começar», «Subscrever») levam a /app/pricing, que manda quem não entrou de volta a esta página: não fazem nada à vista. · Os planos prometem coisas que não existem (fórum, newsletter, feedback com IA). · Preços em formato inglês («€4.99»); no plano grátis, «Gratuito» aparece como título e como preço. · O separador do navegador diz «reflab», com o ícone do Vite e lang="en". |
-| Entrada | ↳ Iniciar sessão | Existe | [inicio.html](../design/super-maquete/imagens/inicio.jpg) | O cartão do login tem título e moldura; o de criar conta e o de recuperar não têm: as três vistas parecem de produtos diferentes. · Erros do servidor que não estão mapeados aparecem em inglês. |
-| Entrada | ↳ Campos em falta | Existe | [entrar-erros.html](../design/super-maquete/imagens/entrar-erros.jpg) |  |
-| Entrada | ↳ Email ou palavra-passe errados | Existe | [entrar-errado.html](../design/super-maquete/imagens/entrar-errado.jpg) |  |
-| Entrada | Criar conta | Existe | [criar-conta.html](../design/super-maquete/imagens/criar-conta.jpg) | Não há escolha de nome de utilizador nem boas-vindas: a pessoa cai no Painel com um nome inventado. · Não há link para Termos e Privacidade no registo. |
-| Entrada | ↳ Erros ao criar conta | Existe | [criar-conta-erros.html](../design/super-maquete/imagens/criar-conta-erros.jpg) |  |
-| Entrada | ↳ Conta criada: verifica o email | Existe | [criar-conta-feito.html](../design/super-maquete/imagens/criar-conta-feito.jpg) |  |
-| Entrada | Esqueci-me da palavra-passe | Existe | [esqueci.html](../design/super-maquete/imagens/esqueci.jpg) | Os erros do servidor aparecem em inglês, crus (não passam pelo tradutor de erros). |
-| Entrada | ↳ Ligação enviada | Existe | [esqueci-enviado.html](../design/super-maquete/imagens/esqueci-enviado.jpg) |  |
-| Entrada | Definir nova palavra-passe | Existe, com problemas | [nova-passe.html](../design/super-maquete/imagens/nova-passe.jpg) | Não confirma que se chegou pela ligação do email: qualquer pessoa com sessão aberta pode mudar a palavra-passe aqui sem saber a antiga. |
-| Entrada | ↳ Erros | Existe | [nova-passe-erros.html](../design/super-maquete/imagens/nova-passe-erros.jpg) |  |
-| Entrada | ↳ Palavra-passe atualizada | Existe | [nova-passe-feita.html](../design/super-maquete/imagens/nova-passe-feita.jpg) |  |
-| Entrada | ↳ Sem sessão de recuperação | Existe, com problemas | [nova-passe-invalida.html](../design/super-maquete/imagens/nova-passe-invalida.jpg) |  |
-| Entrada | A entrar (regresso do Google ou do email) | Existe | [regresso.html](../design/super-maquete/imagens/regresso.jpg) | Uma ligação de confirmação aberta noutro aparelho deve dar «A autenticação falhou…» (o método PKCE exige o mesmo navegador). |
-| Entrada | Falhou a entrada | Não consegui ver | — | Não consegui provocar este estado com a base de dados falsa: a captura fica presa em «A iniciar sessão...». Descrito a partir do código. |
-| Entrada | Aviso de cookies | Existe, com problemas | [inicio-cookies.html](../design/super-maquete/imagens/inicio-cookies.jpg) | Nada lê a escolha: aceitar ou recusar não muda nada. · Dentro da app tapa a barra de baixo até se responder. · A política de cookies promete gerir preferências, o que não existe. |
-| Entrada | ↳ Dentro da app | Existe, com problemas | [cookies-na-app.html](../design/super-maquete/imagens/cookies-na-app.jpg) |  |
-| Entrada | Páginas legais: Privacidade | Existe | [legal-privacidade.html](../design/super-maquete/imagens/legal-privacidade.jpg) | Os separadores não mudam o endereço. · O email de contacto não é uma ligação. |
-| Entrada | ↳ Termos de Serviço | Existe | [legal-termos.html](../design/super-maquete/imagens/legal-termos.jpg) |  |
-| Entrada | ↳ Política de Cookies | Existe | [legal-cookies.html](../design/super-maquete/imagens/legal-cookies.jpg) |  |
-| Entrada | Emails | Não consegui ver | — | Os modelos, o remetente e a língua estão no painel do Supabase, não no repositório. Não os vi. |
-| Estrutura da app | A carregar a sessão | Existe | [a-carregar.html](../design/super-maquete/imagens/a-carregar.jpg) |  |
-| Estrutura da app | Barra de cima | Existe | [painel.html](../design/super-maquete/imagens/painel.jpg) | Os ícones são desenhos com «role=button» sem foco de teclado: não se usam com teclado. · O número do sino só atualiza quando se muda de página. |
-| Estrutura da app | Menu lateral | Existe, com problemas | [menu.html](../design/super-maquete/imagens/menu.jpg) | Não marca a página onde se está. · O nome vem da conta, não do perfil: quem entrou com email vê o email duas vezes. · É a única porta para «Testes», «Pesquisar», «Notificações», «Planos» e «Definições». |
-| Estrutura da app | Barra de baixo | Existe | [painel.html](../design/super-maquete/imagens/painel.jpg) | Em /app (sem /dashboard) «Painel» não fica aceso. |
-| Estrutura da app | Página que não existe | Existe, com problemas | [pagina-inexistente.html](../design/super-maquete/imagens/pagina-inexistente.jpg) | Não há página 404. |
-| Estrutura da app | Sessão expirada | Não consegui ver | — | O texto está a cinzento escuro sobre fundo escuro: quase ilegível. · Não tem botão para fechar. · Não consegui provocá-la nas capturas. Descrita a partir do código. |
-| Estrutura da app | Cabeçalho e menu antigos | Só no código | — | Nenhum ficheiro os usa. |
-| Estrutura da app | Botão e campo partilhados | Só no código | — | Ficheiros vazios. |
-| Painel | Painel | Existe | [painel.html](../design/super-maquete/imagens/painel.jpg) | As letras do calendário estão em inglês («S M T W T F S»). · Os decimais usam ponto («72.5%»). · «Iniciar novo teste» é azul (--info), a única ação principal azul num produto amarelo. · Abrir uma sessão de perguntas sem responder já conta como dia de treino. · As respostas em vídeo contam como «perguntas respondidas». |
-| Painel | ↳ Sem dados (pessoa nova) | Existe, com problemas | [painel-vazio.html](../design/super-maquete/imagens/painel-vazio.jpg) | Os cartões de tempo mostram «—» grande em vez da frase prevista para o vazio. |
-| Painel | ↳ A carregar | Existe | [painel-a-carregar.html](../design/super-maquete/imagens/painel-a-carregar.jpg) |  |
-| Painel | ↳ Erro | Existe, com problemas | [painel-erro.html](../design/super-maquete/imagens/painel-erro.jpg) |  |
-| Aprender | Teste (início) | Existe | [aprender.html](../design/super-maquete/imagens/aprender.jpg) | «Testes esta semana» conta desde a segunda-feira da semana anterior. · Os ficheiros LearnTabs, TestsTab, QuestionsTab, VideosTab, CourseTab e ResourcesTab não são usados: tudo vive em LearnPage.tsx. |
-| Aprender | ↳ Histórico de testes | Existe | [aprender-historico.html](../design/super-maquete/imagens/aprender-historico.jpg) |  |
-| Aprender | ↳ A gerar o teste | Existe | [teste-a-gerar.html](../design/super-maquete/imagens/teste-a-gerar.jpg) |  |
-| Aprender | ↳ A responder | Existe | [teste-pergunta.html](../design/super-maquete/imagens/teste-pergunta.jpg) | A resposta fica bloqueada ao primeiro toque, sem confirmar. · As perguntas estão em inglês (vêm da base de dados). · A correção é feita no navegador, que recebe a resposta certa: vê-se no tráfego da página. |
-| Aprender | ↳ Resposta bloqueada | Existe | [teste-respondida.html](../design/super-maquete/imagens/teste-respondida.jpg) |  |
-| Aprender | ↳ Última pergunta: «Submeter teste» | Existe | [teste-ultima.html](../design/super-maquete/imagens/teste-ultima.jpg) |  |
-| Aprender | ↳ Resultado (aprovado) | Existe | [teste-resultado.html](../design/super-maquete/imagens/teste-resultado.jpg) | Não há explicação das respostas: a coluna ai_explanation existe mas nada a escreve ou lê; não há IA no produto. · A função de resultados não confirma que a tentativa é de quem pede. |
-| Aprender | ↳ Resultado (reprovado, tempo esgotado) | Existe, com problemas | [teste-resultado-baixo.html](../design/super-maquete/imagens/teste-resultado-baixo.jpg) | Quando o tempo acaba, grava quase zero segundos de duração e só conta as perguntas respondidas. |
-| Aprender | Perguntas (início) | Existe | [perguntas.html](../design/super-maquete/imagens/perguntas.jpg) |  |
-| Aprender | ↳ Escolher leis | Existe, com problemas | [perguntas-por-lei.html](../design/super-maquete/imagens/perguntas-por-lei.jpg) | Leis fora de 11–14 aparecem como «Law N» em inglês; uma pergunta sem lei aparece como «Lei — Law null» (como se vê aqui). |
-| Aprender | ↳ Escolher áreas | Existe, com problemas | [perguntas-por-area.html](../design/super-maquete/imagens/perguntas-por-area.jpg) |  |
-| Aprender | ↳ A responder | Existe | [perguntas-sessao.html](../design/super-maquete/imagens/perguntas-sessao.jpg) |  |
-| Aprender | ↳ Resposta certa | Existe | [perguntas-certa.html](../design/super-maquete/imagens/perguntas-certa.jpg) |  |
-| Aprender | ↳ Resposta errada | Existe | [perguntas-errada.html](../design/super-maquete/imagens/perguntas-errada.jpg) |  |
-| Aprender | ↳ Terminar sessão? | Existe | [perguntas-terminar.html](../design/super-maquete/imagens/perguntas-terminar.jpg) |  |
-| Aprender | ↳ Sessão concluída | Existe | [perguntas-revisao.html](../design/super-maquete/imagens/perguntas-revisao.jpg) | «Voltar» numa sessão sem perguntas salta para um resultado de 0%. |
-| Aprender | Vídeos | Existe, com problemas | [videos.html](../design/super-maquete/imagens/videos.jpg) | Só há um cenário ativo («Offside Analysis 1»): o contador diz sempre «1 / 1». · Quando o vídeo falha, a mensagem fala a quem usa a app de um «bucket learn-videos no Supabase Storage». · O nome do ficheiro não bate certo com a forma como o R2 guarda os clips: o vídeo provavelmente não carrega. |
-| Aprender | ↳ A escolher a sanção | Existe | [videos-sancao.html](../design/super-maquete/imagens/videos-sancao.jpg) |  |
-| Aprender | ↳ Resultado do vídeo | Existe | [videos-resultado.html](../design/super-maquete/imagens/videos-resultado.jpg) |  |
-| Aprender | ↳ Sem vídeos | Existe | [videos-vazio.html](../design/super-maquete/imagens/videos-vazio.jpg) |  |
-| Aprender | Cursos | A meio | [cursos.html](../design/super-maquete/imagens/cursos.jpg) |  |
-| Aprender | Recursos | A meio | [recursos.html](../design/super-maquete/imagens/recursos.jpg) |  |
-| Aprender | Testes disponíveis | Existe, com problemas | [testes-lista.html](../design/super-maquete/imagens/testes-lista.jpg) | Lista escrita no código, nada a ver com arbitragem. · Os títulos estão escuros sobre fundo escuro: quase invisíveis. · Chega-se aqui pelo menu «Testes» e pelos avisos de conteúdo novo. |
-| Aprender | Teste por endereço | Existe, com problemas | [teste-endereco.html](../design/super-maquete/imagens/teste-endereco.jpg) | A caixa de erro é rosa-clara, de outro desenho, com a mensagem crua em inglês. · O fluxo antigo de testes fixos (9 testes semeados) só é alcançável por aqui, na prática nunca. |
-| Aprender | Notícias | Só no código | — |  |
-| Comunidade | Feed | Existe, com problemas | [comunidade.html](../design/super-maquete/imagens/comunidade.jpg) | «João Silva reposted» e o tempo «now» estão em inglês. · Guardar só sobe um contador: não há página de guardados. · Republicações ficam sempre em «Texto», mesmo de uma imagem. · Provável: a página não carrega mais de 20 publicações (a área com scroll não tem altura fixa). · Apagar a original deixa as republicações como cartões vazios. |
-| Comunidade | ↳ A carregar | Existe | [comunidade-a-carregar.html](../design/super-maquete/imagens/comunidade-a-carregar.jpg) |  |
-| Comunidade | ↳ Vazio | Existe | [comunidade-vazia.html](../design/super-maquete/imagens/comunidade-vazia.jpg) |  |
-| Comunidade | ↳ Erro | Existe | [comunidade-erro.html](../design/super-maquete/imagens/comunidade-erro.jpg) |  |
-| Comunidade | ↳ Só imagens | Existe | [comunidade-imagens.html](../design/super-maquete/imagens/comunidade-imagens.jpg) |  |
-| Comunidade | ↳ Comentários | Existe, com problemas | [comunidade-comentarios.html](../design/super-maquete/imagens/comunidade-comentarios.jpg) | Um erro ao comentar não aparece, e o contador sobe na mesma. · Denunciar um comentário envia logo, sem janela nem aviso. · Apagar não pede confirmação. |
-| Comunidade | ↳ Mencionar alguém (@) | Existe, com problemas | [comunidade-mencao.html](../design/super-maquete/imagens/comunidade-mencao.jpg) | Sem resultados diz «No users found», em inglês. |
-| Comunidade | ↳ Menu de uma publicação de outra pessoa | Existe | [comunidade-menu-outro.html](../design/super-maquete/imagens/comunidade-menu-outro.jpg) |  |
-| Comunidade | ↳ Menu de uma publicação minha | Existe, com problemas | [comunidade-menu-meu.html](../design/super-maquete/imagens/comunidade-menu-meu.jpg) |  |
-| Comunidade | ↳ Denunciar | Existe, com problemas | [comunidade-denunciar.html](../design/super-maquete/imagens/comunidade-denunciar.jpg) | «Porque estás a denunciar este post?» / «este user?»: mistura de inglês. · No feed, depois de enviar, não aparece confirmação nenhuma. |
-| Comunidade | ↳ Bloquear | Existe | [comunidade-bloquear.html](../design/super-maquete/imagens/comunidade-bloquear.jpg) |  |
-| Comunidade | ↳ Nova publicação | Existe | [comunidade-publicar.html](../design/super-maquete/imagens/comunidade-publicar.jpg) |  |
-| Comunidade | ↳ Publicar vazio | Existe | [comunidade-publicar-erro.html](../design/super-maquete/imagens/comunidade-publicar-erro.jpg) |  |
-| Comunidade | Partilhar (janela) | Só no código | — | Nenhum ficheiro a usa: «Partilhar» usa a partilha do telemóvel ou copia a ligação. |
-| Comunidade | Publicação aberta | Existe, com problemas | [publicacao.html](../design/super-maquete/imagens/publicacao.jpg) | O título diz «Publicar» (o verbo) em vez de «Publicação». |
-| Comunidade | ↳ Publicação que não existe | Existe | [publicacao-inexistente.html](../design/super-maquete/imagens/publicacao-inexistente.jpg) |  |
-| Perfil | O meu perfil | Existe, com problemas | [perfil.html](../design/super-maquete/imagens/perfil.jpg) | Não mostra seguidores, a seguir, nível nem nada do treino: o perfil não liga ao Aprender. · A tabela de perfis não tem biografia, XP nem nível. |
-| Perfil | ↳ Sem publicações | Existe | [perfil-vazio.html](../design/super-maquete/imagens/perfil-vazio.jpg) |  |
-| Perfil | Editar perfil | Existe | [perfil-editar.html](../design/super-maquete/imagens/perfil-editar.jpg) |  |
-| Perfil | Perfil de outra pessoa | Existe, com problemas | [perfil-outro.html](../design/super-maquete/imagens/perfil-outro.jpg) | Seguir pode falhar sempre: o gatilho do aviso «novo seguidor» chama uma função que ficou ambígua (verificar na base de dados real). · Seguir não se vê em lado nenhum: não há contagens nem listas. · «Try Again» e «Link copied to clipboard» em inglês. |
-| Perfil | ↳ Menu do perfil | Existe | [perfil-outro-menu.html](../design/super-maquete/imagens/perfil-outro-menu.jpg) |  |
-| Perfil | ↳ Bloqueado por mim | Existe | [perfil-outro-bloqueado.html](../design/super-maquete/imagens/perfil-outro-bloqueado.jpg) |  |
-| Perfil | ↳ Bloqueou-me | Existe | [perfil-outro-bloqueou-te.html](../design/super-maquete/imagens/perfil-outro-bloqueou-te.jpg) |  |
-| Perfil | ↳ Utilizador que não existe | Existe | [perfil-outro-inexistente.html](../design/super-maquete/imagens/perfil-outro-inexistente.jpg) |  |
-| Perfil | Perfil público antigo | Só no código | — | Uma segunda versão, não usada. |
-| Mensagens | Conversas | Existe, com problemas | [mensagens.html](../design/super-maquete/imagens/mensagens.jpg) | A lista não se atualiza sozinha. · O número na barra de baixo só muda quando se muda de página. |
-| Mensagens | ↳ Sem conversas | Existe | [mensagens-vazia.html](../design/super-maquete/imagens/mensagens-vazia.jpg) |  |
-| Mensagens | ↳ Procurar pessoa para conversar | Existe | [mensagens-procurar.html](../design/super-maquete/imagens/mensagens-procurar.jpg) |  |
-| Mensagens | Conversa | Existe, com problemas | [conversa.html](../design/super-maquete/imagens/conversa.jpg) | Os anexos ficam num local público: quem tiver a ligação vê. · Se um envio falha (por ex. a pessoa só aceita mensagens de quem segue), a conversa desaparece até ao envio seguinte, e o erro vem em inglês. · A hora mostra os segundos («09:21:08 19-11-2026»). |
-| Mensagens | ↳ Conversa vazia | Existe | [conversa-vazia.html](../design/super-maquete/imagens/conversa-vazia.jpg) |  |
-| Mensagens | ↳ A escrever | Existe | [conversa-a-escrever.html](../design/super-maquete/imagens/conversa-a-escrever.jpg) |  |
-| Pesquisa | Pesquisar pessoas | Existe, com problemas | [pesquisa.html](../design/super-maquete/imagens/pesquisa.jpg) | O histórico é partilhado por todas as contas no mesmo navegador. · Só procura pessoas, não publicações nem perguntas. · Vários ficheiros da pesquisa não são usados (SearchInput, SearchHistoryItem, UserListItem, useSearch, searchApi). |
-| Pesquisa | ↳ Sem histórico | Existe | [pesquisa-vazia.html](../design/super-maquete/imagens/pesquisa-vazia.jpg) |  |
-| Pesquisa | ↳ Resultados | Existe | [pesquisa-resultados.html](../design/super-maquete/imagens/pesquisa-resultados.jpg) |  |
-| Pesquisa | ↳ Sem resultados | Existe | [pesquisa-sem-resultados.html](../design/super-maquete/imagens/pesquisa-sem-resultados.jpg) |  |
-| Avisos | Notificações | Existe, com problemas | [notificacoes.html](../design/super-maquete/imagens/notificacoes.jpg) | O sino não abre uma lista: leva a esta página. · «Completa o teu perfil» nunca desaparece, mesmo depois de completo. · «Lembrar mais tarde» e «dispensar» existem no código, sem botão. |
-| Avisos | ↳ Sem notificações | Existe | [notificacoes-vazia.html](../design/super-maquete/imagens/notificacoes-vazia.jpg) |  |
-| Avisos | Avisos que nunca chegam | Só no código | — | Têm interruptor nas Definições mas nada os cria: os gatilhos de dois deles foram apagados pela migração 0035 e nunca recriados. |
-| Avisos | Lembrete de fim de plano | Existe, com problemas | — | Avisa toda a gente que renova que o plano «vai expirar». · Cada um dos três avisos só é enviado uma vez na vida de cada pessoa. |
-| Conta | Definições | Existe, com problemas | [definicoes.html](../design/super-maquete/imagens/definicoes.jpg) | 5 dos 11 interruptores não fazem nada (os avisos não existem). · Se gravar uma preferência falhar, nada avisa; a escolha falhada fica à vista. |
-| Conta | ↳ Eliminar conta | Existe | [definicoes-apagar.html](../design/super-maquete/imagens/definicoes-apagar.jpg) | Cancela logo a assinatura Stripe, sem reembolso, e deixa o cliente na Stripe. · Erros da função aparecem em inglês. |
-| Conta | ↳ Limpar histórico de aprendizagem | Existe | [definicoes-limpar.html](../design/super-maquete/imagens/definicoes-limpar.jpg) |  |
-| Conta | Eliminar conta (janela antiga) | Só no código | — | Não usada: as Definições têm a sua. |
-| Conta | Planos e faturação (grátis) | Existe, com problemas | [planos.html](../design/super-maquete/imagens/planos.jpg) | Nada no produto muda com o plano: tudo o que é «premium» é grátis. · Os preços, «/ month», «Active», «Past Due» estão em inglês. |
-| Conta | ↳ Com Pro | Existe | [planos-pro.html](../design/super-maquete/imagens/planos-pro.jpg) |  |
-| Conta | ↳ Mudar para Plus | Existe, com problemas | [planos-pro-mudar.html](../design/super-maquete/imagens/planos-pro-mudar.jpg) | Diz que muda no próximo ciclo; na Stripe muda logo, sem acerto de preço. |
-| Conta | ↳ Cancelar | Existe | [planos-pro-cancelar.html](../design/super-maquete/imagens/planos-pro-cancelar.jpg) |  |
-| Conta | ↳ Cancelamento pendente | Existe, com problemas | [planos-a-cancelar.html](../design/super-maquete/imagens/planos-a-cancelar.jpg) | Não há forma de voltar atrás dentro da app: só pela Stripe. |
-| Conta | ↳ Pagamento falhou | Existe | [planos-pagamento-falhou.html](../design/super-maquete/imagens/planos-pagamento-falhou.jpg) |  |
-| Conta | ↳ Regresso da Stripe | Existe, com problemas | [planos-checkout-feito.html](../design/super-maquete/imagens/planos-checkout-feito.jpg) | A verificação automática nunca corre: a faixa pode ficar até se recarregar a página. |
-| Conta | Pagar na Stripe | Não consegui ver | — | Fora da app; não vi. |
-| Conta | Reportar um problema | Só no código | — | O componente devolve nada e ninguém o usa. |
-| Conta | Assistente (chatbot) | Só no código | — | Pastas vazias. O README chama-lhe «básico», mas não há nada. |
-| Por trás | Funções no servidor | Existe, com problemas | — | «sync-video-scenarios» não verifica quem a chama e escreve com a chave de serviço; procura um armazenamento que já não se usa. · Não há config.toml: não se sabe como estão publicadas. |
-| Por trás | Base de dados | Existe, com problemas | — | Qualquer pessoa pode mudar o seu próprio papel para «admin». · Qualquer pessoa com sessão lê o email e o papel de toda a gente. · A migração 0047 falha numa base nova (copia colunas que nunca existiram). · Tabelas antigas de faturação continuam lá sem uso. · A pasta supabase/.temp (ligação ao projeto) está no repositório. |
+| Entrada | Página inicial | Existe, com problemas | [inicio.html](../design/super-maquete/imagens/inicio.jpg) | **Problema:** Os botões dos planos não fazem nada a quem ainda não entrou. A marca, a frase «O teu laboratório de treino de arbitragem», entrar ou criar conta, os planos e o rodapé. |
+| Entrada | ↳ Os planos na página inicial | Existe, com problemas | [planos-inicio.html](../design/super-maquete/imagens/planos-inicio.jpg) | **Problema:** Prometem coisas que o produto não tem (IA, fórum, newsletter). Gratuito, Pro e Plus num carrossel. |
+| Entrada | Iniciar sessão | Existe | [entrar.html](../design/super-maquete/imagens/entrar.jpg) | Email e palavra-passe, «Esqueceste-te da palavra-passe?» e o botão do Google. |
+| Entrada | ↳ Campos por preencher | Existe | [entrar-erros.html](../design/super-maquete/imagens/entrar-erros.jpg) | O aviso por baixo de cada campo. |
+| Entrada | ↳ Email ou palavra-passe errados | Existe | [entrar-errado.html](../design/super-maquete/imagens/entrar-errado.jpg) | A faixa vermelha no cartão. |
+| Entrada | Criar conta | Existe, com problemas | [criar-conta.html](../design/super-maquete/imagens/criar-conta.jpg) | **Problema:** Não há escolha de nome nem boas-vindas: a pessoa entra com um nome inventado (por exemplo «SharpWhistle4821»). Email, palavra-passe (mínimo 6), confirmar, e «Continuar com Google». |
+| Entrada | ↳ Erros ao criar conta | Existe | [criar-conta-erros.html](../design/super-maquete/imagens/criar-conta-erros.jpg) | Email inválido, palavra-passe curta, palavras-passe diferentes. |
+| Entrada | ↳ Conta criada | Existe | [criar-conta-feito.html](../design/super-maquete/imagens/criar-conta-feito.jpg) | «Conta criada! Verifica o teu email para confirmar a conta.» |
+| Entrada | Esqueci-me da palavra-passe | Existe, com problemas | [esqueci.html](../design/super-maquete/imagens/esqueci.jpg) | **Problema:** Se o servidor der erro, a mensagem aparece em inglês. Pede o email para enviar uma ligação. |
+| Entrada | ↳ Ligação enviada | Existe | [esqueci-enviado.html](../design/super-maquete/imagens/esqueci-enviado.jpg) | A confirmação a verde. |
+| Entrada | Definir nova palavra-passe | Existe, com problemas | [nova-passe.html](../design/super-maquete/imagens/nova-passe.jpg) | **Problema:** Quem já tem sessão aberta pode mudar a palavra-passe aqui sem saber a antiga. A página a que leva a ligação do email. |
+| Entrada | ↳ Erros | Existe | [nova-passe-erros.html](../design/super-maquete/imagens/nova-passe-erros.jpg) | Palavra-passe curta, palavras-passe diferentes. |
+| Entrada | ↳ Palavra-passe atualizada | Existe | [nova-passe-feita.html](../design/super-maquete/imagens/nova-passe-feita.jpg) | «A redirecionar para o painel…» |
+| Entrada | ↳ Sem a ligação do email | Existe, com problemas | [nova-passe-invalida.html](../design/super-maquete/imagens/nova-passe-invalida.jpg) | **Problema:** Devia dizer «Ligação inválida ou expirada»; na captura não apareceu. O botão fica apagado. |
+| Entrada | A entrar | Existe | [regresso.html](../design/super-maquete/imagens/regresso.jpg) | A roda e «A iniciar sessão...», ao voltar do Google ou do email de confirmação. |
+| Entrada | Aviso de cookies | Existe, com problemas | [inicio-cookies.html](../design/super-maquete/imagens/inicio-cookies.jpg) | **Problema:** Aceitar ou recusar não muda nada. Faixa em baixo com «Aceitar» e «Recusar». |
+| Entrada | ↳ O aviso dentro da app | Existe, com problemas | [cookies-na-app.html](../design/super-maquete/imagens/cookies-na-app.jpg) | **Problema:** Não se consegue mudar de secção até responder. Tapa a barra de baixo. |
+| Entrada | Privacidade | Existe | [legal-privacidade.html](../design/super-maquete/imagens/legal-privacidade.jpg) | Página com três separadores, já em português. |
+| Entrada | ↳ Termos de Serviço | Existe | [legal-termos.html](../design/super-maquete/imagens/legal-termos.jpg) | O segundo separador. |
+| Entrada | ↳ Política de Cookies | Existe | [legal-cookies.html](../design/super-maquete/imagens/legal-cookies.jpg) | O terceiro separador. |
+| Entrada | Falhou a entrada | Não consegui ver | Sem ecrã | Devia mostrar «A autenticação falhou» e «Voltar ao início de sessão». Não consegui provocar este estado com os dados de exemplo. |
+| Entrada | Emails | Não consegui ver | Sem ecrã | Dois, enviados pelo Supabase: confirmar o registo e redefinir a palavra-passe. O texto, o remetente e a língua estão no painel do Supabase; não os vi. |
+| Estrutura da app | Barra de cima | Existe, com problemas | [barra-cima.html](../design/super-maquete/imagens/barra-cima.jpg) | **Problema:** O número do sino só muda quando se muda de página. Menu, a marca, a lupa e o sino com o número de avisos por ler (aqui «9+»). |
+| Estrutura da app | Barra de baixo | Existe, com problemas | [barra-baixo.html](../design/super-maquete/imagens/barra-baixo.jpg) | **Problema:** O número das mensagens só muda quando se muda de página. Painel, Aprender, Comunidade, Mensagens (aqui com «99+» por ler), Perfil. |
+| Estrutura da app | Menu lateral | Existe, com problemas | [menu.html](../design/super-maquete/imagens/menu.jpg) | **Problema:** É o único caminho para Testes, Pesquisar, Notificações, Planos e Definições, e não marca onde estás. Dez entradas, o nome e o email, e «Terminar sessão». |
+| Estrutura da app | Endereço que não existe | Existe, com problemas | [pagina-inexistente.html](../design/super-maquete/imagens/pagina-inexistente.jpg) | **Problema:** Não há página «não encontrado». Uma página escura vazia. |
+| Estrutura da app | Sessão expirada | Não consegui ver | Sem ecrã | Uma janela «Sessão expirada» com «Iniciar sessão». Não consegui provocá-la com os dados de exemplo. No código, o texto está quase ilegível e não há forma de fechar. |
+| Estrutura da app | Cabeçalho e menu antigos | Só no código | Sem ecrã | Uma versão branca anterior, com emojis. Ninguém os usa. |
+| Estrutura da app | Botão e campo partilhados | Só no código | Sem ecrã | Peças de desenho comuns. Os ficheiros estão vazios. |
+| Painel | Painel | Existe, com problemas | [painel.html](../design/super-maquete/imagens/painel.jpg) | **Problema:** Os dias da semana do calendário estão em inglês e os decimais usam ponto. Desempenho (precisão geral e por tema), Progresso e Hábitos (calendário de 30 dias, sequências). |
+| Painel | ↳ Pessoa nova | Existe, com problemas | [painel-vazio.html](../design/super-maquete/imagens/painel-vazio.jpg) | **Problema:** Os cartões de tempo mostram um «—» grande em vez da frase prevista. Os cartões vazios. |
+| Painel | ↳ A carregar | Existe | [painel-a-carregar.html](../design/super-maquete/imagens/painel-a-carregar.jpg) | As silhuetas cinzentas. |
+| Painel | ↳ Erro | Existe, com problemas | [painel-erro.html](../design/super-maquete/imagens/painel-erro.jpg) | **Problema:** Não há botão para tentar de novo. A faixa vermelha. |
+| Aprender | Teste | Existe, com problemas | [aprender.html](../design/super-maquete/imagens/aprender.jpg) | **Problema:** «Testes esta semana» conta também a semana anterior. «Teste de Conhecimento de Arbitragem»: 20 perguntas ao acaso, 40 minutos, e os teus números. |
+| Aprender | ↳ Histórico de testes | Existe | [aprender-historico.html](../design/super-maquete/imagens/aprender-historico.jpg) | Data, certas, tempo e nota de cada teste. |
+| Aprender | ↳ A preparar o teste | Existe | [teste-a-gerar.html](../design/super-maquete/imagens/teste-a-gerar.jpg) | «A gerar o teu teste...» |
+| Aprender | ↳ A responder | Existe, com problemas | [teste-pergunta.html](../design/super-maquete/imagens/teste-pergunta.jpg) | **Problema:** As perguntas estão em inglês num produto em português. Relógio, «Pergunta 1 de 20», quatro opções. |
+| Aprender | ↳ Resposta escolhida | Existe, com problemas | [teste-respondida.html](../design/super-maquete/imagens/teste-respondida.jpg) | **Problema:** Fica bloqueada ao primeiro toque, sem confirmar. A opção fica marcada e bloqueada. |
+| Aprender | ↳ A última pergunta | Existe | [teste-ultima.html](../design/super-maquete/imagens/teste-ultima.jpg) | Aparece «Submeter teste». |
+| Aprender | ↳ Resultado: aprovado | Existe, com problemas | [teste-resultado.html](../design/super-maquete/imagens/teste-resultado.jpg) | **Problema:** Não explica as respostas: não há IA nenhuma no produto. 16/20, pontos fortes e áreas a melhorar por tema. |
+| Aprender | ↳ Resultado: reprovado com o tempo esgotado | Existe, com problemas | [teste-resultado-baixo.html](../design/super-maquete/imagens/teste-resultado-baixo.jpg) | **Problema:** Quando o tempo acaba, só conta as perguntas respondidas e grava a duração errada. 9/20 e «Submetido automaticamente». |
+| Aprender | Perguntas | Existe | [perguntas.html](../design/super-maquete/imagens/perguntas.jpg) | «Perguntas de prática», sem limite de tempo: rápidas, por lei ou por área. |
+| Aprender | ↳ Escolher leis | Existe, com problemas | [perguntas-por-lei.html](../design/super-maquete/imagens/perguntas-por-lei.jpg) | **Problema:** Uma pergunta sem lei aparece como «Lei — Law null». As leis 11 a 14 com nome em português. |
+| Aprender | ↳ Escolher áreas | Existe, com problemas | [perguntas-por-area.html](../design/super-maquete/imagens/perguntas-por-area.jpg) | **Problema:** Os nomes das áreas aparecem em inglês. As áreas para praticar. |
+| Aprender | ↳ A responder | Existe | [perguntas-sessao.html](../design/super-maquete/imagens/perguntas-sessao.jpg) | Relógio, certas até agora, «Terminar sessão». |
+| Aprender | ↳ Resposta certa | Existe | [perguntas-certa.html](../design/super-maquete/imagens/perguntas-certa.jpg) | A opção fica verde. |
+| Aprender | ↳ Resposta errada | Existe | [perguntas-errada.html](../design/super-maquete/imagens/perguntas-errada.jpg) | A tua a vermelho, a certa a verde. |
+| Aprender | ↳ Terminar a sessão? | Existe | [perguntas-terminar.html](../design/super-maquete/imagens/perguntas-terminar.jpg) | A janela de confirmação. |
+| Aprender | ↳ Sessão concluída | Existe | [perguntas-revisao.html](../design/super-maquete/imagens/perguntas-revisao.jpg) | Certas, tempo, precisão, e as respostas para rever. |
+| Aprender | Vídeos | Existe, com problemas | [videos.html](../design/super-maquete/imagens/videos.jpg) | **Problema:** Só há um vídeo, e quando não carrega a mensagem é técnica e dirigida à equipa. Um lance em vídeo, depois «Que ação deve o árbitro tomar?» e a sanção. |
+| Aprender | ↳ A escolher a sanção | Existe | [videos-sancao.html](../design/super-maquete/imagens/videos-sancao.jpg) | Sem cartão, amarelo ou vermelho. |
+| Aprender | ↳ Resultado do vídeo | Existe | [videos-resultado.html](../design/super-maquete/imagens/videos-resultado.jpg) | «Parcialmente correta», com a ação e a sanção certas. |
+| Aprender | ↳ Sem vídeos | Existe | [videos-vazio.html](../design/super-maquete/imagens/videos-vazio.jpg) | «Ainda não há cenários de vídeo disponíveis.» |
+| Aprender | Cursos | A meio | [cursos.html](../design/super-maquete/imagens/cursos.jpg) | **Problema:** Não há cursos. Só a palavra «Brevemente.» |
+| Aprender | Recursos | A meio | [recursos.html](../design/super-maquete/imagens/recursos.jpg) | **Problema:** Os ficheiros não existem e «Transferir» não faz nada. Cinco ficheiros («Leis do Jogo 2024/25»…) com «Transferir». |
+| Aprender | Testes disponíveis | Existe, com problemas | [testes-lista.html](../design/super-maquete/imagens/testes-lista.jpg) | **Problema:** São exemplos de programação («React Basics»), e os títulos quase não se veem. Três questionários com «Iniciar teste», pelo menu lateral. |
+| Aprender | Abrir um desses testes | Existe, com problemas | [teste-endereco.html](../design/super-maquete/imagens/teste-endereco.jpg) | **Problema:** Os testes da lista não existem: mostra um erro técnico em inglês. Uma caixa rosa com um erro. |
+| Aprender | Notícias | Só no código | Sem ecrã | Três artigos de exemplo guardados, sem página para os ler. |
+| Comunidade | Feed | Existe, com problemas | [comunidade.html](../design/super-maquete/imagens/comunidade.jpg) | **Problema:** Republicar mostra «reposted» em inglês, e guardar não leva a lado nenhum. Filtros por tipo, cartões com gosto, comentários, republicar, guardar e partilhar; o «+» amarelo para publicar. |
+| Comunidade | ↳ A carregar | Existe | [comunidade-a-carregar.html](../design/super-maquete/imagens/comunidade-a-carregar.jpg) | As silhuetas. |
+| Comunidade | ↳ Ainda sem publicações | Existe | [comunidade-vazia.html](../design/super-maquete/imagens/comunidade-vazia.jpg) | «Ainda não há publicações». |
+| Comunidade | ↳ Erro | Existe | [comunidade-erro.html](../design/super-maquete/imagens/comunidade-erro.jpg) | «Ocorreu um erro ao carregar o feed.» e «Tentar novamente». |
+| Comunidade | ↳ Só imagens | Existe | [comunidade-imagens.html](../design/super-maquete/imagens/comunidade-imagens.jpg) | O filtro «Imagem». |
+| Comunidade | ↳ Comentários | Existe, com problemas | [comunidade-comentarios.html](../design/super-maquete/imagens/comunidade-comentarios.jpg) | **Problema:** Se um comentário falhar, ninguém avisa e o contador sobe na mesma. Abrem dentro do cartão, com respostas e @menções a amarelo. |
+| Comunidade | ↳ Mencionar alguém | Existe, com problemas | [comunidade-mencao.html](../design/super-maquete/imagens/comunidade-mencao.jpg) | **Problema:** Sem resultados diz «No users found», em inglês. Ao escrever «@an» aparece a lista de pessoas. |
+| Comunidade | ↳ Menu numa publicação de outra pessoa | Existe | [comunidade-menu-outro.html](../design/super-maquete/imagens/comunidade-menu-outro.jpg) | Denunciar a publicação, denunciar a pessoa, bloquear. |
+| Comunidade | ↳ Menu numa publicação minha | Existe, com problemas | [comunidade-menu-meu.html](../design/super-maquete/imagens/comunidade-menu-meu.jpg) | **Problema:** Elimina sem pedir confirmação. «Eliminar publicação». |
+| Comunidade | ↳ Denunciar | Existe, com problemas | [comunidade-denunciar.html](../design/super-maquete/imagens/comunidade-denunciar.jpg) | **Problema:** Diz «este post» e «este user», e depois de enviar não confirma nada. Três motivos e uma caixa para descrever. |
+| Comunidade | ↳ Bloquear | Existe | [comunidade-bloquear.html](../design/super-maquete/imagens/comunidade-bloquear.jpg) | «Bloquear @anacosta?» |
+| Comunidade | ↳ Nova publicação | Existe | [comunidade-publicar.html](../design/super-maquete/imagens/comunidade-publicar.jpg) | Texto e um ficheiro: imagem, vídeo ou áudio. |
+| Comunidade | ↳ Publicar sem nada escrito | Existe | [comunidade-publicar-erro.html](../design/super-maquete/imagens/comunidade-publicar-erro.jpg) | «Escreve algo ou anexa multimédia.» |
+| Comunidade | Publicação aberta | Existe, com problemas | [publicacao.html](../design/super-maquete/imagens/publicacao.jpg) | **Problema:** O título diz «Publicar» em vez de «Publicação». A publicação com os comentários abertos. |
+| Comunidade | ↳ Publicação que já não existe | Existe | [publicacao-inexistente.html](../design/super-maquete/imagens/publicacao-inexistente.jpg) | «Publicação não encontrada ou já eliminada.» |
+| Comunidade | Janela de partilha | Só no código | Sem ecrã | WhatsApp, X, Facebook, Telegram, Email e «Copiar». Ninguém a usa: «Partilhar» copia a ligação. |
+| Perfil | O meu perfil | Existe, com problemas | [perfil.html](../design/super-maquete/imagens/perfil.jpg) | **Problema:** Não mostra nada do treino nem quem me segue. Iniciais ou foto, nome, @utilizador, e as minhas publicações. |
+| Perfil | ↳ Sem publicações | Existe | [perfil-vazio.html](../design/super-maquete/imagens/perfil-vazio.jpg) | Só o cartão do perfil. |
+| Perfil | Editar perfil | Existe | [perfil-editar.html](../design/super-maquete/imagens/perfil-editar.jpg) | Foto, nome e nome de utilizador, com verificação se está livre. |
+| Perfil | Perfil de outra pessoa | Existe, com problemas | [perfil-outro.html](../design/super-maquete/imagens/perfil-outro.jpg) | **Problema:** Seguir pode estar a falhar sempre, e não se vê quem se segue. «Seguir» e «Mensagem», e as publicações dela. |
+| Perfil | ↳ Menu do perfil | Existe | [perfil-outro-menu.html](../design/super-maquete/imagens/perfil-outro-menu.jpg) | Denunciar ou bloquear a pessoa. |
+| Perfil | ↳ Pessoa que bloqueei | Existe | [perfil-outro-bloqueado.html](../design/super-maquete/imagens/perfil-outro-bloqueado.jpg) | O perfil com «Desbloquear». |
+| Perfil | ↳ Pessoa que me bloqueou | Existe | [perfil-outro-bloqueou-te.html](../design/super-maquete/imagens/perfil-outro-bloqueou-te.jpg) | O perfil sem publicações. |
+| Perfil | ↳ Pessoa que não existe | Existe | [perfil-outro-inexistente.html](../design/super-maquete/imagens/perfil-outro-inexistente.jpg) | O aviso de perfil não encontrado. |
+| Perfil | Perfil público antigo | Só no código | Sem ecrã | Uma segunda versão do perfil de outra pessoa. Ninguém a usa. |
+| Mensagens | Conversas | Existe, com problemas | [mensagens.html](../design/super-maquete/imagens/mensagens.jpg) | **Problema:** A lista não se atualiza sozinha. Procurar alguém, e cada conversa com a última mensagem e quantas faltam ler. |
+| Mensagens | ↳ Sem conversas | Existe | [mensagens-vazia.html](../design/super-maquete/imagens/mensagens-vazia.jpg) | A lista vazia. |
+| Mensagens | ↳ Procurar pessoa | Existe | [mensagens-procurar.html](../design/super-maquete/imagens/mensagens-procurar.jpg) | Ao escrever «ru» aparecem as pessoas. |
+| Mensagens | Conversa | Existe, com problemas | [conversa.html](../design/super-maquete/imagens/conversa.jpg) | **Problema:** Os anexos ficam num sítio público: quem tiver a ligação vê. Balões, data e hora, anexar e «Enviar». As mensagens chegam na hora. |
+| Mensagens | ↳ Conversa nova | Existe | [conversa-vazia.html](../design/super-maquete/imagens/conversa-vazia.jpg) | Ainda sem mensagens. |
+| Mensagens | ↳ A escrever | Existe | [conversa-a-escrever.html](../design/super-maquete/imagens/conversa-a-escrever.jpg) | A mensagem na caixa, antes de enviar. |
+| Pesquisa | Pesquisar pessoas | Existe, com problemas | [pesquisa.html](../design/super-maquete/imagens/pesquisa.jpg) | **Problema:** Só procura pessoas, e as recentes são as de todas as contas do mesmo telemóvel. O campo, as pesquisas recentes e «Limpar tudo». |
+| Pesquisa | ↳ Primeira vez | Existe | [pesquisa-vazia.html](../design/super-maquete/imagens/pesquisa-vazia.jpg) | Sem pesquisas recentes. |
+| Pesquisa | ↳ Resultados | Existe | [pesquisa-resultados.html](../design/super-maquete/imagens/pesquisa-resultados.jpg) | Ao escrever «ana». |
+| Pesquisa | ↳ Sem resultados | Existe | [pesquisa-sem-resultados.html](../design/super-maquete/imagens/pesquisa-sem-resultados.jpg) | Nenhuma pessoa encontrada. |
+| Avisos | Notificações | Existe, com problemas | [notificacoes.html](../design/super-maquete/imagens/notificacoes.jpg) | **Problema:** «Completa o teu perfil» nunca desaparece, mesmo depois de completo. Gostos, comentários, menções, novos seguidores, republicações, avisos do plano. |
+| Avisos | ↳ Sem notificações | Existe | [notificacoes-vazia.html](../design/super-maquete/imagens/notificacoes-vazia.jpg) | A página vazia. |
+| Avisos | Avisos que nunca chegam | Só no código | Sem ecrã | Nova mensagem, sequências e conteúdo novo. Têm interruptor nas Definições, mas nada os envia. |
+| Avisos | Lembrete do fim do plano | Existe, com problemas | Sem ecrã | **Problema:** Avisa quem renova que o plano «vai expirar», e cada aviso só sai uma vez na vida. Um aviso automático antes do fim do plano. |
+| Conta | Definições | Existe, com problemas | [definicoes.html](../design/super-maquete/imagens/definicoes.jpg) | **Problema:** 5 dos 11 interruptores não fazem nada. Perfil, conta, 11 interruptores de avisos, quem te pode escrever, bloqueados, aprendizagem, legal. |
+| Conta | ↳ Eliminar conta | Existe, com problemas | [definicoes-apagar.html](../design/super-maquete/imagens/definicoes-apagar.jpg) | **Problema:** Cancela logo o plano pago, sem reembolso. Escrever DELETE para confirmar. |
+| Conta | ↳ Limpar o histórico de aprendizagem | Existe | [definicoes-limpar.html](../design/super-maquete/imagens/definicoes-limpar.jpg) | A janela de confirmação. |
+| Conta | Planos e faturação | Existe, com problemas | [planos.html](../design/super-maquete/imagens/planos.jpg) | **Problema:** Pagar não muda nada no produto: tudo o que é «premium» é grátis. Gratuito, Pro a €4.99 (Recomendado) e Plus a €9.99. |
+| Conta | ↳ Com o plano Pro | Existe | [planos-pro.html](../design/super-maquete/imagens/planos-pro.jpg) | O plano, o estado, a renovação, cancelar, gerir na Stripe, histórico de compras. |
+| Conta | ↳ Mudar para Plus | Existe, com problemas | [planos-pro-mudar.html](../design/super-maquete/imagens/planos-pro-mudar.jpg) | **Problema:** Diz que muda no próximo ciclo, mas muda logo. A janela de confirmação. |
+| Conta | ↳ Cancelar o plano | Existe | [planos-pro-cancelar.html](../design/super-maquete/imagens/planos-pro-cancelar.jpg) | A janela de confirmação. |
+| Conta | ↳ Cancelamento pendente | Existe, com problemas | [planos-a-cancelar.html](../design/super-maquete/imagens/planos-a-cancelar.jpg) | **Problema:** Não se pode voltar atrás dentro da app. «A tua subscrição será cancelada no fim do período». |
+| Conta | ↳ Pagamento falhou | Existe | [planos-pagamento-falhou.html](../design/super-maquete/imagens/planos-pagamento-falhou.jpg) | O aviso vermelho para atualizar o cartão. |
+| Conta | ↳ Regresso do pagamento | Existe, com problemas | [planos-checkout-feito.html](../design/super-maquete/imagens/planos-checkout-feito.jpg) | **Problema:** Pode ficar assim até se recarregar a página. «A processar a tua subscrição…» |
+| Conta | Pagar | Não consegui ver | Sem ecrã | A página de pagamento e o portal são da Stripe. Fora da app; não vi. |
+| Conta | Janela antiga de eliminar conta | Só no código | Sem ecrã | Uma segunda janela de eliminar conta. Ninguém a usa. |
+| Conta | Reportar um problema | Só no código | Sem ecrã | Uma janela prevista para reportar problemas. Está vazia e ninguém a usa. |
+| Conta | Assistente | Só no código | Sem ecrã | O «chatbot» do README. Não há nada: pastas vazias. |
+| Por trás | Funções no servidor | Existe, com problemas | Sem ecrã | **Problema:** Uma delas aceita pedidos de qualquer pessoa. Oito: pagamento, portal, cancelar, mudar de plano, faturas, avisos da Stripe, apagar conta, sincronizar vídeos. |
+| Por trás | Base de dados | Existe, com problemas | Sem ecrã | **Problema:** Qualquer pessoa pode tornar-se administradora e ler o email de toda a gente. 49 migrações e 38 tabelas. |
+
 ## Como está montado (nomes apenas)
 
 | Peça | O quê |

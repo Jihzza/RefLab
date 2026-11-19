@@ -2866,7 +2866,7 @@ a:hover {
   .pricing-swiper .swiper-wrapper {
     transition-timing-function: ease-out;
   }
-</style><h2 class="text-2xl md:text-3xl font-bold text-(--text-primary) text-center mb-8 px-6">Escolhe o teu plano</h2><div class="swiper swiper-initialized swiper-horizontal swiper-watch-progress swiper-backface-hidden pricing-swiper" style="cursor: grab;"><div class="swiper-wrapper" style="transition-duration: 500ms; transform: translate3d(-744.333px, 0px, 0px);"><div class="swiper-slide py-4" data-swiper-slide-index="4" style="width: 254.667px; margin-right: 16px;"><div class="
+</style><h2 class="text-2xl md:text-3xl font-bold text-(--text-primary) text-center mb-8 px-6">Escolhe o teu plano</h2><div class="swiper swiper-initialized swiper-horizontal swiper-watch-progress swiper-backface-hidden pricing-swiper" style="cursor: grab;"><div class="swiper-wrapper" style="transition-duration: 0ms; transform: translate3d(-744.333px, 0px, 0px); transition-delay: 0ms;"><div class="swiper-slide py-4" data-swiper-slide-index="4" style="width: 254.667px; margin-right: 16px;"><div class="
         flex flex-col min-h-[360px] p-6 rounded-(--radius-card) shadow-(--shadow-soft) bg-(--bg-surface)
         border-2 border-(--brand-yellow) ring-2 ring-(--brand-yellow)/20
       "><h3 class="
@@ -2930,23 +2930,4 @@ a:hover {
     
   
 
-<script>window.__SCROLL=0;</script><script id="maquete-ligacoes">
-/* Maquete: ligações a mais dentro das fotografias (ícones e separadores que na app são botões). */
-(function(){
-  var here = location.pathname.split('/').pop();
-  var learn = /^(aprender|perguntas|videos|cursos|recursos|teste-|aprender-)/.test(here);
-  var tabs = { 'Teste': 'aprender.html', 'Perguntas': 'perguntas.html', 'Vídeos': 'videos.html', 'Cursos': 'cursos.html', 'Recursos': 'recursos.html' };
-  document.addEventListener('click', function(e){
-    var t = e.target; if (!t.closest) return;
-    var to = null;
-    if (t.closest('header [aria-label="Pesquisar"]')) to = 'pesquisa.html';
-    else if (t.closest('header [aria-label="Abrir menu"]')) to = 'menu.html';
-    else if (t.closest('header [aria-label*="otifica"]')) to = 'notificacoes.html';
-    else if (t.closest('header [aria-label="Início RefLab"]')) to = 'painel.html';
-    else if (learn) { var b = t.closest('button'); var k = b && b.textContent.trim(); if (k && tabs[k] && b.closest('nav, .border-b')) to = tabs[k]; }
-    else if (here === 'inicio.html' || here === 'inicio-cookies.html') { var b2 = t.closest('button'); var k2 = b2 && b2.textContent.trim(); if (k2 === 'Criar conta' && !b2.closest('form')) to = 'criar-conta.html'; else if (k2 === 'Esqueceste-te da palavra-passe?') to = 'esqueci.html'; }
-    else if (/^(criar-conta|esqueci)/.test(here)) { var b3 = t.closest('button'); var k3 = b3 && b3.textContent.trim(); if (k3 === 'Iniciar sessão' && !b3.closest('form')) to = 'inicio.html'; else if (/Voltar ao início de sessão/.test(k3 || '')) to = 'inicio.html'; }
-    if (to && to !== here) { e.preventDefault(); e.stopPropagation(); location.href = to; }
-  }, true);
-})();
-</script></body></html>
+<script>window.__SCROLL=346;</script></body></html>

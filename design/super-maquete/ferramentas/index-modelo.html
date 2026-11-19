@@ -3,21 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>RefLab: a super maquete do que existe hoje</title>
+<title>RefLab · o que existe hoje</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* A «super maquete» do RefLab: o mapa de todas as partes da app como existe hoje (ramo main) e, ao lado (ou por cima,
-   no telemóvel), a app. Mesma mecânica da super maquete da Tertúlia; as cores e a letra são as do próprio RefLab
-   (apps/frontend/src/styles/globals.css). Cada página é uma fotografia da app verdadeira com dados de exemplo. */
+/* A «super maquete»: um mapa de todas as páginas decididas e, ao lado (ou por cima, no telemóvel), a app a funcionar.
+   As páginas são as maquetes finais desta pasta, tal como estão: aqui só se juntam. Mesmas cores e letras. */
 :root{
   color-scheme:dark;
-  --bg:#14192c;--surface:#181f32;--block:#1e2842;--text:#f5f7fa;--muted:#b8c0d4;
-  --border:#24304a;--border-strong:#2f3c5c;--accent:#f6c21c;--on-accent:#14192c;
-  --stage:#0d1120;--bezel:#090c17;--ok:#3ddc97;--warn:#f6a821;--err:#e53935;
-  --font-display:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --font-body:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --bg:#0A1436;--surface:#1C2E6E;--block:#1B2A62;--text:#F3F6FE;--muted:#AEB9DB;
+  --border:#2C3E7E;--border-strong:#6F82B8;--accent:#9DB4FA;--on-accent:#0A1436;
+  --stage:#060C24;--bezel:#050A1E;
+  --font-display:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --ease:cubic-bezier(.2,.7,.2,1);
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -72,19 +71,12 @@ a.row .t::after{content:"\00a0\00a0\203A";color:var(--muted);font-weight:500}   
 .row[aria-current="true"] .t{color:var(--accent)}
 div.row{cursor:default}
 .tag{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
-.tag.existe{background:var(--ok);color:var(--on-accent)}
-.tag.problemas{background:var(--accent);color:var(--on-accent)}
-.tag.ameio{border-color:var(--warn);color:var(--warn)}
-.tag.codigo{border:1px dashed var(--border-strong);color:var(--text)}
-.tag.naovi{border-color:var(--border);color:var(--muted)}
-.know{display:grid;gap:3px;font-size:12.5px;line-height:1.35;color:var(--muted)}
-.know b{color:var(--text);font-weight:600}
-.know code{font-size:11.5px;color:var(--text);word-break:break-all}
-.know .bug b{color:var(--err)}
-details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600;min-height:32px;display:flex;align-items:center}
-.frames{display:flex;gap:6px;margin-top:12px}
-.frames button{min-height:36px;padding:0 12px;border:1px solid var(--border-strong);border-radius:999px;font-size:13px;font-weight:600;color:var(--muted)}
-.frames button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.tag.naapp{background:var(--accent);color:var(--on-accent)}
+.tag.nova{background:var(--text);color:var(--on-accent)}
+.tag.construir{border-color:var(--accent);color:var(--accent)}
+.tag.aberta{border:1px dashed var(--border-strong);color:var(--text)}
+.tag.sem{border-color:var(--border);color:var(--muted)}
+.tag.filme{border:1px dashed var(--accent);color:var(--text)}
 /* por baixo de uma linha: quem constrói, a imagem aprovada, as opções por escolher */
 .more{padding:0 0 12px;display:grid;gap:8px}
 .more.sub{padding-left:14px}
@@ -134,9 +126,9 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
 .device{box-sizing:content-box;width:var(--fw);height:var(--fh);padding:10px;border:1px solid var(--border-strong);border-radius:56px;background:var(--bezel);transform-origin:0 0;transform:scale(var(--s,1))}
 .device iframe{display:block;width:100%;height:100%;border:0;border-radius:46px;background:var(--bg)}
 .app{--fw:390px;--fh:844px}
-.app.pc{--fw:1280px;--fh:800px}
-.app.pc .device{border-radius:18px;padding:8px}
-.app.pc .device iframe{border-radius:10px}
+.app.deitado{--fw:844px;--fh:390px}
+.app.deitado .device{border-radius:44px}
+.app.deitado .device iframe{border-radius:34px}
 .back{display:none}
 
 /* ---------- no telemóvel: o mapa é a página; a app abre por cima, em ecrã inteiro ---------- */
@@ -148,7 +140,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   .app.ver .map{visibility:hidden}
   .slot{width:100%;height:calc(100% - 52px - env(safe-area-inset-bottom))}   /* a faixa de baixo é do botão «Mapa»: nunca tapa a app */
   .device{width:100%;height:100%;padding:0;border:0;border-radius:0;transform:none;box-sizing:border-box}
-  .device iframe,.app.pc .device iframe{border-radius:0}
+  .device iframe,.app.deitado .device iframe{border-radius:0}
   .back{display:inline-flex;position:fixed;left:10px;bottom:calc(4px + env(safe-area-inset-bottom));z-index:6;min-height:44px;padding:0 14px;border:1px dashed var(--border-strong);border-radius:999px;background:var(--bg);font-size:13px;font-weight:600;color:var(--muted);align-items:center;gap:7px}
   .back svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
   .app:not(.ver) .back{display:none}
@@ -157,17 +149,51 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
 @media (min-width:901px){.open{display:none}.ops{margin:0;padding-left:0;padding-right:0}}
 @media (min-width:600px) and (max-width:900px){.counts{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ---------- acrescentos da super maquete do RefLab: o mesmo aspeto, uma só cor de destaque ---------- */
+.tag.existe{background:var(--accent);color:var(--on-accent)}
+.tag.problemas{border-color:var(--accent);color:var(--accent)}
+.tag.ameio{border:1px dashed var(--accent);color:var(--text)}
+.tag.codigo{border:1px dashed var(--border-strong);color:var(--muted)}
+.tag.naovi{border-color:var(--border);color:var(--muted)}
+.counts .prob{grid-column:1/-1}
+.row .p{grid-column:1;font-size:13.5px;line-height:1.3;color:var(--text)}
+.row .p::before{content:"Problema: ";color:var(--accent);font-weight:600}
+details.ficha>summary{list-style:none;cursor:pointer;min-height:32px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--accent);border-radius:8px}
+details.ficha>summary::-webkit-details-marker{display:none}
+details.ficha>summary::after{content:"\203A";transition:transform .2s var(--ease)}
+details.ficha[open]>summary::after{transform:rotate(90deg)}
+.know{display:grid;gap:4px;padding:2px 0 6px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.know b{color:var(--text);font-weight:600}
+.know code{font-size:11.5px;color:var(--text);word-break:break-word}
+details.semecra{margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+details.semecra>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+details.semecra>summary::-webkit-details-marker{display:none}
+details.semecra>summary span{font-weight:500;font-size:13px}
+details.semecra>summary::after{content:"\203A";font-size:18px;transition:transform .2s var(--ease)}
+details.semecra[open]>summary::after{transform:rotate(90deg)}
+.frames{display:flex;gap:6px}
+.frames button{min-height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.frames button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--block)}
+.frames.no-mapa{margin-top:10px}
+.frames.no-palco{position:absolute;top:16px;right:16px;z-index:3}
+@media (min-width:901px){.frames.no-mapa{display:none}}
+@media (max-width:900px){.frames.no-palco{display:none}}
+.app.pc{--fw:1280px;--fh:800px}
+.app.pc .device{border-radius:18px;padding:8px}
+.app.pc .device iframe{border-radius:10px}
+@media (max-width:900px){.device iframe,.app.pc .device iframe{border-radius:0}}
 </style>
 </head>
 <body>
 <div class="app" id="app">
   <main class="map" id="map">
     <div class="map-in">
-      <p class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 19L9 5h3.5L6.5 19z" fill="#f6c21c"/><path d="M8.5 19l6-14H18l-6 14z" fill="#f6c21c"/><path d="M14 19l6-14h3.5l-6 14z" fill="#e53935"/></svg></span>RefLab · a super maquete</p>
-      <h1>O RefLab, como existe hoje</h1>
-      <p class="lede">Todas as partes da app, uma por linha, com o que se sabe de cada uma. Cada ecrã é a <b>app verdadeira</b> (ramo <b>main</b>) desenhada com dados de exemplo. Toca numa linha com seta para a abrir; «O que se sabe» abre a ficha.</p>
-      <div class="frames" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
+      <p class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle class="o-line" cx="12" cy="12" r="10.500"/><path class="o-fill" d="M12 12C8.800 9.200 8.800 5.200 12 2.500c3.200 2.700 3.200 6.700 0 9.500zm0 0c2.800-3.200 6.800-3.200 9.500 0-2.700 3.200-6.700 3.200-9.500 0zm0 0c3.200 2.800 3.200 6.800 0 9.500-3.200-2.700-3.200-6.700 0-9.500zm0 0c-2.800 3.200-6.800 3.200-9.500 0 2.700-3.200 6.700-3.200 9.500 0z"/></svg></span>RefLab · o que existe hoje</p>
+      <h1>O RefLab, como está hoje</h1>
+      <p class="lede">Todas as partes da app de treino para árbitros, uma por linha: o que <b>funciona</b>, o que <b>funciona com problemas</b>, o que está <b>a meio</b> e o que <b>só existe no código</b>. Cada ecrã é a app verdadeira com dados de exemplo. Toca numa linha com seta para a abrir.</p>
       <button class="open" type="button" id="open">Abrir a app no Painel<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="frames no-mapa" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
       <div class="counts" id="counts" role="group" aria-label="Mostrar"></div>
       <div id="secs"></div>
       <p class="foot" id="foot"></p>
@@ -175,18 +201,10 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   </main>
 
   <section class="view" id="view" aria-label="A app">
+    <div class="frames no-palco" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
     <div class="slot"><div class="device"><iframe id="frame" title="A app" src="about:blank"></iframe></div></div>
     <button class="back" type="button" id="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Mapa</button>
   </section>
-</div>
-
-<div class="box" id="box" role="dialog" aria-modal="true" aria-labelledby="box-title">
-  <div class="box-head">
-    <div><h2 id="box-title"></h2><p id="box-sub"></p></div>
-    <button class="box-x" type="button" id="box-x" aria-label="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </div>
-  <div class="box-pic" id="box-pic"><button class="box-zoom" type="button" id="box-zoom" aria-label="Aumentar ou diminuir a imagem"><img id="box-img" alt=""></button></div>
-  <div class="box-foot"><p class="answer">Toca na imagem para a aumentar.</p></div>
 </div>
 
 <script>
@@ -194,51 +212,50 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
   const TAG = { existe: 'Existe', problemas: 'Existe, com problemas', ameio: 'A meio', codigo: 'Só no código', naovi: 'Não consegui ver' };
-  const WHAT = { existe: 'Funciona, tanto quanto se vê.', problemas: 'Funciona, mas com falhas.', ameio: 'Começado, não usável.', codigo: 'Existe no código; ninguém lá chega.', naovi: 'Fica descrito, sem ecrã.' };
+  const WHAT = { existe: 'Funciona, tanto quanto se vê.', problemas: 'Funciona, mas com falhas.', ameio: 'Começado, não usável.', codigo: 'Ninguém lá chega.', naovi: 'Descrito, sem ecrã.' };
 
-  /* O mapa. u = página que abre na moldura; sem u = não há ecrã. sub = um estado da página de cima.
-     d = para que serve. k = o que se sabe: onde (ficheiros), dados (lê e escreve), decisoes, problemas, perguntas.
-     shots = imagens para ver em grande. */
+  /* O mapa. u = página que abre na moldura, no seu estado; sem u = vai para «Sem ecrã», fechado no fim da secção.
+     d = o que se vê (para o Daniel). p = o problema, na primeira linha. k = «O que se sabe» (ficheiros, dados, ...). */
   const FOOT = /*RODAPE*/""/*FIMRODAPE*/;
   const MAP = /*MAPA*/[]/*FIM*/;
 
   let filter = 'tudo';
   const all = MAP.flatMap(s => s.rows);
+  const match = r => filter === 'tudo' || r.tag === filter || (filter === 'falhas' && (r.tag === 'problemas' || r.tag === 'ameio'));
   function drawCounts() {
     const n = k => all.filter(r => r.tag === k).length;
     $('#counts').innerHTML = Object.keys(TAG).map(k =>
       '<button type="button" data-f="' + k + '" aria-pressed="' + (filter === k) + '"><span class="n">' + n(k) + '</span><span class="l">' + TAG[k] + '</span><span class="w">' + WHAT[k] + '</span></button>').join('') +
-      '<button class="all" type="button" data-f="tudo" aria-pressed="' + (filter === 'tudo') + '"><span class="n">' + all.length + '</span><span class="l">Tudo</span><span class="w"></span></button>';
+      '<button class="all" type="button" data-f="tudo" aria-pressed="' + (filter === 'tudo') + '"><span class="n">' + all.length + '</span><span class="l">Tudo</span><span class="w"></span></button>' +
+      '<button class="prob" type="button" data-f="falhas" aria-pressed="' + (filter === 'falhas') + '"><span class="n">' + (n('problemas') + n('ameio')) + '</span><span class="l">Só o que tem problemas ou está a meio</span><span class="w">Cada linha diz o problema logo por baixo do nome.</span></button>';
   }
-  const KN = [['onde', 'Onde vive'], ['dados', 'Dados'], ['decisoes', 'Decisões nos documentos'], ['problemas', 'Problemas conhecidos'], ['perguntas', 'Perguntas']];
+  const KN = [['onde', 'Onde vive no código'], ['dados', 'Dados que lê e escreve'], ['decisoes', 'Decisões nos documentos'], ['problemas', 'Problemas, em pormenor'], ['perguntas', 'Perguntas']];
   let current = null;
-  const shots = [];
+  function rowHtml(r) {
+    const inner = '<span class="t">' + esc(r.t) + '</span>' + (r.p ? '<span class="p">' + esc(r.p) + '</span>' : '') + (r.d ? '<span class="d">' + esc(r.d) + '</span>' : '') + '<span class="tag ' + r.tag + '">' + TAG[r.tag] + '</span>';
+    const cls = 'row' + (r.sub ? ' sub' : '');
+    let more = '';
+    if (r.nota) more += '<p class="quem">' + esc(r.nota) + '</p>';
+    if (r.k) {
+      const parts = KN.filter(([key]) => r.k[key] && r.k[key].length).map(([key, label]) =>
+        '<p><b>' + label + ':</b> ' + [].concat(r.k[key]).map(x => key === 'onde' ? '<code>' + esc(x) + '</code>' : esc(x)).join(key === 'onde' ? ' · ' : ' — ') + '</p>');
+      if (parts.length) more += '<details class="ficha"><summary>O que se sabe</summary><div class="know">' + parts.join('') + '</div></details>';
+    }
+    return '<li>' + (r.u
+      ? '<a class="' + cls + '" href="' + esc(r.u) + '" data-u="' + esc(r.u) + '"' + (r.u === current ? ' aria-current="true"' : '') + '>' + inner + '</a>'
+      : '<div class="' + cls + '">' + inner + '</div>') + (more ? '<div class="more' + (r.sub ? ' sub' : '') + '">' + more + '</div>' : '') + '</li>';
+  }
   function drawMap() {
-    shots.length = 0;
     $('#secs').innerHTML = MAP.map(s => {
-      const rows = s.rows.filter(r => filter === 'tudo' || r.tag === filter);
+      const rows = s.rows.filter(match);
       if (!rows.length) return '';
-      return '<section class="sec"><h2>' + esc(s.t) + '</h2>' + (s.how ? '<p class="how">' + esc(s.how) + '</p>' : '') + '<ul class="rows">' + rows.map(r => {
-        const inner = '<span class="t">' + esc(r.t) + '</span>' + (r.d ? '<span class="d">' + esc(r.d) + '</span>' : '') + '<span class="tag ' + r.tag + '">' + TAG[r.tag] + '</span>';
-        const cls = 'row' + (r.sub ? ' sub' : '');
-        let more = '';
-        if (r.nota) more += '<p class="quem">' + esc(r.nota) + '</p>';
-        if (r.k) {
-          const parts = KN.filter(([key]) => r.k[key] && r.k[key].length).map(([key, label]) =>
-            '<p class="' + (key === 'problemas' ? 'bug' : '') + '"><b>' + label + ':</b> ' + [].concat(r.k[key]).map(x => key === 'onde' ? '<code>' + esc(x) + '</code>' : esc(x)).join(key === 'onde' ? ' · ' : ' — ') + '</p>');
-          if (parts.length) more += '<details class="ficha"><summary>O que se sabe</summary><div class="know">' + parts.join('') + '</div></details>';
-        }
-        return '<li>' + (r.u
-          ? '<a class="' + cls + '" href="' + esc(r.u) + '" data-u="' + esc(r.u) + '"' + (r.u === current ? ' aria-current="true"' : '') + '>' + inner + '</a>'
-          : '<div class="' + cls + '">' + inner + '</div>') + (more ? '<div class="more' + (r.sub ? ' sub' : '') + '">' + more + '</div>' : '') + '</li>';
-      }).join('') + '</ul></section>';
+      const seen = rows.filter(r => r.u), none = rows.filter(r => !r.u);
+      return '<section class="sec"><h2>' + esc(s.t) + '</h2>' + (s.how ? '<p class="how">' + esc(s.how) + '</p>' : '') +
+        (seen.length ? '<ul class="rows">' + seen.map(rowHtml).join('') + '</ul>' : '') +
+        (none.length ? '<details class="semecra"' + (filter !== 'tudo' && !seen.length ? ' open' : '') + '><summary>Sem ecrã <span>' + none.length + (none.length === 1 ? ' parte' : ' partes') + '</span></summary><ul class="rows">' + none.map(rowHtml).join('') + '</ul></details>' : '') +
+        '</section>';
     }).join('');
   }
-
-  const box = $('#box'); let boxOpener = null;
-  function closeShot() { if (!box.classList.contains('aberta')) return false; box.classList.remove('aberta'); app.inert = false; if (boxOpener) boxOpener.focus({ preventScroll: true }); return true; }
-  $('#box-x').addEventListener('click', closeShot);
-  $('#box-zoom').addEventListener('click', () => { const b = $('#box-pic'); b.classList.toggle('zoom'); b.scrollTop = 0; b.scrollLeft = 0; });
 
   const app = $('#app'), frame = $('#frame'), small = matchMedia('(max-width:900px)');
   let pc = false;
@@ -253,7 +270,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
     if (small.matches) { document.documentElement.style.removeProperty('--s'); return; }
     const v = $('#view'), big = app.classList.contains('pc');
     const fw = (big ? 1280 : 390) + 22, fh = (big ? 800 : 844) + 22;
-    const s = Math.min(1, (v.clientHeight - 32) / fh, (v.clientWidth - 32) / fw);
+    const s = Math.min(1, (v.clientHeight - 88) / fh, (v.clientWidth - 32) / fw);
     document.documentElement.style.setProperty('--s', Math.max(.3, s).toFixed(4));
   }
   function mark(u) {
@@ -286,7 +303,7 @@ details.ficha summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-w
   document.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => setFrame(b.dataset.frame === 'pc')));
   $('#open').addEventListener('click', () => show('painel.html'));
   $('#back').addEventListener('click', backToMap);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!closeShot() && app.classList.contains('ver')) backToMap(); } });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && app.classList.contains('ver')) backToMap(); });
 
   /* As páginas dizem onde estão (quando se anda lá dentro): o mapa acompanha. */
   addEventListener('message', e => {

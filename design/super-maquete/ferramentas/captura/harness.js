@@ -4,9 +4,10 @@ const fs = require('fs'), path = require('path');
 const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
 const now = Math.floor(Date.now()/1000);
 exports.USER = { id:'11111111-1111-1111-1111-111111111111', aud:'authenticated', role:'authenticated', email:'joao.silva@example.com', user_metadata:{ full_name:'João Silva' }, app_metadata:{provider:'email'}, identities:[{provider:'email'}], created_at:'2026-02-01T10:00:00Z' };
-function session(user) {
-  const jwt = b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub:user.id,exp:now+86400*30,role:'authenticated',aud:'authenticated',email:user.email})+'.sig';
-  return { access_token: jwt, refresh_token:'r', expires_in:86400*30, expires_at: now+86400*30, token_type:'bearer', user };
+function session(user, exp) {
+  const ttl = exp || 86400*30;
+  const jwt = b64({alg:'HS256',typ:'JWT'})+'.'+b64({sub:user.id,exp:now+ttl,role:'authenticated',aud:'authenticated',email:user.email})+'.sig';
+  return { access_token: jwt, refresh_token:'r', expires_in:ttl, expires_at: Math.floor(Date.now()/1000)+ttl, token_type:'bearer', user };
 }
 // fixtures: array of [matcher, response]; matcher = 'METHOD /path' prefix or function(req,u). response = value | function
 function resolve(fx, req, u) {
@@ -69,7 +70,7 @@ exports.run = async function (shots, opts = {}) {
     });
     await page.route('**/*.{mp4,webm}', r => r.abort());
     await page.route(u => /^https?:\/\/(?!localhost|mock\.supabase|fonts\.)/.test(u.toString()), r => r.fulfill({ status: 200, contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="100%" height="100%" fill="#2f3c5c"/></svg>' }));
-    const sess = s.auth === false ? null : session(s.user || exports.USER);
+    const sess = s.auth === false ? null : session(s.user || exports.USER, s.sessExp);
     await page.addInitScript(([sess, ls]) => {
       if (!sessionStorage.getItem('__init')) { sessionStorage.setItem('__init', '1'); localStorage.clear(); if (sess) localStorage.setItem('sb-mock-auth-token', JSON.stringify(sess)); for (const k in ls) localStorage.setItem(k, ls[k]); }
     }, [sess, Object.assign({ 'cookie-consent': 'accepted' }, s.ls || {})]);
