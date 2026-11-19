@@ -62,6 +62,7 @@ exports.run = async function (shots, opts = {}) {
       const body = res && res.__body !== undefined ? res.__body : res;
       const accept = req.headers()['accept'] || '';
       let out = body;
+      const lim = +u.searchParams.get('limit'); if (lim && Array.isArray(out)) out = out.slice(0, lim);
       if (accept.includes('vnd.pgrst.object') && Array.isArray(body)) out = body[0] ?? null;
       if (out === null && accept.includes('vnd.pgrst.object')) return r.fulfill({ status: 406, headers, body: JSON.stringify({ code: 'PGRST116', message: 'no rows' }) });
       r.fulfill({ status, headers, body: typeof out === 'string' && res.__raw ? out : JSON.stringify(out ?? null) });

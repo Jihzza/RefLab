@@ -273,7 +273,7 @@ EXTRA = '''<script id="maquete-ligacoes">
 </script>'''
 import glob, re
 for f in glob.glob(OUT + '*.html'):
-    if f.endswith('/index.html'): continue
+    if f.endswith('/index.html') or '/super-maquete' in f: continue
     s = open(f).read()
     s = re.sub(r'<script id="maquete-ligacoes">.*?</script>', '', s, flags=re.S)
     i = s.rindex('</body>'); s = s[:i] + EXTRA + s[i:]
