@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RefLab · o que existe hoje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* A «super maquete»: um mapa de todas as páginas decididas e, ao lado (ou por cima, no telemóvel), a app a funcionar.
+   As páginas são as maquetes finais desta pasta, tal como estão: aqui só se juntam. Mesmas cores e letras. */
+:root{
+  color-scheme:dark;
+  --bg:#0A1436;--surface:#1C2E6E;--block:#1B2A62;--text:#F3F6FE;--muted:#AEB9DB;
+  --border:#2C3E7E;--border-strong:#6F82B8;--accent:#9DB4FA;--on-accent:#0A1436;
+  --stage:#060C24;--bezel:#050A1E;
+  --font-display:"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --font-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--stage);color:var(--text);font-family:var(--font-body);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:inherit}
+a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
+svg{display:block}
+h1,h2,h3,p,ul{margin:0}
+ul{padding:0;list-style:none}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{height:100%;display:grid;grid-template-columns:minmax(360px,460px) minmax(0,1fr)}
+
+/* ---------- o mapa ---------- */
+.map{min-height:0;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);border-right:1px solid var(--border);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.map-in{padding:22px 20px 40px;max-width:560px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--muted)}
+.mark{flex:none;width:30px;height:30px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);display:grid;place-items:center}
+.mark svg{width:22px;height:22px}
+.o-line{fill:none;stroke:var(--border-strong);stroke-width:.6}
+.o-fill{fill:var(--accent)}
+.map h1{font-family:var(--font-display);font-weight:600;font-size:34px;line-height:1.06;letter-spacing:-.01em;margin:14px 0 8px}
+.lede{color:var(--muted);font-size:15px}
+.lede b{color:var(--text);font-weight:600}
+.open{margin-top:16px;width:100%;min-height:48px;border-radius:999px;background:var(--accent);color:var(--on-accent);font-weight:600;font-size:15.5px;display:flex;align-items:center;justify-content:center;gap:8px}
+.open:focus-visible{outline-color:var(--text)}
+.open svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.counts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:18px}
+.counts button{position:relative;display:grid;gap:2px;padding:10px 12px 11px;min-height:72px;border:1px solid var(--border);border-radius:14px;background:var(--bg);align-content:start}
+.counts button[aria-pressed="true"]{border-color:var(--accent);background:var(--block)}
+.counts .n{font-family:var(--font-display);font-weight:600;font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.counts .l{font-size:13.5px;font-weight:600;line-height:1.2}
+.counts .w{font-size:12.5px;color:var(--muted);line-height:1.25}
+.counts .all .w{display:none}
+.sec{margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+.sec h2{font-family:var(--font-display);font-weight:600;font-size:22px;line-height:1.15;letter-spacing:-.01em}
+.sec .how{margin-top:2px;font-size:13px;color:var(--muted)}
+.rows{margin-top:8px}
+.rows li+li{border-top:1px solid var(--border)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;width:100%;min-height:56px;padding:9px 8px;margin:0 -8px;width:calc(100% + 16px);border-radius:10px}
+.row .t{font-weight:600;font-size:15.5px;line-height:1.25}
+.row .d{grid-column:1;font-size:13.5px;color:var(--muted);line-height:1.3}
+.row .tag{grid-column:2;grid-row:1/span 2}
+.row.sub{min-height:44px;padding-left:22px}
+.row.sub .t{font-weight:500;font-size:14.5px}
+a.row .t::after{content:"\00a0\00a0\203A";color:var(--muted);font-weight:500}   /* a seta fica colada à última palavra */
+.row[aria-current="true"]{background:var(--block)}
+.row[aria-current="true"] .t{color:var(--accent)}
+div.row{cursor:default}
+.tag{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.tag.naapp{background:var(--accent);color:var(--on-accent)}
+.tag.nova{background:var(--text);color:var(--on-accent)}
+.tag.construir{border-color:var(--accent);color:var(--accent)}
+.tag.aberta{border:1px dashed var(--border-strong);color:var(--text)}
+.tag.sem{border-color:var(--border);color:var(--muted)}
+.tag.filme{border:1px dashed var(--accent);color:var(--text)}
+/* por baixo de uma linha: quem constrói, a imagem aprovada, as opções por escolher */
+.more{padding:0 0 12px;display:grid;gap:8px}
+.more.sub{padding-left:14px}
+.quem{font-size:13px;color:var(--muted);line-height:1.3}
+.quem b{color:var(--text);font-weight:600}
+.onde{font-size:13px;line-height:1.3;color:var(--muted)}
+.onde b{color:var(--accent);font-weight:600}
+.olds{display:flex;flex-wrap:wrap;gap:4px 14px}
+.olds button{min-height:44px;display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--accent);font-weight:500;border-radius:8px}
+.olds svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ask{font-size:13.5px;font-weight:600}
+.ops{display:flex;gap:10px;overflow-x:auto;padding:2px 0 4px;margin:0 -20px;padding-left:20px;padding-right:20px;scrollbar-width:none;overscroll-behavior-x:contain}
+.ops::-webkit-scrollbar{display:none}
+.op{flex:none;width:168px;display:grid;gap:6px;border-radius:10px;text-align:left;scroll-margin:0 20px}
+.op img{display:block;width:168px;height:112px;object-fit:cover;object-position:top;border:1px solid var(--border-strong);border-radius:8px;background:var(--block)}
+.op .cap{font-size:12.5px;line-height:1.3;color:var(--muted)}
+.op .cap b{display:block;color:var(--text);font-weight:600;font-size:13px}
+/* ver uma imagem em grande */
+.box{position:fixed;inset:0;z-index:20;display:none;grid-template-rows:auto minmax(0,1fr) auto;background:var(--stage)}
+.box.aberta{display:grid}
+.box-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 8px 8px 18px;border-bottom:1px solid var(--border)}
+.box-head h2{font-family:var(--font-display);font-weight:600;font-size:19px;line-height:1.2}
+.box-head p{font-size:13px;color:var(--muted)}
+.box-x{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:10px}
+.box-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.box-pic{min-height:0;overflow:auto;display:grid;place-items:start center;padding:12px;overscroll-behavior:contain}
+.box-zoom{display:block;max-width:100%;border-radius:6px;cursor:zoom-in}
+.box-zoom img{display:block;max-width:100%;height:auto;border-radius:6px;cursor:inherit}
+.box-pic.zoom{place-items:start}
+.box-pic.zoom .box-zoom{max-width:none;width:260%;cursor:zoom-out}
+.box-pic.zoom .box-zoom img{width:100%;max-width:none}
+@media (min-width:901px){.box-pic.zoom .box-zoom{width:160%}}
+.box-foot{border-top:1px solid var(--border);padding:10px 18px calc(12px + env(safe-area-inset-bottom));display:grid;gap:8px;max-height:38vh;overflow-y:auto}
+.letters{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.letters li{display:flex;gap:8px;align-items:baseline}
+.letters b{font-family:var(--font-display);font-weight:600;font-size:17px;color:var(--accent)}
+.box-nav{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.box-nav button{min-height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;font-weight:600;font-size:14px}
+.box-nav button[disabled]{opacity:.4;cursor:default}
+.box-nav span{font-size:13px;color:var(--muted)}
+.answer{font-size:13px;color:var(--muted)}
+.foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+
+/* ---------- a app, dentro da moldura ---------- */
+.view{position:relative;min-width:0;min-height:0;display:grid;place-items:center;overflow:hidden}
+.slot{width:calc((var(--fw) + 22px)*var(--s,1));height:calc((var(--fh) + 22px)*var(--s,1))}
+.device{box-sizing:content-box;width:var(--fw);height:var(--fh);padding:10px;border:1px solid var(--border-strong);border-radius:56px;background:var(--bezel);transform-origin:0 0;transform:scale(var(--s,1))}
+.device iframe{display:block;width:100%;height:100%;border:0;border-radius:46px;background:var(--bg)}
+.app{--fw:390px;--fh:844px}
+.app.deitado{--fw:844px;--fh:390px}
+.app.deitado .device{border-radius:44px}
+.app.deitado .device iframe{border-radius:34px}
+.back{display:none}
+
+/* ---------- no telemóvel: o mapa é a página; a app abre por cima, em ecrã inteiro ---------- */
+@media (max-width:900px){
+  .app{display:block}
+  .map{height:100%;border-right:0}
+  .view{position:fixed;inset:0;z-index:5;background:var(--bg);display:none}
+  .app.ver .view{display:block}
+  .app.ver .map{visibility:hidden}
+  .slot{width:100%;height:calc(100% - 52px - env(safe-area-inset-bottom))}   /* a faixa de baixo é do botão «Mapa»: nunca tapa a app */
+  .device{width:100%;height:100%;padding:0;border:0;border-radius:0;transform:none;box-sizing:border-box}
+  .device iframe,.app.deitado .device iframe{border-radius:0}
+  .back{display:inline-flex;position:fixed;left:10px;bottom:calc(4px + env(safe-area-inset-bottom));z-index:6;min-height:44px;padding:0 14px;border:1px dashed var(--border-strong);border-radius:999px;background:var(--bg);font-size:13px;font-weight:600;color:var(--muted);align-items:center;gap:7px}
+  .back svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .app:not(.ver) .back{display:none}
+}
+@media (hover:hover) and (pointer:fine){.ops{scrollbar-width:thin;scrollbar-color:var(--border-strong) transparent;padding-bottom:10px}.ops::-webkit-scrollbar{display:block;height:8px}.ops::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:4px}}
+@media (min-width:901px){.open{display:none}.ops{margin:0;padding-left:0;padding-right:0}}
+@media (min-width:600px) and (max-width:900px){.counts{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* ---------- acrescentos da super maquete do RefLab: o mesmo aspeto, uma só cor de destaque ---------- */
+.tag.existe{background:var(--accent);color:var(--on-accent)}
+.tag.problemas{border-color:var(--accent);color:var(--accent)}
+.tag.ameio{border:1px dashed var(--accent);color:var(--text)}
+.tag.codigo{border:1px dashed var(--border-strong);color:var(--muted)}
+.tag.naovi{border-color:var(--border);color:var(--muted)}
+.counts .prob{grid-column:1/-1}
+.row .p{grid-column:1;font-size:13.5px;line-height:1.3;color:var(--text)}
+.row .p::before{content:"Problema: ";color:var(--accent);font-weight:600}
+details.ficha>summary{list-style:none;cursor:pointer;min-height:32px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--accent);border-radius:8px}
+details.ficha>summary::-webkit-details-marker{display:none}
+details.ficha>summary::after{content:"\203A";transition:transform .2s var(--ease)}
+details.ficha[open]>summary::after{transform:rotate(90deg)}
+.know{display:grid;gap:4px;padding:2px 0 6px;font-size:12.5px;line-height:1.4;color:var(--muted)}
+.know b{color:var(--text);font-weight:600}
+.know code{font-size:11.5px;color:var(--text);word-break:break-word}
+details.semecra{margin-top:6px;border-top:1px solid var(--border);padding-top:6px}
+details.semecra>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;color:var(--muted)}
+details.semecra>summary::-webkit-details-marker{display:none}
+details.semecra>summary span{font-weight:500;font-size:13px}
+details.semecra>summary::after{content:"\203A";font-size:18px;transition:transform .2s var(--ease)}
+details.semecra[open]>summary::after{transform:rotate(90deg)}
+.frames{display:flex;gap:6px}
+.frames button{min-height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:999px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.frames button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--block)}
+.frames.no-mapa{margin-top:10px}
+.frames.no-palco{position:absolute;top:16px;right:16px;z-index:3}
+@media (min-width:901px){.frames.no-mapa{display:none}}
+@media (max-width:900px){.frames.no-palco{display:none}}
+.app.pc{--fw:1280px;--fh:800px}
+.app.pc .device{border-radius:18px;padding:8px}
+.app.pc .device iframe{border-radius:10px}
+@media (max-width:900px){.device iframe,.app.pc .device iframe{border-radius:0}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <main class="map" id="map">
+    <div class="map-in">
+      <p class="brand"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle class="o-line" cx="12" cy="12" r="10.500"/><path class="o-fill" d="M12 12C8.800 9.200 8.800 5.200 12 2.500c3.200 2.700 3.200 6.700 0 9.500zm0 0c2.800-3.200 6.800-3.200 9.500 0-2.700 3.200-6.700 3.200-9.500 0zm0 0c3.200 2.800 3.200 6.800 0 9.500-3.200-2.700-3.200-6.700 0-9.500zm0 0c-2.800 3.200-6.800 3.200-9.500 0 2.700-3.200 6.700-3.200 9.500 0z"/></svg></span>RefLab · o que existe hoje</p>
+      <h1>O RefLab, como está hoje</h1>
+      <p class="lede">Todas as partes da app de treino para árbitros, uma por linha: o que <b>funciona</b>, o que <b>funciona com problemas</b>, o que está <b>a meio</b> e o que <b>só existe no código</b>. Cada ecrã é a app verdadeira com dados de exemplo. Toca numa linha com seta para a abrir.</p>
+      <button class="open" type="button" id="open">Abrir a app no Painel<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+      <div class="frames no-mapa" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
+      <div class="counts" id="counts" role="group" aria-label="Mostrar"></div>
+      <div id="secs"></div>
+      <p class="foot" id="foot"></p>
+    </div>
+  </main>
+
+  <section class="view" id="view" aria-label="A app">
+    <div class="frames no-palco" role="group" aria-label="Moldura"><button type="button" data-frame="tel" aria-pressed="true">Telemóvel</button><button type="button" data-frame="pc" aria-pressed="false">Computador</button></div>
+    <div class="slot"><div class="device"><iframe id="frame" title="A app" src="about:blank"></iframe></div></div>
+    <button class="back" type="button" id="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Mapa</button>
+  </section>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+  const TAG = { existe: 'Existe', problemas: 'Existe, com problemas', ameio: 'A meio', codigo: 'Só no código', naovi: 'Não consegui ver' };
+  const WHAT = { existe: 'Funciona, tanto quanto se vê.', problemas: 'Funciona, mas com falhas.', ameio: 'Começado, não usável.', codigo: 'Ninguém lá chega.', naovi: 'Descrito, sem ecrã.' };
+
+  /* O mapa. u = página que abre na moldura, no seu estado; sem u = vai para «Sem ecrã», fechado no fim da secção.
+     d = o que se vê (para o Daniel). p = o problema, na primeira linha. k = «O que se sabe» (ficheiros, dados, ...). */
+  const FOOT = /*RODAPE*/""/*FIMRODAPE*/;
+  const MAP = /*MAPA*/[]/*FIM*/;
+
+  let filter = 'tudo';
+  const all = MAP.flatMap(s => s.rows);
+  const match = r => filter === 'tudo' || r.tag === filter || (filter === 'falhas' && (r.tag === 'problemas' || r.tag === 'ameio'));
+  function drawCounts() {
+    const n = k => all.filter(r => r.tag === k).length;
+    $('#counts').innerHTML = Object.keys(TAG).map(k =>
+      '<button type="button" data-f="' + k + '" aria-pressed="' + (filter === k) + '"><span class="n">' + n(k) + '</span><span class="l">' + TAG[k] + '</span><span class="w">' + WHAT[k] + '</span></button>').join('') +
+      '<button class="all" type="button" data-f="tudo" aria-pressed="' + (filter === 'tudo') + '"><span class="n">' + all.length + '</span><span class="l">Tudo</span><span class="w"></span></button>' +
+      '<button class="prob" type="button" data-f="falhas" aria-pressed="' + (filter === 'falhas') + '"><span class="n">' + (n('problemas') + n('ameio')) + '</span><span class="l">Só o que tem problemas ou está a meio</span><span class="w">Cada linha diz o problema logo por baixo do nome.</span></button>';
+  }
+  const KN = [['onde', 'Onde vive no código'], ['dados', 'Dados que lê e escreve'], ['decisoes', 'Decisões nos documentos'], ['problemas', 'Problemas, em pormenor'], ['perguntas', 'Perguntas']];
+  let current = null;
+  function rowHtml(r) {
+    const inner = '<span class="t">' + esc(r.t) + '</span>' + (r.p ? '<span class="p">' + esc(r.p) + '</span>' : '') + (r.d ? '<span class="d">' + esc(r.d) + '</span>' : '') + '<span class="tag ' + r.tag + '">' + TAG[r.tag] + '</span>';
+    const cls = 'row' + (r.sub ? ' sub' : '');
+    let more = '';
+    if (r.nota) more += '<p class="quem">' + esc(r.nota) + '</p>';
+    if (r.k) {
+      const parts = KN.filter(([key]) => r.k[key] && r.k[key].length).map(([key, label]) =>
+        '<p><b>' + label + ':</b> ' + [].concat(r.k[key]).map(x => key === 'onde' ? '<code>' + esc(x) + '</code>' : esc(x)).join(key === 'onde' ? ' · ' : ' — ') + '</p>');
+      if (parts.length) more += '<details class="ficha"><summary>O que se sabe</summary><div class="know">' + parts.join('') + '</div></details>';
+    }
+    return '<li>' + (r.u
+      ? '<a class="' + cls + '" href="' + esc(r.u) + '" data-u="' + esc(r.u) + '"' + (r.u === current ? ' aria-current="true"' : '') + '>' + inner + '</a>'
+      : '<div class="' + cls + '">' + inner + '</div>') + (more ? '<div class="more' + (r.sub ? ' sub' : '') + '">' + more + '</div>' : '') + '</li>';
+  }
+  function drawMap() {
+    $('#secs').innerHTML = MAP.map(s => {
+      const rows = s.rows.filter(match);
+      if (!rows.length) return '';
+      const seen = rows.filter(r => r.u), none = rows.filter(r => !r.u);
+      return '<section class="sec"><h2>' + esc(s.t) + '</h2>' + (s.how ? '<p class="how">' + esc(s.how) + '</p>' : '') +
+        (seen.length ? '<ul class="rows">' + seen.map(rowHtml).join('') + '</ul>' : '') +
+        (none.length ? '<details class="semecra"' + (filter !== 'tudo' && !seen.length ? ' open' : '') + '><summary>Sem ecrã <span>' + none.length + (none.length === 1 ? ' parte' : ' partes') + '</span></summary><ul class="rows">' + none.map(rowHtml).join('') + '</ul></details>' : '') +
+        '</section>';
+    }).join('');
+  }
+
+  const app = $('#app'), frame = $('#frame'), small = matchMedia('(max-width:900px)');
+  let pc = false;
+  try { pc = localStorage.getItem('reflab-maquete-moldura') === 'pc'; } catch (e) {}
+  function setFrame(v) {
+    pc = v; app.classList.toggle('pc', pc && !small.matches);
+    document.querySelectorAll('[data-frame]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.frame === 'pc') === pc)));
+    try { localStorage.setItem('reflab-maquete-moldura', pc ? 'pc' : 'tel'); } catch (e) {}
+    fit();
+  }
+  function fit() {
+    if (small.matches) { document.documentElement.style.removeProperty('--s'); return; }
+    const v = $('#view'), big = app.classList.contains('pc');
+    const fw = (big ? 1280 : 390) + 22, fh = (big ? 800 : 844) + 22;
+    const s = Math.min(1, (v.clientHeight - 88) / fh, (v.clientWidth - 32) / fw);
+    document.documentElement.style.setProperty('--s', Math.max(.3, s).toFixed(4));
+  }
+  function mark(u) {
+    current = u;
+    document.querySelectorAll('.row[aria-current]').forEach(r => r.removeAttribute('aria-current'));
+    const el = document.querySelector('.row[data-u="' + CSS.escape(u) + '"]');
+    if (el) { el.setAttribute('aria-current', 'true'); if (!small.matches) el.scrollIntoView({ block: 'nearest' }); }
+  }
+  function show(u) {
+    frame.src = u;
+    mark(u);
+    if (small.matches) { app.classList.add('ver'); $('#map').inert = true; $('#back').focus({ preventScroll: true }); }
+    try { history.replaceState(null, '', '#' + u); } catch (e) {}
+  }
+  function backToMap() {
+    app.classList.remove('ver'); $('#map').inert = false;
+    const el = current && document.querySelector('.row[data-u="' + CSS.escape(current) + '"]');
+    if (el) { el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'center' }); }
+  }
+  $('#secs').addEventListener('click', e => {
+    const a = e.target.closest('a.row'); if (!a) return;
+    e.preventDefault(); show(a.dataset.u);
+  });
+  $('#counts').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    filter = filter === b.dataset.f ? 'tudo' : b.dataset.f; drawCounts(); drawMap();
+    if (!small.matches) $('#map').scrollTop = 0;
+    document.querySelector('#counts [data-f="' + b.dataset.f + '"]').focus();
+  });
+  document.querySelectorAll('[data-frame]').forEach(b => b.addEventListener('click', () => setFrame(b.dataset.frame === 'pc')));
+  $('#open').addEventListener('click', () => show('painel.html'));
+  $('#back').addEventListener('click', backToMap);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && app.classList.contains('ver')) backToMap(); });
+
+  /* As páginas dizem onde estão (quando se anda lá dentro): o mapa acompanha. */
+  addEventListener('message', e => {
+    const m = e.data; if (!m || m.reflab !== 'pagina' || e.source !== frame.contentWindow) return;
+    const u = String(m.href).split('/').pop().split(/[?#]/)[0];
+    if (all.some(r => r.u === u)) mark(u);
+  });
+
+  addEventListener('resize', fit);
+  small.addEventListener('change', () => { if (!small.matches) { app.classList.remove('ver'); $('#map').inert = false; } setFrame(pc); });
+  $('#foot').textContent = FOOT;
+  drawCounts(); drawMap(); setFrame(pc);
+  let start = ''; try { start = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+  if (start && all.some(r => r.u === start)) show(start);
+  else if (!small.matches) show('painel.html');
+})();
+</script>
+</body>
+</html>
