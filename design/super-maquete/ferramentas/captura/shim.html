@@ -1,0 +1,26 @@
+<script>
+/* Maquete: esta página é uma fotografia estática do RefLab verdadeiro (código de main), desenhada com dados de exemplo.
+   Os toques em ligações levam à fotografia correspondente; dentro de index.html, o mapa acompanha. */
+(function(){
+  var META = __META__;
+  var ROUTES = META.routes || {};
+  function fileFor(href){
+    try { var u = new URL(href, 'http://x' + (META.route || '/')); } catch(e) { return null; }
+    var p = u.pathname.replace(/\/$/, '') || '/';
+    if (ROUTES[p]) return ROUTES[p];
+    for (var k in ROUTES) { if (k.indexOf(':') > -1) { var re = new RegExp('^' + k.replace(/:[^/]+/g, '[^/]+') + '$'); if (re.test(p)) return ROUTES[k]; } }
+    return null;
+  }
+  window.__fileFor = fileFor;
+  document.addEventListener('click', function(e){
+    var hot = (META.links || []).find(function(l){ try { return e.target.closest(l.sel); } catch(x){ return false; } });
+    var a = e.target.closest && e.target.closest('a[href]');
+    var to = hot ? hot.to : (a ? fileFor(a.getAttribute('href')) : null);
+    if (a || hot) { e.preventDefault(); }
+    if (to) location.href = to;
+  }, true);
+  document.addEventListener('submit', function(e){ e.preventDefault(); }, true);
+  addEventListener('load', function(){ if (window.__SCROLL) scrollTo(0, window.__SCROLL); });
+  try { if (parent !== window) parent.postMessage({ reflab: 'pagina', href: location.href }, '*'); } catch(e) {}
+})();
+</script>

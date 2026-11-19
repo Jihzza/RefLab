@@ -1,0 +1,1382 @@
+[
+ {
+  "t": "Entrada",
+  "how": "O que vê quem ainda não entrou: a página inicial em reflab.netlify.app.",
+  "rows": [
+   {
+    "t": "Página inicial",
+    "tag": "problemas",
+    "d": "A marca, a frase, «Iniciar sessão» / «Criar conta», os planos em carrossel e o rodapé legal.",
+    "u": "inicio.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/landing/components/LandingPage.tsx",
+      "HeroSection.tsx",
+      "AuthSection.tsx",
+      "PricingSection.tsx",
+      "PricingCard.tsx",
+      "FooterSection.tsx"
+     ],
+     "dados": [
+      "Não lê nada da base de dados: os planos e os preços estão escritos no código."
+     ],
+     "problemas": [
+      "Os botões dos planos («Começar», «Subscrever») levam a /app/pricing, que manda quem não entrou de volta a esta página: não fazem nada à vista.",
+      "Os planos prometem coisas que não existem (fórum, newsletter, feedback com IA).",
+      "Preços em formato inglês («€4.99»); no plano grátis, «Gratuito» aparece como título e como preço.",
+      "O separador do navegador diz «reflab», com o ícone do Vite e lang=\"en\"."
+     ]
+    }
+   },
+   {
+    "t": "Iniciar sessão",
+    "tag": "existe",
+    "d": "Email e palavra-passe, «Esqueceste-te da palavra-passe?», Google.",
+    "u": "inicio.html#entrar",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/LoginForm.tsx"
+     ],
+     "dados": [
+      "Supabase Auth: signInWithPassword, signInWithOAuth(google). Depois de entrar vai sempre para /app/dashboard."
+     ],
+     "problemas": [
+      "O cartão do login tem título e moldura; o de criar conta e o de recuperar não têm: as três vistas parecem de produtos diferentes.",
+      "Erros do servidor que não estão mapeados aparecem em inglês."
+     ]
+    }
+   },
+   {
+    "t": "Campos em falta",
+    "tag": "existe",
+    "u": "entrar-erros.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/LoginForm.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Email ou palavra-passe errados",
+    "tag": "existe",
+    "u": "entrar-errado.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/api/authErrors.ts"
+     ]
+    }
+   },
+   {
+    "t": "Criar conta",
+    "tag": "existe",
+    "d": "Email, palavra-passe (mínimo 6), confirmar, «Continuar com Google».",
+    "u": "criar-conta.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/SignupForm.tsx"
+     ],
+     "dados": [
+      "Supabase Auth signUp. Um gatilho na base de dados cria o perfil com um nome aleatório (ex. «SharpWhistle4821»), as definições e um aviso «Completa o teu perfil»."
+     ],
+     "problemas": [
+      "Não há escolha de nome de utilizador nem boas-vindas: a pessoa cai no Painel com um nome inventado.",
+      "Não há link para Termos e Privacidade no registo."
+     ],
+     "perguntas": [
+      "A confirmação por email está ligada no Supabase? Não se vê no repositório."
+     ]
+    }
+   },
+   {
+    "t": "Erros ao criar conta",
+    "tag": "existe",
+    "u": "criar-conta-erros.html",
+    "sub": 1
+   },
+   {
+    "t": "Conta criada: verifica o email",
+    "tag": "existe",
+    "u": "criar-conta-feito.html",
+    "sub": 1,
+    "nota": "Manda o email de confirmação do Supabase (o texto do email está configurado no Supabase, não no repositório)."
+   },
+   {
+    "t": "Esqueci-me da palavra-passe",
+    "tag": "existe",
+    "d": "Pede o email e envia uma ligação.",
+    "u": "esqueci.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/ForgotPassword.tsx"
+     ],
+     "problemas": [
+      "Os erros do servidor aparecem em inglês, crus (não passam pelo tradutor de erros)."
+     ]
+    }
+   },
+   {
+    "t": "Ligação enviada",
+    "tag": "existe",
+    "u": "esqueci-enviado.html",
+    "sub": 1
+   },
+   {
+    "t": "Definir nova palavra-passe",
+    "tag": "problemas",
+    "d": "Aonde leva a ligação do email.",
+    "u": "nova-passe.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/ResetPassword.tsx",
+      "rota /reset-password"
+     ],
+     "problemas": [
+      "Não confirma que se chegou pela ligação do email: qualquer pessoa com sessão aberta pode mudar a palavra-passe aqui sem saber a antiga."
+     ]
+    }
+   },
+   {
+    "t": "Erros",
+    "tag": "existe",
+    "u": "nova-passe-erros.html",
+    "sub": 1
+   },
+   {
+    "t": "Palavra-passe atualizada",
+    "tag": "existe",
+    "d": "«A redirecionar para o painel…»",
+    "u": "nova-passe-feita.html",
+    "sub": 1
+   },
+   {
+    "t": "Sem sessão de recuperação",
+    "tag": "problemas",
+    "d": "Sem sessão: o botão fica apagado.",
+    "u": "nova-passe-invalida.html",
+    "sub": 1,
+    "nota": "O código prevê a mensagem «Ligação inválida ou expirada» ao fim de uns segundos; na captura ficou só o botão apagado."
+   },
+   {
+    "t": "A entrar (regresso do Google ou do email)",
+    "tag": "existe",
+    "d": "Roda e «A iniciar sessão...».",
+    "u": "regresso.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx"
+     ],
+     "problemas": [
+      "Uma ligação de confirmação aberta noutro aparelho deve dar «A autenticação falhou…» (o método PKCE exige o mesmo navegador)."
+     ]
+    }
+   },
+   {
+    "t": "Falhou a entrada",
+    "tag": "naovi",
+    "d": "Cartão «A autenticação falhou. Tenta iniciar sessão novamente.» e «Voltar ao início de sessão».",
+    "nota": "Não consegui provocar este estado com a base de dados falsa: a captura fica presa em «A iniciar sessão...». Descrito a partir do código.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/OAuthCallbackPage.tsx:34"
+     ]
+    }
+   },
+   {
+    "t": "Aviso de cookies",
+    "tag": "problemas",
+    "d": "Faixa em baixo: «Aceitar» e «Recusar».",
+    "u": "inicio-cookies.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/CookieConsentBanner.tsx"
+     ],
+     "dados": [
+      "Guarda «cookie-consent» no navegador."
+     ],
+     "problemas": [
+      "Nada lê a escolha: aceitar ou recusar não muda nada.",
+      "Dentro da app tapa a barra de baixo até se responder.",
+      "A política de cookies promete gerir preferências, o que não existe."
+     ]
+    }
+   },
+   {
+    "t": "Dentro da app",
+    "tag": "problemas",
+    "u": "cookies-na-app.html",
+    "sub": 1
+   },
+   {
+    "t": "Páginas legais: Privacidade",
+    "tag": "existe",
+    "d": "Uma página com três separadores; texto já em português.",
+    "u": "legal-privacidade.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/policies/components/*"
+     ],
+     "problemas": [
+      "Os separadores não mudam o endereço.",
+      "O email de contacto não é uma ligação."
+     ],
+     "perguntas": [
+      "Os textos legais são finais? O PR #22 diz que faltam a identidade do operador e contactos válidos."
+     ]
+    }
+   },
+   {
+    "t": "Termos de Serviço",
+    "tag": "existe",
+    "u": "legal-termos.html",
+    "sub": 1
+   },
+   {
+    "t": "Política de Cookies",
+    "tag": "existe",
+    "u": "legal-cookies.html",
+    "sub": 1
+   },
+   {
+    "t": "Emails",
+    "tag": "naovi",
+    "d": "Só dois, ambos do Supabase: confirmar o registo e redefinir a palavra-passe.",
+    "nota": "Os modelos, o remetente e a língua estão no painel do Supabase, não no repositório. Não os vi.",
+    "k": {
+     "perguntas": [
+      "Os emails estão em português ou nos modelos ingleses do Supabase? Há SMTP próprio?"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Estrutura da app",
+  "how": "Em todas as páginas depois de entrar.",
+  "rows": [
+   {
+    "t": "A carregar a sessão",
+    "tag": "existe",
+    "d": "«A carregar...» ao centro, numa página vazia.",
+    "u": "a-carregar.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/app/RequireAuth.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Barra de cima",
+    "tag": "existe",
+    "d": "Menu, a marca RefLab, a lupa e o sino com o número de avisos por ler.",
+    "u": "painel.html#cima",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/Header.tsx"
+     ],
+     "problemas": [
+      "Os ícones são desenhos com «role=button» sem foco de teclado: não se usam com teclado.",
+      "O número do sino só atualiza quando se muda de página."
+     ]
+    }
+   },
+   {
+    "t": "Menu lateral",
+    "tag": "problemas",
+    "d": "Dez entradas, o nome e email da pessoa, «Terminar sessão».",
+    "u": "menu.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/Sidebar.tsx"
+     ],
+     "problemas": [
+      "Não marca a página onde se está.",
+      "O nome vem da conta, não do perfil: quem entrou com email vê o email duas vezes.",
+      "É a única porta para «Testes», «Pesquisar», «Notificações», «Planos» e «Definições»."
+     ]
+    }
+   },
+   {
+    "t": "Barra de baixo",
+    "tag": "existe",
+    "d": "Painel, Aprender, Comunidade, Mensagens (com o número por ler), Perfil.",
+    "u": "painel.html#baixo",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/BottomNav.tsx"
+     ],
+     "problemas": [
+      "Em /app (sem /dashboard) «Painel» não fica aceso."
+     ]
+    }
+   },
+   {
+    "t": "Página que não existe",
+    "tag": "problemas",
+    "d": "Um endereço desconhecido mostra uma página escura vazia.",
+    "u": "pagina-inexistente.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/app/Router.tsx"
+     ],
+     "problemas": [
+      "Não há página 404."
+     ]
+    }
+   },
+   {
+    "t": "Sessão expirada",
+    "tag": "naovi",
+    "d": "Janela «Sessão expirada», «A tua sessão expirou…», «Iniciar sessão».",
+    "nota": "Não consegui provocá-la nas capturas. Descrita a partir do código.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/SessionExpiredModal.tsx"
+     ],
+     "problemas": [
+      "O texto está a cinzento escuro sobre fundo escuro: quase ilegível.",
+      "Não tem botão para fechar."
+     ]
+    }
+   },
+   {
+    "t": "Cabeçalho e menu antigos",
+    "tag": "codigo",
+    "d": "Uma versão branca anterior, com emojis e uma ligação para /app/chat que não existe.",
+    "nota": "Nenhum ficheiro os usa.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/layout/Header.tsx, Sidebar.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Botão e campo partilhados",
+    "tag": "codigo",
+    "nota": "Ficheiros vazios.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/components/ui/Button.tsx, Input.tsx"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Painel",
+  "how": "A primeira página depois de entrar. Barra de baixo: Painel.",
+  "rows": [
+   {
+    "t": "Painel",
+    "tag": "existe",
+    "d": "Desempenho (precisão global e por tema, simulação de jogo, aprovação), Progresso e Hábitos (calendário de 30 dias, sequências).",
+    "u": "painel.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/dashboard/components/DashboardPage.tsx",
+      "PerformanceSection.tsx",
+      "ProgressSection.tsx",
+      "HabitsSection.tsx",
+      "TrainingCalendar.tsx",
+      "StatCard.tsx",
+      "TopicAccuracyCard.tsx"
+     ],
+     "dados": [
+      "Uma só função na base de dados: get_dashboard_stats (testes, perguntas de prática e vídeos). Os dias de treino vêm de user_activity_days, preenchida por gatilhos."
+     ],
+     "problemas": [
+      "As letras do calendário estão em inglês («S M T W T F S»).",
+      "Os decimais usam ponto («72.5%»).",
+      "«Iniciar novo teste» é azul (--info), a única ação principal azul num produto amarelo.",
+      "Abrir uma sessão de perguntas sem responder já conta como dia de treino.",
+      "As respostas em vídeo contam como «perguntas respondidas»."
+     ]
+    }
+   },
+   {
+    "t": "Sem dados (pessoa nova)",
+    "tag": "problemas",
+    "u": "painel-vazio.html",
+    "sub": 1,
+    "k": {
+     "problemas": [
+      "Os cartões de tempo mostram «—» grande em vez da frase prevista para o vazio."
+     ]
+    }
+   },
+   {
+    "t": "A carregar",
+    "tag": "existe",
+    "u": "painel-a-carregar.html",
+    "sub": 1
+   },
+   {
+    "t": "Erro",
+    "tag": "problemas",
+    "d": "Faixa vermelha, sem botão para tentar de novo.",
+    "u": "painel-erro.html",
+    "sub": 1
+   }
+  ]
+ },
+ {
+  "t": "Aprender",
+  "how": "Barra de baixo: Aprender. Cinco separadores numa só página.",
+  "rows": [
+   {
+    "t": "Teste (início)",
+    "tag": "existe",
+    "d": "«Teste de Conhecimento de Arbitragem»: 20 perguntas aleatórias, 40 minutos, quatro números e «Iniciar teste».",
+    "u": "aprender.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/LearnPage.tsx",
+      "test/RandomTestLanding.tsx"
+     ],
+     "dados": [
+      "test_attempts (contagens da semana, média, melhor, tempo)."
+     ],
+     "problemas": [
+      "«Testes esta semana» conta desde a segunda-feira da semana anterior.",
+      "Os ficheiros LearnTabs, TestsTab, QuestionsTab, VideosTab, CourseTab e ResourcesTab não são usados: tudo vive em LearnPage.tsx."
+     ],
+     "perguntas": [
+      "O banco de perguntas real (com leis e temas) não está no repositório: foi preenchido à mão na produção. Quantas perguntas há, e em que língua?"
+     ]
+    }
+   },
+   {
+    "t": "Histórico de testes",
+    "tag": "existe",
+    "u": "aprender-historico.html",
+    "sub": 1
+   },
+   {
+    "t": "A gerar o teste",
+    "tag": "existe",
+    "u": "teste-a-gerar.html",
+    "sub": 1
+   },
+   {
+    "t": "A responder",
+    "tag": "existe",
+    "d": "Relógio, «Pergunta 1 de 20», quatro opções, «Voltar» / «Seguinte».",
+    "u": "teste-pergunta.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/test/RandomTestRunner.tsx"
+     ],
+     "dados": [
+      "get_random_questions; cada resposta grava em test_attempt_answers."
+     ],
+     "problemas": [
+      "A resposta fica bloqueada ao primeiro toque, sem confirmar.",
+      "As perguntas estão em inglês (vêm da base de dados).",
+      "A correção é feita no navegador, que recebe a resposta certa: vê-se no tráfego da página."
+     ]
+    }
+   },
+   {
+    "t": "Resposta bloqueada",
+    "tag": "existe",
+    "u": "teste-respondida.html",
+    "sub": 1
+   },
+   {
+    "t": "Última pergunta: «Submeter teste»",
+    "tag": "existe",
+    "u": "teste-ultima.html",
+    "sub": 1
+   },
+   {
+    "t": "Resultado (aprovado)",
+    "tag": "existe",
+    "d": "Nota, pontos fortes e áreas a melhorar por tema, rever todas as perguntas.",
+    "u": "teste-resultado.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/test/RandomTestResults.tsx"
+     ],
+     "dados": [
+      "get_attempt_topic_breakdown"
+     ],
+     "problemas": [
+      "Não há explicação das respostas: a coluna ai_explanation existe mas nada a escreve ou lê; não há IA no produto.",
+      "A função de resultados não confirma que a tentativa é de quem pede."
+     ]
+    }
+   },
+   {
+    "t": "Resultado (reprovado, tempo esgotado)",
+    "tag": "problemas",
+    "u": "teste-resultado-baixo.html",
+    "sub": 1,
+    "k": {
+     "problemas": [
+      "Quando o tempo acaba, grava quase zero segundos de duração e só conta as perguntas respondidas."
+     ]
+    }
+   },
+   {
+    "t": "Perguntas (início)",
+    "tag": "existe",
+    "d": "«Perguntas de prática»: sem limite de tempo; rápidas, por lei, por área.",
+    "u": "perguntas.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/questions/QuestionsLanding.tsx"
+     ],
+     "dados": [
+      "question_sessions, question_practice_answers, question_bank."
+     ]
+    }
+   },
+   {
+    "t": "Escolher leis",
+    "tag": "problemas",
+    "d": "Leis 11 a 14 com nomes em português.",
+    "u": "perguntas-por-lei.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/questions/QuestionsSetup.tsx"
+     ],
+     "problemas": [
+      "Leis fora de 11–14 aparecem como «Law N» em inglês; uma pergunta sem lei aparece como «Lei — Law null» (como se vê aqui)."
+     ]
+    }
+   },
+   {
+    "t": "Escolher áreas",
+    "tag": "problemas",
+    "d": "Os nomes das áreas aparecem como estão na base de dados, em inglês.",
+    "u": "perguntas-por-area.html",
+    "sub": 1
+   },
+   {
+    "t": "A responder",
+    "tag": "existe",
+    "u": "perguntas-sessao.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/questions/QuestionsSession.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Resposta certa",
+    "tag": "existe",
+    "u": "perguntas-certa.html",
+    "sub": 1
+   },
+   {
+    "t": "Resposta errada",
+    "tag": "existe",
+    "u": "perguntas-errada.html",
+    "sub": 1
+   },
+   {
+    "t": "Terminar sessão?",
+    "tag": "existe",
+    "u": "perguntas-terminar.html",
+    "sub": 1
+   },
+   {
+    "t": "Sessão concluída",
+    "tag": "existe",
+    "u": "perguntas-revisao.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/questions/QuestionsReview.tsx"
+     ],
+     "problemas": [
+      "«Voltar» numa sessão sem perguntas salta para um resultado de 0%."
+     ]
+    }
+   },
+   {
+    "t": "Vídeos",
+    "tag": "problemas",
+    "d": "Um vídeo, depois «Que ação deve o árbitro tomar?» e «Que sanção…?».",
+    "u": "videos.html",
+    "nota": "Não consegui ver o vídeo a tocar (o site e o R2 estão fora do alcance deste ambiente); o erro mostrado é o que a app mostra quando o vídeo não carrega.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/LearnPage.tsx:297-664"
+     ],
+     "dados": [
+      "video_scenarios, video_attempts. Os vídeos vêm de um endereço Cloudflare R2 escrito no código."
+     ],
+     "problemas": [
+      "Só há um cenário ativo («Offside Analysis 1»): o contador diz sempre «1 / 1».",
+      "Quando o vídeo falha, a mensagem fala a quem usa a app de um «bucket learn-videos no Supabase Storage».",
+      "O nome do ficheiro não bate certo com a forma como o R2 guarda os clips: o vídeo provavelmente não carrega."
+     ]
+    }
+   },
+   {
+    "t": "A escolher a sanção",
+    "tag": "existe",
+    "u": "videos-sancao.html",
+    "sub": 1
+   },
+   {
+    "t": "Resultado do vídeo",
+    "tag": "existe",
+    "d": "«Parcialmente correta», ação e sanção.",
+    "u": "videos-resultado.html",
+    "sub": 1
+   },
+   {
+    "t": "Sem vídeos",
+    "tag": "existe",
+    "u": "videos-vazio.html",
+    "sub": 1
+   },
+   {
+    "t": "Cursos",
+    "tag": "ameio",
+    "d": "«Brevemente.»",
+    "u": "cursos.html"
+   },
+   {
+    "t": "Recursos",
+    "tag": "ameio",
+    "d": "Cinco ficheiros de exemplo («Leis do Jogo 2024/25»…) com «Transferir» que não faz nada.",
+    "u": "recursos.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/LearnPage.tsx:680-711"
+     ]
+    }
+   },
+   {
+    "t": "Testes disponíveis",
+    "tag": "problemas",
+    "d": "Três questionários de programação de exemplo («React Basics»…) com «Iniciar teste».",
+    "u": "testes-lista.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/tests/components/TestsList.tsx"
+     ],
+     "problemas": [
+      "Lista escrita no código, nada a ver com arbitragem.",
+      "Os títulos estão escuros sobre fundo escuro: quase invisíveis.",
+      "Chega-se aqui pelo menu «Testes» e pelos avisos de conteúdo novo."
+     ]
+    }
+   },
+   {
+    "t": "Teste por endereço",
+    "tag": "problemas",
+    "d": "Só mostra o erro: os testes da lista não existem.",
+    "u": "teste-endereco.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/learn/components/TestPage.tsx"
+     ],
+     "problemas": [
+      "A caixa de erro é rosa-clara, de outro desenho, com a mensagem crua em inglês.",
+      "O fluxo antigo de testes fixos (9 testes semeados) só é alcançável por aqui, na prática nunca."
+     ]
+    }
+   },
+   {
+    "t": "Notícias",
+    "tag": "codigo",
+    "d": "Duas tabelas e três artigos de exemplo na base de dados, sem nenhum ecrã.",
+    "k": {
+     "onde": [
+      "backend/supabase/migrations/20260222_0048_news_feature.sql, 0049_seed_news.sql"
+     ],
+     "perguntas": [
+      "As notícias eram para entrar? Onde?"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Comunidade",
+  "how": "Barra de baixo: Comunidade. Um feed de toda a gente (não só de quem se segue).",
+  "rows": [
+   {
+    "t": "Feed",
+    "tag": "problemas",
+    "d": "Filtros Todos, Texto, Imagem, Vídeo, Áudio; cartões com gosto, comentários, republicar, guardar, partilhar; botão amarelo «+».",
+    "u": "comunidade.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/SocialPage.tsx",
+      "NavigationBar.tsx",
+      "PostBox.tsx",
+      "PostHeader.tsx",
+      "PostBody.tsx",
+      "PostFooter.tsx",
+      "RepostBox.tsx",
+      "NewPostButton.tsx"
+     ],
+     "dados": [
+      "get_social_feed (20 de cada vez), posts, post_likes, post_saves. Sem tempo real."
+     ],
+     "problemas": [
+      "«João Silva reposted» e o tempo «now» estão em inglês.",
+      "Guardar só sobe um contador: não há página de guardados.",
+      "Republicações ficam sempre em «Texto», mesmo de uma imagem.",
+      "Provável: a página não carrega mais de 20 publicações (a área com scroll não tem altura fixa).",
+      "Apagar a original deixa as republicações como cartões vazios."
+     ]
+    }
+   },
+   {
+    "t": "A carregar",
+    "tag": "existe",
+    "u": "comunidade-a-carregar.html",
+    "sub": 1
+   },
+   {
+    "t": "Vazio",
+    "tag": "existe",
+    "u": "comunidade-vazia.html",
+    "sub": 1
+   },
+   {
+    "t": "Erro",
+    "tag": "existe",
+    "u": "comunidade-erro.html",
+    "sub": 1
+   },
+   {
+    "t": "Só imagens",
+    "tag": "existe",
+    "u": "comunidade-imagens.html",
+    "sub": 1
+   },
+   {
+    "t": "Comentários",
+    "tag": "problemas",
+    "d": "Abrem dentro do cartão; respostas num segundo nível; @menções a amarelo.",
+    "u": "comunidade-comentarios.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/CommentSection.tsx, CommentBox.tsx"
+     ],
+     "problemas": [
+      "Um erro ao comentar não aparece, e o contador sobe na mesma.",
+      "Denunciar um comentário envia logo, sem janela nem aviso.",
+      "Apagar não pede confirmação."
+     ]
+    }
+   },
+   {
+    "t": "Mencionar alguém (@)",
+    "tag": "problemas",
+    "u": "comunidade-mencao.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/MentionDropdown.tsx"
+     ],
+     "problemas": [
+      "Sem resultados diz «No users found», em inglês."
+     ]
+    }
+   },
+   {
+    "t": "Menu de uma publicação de outra pessoa",
+    "tag": "existe",
+    "u": "comunidade-menu-outro.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/PostMenu.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Menu de uma publicação minha",
+    "tag": "problemas",
+    "d": "«Eliminar publicação», sem confirmação.",
+    "u": "comunidade-menu-meu.html",
+    "sub": 1
+   },
+   {
+    "t": "Denunciar",
+    "tag": "problemas",
+    "u": "comunidade-denunciar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/ReportDialog.tsx"
+     ],
+     "problemas": [
+      "«Porque estás a denunciar este post?» / «este user?»: mistura de inglês.",
+      "No feed, depois de enviar, não aparece confirmação nenhuma."
+     ],
+     "perguntas": [
+      "Quem lê as denúncias? Não há ecrã de moderação."
+     ]
+    }
+   },
+   {
+    "t": "Bloquear",
+    "tag": "existe",
+    "u": "comunidade-bloquear.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/BlockConfirmDialog.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Nova publicação",
+    "tag": "existe",
+    "d": "Texto e um ficheiro (imagem, vídeo ou áudio até 50 MB).",
+    "u": "comunidade-publicar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/CreatePostModal.tsx"
+     ],
+     "dados": [
+      "Storage post-media, tabela posts."
+     ]
+    }
+   },
+   {
+    "t": "Publicar vazio",
+    "tag": "existe",
+    "u": "comunidade-publicar-erro.html",
+    "sub": 1
+   },
+   {
+    "t": "Partilhar (janela)",
+    "tag": "codigo",
+    "d": "WhatsApp, X, Facebook, Telegram, Email e «Copiar».",
+    "nota": "Nenhum ficheiro a usa: «Partilhar» usa a partilha do telemóvel ou copia a ligação.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/ShareDialog.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Publicação aberta",
+    "tag": "problemas",
+    "d": "A publicação com os comentários abertos.",
+    "u": "publicacao.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/PostDetailPage.tsx"
+     ],
+     "problemas": [
+      "O título diz «Publicar» (o verbo) em vez de «Publicação»."
+     ]
+    }
+   },
+   {
+    "t": "Publicação que não existe",
+    "tag": "existe",
+    "u": "publicacao-inexistente.html",
+    "sub": 1
+   }
+  ]
+ },
+ {
+  "t": "Perfil",
+  "how": "Barra de baixo: Perfil.",
+  "rows": [
+   {
+    "t": "O meu perfil",
+    "tag": "problemas",
+    "d": "Foto ou iniciais, nome, @utilizador e as minhas publicações com os mesmos filtros.",
+    "u": "perfil.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/profile/components/ProfilePage.tsx"
+     ],
+     "dados": [
+      "profiles; get_profile_feed."
+     ],
+     "problemas": [
+      "Não mostra seguidores, a seguir, nível nem nada do treino: o perfil não liga ao Aprender.",
+      "A tabela de perfis não tem biografia, XP nem nível."
+     ]
+    }
+   },
+   {
+    "t": "Sem publicações",
+    "tag": "existe",
+    "u": "perfil-vazio.html",
+    "sub": 1
+   },
+   {
+    "t": "Editar perfil",
+    "tag": "existe",
+    "d": "Foto, nome e nome de utilizador (com verificação de disponibilidade).",
+    "u": "perfil-editar.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/profile/components/EditProfilePage.tsx"
+     ],
+     "dados": [
+      "Storage profile-media (5 MB), profiles, public_profiles."
+     ]
+    }
+   },
+   {
+    "t": "Perfil de outra pessoa",
+    "tag": "problemas",
+    "d": "«Seguir» e «Mensagem».",
+    "u": "perfil-outro.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/PublicProfilePage.tsx"
+     ],
+     "dados": [
+      "get_public_profile_view, get_public_profile_feed, user_follows."
+     ],
+     "problemas": [
+      "Seguir pode falhar sempre: o gatilho do aviso «novo seguidor» chama uma função que ficou ambígua (verificar na base de dados real).",
+      "Seguir não se vê em lado nenhum: não há contagens nem listas.",
+      "«Try Again» e «Link copied to clipboard» em inglês."
+     ]
+    }
+   },
+   {
+    "t": "Menu do perfil",
+    "tag": "existe",
+    "u": "perfil-outro-menu.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/social/components/PublicProfileMenu.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Bloqueado por mim",
+    "tag": "existe",
+    "u": "perfil-outro-bloqueado.html",
+    "sub": 1
+   },
+   {
+    "t": "Bloqueou-me",
+    "tag": "existe",
+    "u": "perfil-outro-bloqueou-te.html",
+    "sub": 1
+   },
+   {
+    "t": "Utilizador que não existe",
+    "tag": "existe",
+    "u": "perfil-outro-inexistente.html",
+    "sub": 1
+   },
+   {
+    "t": "Perfil público antigo",
+    "tag": "codigo",
+    "nota": "Uma segunda versão, não usada.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/profile/components/PublicProfilePage.tsx, api/publicProfilesApi.ts"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Mensagens",
+  "how": "Barra de baixo: Mensagens.",
+  "rows": [
+   {
+    "t": "Conversas",
+    "tag": "problemas",
+    "d": "Procurar, e a lista com a última mensagem e o número por ler.",
+    "u": "mensagens.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/messages/components/MessagesPage.tsx, ConversationItem.tsx"
+     ],
+     "dados": [
+      "get_conversations; search_users."
+     ],
+     "problemas": [
+      "A lista não se atualiza sozinha.",
+      "O número na barra de baixo só muda quando se muda de página."
+     ]
+    }
+   },
+   {
+    "t": "Sem conversas",
+    "tag": "existe",
+    "u": "mensagens-vazia.html",
+    "sub": 1
+   },
+   {
+    "t": "Procurar pessoa para conversar",
+    "tag": "existe",
+    "u": "mensagens-procurar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/messages/components/UserSearchBar.tsx, UserSearchDropdown.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Conversa",
+    "tag": "problemas",
+    "d": "Balões, data e hora, anexar e «Enviar». Chega em tempo real.",
+    "u": "conversa.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/messages/components/ConversationPage.tsx, MessageBubble.tsx, MessageInput.tsx"
+     ],
+     "dados": [
+      "get_messages; messages (tempo real); Storage message-media."
+     ],
+     "problemas": [
+      "Os anexos ficam num local público: quem tiver a ligação vê.",
+      "Se um envio falha (por ex. a pessoa só aceita mensagens de quem segue), a conversa desaparece até ao envio seguinte, e o erro vem em inglês.",
+      "A hora mostra os segundos («09:21:08 19-11-2026»)."
+     ]
+    }
+   },
+   {
+    "t": "Conversa vazia",
+    "tag": "existe",
+    "u": "conversa-vazia.html",
+    "sub": 1
+   },
+   {
+    "t": "A escrever",
+    "tag": "existe",
+    "u": "conversa-a-escrever.html",
+    "sub": 1
+   }
+  ]
+ },
+ {
+  "t": "Pesquisa",
+  "how": "Pela lupa na barra de cima, ou pelo menu.",
+  "rows": [
+   {
+    "t": "Pesquisar pessoas",
+    "tag": "problemas",
+    "d": "Campo, «Recentes» e «Limpar tudo».",
+    "u": "pesquisa.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/search/components/SearchPage.tsx, SearchHistory.tsx"
+     ],
+     "dados": [
+      "search_users (procura aproximada); histórico guardado no navegador."
+     ],
+     "problemas": [
+      "O histórico é partilhado por todas as contas no mesmo navegador.",
+      "Só procura pessoas, não publicações nem perguntas.",
+      "Vários ficheiros da pesquisa não são usados (SearchInput, SearchHistoryItem, UserListItem, useSearch, searchApi)."
+     ]
+    }
+   },
+   {
+    "t": "Sem histórico",
+    "tag": "existe",
+    "u": "pesquisa-vazia.html",
+    "sub": 1
+   },
+   {
+    "t": "Resultados",
+    "tag": "existe",
+    "u": "pesquisa-resultados.html",
+    "sub": 1
+   },
+   {
+    "t": "Sem resultados",
+    "tag": "existe",
+    "u": "pesquisa-sem-resultados.html",
+    "sub": 1
+   }
+  ]
+ },
+ {
+  "t": "Avisos",
+  "how": "Pelo sino na barra de cima.",
+  "rows": [
+   {
+    "t": "Notificações",
+    "tag": "problemas",
+    "d": "A lista: gostos, comentários, menções, seguidores, republicações, avisos do plano, completar o perfil.",
+    "u": "notificacoes.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/notifications/components/NotificationsPage.tsx, NotificationBanner.tsx, NotificationBell.tsx"
+     ],
+     "dados": [
+      "notifications (criadas por gatilhos na base de dados). Sem tempo real."
+     ],
+     "problemas": [
+      "O sino não abre uma lista: leva a esta página.",
+      "«Completa o teu perfil» nunca desaparece, mesmo depois de completo.",
+      "«Lembrar mais tarde» e «dispensar» existem no código, sem botão."
+     ]
+    }
+   },
+   {
+    "t": "Sem notificações",
+    "tag": "existe",
+    "u": "notificacoes-vazia.html",
+    "sub": 1
+   },
+   {
+    "t": "Avisos que nunca chegam",
+    "tag": "codigo",
+    "d": "«Nova mensagem», «lembrete de sequência», «perdeste a sequência», «sequência» e «conteúdo novo».",
+    "nota": "Têm interruptor nas Definições mas nada os cria: os gatilhos de dois deles foram apagados pela migração 0035 e nunca recriados.",
+    "k": {
+     "onde": [
+      "backend/supabase/migrations/20260213_0035_fresh_rebuild_all.sql"
+     ]
+    }
+   },
+   {
+    "t": "Lembrete de fim de plano",
+    "tag": "problemas",
+    "d": "Trabalho de hora a hora no servidor.",
+    "k": {
+     "onde": [
+      "backend/supabase/migrations/20260213_0023_plan_expiration_reminders.sql"
+     ],
+     "problemas": [
+      "Avisa toda a gente que renova que o plano «vai expirar».",
+      "Cada um dos três avisos só é enviado uma vez na vida de cada pessoa."
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Conta",
+  "how": "Pelo menu lateral: Planos e Definições.",
+  "rows": [
+   {
+    "t": "Definições",
+    "tag": "problemas",
+    "d": "Perfil, Conta e segurança, Notificações (11 interruptores), Privacidade (quem me pode escrever), Bloqueados, Aprendizagem, Legal.",
+    "u": "definicoes.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/settings/components/SettingsPage.tsx e *Section.tsx"
+     ],
+     "dados": [
+      "get_user_settings_all, notification_preferences, user_settings, get_blocked_users."
+     ],
+     "problemas": [
+      "5 dos 11 interruptores não fazem nada (os avisos não existem).",
+      "Se gravar uma preferência falhar, nada avisa; a escolha falhada fica à vista."
+     ]
+    }
+   },
+   {
+    "t": "Eliminar conta",
+    "tag": "existe",
+    "d": "Escrever DELETE para confirmar.",
+    "u": "definicoes-apagar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/settings/components/ConfirmDialog.tsx",
+      "backend/supabase/functions/delete-account"
+     ],
+     "problemas": [
+      "Cancela logo a assinatura Stripe, sem reembolso, e deixa o cliente na Stripe.",
+      "Erros da função aparecem em inglês."
+     ]
+    }
+   },
+   {
+    "t": "Limpar histórico de aprendizagem",
+    "tag": "existe",
+    "u": "definicoes-limpar.html",
+    "sub": 1,
+    "k": {
+     "dados": [
+      "clear_learning_history"
+     ]
+    }
+   },
+   {
+    "t": "Eliminar conta (janela antiga)",
+    "tag": "codigo",
+    "nota": "Não usada: as Definições têm a sua.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/auth/components/DeleteAccountDialog.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Planos e faturação (grátis)",
+    "tag": "problemas",
+    "d": "Gratuito, Pro €4.99 (Recomendado), Plus €9.99.",
+    "u": "planos.html",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/pricing/components/PricingPage.tsx, PlansSection.tsx"
+     ],
+     "dados": [
+      "stripe_subscriptions; funções create-checkout-session, create-portal-session."
+     ],
+     "problemas": [
+      "Nada no produto muda com o plano: tudo o que é «premium» é grátis.",
+      "Os preços, «/ month», «Active», «Past Due» estão em inglês."
+     ],
+     "perguntas": [
+      "Os planos pagos são para ligar já? O PR #22 deixa-os desligados até haver testes à Stripe.",
+      "O que deve ficar só para Pro e Plus?"
+     ]
+    }
+   },
+   {
+    "t": "Com Pro",
+    "tag": "existe",
+    "d": "O plano atual, estado, renovação, «Cancelar subscrição», «Gerir na Stripe», histórico de compras.",
+    "u": "planos-pro.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/pricing/components/SubscriptionCard.tsx, InvoiceHistory.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Mudar para Plus",
+    "tag": "problemas",
+    "u": "planos-pro-mudar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/pricing/components/ChangePlanDialog.tsx"
+     ],
+     "problemas": [
+      "Diz que muda no próximo ciclo; na Stripe muda logo, sem acerto de preço."
+     ]
+    }
+   },
+   {
+    "t": "Cancelar",
+    "tag": "existe",
+    "u": "planos-pro-cancelar.html",
+    "sub": 1,
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/pricing/components/CancelDialog.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Cancelamento pendente",
+    "tag": "problemas",
+    "u": "planos-a-cancelar.html",
+    "sub": 1,
+    "k": {
+     "problemas": [
+      "Não há forma de voltar atrás dentro da app: só pela Stripe."
+     ]
+    }
+   },
+   {
+    "t": "Pagamento falhou",
+    "tag": "existe",
+    "u": "planos-pagamento-falhou.html",
+    "sub": 1
+   },
+   {
+    "t": "Regresso da Stripe",
+    "tag": "problemas",
+    "d": "«A processar a tua subscrição…»",
+    "u": "planos-checkout-feito.html",
+    "sub": 1,
+    "k": {
+     "problemas": [
+      "A verificação automática nunca corre: a faixa pode ficar até se recarregar a página."
+     ]
+    }
+   },
+   {
+    "t": "Pagar na Stripe",
+    "tag": "naovi",
+    "d": "A página de pagamento e o portal são da Stripe.",
+    "nota": "Fora da app; não vi."
+   },
+   {
+    "t": "Reportar um problema",
+    "tag": "codigo",
+    "nota": "O componente devolve nada e ninguém o usa.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/feedback/components/ReportIssueModal.tsx"
+     ]
+    }
+   },
+   {
+    "t": "Assistente (chatbot)",
+    "tag": "codigo",
+    "nota": "Pastas vazias. O README chama-lhe «básico», mas não há nada.",
+    "k": {
+     "onde": [
+      "apps/frontend/src/features/chatbot/"
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "t": "Por trás",
+  "how": "O que corre no servidor e não tem ecrã.",
+  "rows": [
+   {
+    "t": "Funções no servidor",
+    "tag": "problemas",
+    "d": "Oito: pagamento, portal, cancelar, mudar plano, faturas, webhook da Stripe, apagar conta, sincronizar vídeos.",
+    "k": {
+     "onde": [
+      "backend/supabase/functions/*"
+     ],
+     "problemas": [
+      "«sync-video-scenarios» não verifica quem a chama e escreve com a chave de serviço; procura um armazenamento que já não se usa.",
+      "Não há config.toml: não se sabe como estão publicadas."
+     ]
+    }
+   },
+   {
+    "t": "Base de dados",
+    "tag": "problemas",
+    "d": "49 migrações; cerca de 35 tabelas.",
+    "k": {
+     "onde": [
+      "backend/supabase/migrations"
+     ],
+     "problemas": [
+      "Qualquer pessoa pode mudar o seu próprio papel para «admin».",
+      "Qualquer pessoa com sessão lê o email e o papel de toda a gente.",
+      "A migração 0047 falha numa base nova (copia colunas que nunca existiram).",
+      "Tabelas antigas de faturação continuam lá sem uso.",
+      "A pasta supabase/.temp (ligação ao projeto) está no repositório."
+     ],
+     "perguntas": [
+      "As migrações aplicadas na base real são estas? Não consegui ver a base de dados."
+     ]
+    }
+   }
+  ]
+ }
+]
