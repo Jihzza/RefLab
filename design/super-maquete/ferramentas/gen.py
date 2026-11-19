@@ -224,7 +224,7 @@ MAP = [
  dict(t='Por trás', how='O que corre no servidor e não tem ecrã.', rows=[
   row('Funções no servidor', P, 'Oito: pagamento, portal, cancelar, mudar plano, faturas, webhook da Stripe, apagar conta, sincronizar vídeos.', onde='backend/supabase/functions/*',
       problemas=['«sync-video-scenarios» não verifica quem a chama e escreve com a chave de serviço; procura um armazenamento que já não se usa.', 'Não há config.toml: não se sabe como estão publicadas.']),
-  row('Base de dados', P, '49 migrações; cerca de 35 tabelas.', onde='backend/supabase/migrations',
+  row('Base de dados', P, '49 migrações; 38 tabelas.', onde='backend/supabase/migrations',
       problemas=['Qualquer pessoa pode mudar o seu próprio papel para «admin».', 'Qualquer pessoa com sessão lê o email e o papel de toda a gente.', 'A migração 0047 falha numa base nova (copia colunas que nunca existiram).',
                  'Tabelas antigas de faturação continuam lá sem uso.', 'A pasta supabase/.temp (ligação ao projeto) está no repositório.'],
       perguntas='As migrações aplicadas na base real são estas? Não consegui ver a base de dados.'),
